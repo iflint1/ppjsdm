@@ -4,8 +4,14 @@
 \alias{rgibbs}
 \title{Sample from a multivariate Gibbs point process.}
 \usage{
-rgibbs(alpha, lambda, nsim = 30000, prob = 0.5, verbose = TRUE,
-  return_full_chain = FALSE)
+rgibbs(
+  alpha,
+  lambda,
+  nsim = 30000,
+  prob = 0.5,
+  verbose = TRUE,
+  return_full_chain = FALSE
+)
 }
 \arguments{
 \item{alpha}{alpha}

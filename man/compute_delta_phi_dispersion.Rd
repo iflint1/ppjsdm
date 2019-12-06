@@ -4,8 +4,13 @@
 \alias{compute_delta_phi_dispersion}
 \title{Compute the delta of the phi-dispersion of a marked configuration (radius = 0 corresponds to the proposal model).}
 \usage{
-compute_delta_phi_dispersion(configuration, location, type, number_types,
-  radius = 0)
+compute_delta_phi_dispersion(
+  configuration,
+  location,
+  type,
+  number_types,
+  radius = 0
+)
 }
 \arguments{
 \item{configuration}{The configuration.}
