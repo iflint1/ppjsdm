@@ -4,6 +4,7 @@
 #' @param year A number between 1971 and 2013 representing the year.
 #' @param prevalent Number of most prevalent species to use.
 #' @param jitter Variance of the shifts applied to the locations of the trees.
+#' @importFrom stats rnorm
 #' @export
 get_csiro_trees_configuration <- function(index = 15, year = 2013, prevalent = 10, jitter = 0.3) {
   stopifnot(index >= 1, index <= 20, year >= 1971, year <= 2013)

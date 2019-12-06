@@ -98,6 +98,11 @@ papangelou <- function(configuration, x, type, alpha, lambda, types) {
 #'
 #' @param alpha alpha
 #' @param lambda lambda
+#' @param nsim Number of steps in the Markov Chain algorithm
+#' @param prob Probability of choosing a birth.
+#' @param verbose Print extra information
+#' @param return_full_chain Return the full chain or only the last element?
+#' @importFrom stats runif
 #' @export
 rgibbs <- function (alpha, lambda, nsim = 30000, prob = 0.5, verbose = TRUE, return_full_chain = FALSE) {
   acceptance <- matrix(NA, nsim, 2)

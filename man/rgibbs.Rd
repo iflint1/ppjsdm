@@ -17,6 +17,14 @@ rgibbs(
 \item{alpha}{alpha}
 
 \item{lambda}{lambda}
+
+\item{nsim}{Number of steps in the Markov Chain algorithm}
+
+\item{prob}{Probability of choosing a birth.}
+
+\item{verbose}{Print extra information}
+
+\item{return_full_chain}{Return the full chain or only the last element?}
 }
 \description{
 Sample from a multivariate Gibbs point process.

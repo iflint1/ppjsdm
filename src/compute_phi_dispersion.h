@@ -62,7 +62,7 @@ template<Varphi V>
 template<Varphi V, typename X, typename Y, typename T>
 [[nodiscard]] inline Rcpp::NumericVector compute_delta_phi_dispersion_helper(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, R_xlen_t number_types, double square_radius = 0) {
   // TODO: Might be able to avoid recomputing this every time, marginal efficiency gain.
-  const R_xlen_t number_points{x.size()};
+  const auto number_points{x.size()};
 
   R_xlen_t same_type_points{0};
   for(R_xlen_t i{0}; i < number_points; ++i) {
