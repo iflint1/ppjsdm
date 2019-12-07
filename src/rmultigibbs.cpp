@@ -11,10 +11,10 @@
 #include "make_default_types.h"
 #include "window_utilities.h"
 
-template<Varphi V, typename X, typename Y, typename T>
-[[nodiscard]] double compute_papangelou(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, R_xlen_t number_types, double square_radius) {
+template<typename V, typename X, typename Y, typename T>
+[[nodiscard]] double compute_papangelou(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, R_xlen_t number_types, const V& varphi) {
 
-  const auto delta_D{compute_delta_phi_dispersion_helper<V>(x, y, types_vector, location, type, number_types, square_radius)};
+  const auto delta_D{compute_delta_phi_dispersion_helper(x, y, types_vector, location, type, number_types, varphi)};
 
   double inner_product{0};
   for(R_xlen_t i{0}; i < number_types; ++i) {
@@ -47,8 +47,8 @@ template<typename X, typename Y, typename T>
   return lambda[type] * std::exp(inner_product);
 }
 
-template<Varphi V, typename S>
-[[nodiscard]] inline SEXP rmultigibbs_helper2(const S& window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop, double square_radius = 0) {
+template<typename V, typename S>
+[[nodiscard]] inline SEXP rmultigibbs_helper2(const S& window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop, const V& varphi) {
   const auto number_types{lambda.size()};
   const auto volume{window.volume()};
   const auto prob{0.5};
@@ -77,7 +77,7 @@ template<Varphi V, typename S>
         const Rcpp::NumericVector location{location_pair.first, location_pair.second};
 
         // TODO: You can avoid taking the exp by reorganising the ratio, and sampling an exponential r.v. instead.
-        const auto papangelou{compute_papangelou<V>(x, y, types_vector, location, type, alpha, lambda, number_types, square_radius)};
+        const auto papangelou{compute_papangelou(x, y, types_vector, location, type, alpha, lambda, number_types, varphi)};
         //const auto papangelou{compute_papangelou_geyer(x, y, types_vector, location, type, lambda, alpha, 2, number_types, square_radius)};
         const auto birth_ratio{papangelou * (1 - prob) * volume * number_types / (prob * (1 + total_number))};
 
@@ -97,7 +97,7 @@ template<Varphi V, typename S>
           y.erase(y.begin() + index);
           types_vector.erase(types_vector.begin() + index);
 
-          const auto papangelou{compute_papangelou<V>(x, y, types_vector, saved_location, saved_type, alpha, lambda, number_types, square_radius)};
+          const auto papangelou{compute_papangelou(x, y, types_vector, saved_location, saved_type, alpha, lambda, number_types, varphi)};
           //const auto papangelou{compute_papangelou_geyer(x, y, types_vector, saved_location, saved_type, lambda, alpha, 2, number_types, square_radius)};
           const auto death_ratio{prob * total_number / (number_types * (1 - prob) * volume * papangelou)};
           if(v <= death_ratio) {
@@ -125,9 +125,11 @@ template<Window WindowType>
 [[nodiscard]] inline SEXP rmultigibbs_helper(SEXP window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop) {
   const Window_wrapper<WindowType> window_wrapper{window};
   if(radius == 0) {
-    return rmultigibbs_helper2<Varphi::identity>(window_wrapper, alpha, lambda, steps, nsim, types, drop);
+    const auto varphi{varphi::Identity{}};
+    return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
   } else {
-    return rmultigibbs_helper2<Varphi::Strauss>(window_wrapper, alpha, lambda, steps, nsim, types, drop, radius * radius);
+    const auto varphi{varphi::Strauss{radius * radius}};
+    return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
   }
 }
 

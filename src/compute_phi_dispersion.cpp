@@ -13,9 +13,11 @@
 // [[Rcpp::export]]
 [[nodiscard]] Rcpp::NumericMatrix compute_phi_dispersion(Rcpp::S4 configuration, int number_types, double radius = 0) {
   if(radius == 0) {
-    return compute_phi_dispersion_helper<Varphi::identity>(configuration, number_types);
+    const auto varphi{varphi::Identity{}};
+    return compute_phi_dispersion_helper(configuration, number_types, varphi);
   } else {
-    return compute_phi_dispersion_helper<Varphi::Strauss>(configuration, number_types, radius * radius);
+    const auto varphi{varphi::Strauss{radius * radius}};
+    return compute_phi_dispersion_helper(configuration, number_types, varphi);
   }
 }
 
@@ -32,9 +34,11 @@
 // [[Rcpp::export]]
 [[nodiscard]] Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::S4 configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, double radius = 0) {
   if(radius == 0) {
-    return compute_delta_phi_dispersion_helper<Varphi::identity>(configuration, location, type, number_types);
+    const auto varphi{varphi::Identity{}};
+    return compute_delta_phi_dispersion_helper(configuration, location, type, number_types, varphi);
   } else {
-    return compute_delta_phi_dispersion_helper<Varphi::Strauss>(configuration, location, type, number_types, radius * radius);
+    const auto varphi{varphi::Strauss{radius * radius}};
+    return compute_delta_phi_dispersion_helper(configuration, location, type, number_types, varphi);
   }
 }
 

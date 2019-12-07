@@ -6,8 +6,8 @@
 #include "compute_phi_distance.h"
 // #include "configuration_utilities.h"
 
-template<Varphi V, typename X, typename Y, typename T>
-[[nodiscard]] inline Rcpp::NumericMatrix compute_phi_dispersion_helper(const X& x, const Y& y, const T& types_vector, int number_types, double square_R = 0) {
+template<typename V, typename X, typename Y, typename T>
+[[nodiscard]] inline Rcpp::NumericMatrix compute_phi_dispersion_helper(const X& x, const Y& y, const T& types_vector, int number_types, const V& varphi) {
   // TODO: Might be able to avoid recomputing this every time, marginal efficiency gain.
   const R_xlen_t number_points{x.size()};
 
@@ -22,7 +22,7 @@ template<Varphi V, typename X, typename Y, typename T>
     for(R_xlen_t j{i + 1}; j < number_points; ++j) {
       const auto type_j{types_vector[j] - 1};
 
-      const auto phi_distance{compute_phi_distance<V>(x[i], y[i], x[j], y[j], square_R)};
+      const auto phi_distance{compute_phi_distance(x[i], y[i], x[j], y[j], varphi)};
 
       dispersion(type_i, type_j) += phi_distance;
       if(type_i != type_j) {
@@ -50,17 +50,17 @@ template<Varphi V, typename X, typename Y, typename T>
   return dispersion;
 }
 
-template<Varphi V>
-[[nodiscard]] inline Rcpp::NumericMatrix compute_phi_dispersion_helper(Rcpp::S4 configuration, int number_types, double square_R = 0) {
+template<typename V>
+[[nodiscard]] inline Rcpp::NumericMatrix compute_phi_dispersion_helper(Rcpp::S4 configuration, int number_types, const V& varphi) {
   return compute_phi_dispersion_helper<V>(Rcpp::NumericVector(configuration.slot("x")),
                                        Rcpp::NumericVector(configuration.slot("y")),
                                        Rcpp::IntegerVector(configuration.slot("types")),
                                        number_types,
-                                       square_R);
+                                       varphi);
 }
 
-template<Varphi V, typename X, typename Y, typename T>
-[[nodiscard]] inline Rcpp::NumericVector compute_delta_phi_dispersion_helper(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, R_xlen_t number_types, double square_radius = 0) {
+template<typename V, typename X, typename Y, typename T>
+[[nodiscard]] inline Rcpp::NumericVector compute_delta_phi_dispersion_helper(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, R_xlen_t number_types, const V& varphi) {
   // TODO: Might be able to avoid recomputing this every time, marginal efficiency gain.
   const auto number_points{x.size()};
 
@@ -85,7 +85,7 @@ template<Varphi V, typename X, typename Y, typename T>
     for(R_xlen_t j{0}; j < number_points; ++j) {
       const auto type_j{types_vector[j] - 1};
       if(type_j == type && j != i) {
-        const auto phi_distance{compute_phi_distance<V>(x[i], y[i], x[j], y[j], square_radius)};
+        const auto phi_distance{compute_phi_distance(x[i], y[i], x[j], y[j], varphi)};
 
         average_dispersion += phi_distance;
       }
@@ -99,7 +99,7 @@ template<Varphi V, typename X, typename Y, typename T>
         average_dispersion /= same_type_points;
       }
     }
-    delta_dispersion[type_i] += average_dispersion - compute_phi_distance<V>(x[i], y[i], location[0], location[1], square_radius);
+    delta_dispersion[type_i] += average_dispersion - compute_phi_distance(x[i], y[i], location[0], location[1], varphi);
   }
 
   for(R_xlen_t i{0}; i < number_types; ++i) {
@@ -116,15 +116,15 @@ template<Varphi V, typename X, typename Y, typename T>
   return delta_dispersion;
 }
 
-template<Varphi V>
-[[nodiscard]] inline Rcpp::NumericVector compute_delta_phi_dispersion_helper(Rcpp::S4 configuration, Rcpp::NumericVector location, R_xlen_t type, R_xlen_t number_types, double square_radius = 0) {
+template<typename V>
+[[nodiscard]] inline Rcpp::NumericVector compute_delta_phi_dispersion_helper(Rcpp::S4 configuration, Rcpp::NumericVector location, R_xlen_t type, R_xlen_t number_types, const V& varphi) {
   return compute_delta_phi_dispersion_helper<V>(Rcpp::NumericVector(configuration.slot("x")),
                                           Rcpp::NumericVector(configuration.slot("y")),
                                           Rcpp::IntegerVector(configuration.slot("types")),
                                           location,
                                           type,
                                           number_types,
-                                          square_radius);
+                                          varphi);
 }
 
 #endif // INCLUDE_PPJSDM_PHI_DISPERSION
