@@ -52,7 +52,7 @@ template<typename V, typename X, typename Y, typename T>
 
 template<typename V>
 [[nodiscard]] inline Rcpp::NumericMatrix compute_phi_dispersion_helper(Rcpp::S4 configuration, int number_types, const V& varphi) {
-  return compute_phi_dispersion_helper<V>(Rcpp::NumericVector(configuration.slot("x")),
+  return compute_phi_dispersion_helper(Rcpp::NumericVector(configuration.slot("x")),
                                        Rcpp::NumericVector(configuration.slot("y")),
                                        Rcpp::IntegerVector(configuration.slot("types")),
                                        number_types,
@@ -118,7 +118,7 @@ template<typename V, typename X, typename Y, typename T>
 
 template<typename V>
 [[nodiscard]] inline Rcpp::NumericVector compute_delta_phi_dispersion_helper(Rcpp::S4 configuration, Rcpp::NumericVector location, R_xlen_t type, R_xlen_t number_types, const V& varphi) {
-  return compute_delta_phi_dispersion_helper<V>(Rcpp::NumericVector(configuration.slot("x")),
+  return compute_delta_phi_dispersion_helper(Rcpp::NumericVector(configuration.slot("x")),
                                           Rcpp::NumericVector(configuration.slot("y")),
                                           Rcpp::IntegerVector(configuration.slot("types")),
                                           location,

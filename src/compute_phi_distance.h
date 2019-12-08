@@ -24,11 +24,11 @@ public:
 class Strauss {
 public:
   Strauss(double square_radius): square_radius_{square_radius} {}
-  double apply(double square_distance) {
+  double apply(double square_distance) const {
     if(square_distance <= square_radius_) {
-      return double(1);
+      return 1.;
     } else {
-      return double(0);
+      return 0.;
     }
   }
 
@@ -38,8 +38,8 @@ private:
 
 }
 
-template<typename T>
-[[nodiscard]] double compute_phi_distance(double x1, double y1, double x2, double y2, T varphi) {
+template<typename V>
+[[nodiscard]] double compute_phi_distance(double x1, double y1, double x2, double y2, const V& varphi) {
   const auto delta_x{x2 - x1};
   const auto delta_y{y2 - y1};
 

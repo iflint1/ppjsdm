@@ -64,7 +64,7 @@ rbinomialpp <- function(window, n = as.integer( c(1)), nsim = 1L, types = NULL, 
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-rmultigibbs <- function(window, alpha = 1L, lambda = 1L, radius = 1, steps = 30000L, nsim = 1L, types = NULL, drop = TRUE) {
+rmultigibbs <- function(window, alpha = 1L, lambda = 1L, radius = 0, steps = 30000L, nsim = 1L, types = NULL, drop = TRUE) {
     .Call('_ppjsdm_rmultigibbs', PACKAGE = 'ppjsdm', window, alpha, lambda, radius, steps, nsim, types, drop)
 }
 
