@@ -1,7 +1,6 @@
 #include <Rcpp.h>
 #include <Rmath.h>
 
-#include <algorithm> // std::min
 #include <cmath> // std::exp
 #include <vector> // std::vector
 
@@ -26,22 +25,12 @@ template<typename X, typename Y, typename T, typename V>
 
 template<typename X, typename Y, typename T>
 [[nodiscard]] double compute_papangelou_geyer(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, double saturation, R_xlen_t number_types, double square_radius) {
-  const auto number_points{x.size()};
 
-  Rcpp::NumericVector delta_D(number_types);
-  for(R_xlen_t i{0}; i < number_points; ++i) {
-    const auto delta_x{x[i] - location[0]};
-    const auto delta_y{y[i] - location[1]};
-    const auto square_distance{delta_x * delta_x + delta_y * delta_y};
-    if(square_distance <= square_radius) {
-      const auto type_i{types_vector[i] - 1};
-      delta_D[type_i] += 1.;
-    }
-  }
+  const auto delta_D{compute_delta_phi_dispersion_geyer_helper(x, y, types_vector, location, type, number_types, square_radius, saturation)};
 
   double inner_product{0};
   for(R_xlen_t i{0}; i < number_types; ++i) {
-    inner_product += alpha(i, type) *  std::min(saturation, delta_D[i]);
+    inner_product += alpha(i, type) *  delta_D[i];
   }
 
   return lambda[type] * std::exp(inner_product);
@@ -77,8 +66,8 @@ template<typename V, typename S>
         const Rcpp::NumericVector location{location_pair.first, location_pair.second};
 
         // TODO: You can avoid taking the exp by reorganising the ratio, and sampling an exponential r.v. instead.
-        const auto papangelou{compute_papangelou(x, y, types_vector, location, type, alpha, lambda, number_types, varphi)};
-        //const auto papangelou{compute_papangelou_geyer(x, y, types_vector, location, type, alpha, lambda, 2., number_types, 0.02 * 0.02)};
+        //const auto papangelou{compute_papangelou(x, y, types_vector, location, type, alpha, lambda, number_types, varphi)};
+        const auto papangelou{compute_papangelou_geyer(x, y, types_vector, location, type, alpha, lambda, 2., number_types, 0.02 * 0.02)};
         const auto birth_ratio{papangelou * (1 - prob) * volume * number_types / (prob * (1 + total_number))};
 
         if(v <= birth_ratio) {
@@ -97,8 +86,8 @@ template<typename V, typename S>
           y.erase(y.begin() + index);
           types_vector.erase(types_vector.begin() + index);
 
-          const auto papangelou{compute_papangelou(x, y, types_vector, saved_location, saved_type, alpha, lambda, number_types, varphi)};
-          //const auto papangelou{compute_papangelou_geyer(x, y, types_vector, saved_location, saved_type, alpha, lambda, 2., number_types, 0.02 * 0.02)};
+          //const auto papangelou{compute_papangelou(x, y, types_vector, saved_location, saved_type, alpha, lambda, number_types, varphi)};
+          const auto papangelou{compute_papangelou_geyer(x, y, types_vector, saved_location, saved_type, alpha, lambda, 2., number_types, 0.02 * 0.02)};
           const auto death_ratio{prob * total_number / (number_types * (1 - prob) * volume * papangelou)};
           if(v <= death_ratio) {
             --total_number;

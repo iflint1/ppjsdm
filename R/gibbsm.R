@@ -58,13 +58,15 @@ gibbsm <- function(configuration, window, radius = 0) {
       type <- types(configuration)[i]
 
       # TODO: We have i, should be quicker to remove from configuration
-      disp <- compute_delta_phi_dispersion(remove_from_configuration(configuration, location, type), location, match(type, distinct_types) - 1, p, radius)
+      disp <- compute_delta_phi_dispersion_geyer(remove_from_configuration(configuration, location, type), location, match(type, distinct_types) - 1, p, radius, 2.0)
+      #disp <- compute_delta_phi_dispersion(remove_from_configuration(configuration, location, type), location, match(type, distinct_types) - 1, p, radius)
       #disp <- compute_phi_dispersion(remove_from_configuration(configuration, location, type), p, radius = radius) - compute_phi_dispersion(configuration, p, radius = radius)
     } else {
       location <- c(D@x[i - n_Z], D@y[i - n_Z])
       type <- types(D)[i - n_Z]
 
-      disp <- compute_delta_phi_dispersion(configuration, location, match(type, distinct_types) - 1, p, radius)
+      disp <- compute_delta_phi_dispersion_geyer(configuration, location, match(type, distinct_types) - 1, p, radius, 2.0)
+      #disp <- compute_delta_phi_dispersion(configuration, location, match(type, distinct_types) - 1, p, radius)
       #disp <- compute_phi_dispersion(configuration, p, radius = radius) - compute_phi_dispersion(add_to_configuration(configuration, location, type), p, radius = radius)
     }
 

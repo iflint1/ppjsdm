@@ -41,3 +41,19 @@
   }
 }
 
+//' Compute the delta of the phi-dispersion of a marked configuration in the Geyer model setting.
+//'
+//' @param configuration The configuration.
+//' @param location Point to be added.
+//' @param type Type of point to be added.
+//' @param number_types Number of different types.
+//' @param radius Radius of interaction.
+//' @param saturation Saturation parameter.
+//' @export
+//' @useDynLib ppjsdm
+//' @import Rcpp
+// [[Rcpp::export]]
+[[nodiscard]] Rcpp::NumericVector compute_delta_phi_dispersion_geyer(Rcpp::S4 configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, double radius, double saturation) {
+  return compute_delta_phi_dispersion_geyer_helper(configuration, location, type, number_types, radius * radius, saturation);
+}
+
