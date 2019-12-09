@@ -2,6 +2,7 @@
 #define INCLUDE_PPJSDM_PHI_DISTANCE
 
 #include <cmath> // std::sqrt
+#include <utility> // std::forward
 
 //enum class Varphi {identity, Strauss, inverse_square};
 

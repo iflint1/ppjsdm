@@ -10,18 +10,18 @@
 #include "make_default_types.h"
 #include "window_utilities.h"
 
-template<typename X, typename Y, typename T, typename V>
-[[nodiscard]] double compute_papangelou(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, R_xlen_t number_types, const V& varphi) {
-
-  const auto delta_D{compute_delta_phi_dispersion_helper(x, y, types_vector, location, type, number_types, varphi)};
-
-  double inner_product{0};
-  for(R_xlen_t i{0}; i < number_types; ++i) {
-    inner_product += alpha(i, type) * delta_D[i];
-  }
-
-  return lambda[type] * std::exp(inner_product);
-}
+// template<typename X, typename Y, typename T, typename V>
+// [[nodiscard]] double compute_papangelou(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, R_xlen_t number_types, const V& varphi) {
+//
+//   const auto delta_D{compute_delta_phi_dispersion_helper(x, y, types_vector, location, type, number_types, varphi)};
+//
+//   double inner_product{0};
+//   for(R_xlen_t i{0}; i < number_types; ++i) {
+//     inner_product += alpha(i, type) * delta_D[i];
+//   }
+//
+//   return lambda[type] * std::exp(inner_product);
+// }
 
 template<typename X, typename Y, typename T>
 [[nodiscard]] double compute_papangelou_geyer(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, double saturation, R_xlen_t number_types, double square_radius) {
@@ -66,7 +66,7 @@ template<typename V, typename S>
         const Rcpp::NumericVector location{location_pair.first, location_pair.second};
 
         // TODO: You can avoid taking the exp by reorganising the ratio, and sampling an exponential r.v. instead.
-        const auto papangelou{compute_papangelou(x, y, types_vector, location, type, alpha, lambda, number_types, varphi)};
+        const auto papangelou{varphi.compute_papangelou(x, y, types_vector, location, type, number_types)};
         //const auto papangelou{compute_papangelou_geyer(x, y, types_vector, location, type, alpha, lambda, 2., number_types, 0.02 * 0.02)};
         const auto birth_ratio{papangelou * (1 - prob) * volume * number_types / (prob * (1 + total_number))};
 
@@ -86,7 +86,7 @@ template<typename V, typename S>
           y.erase(y.begin() + index);
           types_vector.erase(types_vector.begin() + index);
 
-          const auto papangelou{compute_papangelou(x, y, types_vector, saved_location, saved_type, alpha, lambda, number_types, varphi)};
+          const auto papangelou{varphi.compute_papangelou(x, y, types_vector, saved_location, saved_type, number_types)};
           //const auto papangelou{compute_papangelou_geyer(x, y, types_vector, saved_location, saved_type, alpha, lambda, 2., number_types, 0.02 * 0.02)};
           const auto death_ratio{prob * total_number / (number_types * (1 - prob) * volume * papangelou)};
           if(v <= death_ratio) {
@@ -114,13 +114,13 @@ template<Window WindowType>
 [[nodiscard]] inline SEXP rmultigibbs_helper(SEXP window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, Rcpp::CharacterVector model, bool drop) {
   const Window_wrapper<WindowType> window_wrapper{window};
   if(std::equal(model.begin(), model.end(), "identity")) {
-    const auto varphi{varphi::Identity{}};
+    const auto varphi{Varphi_model<varphi::Identity, Rcpp::NumericVector, Rcpp::NumericMatrix>{lambda, alpha}};
     return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
   } else if(std::equal(model.begin(), model.end(), "Strauss")) {
-    const auto varphi{varphi::Strauss{radius * radius}};
+    const auto varphi{Varphi_model<varphi::Strauss, Rcpp::NumericVector, Rcpp::NumericMatrix>{lambda, alpha, radius * radius}};
     return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
   } else { // TODO: Not right varphi.
-    const auto varphi{varphi::Strauss{radius * radius}};
+    const auto varphi{Varphi_model<varphi::Strauss, Rcpp::NumericVector, Rcpp::NumericMatrix>{lambda, alpha, radius * radius}};
     return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
   }
 }

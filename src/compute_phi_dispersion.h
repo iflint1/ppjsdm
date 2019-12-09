@@ -159,4 +159,26 @@ template<typename X, typename Y, typename T>
                                              saturation);
 }
 
+template<typename Varphi, typename U, typename V>
+class Varphi_model: public Varphi {
+public:
+  template<typename... Args>
+  Varphi_model(const U& lambda, const V& alpha, Args&&... args): lambda_{lambda}, alpha_{alpha}, Varphi(std::forward<Args>(args)...) {}
+  template<typename X, typename Y, typename T>
+  [[nodiscard]] double compute_papangelou(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, R_xlen_t number_types) const {
+
+    const auto delta_D{compute_delta_phi_dispersion_helper(x, y, types_vector, location, type, number_types, *this)};
+
+    double inner_product{0};
+    for(R_xlen_t i{0}; i < number_types; ++i) {
+      inner_product += alpha_(i, type) * delta_D[i];
+    }
+
+    return lambda_[type] * std::exp(inner_product);
+  }
+private:
+  U lambda_;
+  V alpha_;
+};
+
 #endif // INCLUDE_PPJSDM_PHI_DISPERSION
