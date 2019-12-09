@@ -77,8 +77,8 @@ template<typename V, typename S>
         const Rcpp::NumericVector location{location_pair.first, location_pair.second};
 
         // TODO: You can avoid taking the exp by reorganising the ratio, and sampling an exponential r.v. instead.
-        //const auto papangelou{compute_papangelou(x, y, types_vector, location, type, alpha, lambda, number_types, varphi)};
-        const auto papangelou{compute_papangelou_geyer(x, y, types_vector, location, type, alpha, lambda, 2., number_types, 0.02 * 0.02)};
+        const auto papangelou{compute_papangelou(x, y, types_vector, location, type, alpha, lambda, number_types, varphi)};
+        //const auto papangelou{compute_papangelou_geyer(x, y, types_vector, location, type, alpha, lambda, 2., number_types, 0.02 * 0.02)};
         const auto birth_ratio{papangelou * (1 - prob) * volume * number_types / (prob * (1 + total_number))};
 
         if(v <= birth_ratio) {
@@ -97,8 +97,8 @@ template<typename V, typename S>
           y.erase(y.begin() + index);
           types_vector.erase(types_vector.begin() + index);
 
-          //const auto papangelou{compute_papangelou(x, y, types_vector, saved_location, saved_type, alpha, lambda, number_types, varphi)};
-          const auto papangelou{compute_papangelou_geyer(x, y, types_vector, saved_location, saved_type, alpha, lambda, 2., number_types, 0.02 * 0.02)};
+          const auto papangelou{compute_papangelou(x, y, types_vector, saved_location, saved_type, alpha, lambda, number_types, varphi)};
+          //const auto papangelou{compute_papangelou_geyer(x, y, types_vector, saved_location, saved_type, alpha, lambda, 2., number_types, 0.02 * 0.02)};
           const auto death_ratio{prob * total_number / (number_types * (1 - prob) * volume * papangelou)};
           if(v <= death_ratio) {
             --total_number;

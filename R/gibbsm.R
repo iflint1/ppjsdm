@@ -58,27 +58,27 @@ gibbsm <- function(configuration, window, radius = 0) {
       type <- types(configuration)[i]
 
       # TODO: We have i, should be quicker to remove from configuration
-      #disp <- compute_delta_phi_dispersion(remove_from_configuration(configuration, location, type), location, match(type, types) - 1, p, radius)
-      disp <- compute_phi_dispersion(remove_from_configuration(configuration, location, type), p, radius = radius) - compute_phi_dispersion(configuration, p, radius = radius)
+      disp <- compute_delta_phi_dispersion(remove_from_configuration(configuration, location, type), location, match(type, distinct_types) - 1, p, radius)
+      #disp <- compute_phi_dispersion(remove_from_configuration(configuration, location, type), p, radius = radius) - compute_phi_dispersion(configuration, p, radius = radius)
     } else {
       location <- c(D@x[i - n_Z], D@y[i - n_Z])
       type <- types(D)[i - n_Z]
 
-      #disp <- compute_delta_phi_dispersion(configuration, location, match(type, types) - 1, p, radius)
-      disp <- compute_phi_dispersion(configuration, p, radius = radius) - compute_phi_dispersion(add_to_configuration(configuration, location, type), p, radius = radius)
+      disp <- compute_delta_phi_dispersion(configuration, location, match(type, distinct_types) - 1, p, radius)
+      #disp <- compute_phi_dispersion(configuration, p, radius = radius) - compute_phi_dispersion(add_to_configuration(configuration, location, type), p, radius = radius)
     }
 
     index <- 1
     for(j in seq_len(p)) {
       for(k in j:p) {
-        # TODO: Ressetting names too many times in the `i` for loop.
+        # TODO: Resetting names too many times in the `i` for loop.
         names(alpha_list)[index] <- paste0("alpha_", j, k)
-        alpha_list[[index]][i] <-  disp[j, k]
-        # if(j == match(type, types)) {
-        #   alpha_list[[index]][i] <-  disp[k]
-        # } else if(k == match(type, types)) {
-        #   alpha_list[[index]][i] <-  disp[j]
-        # }
+        #alpha_list[[index]][i] <-  disp[j, k]
+        if(j == match(type, distinct_types)) {
+          alpha_list[[index]][i] <-  disp[k]
+        } else if(k == match(type, distinct_types)) {
+          alpha_list[[index]][i] <-  disp[j]
+        }
 
         index <- index + 1
       }
