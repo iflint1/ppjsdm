@@ -12,6 +12,7 @@ rmultigibbs(
   steps = 30000L,
   nsim = 1L,
   types = NULL,
+  model = "i",
   drop = TRUE
 )
 }
@@ -29,6 +30,8 @@ rmultigibbs(
 \item{nsim}{Number of samples to generate.}
 
 \item{types}{Types of the points.}
+
+\item{model}{String representing the model to simulate from.}
 
 \item{drop}{If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration.}
 }

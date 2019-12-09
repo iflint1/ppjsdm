@@ -113,14 +113,15 @@ template<typename V, typename S>
 template<Window WindowType>
 [[nodiscard]] inline SEXP rmultigibbs_helper(SEXP window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, Rcpp::CharacterVector model, bool drop) {
   const Window_wrapper<WindowType> window_wrapper{window};
-  if(std::equal(model.begin(), model.end(), "identity")) {
-    const auto varphi{Varphi_model<Varphi_model_papangelou<varphi::Identity>, Rcpp::NumericVector, Rcpp::NumericMatrix>{lambda, alpha}};
+  // TODO: Better string comparison below
+  if(model[0] == "i") {
+    const auto varphi{Exponential_family_model<Varphi_model_papangelou<varphi::Identity>, decltype(lambda), decltype(alpha)>{lambda, alpha}};
     return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
-  } else if(std::equal(model.begin(), model.end(), "Strauss")) {
-    const auto varphi{Varphi_model<Varphi_model_papangelou<varphi::Strauss>, Rcpp::NumericVector, Rcpp::NumericMatrix>{lambda, alpha, radius * radius}};
+  } else if(model[0] == "s") {
+    const auto varphi{Exponential_family_model<Varphi_model_papangelou<varphi::Strauss>, decltype(lambda), decltype(alpha)>{lambda, alpha, radius * radius}};
     return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
-  } else { // TODO: Not right varphi.
-    const auto varphi{Varphi_model<Varphi_model_papangelou<varphi::Strauss>, Rcpp::NumericVector, Rcpp::NumericMatrix>{lambda, alpha, radius * radius}};
+  } else {
+    const auto varphi{Exponential_family_model<Geyer_papangelou, decltype(lambda), decltype(alpha)>{lambda, alpha, radius * radius, 2.0}};
     return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
   }
 }
@@ -140,7 +141,7 @@ template<Window WindowType>
 //' @useDynLib ppjsdm
 //' @import Rcpp
 // [[Rcpp::export]]
-[[nodiscard]] SEXP rmultigibbs(SEXP window, Rcpp::NumericMatrix alpha = 1, Rcpp::NumericVector lambda = 1, double radius = 0, R_xlen_t steps = 30000, R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, Rcpp::CharacterVector model = "identity", bool drop = true) {
+[[nodiscard]] SEXP rmultigibbs(SEXP window, Rcpp::NumericMatrix alpha = 1, Rcpp::NumericVector lambda = 1, double radius = 0, R_xlen_t steps = 30000, R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, Rcpp::CharacterVector model = "i", bool drop = true) {
   if(Rf_inherits(window, "Rectangle_window")) {
     return rmultigibbs_helper<Window::rectangle>(window, alpha, lambda, radius, steps, nsim, types, model, drop);
   } else if(Rf_inherits(window, "Disk_window")) {
