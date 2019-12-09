@@ -10,16 +10,15 @@
 //' @export
 //' @useDynLib ppjsdm
 //' @import Rcpp
-// [[Rcpp::export]]
-[[nodiscard]] Rcpp::NumericMatrix compute_phi_dispersion(Rcpp::S4 configuration, int number_types, double radius = 0) {
-  if(radius == 0) {
-    const auto varphi{varphi::Identity{}};
-    return compute_phi_dispersion_helper(configuration, number_types, varphi);
-  } else {
-    const auto varphi{varphi::Strauss{radius * radius}};
-    return compute_phi_dispersion_helper(configuration, number_types, varphi);
-  }
-}
+// [[nodiscard]] Rcpp::NumericMatrix compute_phi_dispersion(Rcpp::S4 configuration, int number_types, double radius = 0) {
+//   if(radius == 0) {
+//     const auto varphi{varphi::Identity{}};
+//     return compute_phi_dispersion_helper(configuration, number_types, varphi);
+//   } else {
+//     const auto varphi{varphi::Strauss{radius * radius}};
+//     return compute_phi_dispersion_helper(configuration, number_types, varphi);
+//   }
+// }
 
 //' Compute the delta of the phi-dispersion of a marked configuration (radius = 0 corresponds to the proposal model).
 //'

@@ -5,19 +5,6 @@
 
 using namespace Rcpp;
 
-// compute_phi_dispersion
-[[nodiscard]] Rcpp::NumericMatrix compute_phi_dispersion(Rcpp::S4 configuration, int number_types, double radius);
-RcppExport SEXP _ppjsdm_compute_phi_dispersion(SEXP configurationSEXP, SEXP number_typesSEXP, SEXP radiusSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::S4 >::type configuration(configurationSEXP);
-    Rcpp::traits::input_parameter< int >::type number_types(number_typesSEXP);
-    Rcpp::traits::input_parameter< double >::type radius(radiusSEXP);
-    rcpp_result_gen = Rcpp::wrap(compute_phi_dispersion(configuration, number_types, radius));
-    return rcpp_result_gen;
-END_RCPP
-}
 // compute_delta_phi_dispersion
 [[nodiscard]] Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::S4 configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, double radius);
 RcppExport SEXP _ppjsdm_compute_delta_phi_dispersion(SEXP configurationSEXP, SEXP locationSEXP, SEXP typeSEXP, SEXP number_typesSEXP, SEXP radiusSEXP) {
@@ -94,7 +81,6 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_ppjsdm_compute_phi_dispersion", (DL_FUNC) &_ppjsdm_compute_phi_dispersion, 3},
     {"_ppjsdm_compute_delta_phi_dispersion", (DL_FUNC) &_ppjsdm_compute_delta_phi_dispersion, 5},
     {"_ppjsdm_has_duplicates", (DL_FUNC) &_ppjsdm_has_duplicates, 1},
     {"_ppjsdm_rbinomialpp", (DL_FUNC) &_ppjsdm_rbinomialpp, 5},

@@ -73,6 +73,7 @@ gibbsm <- function(configuration, window, radius = 0) {
       for(k in j:p) {
         # TODO: Resetting names too many times in the `i` for loop.
         names(alpha_list)[index] <- paste0("alpha_", j, k)
+
         #alpha_list[[index]][i] <-  disp[j, k]
         if(j == match(type, distinct_types)) {
           alpha_list[[index]][i] <-  disp[k]

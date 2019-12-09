@@ -8,7 +8,7 @@ rmultigibbs(
   window,
   alpha = 1L,
   lambda = 1L,
-  radius = 1,
+  radius = 0,
   steps = 30000L,
   nsim = 1L,
   types = NULL,

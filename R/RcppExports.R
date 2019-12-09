@@ -9,9 +9,7 @@
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-compute_phi_dispersion <- function(configuration, number_types, radius = 0) {
-    .Call('_ppjsdm_compute_phi_dispersion', PACKAGE = 'ppjsdm', configuration, number_types, radius)
-}
+NULL
 
 #' Compute the delta of the phi-dispersion of a marked configuration (radius = 0 corresponds to the proposal model).
 #'
