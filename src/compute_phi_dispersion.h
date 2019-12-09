@@ -3,8 +3,6 @@
 
 #include <Rcpp.h>
 
-#include <algorithm> // std::min
-
 #include "compute_phi_distance.h"
 // #include "configuration_utilities.h"
 

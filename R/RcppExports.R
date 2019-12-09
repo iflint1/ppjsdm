@@ -73,12 +73,13 @@ rbinomialpp <- function(window, n = as.integer( c(1)), nsim = 1L, types = NULL, 
 #' @param steps Number of steps in the Metropolis algorithm.
 #' @param nsim Number of samples to generate.
 #' @param types Types of the points.
+#' @param model String representing the model to simulate from.
 #' @param drop If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration.
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-rmultigibbs <- function(window, alpha = 1L, lambda = 1L, radius = 0, steps = 30000L, nsim = 1L, types = NULL, drop = TRUE) {
-    .Call('_ppjsdm_rmultigibbs', PACKAGE = 'ppjsdm', window, alpha, lambda, radius, steps, nsim, types, drop)
+rmultigibbs <- function(window, alpha = 1L, lambda = 1L, radius = 0, steps = 30000L, nsim = 1L, types = NULL, model = "identity", drop = TRUE) {
+    .Call('_ppjsdm_rmultigibbs', PACKAGE = 'ppjsdm', window, alpha, lambda, radius, steps, nsim, types, model, drop)
 }
 
 #' Sample a Poisson point processes

@@ -7,11 +7,17 @@
 
 namespace varphi {
 
+template<typename U, typename V>
 class Identity {
 public:
+  Identity(const U& lambda, const V& alpha): lambda_{lambda}, alpha_{alpha} {}
+  Identity(): lambda_{}, alpha_{} {}
   static double apply(double square_distance) {
     return std::sqrt(square_distance);
   }
+private:
+  U lambda_;
+  V alpha_;
 };
 
 class Inverse_square {

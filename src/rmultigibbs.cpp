@@ -66,8 +66,8 @@ template<typename V, typename S>
         const Rcpp::NumericVector location{location_pair.first, location_pair.second};
 
         // TODO: You can avoid taking the exp by reorganising the ratio, and sampling an exponential r.v. instead.
-        //const auto papangelou{compute_papangelou(x, y, types_vector, location, type, alpha, lambda, number_types, varphi)};
-        const auto papangelou{compute_papangelou_geyer(x, y, types_vector, location, type, alpha, lambda, 2., number_types, 0.02 * 0.02)};
+        const auto papangelou{compute_papangelou(x, y, types_vector, location, type, alpha, lambda, number_types, varphi)};
+        //const auto papangelou{compute_papangelou_geyer(x, y, types_vector, location, type, alpha, lambda, 2., number_types, 0.02 * 0.02)};
         const auto birth_ratio{papangelou * (1 - prob) * volume * number_types / (prob * (1 + total_number))};
 
         if(v <= birth_ratio) {
@@ -86,8 +86,8 @@ template<typename V, typename S>
           y.erase(y.begin() + index);
           types_vector.erase(types_vector.begin() + index);
 
-          //const auto papangelou{compute_papangelou(x, y, types_vector, saved_location, saved_type, alpha, lambda, number_types, varphi)};
-          const auto papangelou{compute_papangelou_geyer(x, y, types_vector, saved_location, saved_type, alpha, lambda, 2., number_types, 0.02 * 0.02)};
+          const auto papangelou{compute_papangelou(x, y, types_vector, saved_location, saved_type, alpha, lambda, number_types, varphi)};
+          //const auto papangelou{compute_papangelou_geyer(x, y, types_vector, saved_location, saved_type, alpha, lambda, 2., number_types, 0.02 * 0.02)};
           const auto death_ratio{prob * total_number / (number_types * (1 - prob) * volume * papangelou)};
           if(v <= death_ratio) {
             --total_number;
@@ -111,12 +111,16 @@ template<typename V, typename S>
 }
 
 template<Window WindowType>
-[[nodiscard]] inline SEXP rmultigibbs_helper(SEXP window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop) {
+[[nodiscard]] inline SEXP rmultigibbs_helper(SEXP window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, Rcpp::CharacterVector model, bool drop) {
   const Window_wrapper<WindowType> window_wrapper{window};
-  if(radius == 0) {
-    const auto varphi{varphi::Identity{}};
+  if(std::equal(model.begin(), model.end(), "identity")) {
+    // TODO: Might want to use C++17 type deduction below
+    const auto varphi{varphi::Identity<decltype(lambda), decltype(alpha)>{lambda, alpha}};
     return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
-  } else {
+  } else if(std::equal(model.begin(), model.end(), "Strauss")) {
+    const auto varphi{varphi::Strauss{radius * radius}};
+    return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
+  } else { // TODO: Not right varphi.
     const auto varphi{varphi::Strauss{radius * radius}};
     return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
   }
@@ -131,16 +135,17 @@ template<Window WindowType>
 //' @param steps Number of steps in the Metropolis algorithm.
 //' @param nsim Number of samples to generate.
 //' @param types Types of the points.
+//' @param model String representing the model to simulate from.
 //' @param drop If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration.
 //' @export
 //' @useDynLib ppjsdm
 //' @import Rcpp
 // [[Rcpp::export]]
-[[nodiscard]] SEXP rmultigibbs(SEXP window, Rcpp::NumericMatrix alpha = 1, Rcpp::NumericVector lambda = 1, double radius = 0, R_xlen_t steps = 30000, R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, bool drop = true) {
+[[nodiscard]] SEXP rmultigibbs(SEXP window, Rcpp::NumericMatrix alpha = 1, Rcpp::NumericVector lambda = 1, double radius = 0, R_xlen_t steps = 30000, R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, Rcpp::CharacterVector model = "identity", bool drop = true) {
   if(Rf_inherits(window, "Rectangle_window")) {
-    return rmultigibbs_helper<Window::rectangle>(window, alpha, lambda, radius, steps, nsim, types, drop);
+    return rmultigibbs_helper<Window::rectangle>(window, alpha, lambda, radius, steps, nsim, types, model, drop);
   } else if(Rf_inherits(window, "Disk_window")) {
-    return rmultigibbs_helper<Window::disk>(window, alpha, lambda, radius, steps, nsim, types, drop);
+    return rmultigibbs_helper<Window::disk>(window, alpha, lambda, radius, steps, nsim, types, model, drop);
   } else {
     Rcpp::stop("Only rectangle/disk window implemented for now.");
   }

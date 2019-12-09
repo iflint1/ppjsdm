@@ -33,7 +33,8 @@
 // [[Rcpp::export]]
 [[nodiscard]] Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::S4 configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, double radius = 0) {
   if(radius == 0) {
-    const auto varphi{varphi::Identity{}};
+    // TODO: Change the temporary solution below, I don't really need lambda and alpha
+    const auto varphi{varphi::Identity<int, int>{}};
     return compute_delta_phi_dispersion_helper(configuration, location, type, number_types, varphi);
   } else {
     const auto varphi{varphi::Strauss{radius * radius}};
