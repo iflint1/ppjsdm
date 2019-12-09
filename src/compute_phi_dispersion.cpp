@@ -33,12 +33,17 @@
 // [[Rcpp::export]]
 [[nodiscard]] Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::S4 configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, double radius = 0) {
   if(radius == 0) {
-    // TODO: Change the temporary solution below, I don't really need lambda and alpha
-    const auto varphi{varphi::Identity{}};
-    return compute_delta_phi_dispersion_helper(configuration, location, type, number_types, varphi);
+    const auto varphi{Varphi_model_papangelou<varphi::Identity>{}};
+    return varphi.compute(Rcpp::NumericVector(configuration.slot("x")),
+                          Rcpp::NumericVector(configuration.slot("y")),
+                          Rcpp::IntegerVector(configuration.slot("types")),
+                          location, type, number_types);
   } else {
-    const auto varphi{varphi::Strauss{radius * radius}};
-    return compute_delta_phi_dispersion_helper(configuration, location, type, number_types, varphi);
+    const auto varphi{Varphi_model_papangelou<varphi::Strauss>{radius * radius}};
+    return varphi.compute(Rcpp::NumericVector(configuration.slot("x")),
+                          Rcpp::NumericVector(configuration.slot("y")),
+                          Rcpp::IntegerVector(configuration.slot("types")),
+                          location, type, number_types);
   }
 }
 
@@ -53,8 +58,7 @@
 //' @export
 //' @useDynLib ppjsdm
 //' @import Rcpp
-// [[Rcpp::export]]
-[[nodiscard]] Rcpp::NumericVector compute_delta_phi_dispersion_geyer(Rcpp::S4 configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, double radius, double saturation) {
-  return compute_delta_phi_dispersion_geyer_helper(configuration, location, type, number_types, radius * radius, saturation);
-}
+//[[nodiscard]] Rcpp::NumericVector compute_delta_phi_dispersion_geyer(Rcpp::S4 configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, double radius, double saturation) {
+//  return compute_delta_phi_dispersion_geyer_helper(configuration, location, type, number_types, radius * radius, saturation);
+//}
 

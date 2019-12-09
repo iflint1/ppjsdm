@@ -11,6 +11,19 @@
 #' @import Rcpp
 NULL
 
+#' Compute the delta of the phi-dispersion of a marked configuration in the Geyer model setting.
+#'
+#' @param configuration The configuration.
+#' @param location Point to be added.
+#' @param type Type of point to be added.
+#' @param number_types Number of different types.
+#' @param radius Radius of interaction.
+#' @param saturation Saturation parameter.
+#' @export
+#' @useDynLib ppjsdm
+#' @import Rcpp
+NULL
+
 #' Compute the delta of the phi-dispersion of a marked configuration (radius = 0 corresponds to the proposal model).
 #'
 #' @param configuration The configuration.
@@ -23,21 +36,6 @@ NULL
 #' @import Rcpp
 compute_delta_phi_dispersion <- function(configuration, location, type, number_types, radius = 0) {
     .Call('_ppjsdm_compute_delta_phi_dispersion', PACKAGE = 'ppjsdm', configuration, location, type, number_types, radius)
-}
-
-#' Compute the delta of the phi-dispersion of a marked configuration in the Geyer model setting.
-#'
-#' @param configuration The configuration.
-#' @param location Point to be added.
-#' @param type Type of point to be added.
-#' @param number_types Number of different types.
-#' @param radius Radius of interaction.
-#' @param saturation Saturation parameter.
-#' @export
-#' @useDynLib ppjsdm
-#' @import Rcpp
-compute_delta_phi_dispersion_geyer <- function(configuration, location, type, number_types, radius, saturation) {
-    .Call('_ppjsdm_compute_delta_phi_dispersion_geyer', PACKAGE = 'ppjsdm', configuration, location, type, number_types, radius, saturation)
 }
 
 #' Check if a configuration contains duplicates.

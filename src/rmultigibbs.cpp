@@ -114,13 +114,13 @@ template<Window WindowType>
 [[nodiscard]] inline SEXP rmultigibbs_helper(SEXP window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, Rcpp::CharacterVector model, bool drop) {
   const Window_wrapper<WindowType> window_wrapper{window};
   if(std::equal(model.begin(), model.end(), "identity")) {
-    const auto varphi{Varphi_model<varphi::Identity, Rcpp::NumericVector, Rcpp::NumericMatrix>{lambda, alpha}};
+    const auto varphi{Varphi_model<Varphi_model_papangelou<varphi::Identity>, Rcpp::NumericVector, Rcpp::NumericMatrix>{lambda, alpha}};
     return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
   } else if(std::equal(model.begin(), model.end(), "Strauss")) {
-    const auto varphi{Varphi_model<varphi::Strauss, Rcpp::NumericVector, Rcpp::NumericMatrix>{lambda, alpha, radius * radius}};
+    const auto varphi{Varphi_model<Varphi_model_papangelou<varphi::Strauss>, Rcpp::NumericVector, Rcpp::NumericMatrix>{lambda, alpha, radius * radius}};
     return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
   } else { // TODO: Not right varphi.
-    const auto varphi{Varphi_model<varphi::Strauss, Rcpp::NumericVector, Rcpp::NumericMatrix>{lambda, alpha, radius * radius}};
+    const auto varphi{Varphi_model<Varphi_model_papangelou<varphi::Strauss>, Rcpp::NumericVector, Rcpp::NumericMatrix>{lambda, alpha, radius * radius}};
     return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
   }
 }
