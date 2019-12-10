@@ -34,7 +34,7 @@
                           Rcpp::IntegerVector(configuration.slot("types")),
                           location, type, number_types);
   } else {
-    Rcpp::Rcerr << "Incorrect model entered.\n";
+    Rcpp::stop("Incorrect model entered.\n");
     return {};
   }
 }

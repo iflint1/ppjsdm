@@ -125,8 +125,7 @@ template<Window WindowType>
     const auto varphi{Exponential_family_model<Geyer_papangelou, decltype(lambda), decltype(alpha)>{lambda, alpha, radius * radius, 2.0}};
     return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
   } else {
-    Rcpp::Rcerr << "Incorrect model entered.\n";
-    return {};
+    Rcpp::stop("Incorrect model entered.\n");
   }
 }
 

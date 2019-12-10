@@ -46,3 +46,20 @@ centre <- function(window) {
 radius <- function(window) {
   window@radius
 }
+
+#' Return the volume of the window.
+#'
+#' @param window The window.
+#' @export
+setGeneric("window_volume", function(window) {
+  standardGeneric("window_volume")
+})
+
+#' Return the volume of the window.
+#'
+#' @param window The window.
+#' @export
+setMethod("window_volume", signature(window = "Disk_window"), function(window) {
+  r <- window@radius
+  pi * r * r
+})

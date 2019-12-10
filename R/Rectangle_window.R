@@ -52,11 +52,11 @@ y_range <- function(window) {
 #'
 #' @param window The window.
 #' @export
-window_volume <- function(window) {
+setMethod("window_volume", signature(window = "Rectangle_window"), function(window) {
   x <- window@x_range
   y <- window@y_range
   (x[2] - x[1]) * (y[2] - y[1])
-}
+})
 
 #' Convert a rectangle window to an owin from the SpatStat package.
 #'
