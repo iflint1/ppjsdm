@@ -6,7 +6,7 @@
 #' @param radius Interaction radius.
 #' @importFrom stats as.formula binomial glm
 #' @export
-gibbsm <- function(configuration, window, model = "i", radius = 0) {
+gibbsm <- function(configuration, window, model = "identity", radius = 0) {
   # This is the guideline from the Baddeley et al. paper
   rho <- 4 * get_number_points(configuration) / window_volume(window)
 

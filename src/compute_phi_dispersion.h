@@ -135,7 +135,7 @@ public:
 
 class Geyer_papangelou {
 public:
-  Geyer_papangelou(double square_radius, double saturation) noexcept: square_radius_{square_radius}, saturation_{saturation} {}
+  Geyer_papangelou(double radius, double saturation) noexcept: square_radius_{radius * radius}, saturation_{saturation} {}
   template<typename X, typename Y, typename T>
   [[nodiscard]] inline Rcpp::NumericVector compute(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, R_xlen_t number_types) const {
     // TODO: Might be able to avoid recomputing this every time, marginal efficiency gain.

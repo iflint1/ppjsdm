@@ -22,13 +22,13 @@
                           Rcpp::IntegerVector(configuration.slot("types")),
                           location, type, number_types);
   } else if(model[0] == "Strauss") {
-    const auto varphi{Varphi_model_papangelou<varphi::Strauss>{radius * radius}};
+    const auto varphi{Varphi_model_papangelou<varphi::Strauss>{radius}};
     return varphi.compute(Rcpp::NumericVector(configuration.slot("x")),
                           Rcpp::NumericVector(configuration.slot("y")),
                           Rcpp::IntegerVector(configuration.slot("types")),
                           location, type, number_types);
   } else if(model[0] == "Geyer"){
-    const auto varphi{Geyer_papangelou{radius * radius, 2.0}};
+    const auto varphi{Geyer_papangelou{radius, 2.0}};
     return varphi.compute(Rcpp::NumericVector(configuration.slot("x")),
                           Rcpp::NumericVector(configuration.slot("y")),
                           Rcpp::IntegerVector(configuration.slot("types")),
