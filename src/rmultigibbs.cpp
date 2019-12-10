@@ -3,6 +3,7 @@
 
 #include <cmath> // std::exp
 #include <vector> // std::vector
+#include <cstring> // std::strcmp
 
 #include "compute_phi_dispersion.h"
 #include "configuration_utilities.h"
@@ -114,14 +115,14 @@ template<Window WindowType>
 [[nodiscard]] inline SEXP rmultigibbs_helper(SEXP window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, Rcpp::CharacterVector model, bool drop) {
   const Window_wrapper<WindowType> window_wrapper{window};
   // TODO: Better string comparison below
-  if(model[0] == "i") {
+  if(model[0] == "identity") {
     // TODO: Might use C++17 class type deduction
     const auto varphi{Exponential_family_model<Varphi_model_papangelou<varphi::Identity>, decltype(lambda), decltype(alpha)>{lambda, alpha}};
     return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
-  } else if(model[0] == "s") {
+  } else if(model[0] == "Strauss") {
     const auto varphi{Exponential_family_model<Varphi_model_papangelou<varphi::Strauss>, decltype(lambda), decltype(alpha)>{lambda, alpha, radius * radius}};
     return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
-  } else if(model[0] == "g") {
+  } else if(model[0] == "Geyer") {
     const auto varphi{Exponential_family_model<Geyer_papangelou, decltype(lambda), decltype(alpha)>{lambda, alpha, radius * radius, 2.0}};
     return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
   } else {
@@ -138,13 +139,13 @@ template<Window WindowType>
 //' @param steps Number of steps in the Metropolis algorithm.
 //' @param nsim Number of samples to generate.
 //' @param types Types of the points.
-//' @param model String representing the model to simulate from. At the moment, either "i", "s" or "g".
+//' @param model String representing the model to simulate from. At the moment, either "identity", "Strauss" or "Geyer".
 //' @param drop If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration.
 //' @export
 //' @useDynLib ppjsdm
 //' @import Rcpp
 // [[Rcpp::export]]
-[[nodiscard]] SEXP rmultigibbs(SEXP window, Rcpp::NumericMatrix alpha = 1, Rcpp::NumericVector lambda = 1, double radius = 0, R_xlen_t steps = 30000, R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, Rcpp::CharacterVector model = "i", bool drop = true) {
+[[nodiscard]] SEXP rmultigibbs(SEXP window, Rcpp::NumericMatrix alpha = 1, Rcpp::NumericVector lambda = 1, double radius = 0, R_xlen_t steps = 30000, R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, Rcpp::CharacterVector model = "identity", bool drop = true) {
   if(Rf_inherits(window, "Rectangle_window")) {
     return rmultigibbs_helper<Window::rectangle>(window, alpha, lambda, radius, steps, nsim, types, model, drop);
   } else if(Rf_inherits(window, "Disk_window")) {

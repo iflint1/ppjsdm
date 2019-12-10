@@ -12,7 +12,7 @@ rmultigibbs(
   steps = 30000L,
   nsim = 1L,
   types = NULL,
-  model = "i",
+  model = "identity",
   drop = TRUE
 )
 }
@@ -31,7 +31,7 @@ rmultigibbs(
 
 \item{types}{Types of the points.}
 
-\item{model}{String representing the model to simulate from. At the moment, either "i", "s" or "g".}
+\item{model}{String representing the model to simulate from. At the moment, either "identity", "Strauss" or "Geyer".}
 
 \item{drop}{If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration.}
 }

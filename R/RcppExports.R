@@ -7,12 +7,12 @@
 #' @param location Point to be added.
 #' @param type Type of point to be added.
 #' @param number_types Number of different types.
-#' @param model String representing the model to simulate from. At the moment, either "i", "s" or "g".
+#' @param model String representing the model to simulate from. At the moment, either "identity", "Strauss" or "Geyer".
 #' @param radius Radius of interaction.
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-compute_delta_phi_dispersion <- function(configuration, location, type, number_types, model = "i", radius = 0) {
+compute_delta_phi_dispersion <- function(configuration, location, type, number_types, model = "identity", radius = 0) {
     .Call('_ppjsdm_compute_delta_phi_dispersion', PACKAGE = 'ppjsdm', configuration, location, type, number_types, model, radius)
 }
 
@@ -49,12 +49,12 @@ rbinomialpp <- function(window, n = as.integer( c(1)), nsim = 1L, types = NULL, 
 #' @param steps Number of steps in the Metropolis algorithm.
 #' @param nsim Number of samples to generate.
 #' @param types Types of the points.
-#' @param model String representing the model to simulate from. At the moment, either "i", "s" or "g".
+#' @param model String representing the model to simulate from. At the moment, either "identity", "Strauss" or "Geyer".
 #' @param drop If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration.
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-rmultigibbs <- function(window, alpha = 1L, lambda = 1L, radius = 0, steps = 30000L, nsim = 1L, types = NULL, model = "i", drop = TRUE) {
+rmultigibbs <- function(window, alpha = 1L, lambda = 1L, radius = 0, steps = 30000L, nsim = 1L, types = NULL, model = "identity", drop = TRUE) {
     .Call('_ppjsdm_rmultigibbs', PACKAGE = 'ppjsdm', window, alpha, lambda, radius, steps, nsim, types, model, drop)
 }
 
