@@ -4,9 +4,10 @@
 #' @param window Observation window.
 #' @param model String to represent the model we're calibrating. At the moment, either "identity", "Strauss" or "Geyer".
 #' @param radius Interaction radius.
+#' @param print Print the fitting summary?
 #' @importFrom stats as.formula binomial glm
 #' @export
-gibbsm <- function(configuration, window, model = "identity", radius = 0) {
+gibbsm <- function(configuration, window, model = "identity", radius = 0, print = TRUE) {
   # This is the guideline from the Baddeley et al. paper
   rho <- 4 * get_number_points(configuration) / window_volume(window)
 
@@ -96,5 +97,9 @@ gibbsm <- function(configuration, window, model = "identity", radius = 0) {
 
   g <- glm(formula, data = data, family = binomial())
 
-  print(summary(g))
+  if(print) {
+    print(summary(g))
+  }
+
+  g
 }

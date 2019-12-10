@@ -49,13 +49,15 @@ template<typename V, typename S>
   const auto types_char_vector{types.as()};
 
   Rcpp::List samples{nsim};
-  // TODO: This can likely be made faster by using one unique vector, since all 3 have the same length.
-  // TODO: Make an std_vector_configuration wrapper to make everything more straightforward.
-  std::vector<double> x;
-  std::vector<double> y;
-  std::vector<int> types_vector;
 
   for(R_xlen_t i{0}; i < nsim; ++i) {
+    // TODO: This can likely be made faster by using one unique vector, since all 3 have the same length.
+    // TODO: Make an std_vector_configuration wrapper to make everything more straightforward.
+    // TODO: Preallocate with a rough estimate of final size?
+    std::vector<double> x;
+    std::vector<double> y;
+    std::vector<int> types_vector;
+
     R_xlen_t total_number{0};
 
     for(R_xlen_t step{0}; step < steps; ++step) {
