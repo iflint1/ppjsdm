@@ -31,7 +31,7 @@ rmultigibbs(
 
 \item{types}{Types of the points.}
 
-\item{model}{String representing the model to simulate from.}
+\item{model}{String representing the model to simulate from. At the moment, either "i", "s" or "g".}
 
 \item{drop}{If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration.}
 }

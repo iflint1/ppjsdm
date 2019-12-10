@@ -135,7 +135,7 @@ template<Window WindowType>
 //' @param steps Number of steps in the Metropolis algorithm.
 //' @param nsim Number of samples to generate.
 //' @param types Types of the points.
-//' @param model String representing the model to simulate from.
+//' @param model String representing the model to simulate from. At the moment, either "i", "s" or "g".
 //' @param drop If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration.
 //' @export
 //' @useDynLib ppjsdm

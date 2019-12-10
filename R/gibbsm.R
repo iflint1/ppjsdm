@@ -2,7 +2,7 @@
 #'
 #' @param configuration A configuration assumed to be a draw from the multivariate Gibbs.
 #' @param window Observation window.
-#' @param model String to represent the model we're calibrating.
+#' @param model String to represent the model we're calibrating. At the moment, either "i", "s" or "g".
 #' @param radius Interaction radius.
 #' @importFrom stats as.formula binomial glm
 #' @export

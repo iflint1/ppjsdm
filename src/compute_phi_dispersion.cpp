@@ -26,7 +26,7 @@
 //' @param location Point to be added.
 //' @param type Type of point to be added.
 //' @param number_types Number of different types.
-//' @param model String representing the model to simulate from.
+//' @param model String representing the model to simulate from. At the moment, either "i", "s" or "g".
 //' @param radius Radius of interaction.
 //' @export
 //' @useDynLib ppjsdm

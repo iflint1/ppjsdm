@@ -11,7 +11,7 @@ gibbsm(configuration, window, model = "i", radius = 0)
 
 \item{window}{Observation window.}
 
-\item{model}{String to represent the model we're calibrating.}
+\item{model}{String to represent the model we're calibrating. At the moment, either "i", "s" or "g".}
 
 \item{radius}{Interaction radius.}
 }
