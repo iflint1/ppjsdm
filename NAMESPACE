@@ -2,7 +2,6 @@
 
 S3method(as.owin,Rectangle_window)
 S3method(plot,Configuration)
-export()
 export(Configuration)
 export(Disk_window)
 export(Rectangle_window)

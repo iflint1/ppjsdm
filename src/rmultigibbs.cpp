@@ -115,14 +115,18 @@ template<Window WindowType>
   const Window_wrapper<WindowType> window_wrapper{window};
   // TODO: Better string comparison below
   if(model[0] == "i") {
+    // TODO: Might use C++17 class type deduction
     const auto varphi{Exponential_family_model<Varphi_model_papangelou<varphi::Identity>, decltype(lambda), decltype(alpha)>{lambda, alpha}};
     return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
   } else if(model[0] == "s") {
     const auto varphi{Exponential_family_model<Varphi_model_papangelou<varphi::Strauss>, decltype(lambda), decltype(alpha)>{lambda, alpha, radius * radius}};
     return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
-  } else {
+  } else if(model[0] == "g") {
     const auto varphi{Exponential_family_model<Geyer_papangelou, decltype(lambda), decltype(alpha)>{lambda, alpha, radius * radius, 2.0}};
     return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
+  } else {
+    Rcpp::Rcerr << "Incorrect model entered.\n";
+    return {};
   }
 }
 

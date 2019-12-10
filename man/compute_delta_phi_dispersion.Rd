@@ -2,7 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{compute_delta_phi_dispersion}
 \alias{compute_delta_phi_dispersion}
-\title{Compute the delta of the phi-dispersion of a marked configuration (radius = 0 corresponds to the proposal model).}
+\title{Compute the delta of the phi-dispersion of a marked configuration.}
 \usage{
 compute_delta_phi_dispersion(
   configuration,
@@ -27,5 +27,5 @@ compute_delta_phi_dispersion(
 \item{radius}{Radius of interaction.}
 }
 \description{
-Compute the delta of the phi-dispersion of a marked configuration (radius = 0 corresponds to the proposal model).
+Compute the delta of the phi-dispersion of a marked configuration.
 }

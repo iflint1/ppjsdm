@@ -67,7 +67,7 @@ public:
   template<typename X, typename Y, typename T>
   [[nodiscard]] inline Rcpp::NumericVector compute(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, R_xlen_t number_types) const {
     // TODO: Might be able to avoid recomputing this every time, marginal efficiency gain.
-    const auto number_points{x.size()};
+    const auto number_points = R_xlen_t(x.size());
 
     R_xlen_t same_type_points{0};
     for(R_xlen_t i{0}; i < number_points; ++i) {
@@ -139,7 +139,7 @@ public:
   template<typename X, typename Y, typename T>
   [[nodiscard]] inline Rcpp::NumericVector compute(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, R_xlen_t number_types) const {
     // TODO: Might be able to avoid recomputing this every time, marginal efficiency gain.
-    const auto number_points{x.size()};
+    const auto number_points = R_xlen_t(x.size());
 
     Rcpp::NumericVector delta_dispersion(number_types);
     for(R_xlen_t i{0}; i < number_points; ++i) {
@@ -177,7 +177,7 @@ template<typename Varphi, typename U, typename V>
 class Exponential_family_model: public Varphi {
 public:
   template<typename... Args>
-  Exponential_family_model(const U& lambda, const V& alpha, Args&&... args): lambda_{lambda}, alpha_{alpha}, Varphi(std::forward<Args>(args)...) {}
+  Exponential_family_model(const U& lambda, const V& alpha, Args&&... args): Varphi(std::forward<Args>(args)...), lambda_{lambda}, alpha_{alpha} {}
   template<typename X, typename Y, typename T>
   [[nodiscard]] double compute_papangelou(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, R_xlen_t number_types) const {
     const auto delta_D{Varphi::compute(x, y, types_vector, location, type, number_types)};
