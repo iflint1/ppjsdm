@@ -32,7 +32,7 @@
 //' @useDynLib ppjsdm
 //' @import Rcpp
 // [[Rcpp::export]]
-[[nodiscard]] Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::S4 configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, Rcpp::CharacterVector model, double radius = 0) {
+[[nodiscard]] Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::S4 configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, Rcpp::CharacterVector model = "i", double radius = 0) {
   // TODO: Error message on incorrect model specification.
   if(model[0] == "i") {
     const auto varphi{Varphi_model_papangelou<varphi::Identity>{}};

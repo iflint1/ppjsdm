@@ -9,6 +9,7 @@ compute_delta_phi_dispersion(
   location,
   type,
   number_types,
+  model = "i",
   radius = 0
 )
 }
@@ -20,6 +21,8 @@ compute_delta_phi_dispersion(
 \item{type}{Type of point to be added.}
 
 \item{number_types}{Number of different types.}
+
+\item{model}{String representing the model to simulate from.}
 
 \item{radius}{Radius of interaction.}
 }
