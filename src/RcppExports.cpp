@@ -6,8 +6,8 @@
 using namespace Rcpp;
 
 // compute_delta_phi_dispersion
-[[nodiscard]] Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::S4 configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, double radius);
-RcppExport SEXP _ppjsdm_compute_delta_phi_dispersion(SEXP configurationSEXP, SEXP locationSEXP, SEXP typeSEXP, SEXP number_typesSEXP, SEXP radiusSEXP) {
+[[nodiscard]] Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::S4 configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, Rcpp::CharacterVector model, double radius);
+RcppExport SEXP _ppjsdm_compute_delta_phi_dispersion(SEXP configurationSEXP, SEXP locationSEXP, SEXP typeSEXP, SEXP number_typesSEXP, SEXP modelSEXP, SEXP radiusSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -15,8 +15,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type location(locationSEXP);
     Rcpp::traits::input_parameter< R_xlen_t >::type type(typeSEXP);
     Rcpp::traits::input_parameter< int >::type number_types(number_typesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type model(modelSEXP);
     Rcpp::traits::input_parameter< double >::type radius(radiusSEXP);
-    rcpp_result_gen = Rcpp::wrap(compute_delta_phi_dispersion(configuration, location, type, number_types, radius));
+    rcpp_result_gen = Rcpp::wrap(compute_delta_phi_dispersion(configuration, location, type, number_types, model, radius));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -82,7 +83,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_ppjsdm_compute_delta_phi_dispersion", (DL_FUNC) &_ppjsdm_compute_delta_phi_dispersion, 5},
+    {"_ppjsdm_compute_delta_phi_dispersion", (DL_FUNC) &_ppjsdm_compute_delta_phi_dispersion, 6},
     {"_ppjsdm_has_duplicates", (DL_FUNC) &_ppjsdm_has_duplicates, 1},
     {"_ppjsdm_rbinomialpp", (DL_FUNC) &_ppjsdm_rbinomialpp, 5},
     {"_ppjsdm_rmultigibbs", (DL_FUNC) &_ppjsdm_rmultigibbs, 9},

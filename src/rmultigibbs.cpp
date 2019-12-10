@@ -23,18 +23,18 @@
 //   return lambda[type] * std::exp(inner_product);
 // }
 
-template<typename X, typename Y, typename T>
-[[nodiscard]] double compute_papangelou_geyer(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, double saturation, R_xlen_t number_types, double square_radius) {
-
-  const auto delta_D{compute_delta_phi_dispersion_geyer_helper(x, y, types_vector, location, type, number_types, square_radius, saturation)};
-
-  double inner_product{0};
-  for(R_xlen_t i{0}; i < number_types; ++i) {
-    inner_product += alpha(i, type) *  delta_D[i];
-  }
-
-  return lambda[type] * std::exp(inner_product);
-}
+// template<typename X, typename Y, typename T>
+// [[nodiscard]] double compute_papangelou_geyer(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, double saturation, R_xlen_t number_types, double square_radius) {
+//
+//   const auto delta_D{compute_delta_phi_dispersion_geyer_helper(x, y, types_vector, location, type, number_types, square_radius, saturation)};
+//
+//   double inner_product{0};
+//   for(R_xlen_t i{0}; i < number_types; ++i) {
+//     inner_product += alpha(i, type) *  delta_D[i];
+//   }
+//
+//   return lambda[type] * std::exp(inner_product);
+// }
 
 template<typename V, typename S>
 [[nodiscard]] inline SEXP rmultigibbs_helper2(const S& window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop, const V& varphi) {

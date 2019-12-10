@@ -2,10 +2,11 @@
 #'
 #' @param configuration A configuration assumed to be a draw from the multivariate Gibbs.
 #' @param window Observation window.
+#' @param model String to represent the model we're calibrating.
 #' @param radius Interaction radius.
 #' @importFrom stats as.formula binomial glm
 #' @export
-gibbsm <- function(configuration, window, radius = 0) {
+gibbsm <- function(configuration, window, model = "i", radius = 0) {
   # This is the guideline from the Baddeley et al. paper
   rho <- 4 * get_number_points(configuration) / window_volume(window)
 
@@ -58,14 +59,14 @@ gibbsm <- function(configuration, window, radius = 0) {
       type <- types(configuration)[i]
 
       # TODO: We have i, should be quicker to remove from configuration
-      disp <- compute_delta_phi_dispersion_geyer(remove_from_configuration(configuration, location, type), location, match(type, distinct_types) - 1, p, radius, 2.0)
+      disp <- compute_delta_phi_dispersion(remove_from_configuration(configuration, location, type), location, match(type, distinct_types) - 1, p, model, radius)
       #disp <- compute_delta_phi_dispersion(remove_from_configuration(configuration, location, type), location, match(type, distinct_types) - 1, p, radius)
       #disp <- compute_phi_dispersion(remove_from_configuration(configuration, location, type), p, radius = radius) - compute_phi_dispersion(configuration, p, radius = radius)
     } else {
       location <- c(D@x[i - n_Z], D@y[i - n_Z])
       type <- types(D)[i - n_Z]
 
-      disp <- compute_delta_phi_dispersion_geyer(configuration, location, match(type, distinct_types) - 1, p, radius, 2.0)
+      disp <- compute_delta_phi_dispersion(configuration, location, match(type, distinct_types) - 1, p, model, radius)
       #disp <- compute_delta_phi_dispersion(configuration, location, match(type, distinct_types) - 1, p, radius)
       #disp <- compute_phi_dispersion(configuration, p, radius = radius) - compute_phi_dispersion(add_to_configuration(configuration, location, type), p, radius = radius)
     }

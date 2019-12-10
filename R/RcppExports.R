@@ -30,12 +30,13 @@ NULL
 #' @param location Point to be added.
 #' @param type Type of point to be added.
 #' @param number_types Number of different types.
+#' @param model String representing the model to simulate from.
 #' @param radius Radius of interaction.
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-compute_delta_phi_dispersion <- function(configuration, location, type, number_types, radius = 0) {
-    .Call('_ppjsdm_compute_delta_phi_dispersion', PACKAGE = 'ppjsdm', configuration, location, type, number_types, radius)
+compute_delta_phi_dispersion <- function(configuration, location, type, number_types, model, radius = 0) {
+    .Call('_ppjsdm_compute_delta_phi_dispersion', PACKAGE = 'ppjsdm', configuration, location, type, number_types, model, radius)
 }
 
 #' Check if a configuration contains duplicates.

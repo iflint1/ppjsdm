@@ -135,7 +135,7 @@ public:
 
 class Geyer_papangelou {
 public:
-  Geyer_papangelou(double square_radius, double saturation): square_radius_{square_radius}, saturation_{saturation} {}
+  Geyer_papangelou(double square_radius, double saturation) noexcept: square_radius_{square_radius}, saturation_{saturation} {}
   template<typename X, typename Y, typename T>
   [[nodiscard]] inline Rcpp::NumericVector compute(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, R_xlen_t number_types) const {
     // TODO: Might be able to avoid recomputing this every time, marginal efficiency gain.
@@ -180,7 +180,6 @@ public:
   Exponential_family_model(const U& lambda, const V& alpha, Args&&... args): lambda_{lambda}, alpha_{alpha}, Varphi(std::forward<Args>(args)...) {}
   template<typename X, typename Y, typename T>
   [[nodiscard]] double compute_papangelou(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, R_xlen_t number_types) const {
-
     const auto delta_D{Varphi::compute(x, y, types_vector, location, type, number_types)};
 
     double inner_product{0};
