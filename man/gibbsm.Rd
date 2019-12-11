@@ -4,7 +4,7 @@
 \alias{gibbsm}
 \title{Fit a multivariate Gibbs model to a dataset.}
 \usage{
-gibbsm(configuration, window, model = "i", radius = 0)
+gibbsm(configuration, window, model = "identity", radius = 0, print = TRUE)
 }
 \arguments{
 \item{configuration}{A configuration assumed to be a draw from the multivariate Gibbs.}
@@ -14,6 +14,8 @@ gibbsm(configuration, window, model = "i", radius = 0)
 \item{model}{String to represent the model we're calibrating. At the moment, either "identity", "Strauss" or "Geyer".}
 
 \item{radius}{Interaction radius.}
+
+\item{print}{Print the fitting summary?}
 }
 \description{
 Fit a multivariate Gibbs model to a dataset.
