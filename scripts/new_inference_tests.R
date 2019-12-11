@@ -1,4 +1,4 @@
-alpha <- 0.67
+alpha <- -1
 log_lambda <- 3.6
 nsim <- 1000
 radius <- 0.1

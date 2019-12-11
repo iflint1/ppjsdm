@@ -38,39 +38,26 @@ gibbsm <- function(configuration, window, model = "identity", radius = 0, print 
   }
 
   rho_offset <- rep(0, n_Z + n_D, p)
-  # TODO: Horrible, vectorise
-  for(i in seq_len(n_Z + n_D)) {
-    if(i <= n_Z) {
-      type <- types(configuration)[i]
-    } else {
-      type <- types(D)[i - n_Z]
-    }
-    rho_offset[i] <- rho[match(type, distinct_types)]
-  }
-
   alpha_list <- vector(mode = "list", length = p * (p + 1) / 2)
   alpha_list <- lapply(alpha_list, function(x) rep(0, n_Z + n_D))
-
-  # alpha <- matrix(NA, n_Z + n_D, p * (p + 1) / 2)
 
   # TODO: Horrible, vectorise
   for(i in seq_len(n_Z + n_D)) {
     if(i <= n_Z) {
       location <- c(configuration@x[i], configuration@y[i])
       type <- types(configuration)[i]
+      type_index <- match(type, distinct_types)
 
       # TODO: We have i, should be quicker to remove from configuration
-      disp <- compute_delta_phi_dispersion(remove_from_configuration(configuration, location, type), location, match(type, distinct_types) - 1, p, model, radius)
-      #disp <- compute_delta_phi_dispersion(remove_from_configuration(configuration, location, type), location, match(type, distinct_types) - 1, p, radius)
-      #disp <- compute_phi_dispersion(remove_from_configuration(configuration, location, type), p, radius = radius) - compute_phi_dispersion(configuration, p, radius = radius)
+      disp <- compute_delta_phi_dispersion(remove_from_configuration(configuration, location, type), location, type_index - 1, p, model, radius)
     } else {
       location <- c(D@x[i - n_Z], D@y[i - n_Z])
-      type <- types(D)[i - n_Z]
+      type_index <- match(types(D)[i - n_Z], distinct_types)
 
-      disp <- compute_delta_phi_dispersion(configuration, location, match(type, distinct_types) - 1, p, model, radius)
-      #disp <- compute_delta_phi_dispersion(configuration, location, match(type, distinct_types) - 1, p, radius)
-      #disp <- compute_phi_dispersion(configuration, p, radius = radius) - compute_phi_dispersion(add_to_configuration(configuration, location, type), p, radius = radius)
+      disp <- compute_delta_phi_dispersion(configuration, location, type_index - 1, p, model, radius)
     }
+
+    rho_offset[i] <- rho[type_index]
 
     index <- 1
     for(j in seq_len(p)) {
@@ -79,10 +66,10 @@ gibbsm <- function(configuration, window, model = "identity", radius = 0, print 
         names(alpha_list)[index] <- paste0("alpha_", j, k)
 
         #alpha_list[[index]][i] <-  disp[j, k]
-        if(j == match(type, distinct_types)) {
-          alpha_list[[index]][i] <-  disp[k]
-        } else if(k == match(type, distinct_types)) {
-          alpha_list[[index]][i] <-  disp[j]
+        if(j == type_index) {
+          alpha_list[[index]][i] <- disp[k]
+        } else if(k == type_index) {
+          alpha_list[[index]][i] <- disp[j]
         }
 
         index <- index + 1
