@@ -5,42 +5,42 @@
 
 #include <tuple> // std::pair
 
-inline void add_to_configuration(Rcpp::S4 configuration, Rcpp::NumericVector location, R_xlen_t type) {
-  auto x{Rcpp::NumericVector(configuration.slot("x"))};
-  auto y{Rcpp::NumericVector(configuration.slot("y"))};
-  auto types{Rcpp::IntegerVector(configuration.slot("types"))};
-
-  x.push_back(location[0]);
-  y.push_back(location[1]);
-  types.push_back(type + 1);
-
-  configuration.update(Rcpp::wrap(configuration));
-
-  // TODO: Change this aweful hack
-  configuration.slot("x") = x;
-  configuration.slot("y") = y;
-  configuration.slot("types") = types;
-}
-
-inline std::pair<Rcpp::NumericVector, R_xlen_t> remove_random_point(Rcpp::S4 configuration) {
-  auto x{Rcpp::NumericVector(configuration.slot("x"))};
-  auto y{Rcpp::NumericVector(configuration.slot("y"))};
-  auto types{Rcpp::IntegerVector(configuration.slot("types"))};
-
-  const R_xlen_t index{Rcpp::sample(x.size(), 1, false, R_NilValue, false)[0]};
-  const Rcpp::NumericVector saved_location{x[index], y[index]};
-  const R_xlen_t saved_type{types[index] - 1};
-  x.erase(index);
-  y.erase(index);
-  types.erase(index);
-
-  // TODO: Change this aweful hack
-  configuration.slot("x") = x;
-  configuration.slot("y") = y;
-  configuration.slot("types") = types;
-
-  return std::make_pair(saved_location, saved_type);
-}
+// inline void add_to_configuration(Rcpp::S4 configuration, Rcpp::NumericVector location, R_xlen_t type) {
+//   auto x{Rcpp::NumericVector(configuration.slot("x"))};
+//   auto y{Rcpp::NumericVector(configuration.slot("y"))};
+//   auto types{Rcpp::IntegerVector(configuration.slot("types"))};
+//
+//   x.push_back(location[0]);
+//   y.push_back(location[1]);
+//   types.push_back(type + 1);
+//
+//   configuration.update(Rcpp::wrap(configuration));
+//
+//   // TODO: Change this aweful hack
+//   configuration.slot("x") = x;
+//   configuration.slot("y") = y;
+//   configuration.slot("types") = types;
+// }
+//
+// inline std::pair<Rcpp::NumericVector, R_xlen_t> remove_random_point(Rcpp::S4 configuration) {
+//   auto x{Rcpp::NumericVector(configuration.slot("x"))};
+//   auto y{Rcpp::NumericVector(configuration.slot("y"))};
+//   auto types{Rcpp::IntegerVector(configuration.slot("types"))};
+//
+//   const R_xlen_t index{Rcpp::sample(x.size(), 1, false, R_NilValue, false)[0]};
+//   const Rcpp::NumericVector saved_location{x[index], y[index]};
+//   const R_xlen_t saved_type{types[index] - 1};
+//   x.erase(index);
+//   y.erase(index);
+//   types.erase(index);
+//
+//   // TODO: Change this aweful hack
+//   configuration.slot("x") = x;
+//   configuration.slot("y") = y;
+//   configuration.slot("types") = types;
+//
+//   return std::make_pair(saved_location, saved_type);
+// }
 
 [[nodiscard]] inline Rcpp::S4 make_configuration(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector types_vector, Rcpp::CharacterVector types) {
   types_vector.attr("class") = "factor";
