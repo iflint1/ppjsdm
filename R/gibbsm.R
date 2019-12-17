@@ -15,6 +15,7 @@ gibbsm <- function(configuration, window, model = "identity", radius = 0, print 
   distinct_types <- levels(types)
   p <- length(distinct_types)
 
+  # TODO: binomial process should give better results, easy change.
   D <- rppp(window, lambda = rho, types = distinct_types)
 
   n_Z <- sum(get_number_points(configuration))
