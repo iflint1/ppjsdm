@@ -167,6 +167,9 @@ private:
 template<typename Varphi>
 class Nearest_neighbour_papangelou: public Varphi {
 public:
+  template<typename... Args>
+  Nearest_neighbour_papangelou(Args&&... args): Varphi{std::forward<Args>(args)...} {}
+
   template<typename X, typename Y, typename T>
   [[nodiscard]] inline Rcpp::NumericVector compute(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, R_xlen_t number_types) const {
     // TODO: Might want to not initialize

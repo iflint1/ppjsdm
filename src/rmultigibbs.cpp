@@ -127,7 +127,7 @@ template<Window WindowType>
     const auto varphi{Exponential_family_model<Geyer_papangelou, decltype(lambda), decltype(alpha)>{lambda, alpha, radius, 2.0}};
     return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
   } else if(model[0] == "neighbour") {
-    const auto varphi{Exponential_family_model<Nearest_neighbour_papangelou<varphi::Identity>, decltype(lambda), decltype(alpha)>{lambda, alpha}};
+    const auto varphi{Exponential_family_model<Nearest_neighbour_papangelou<varphi::Strauss>, decltype(lambda), decltype(alpha)>{lambda, alpha, radius}};
     return rmultigibbs_helper2(window_wrapper, alpha, lambda, steps, nsim, types, drop, varphi);
   } else {
     Rcpp::stop("Incorrect model entered.\n");
