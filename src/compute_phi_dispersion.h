@@ -164,6 +164,30 @@ private:
   double saturation_;
 };
 
+class Nearest_neighbour_papangelou {
+public:
+  template<typename X, typename Y, typename T>
+  [[nodiscard]] inline Rcpp::NumericVector compute(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, R_xlen_t number_types) const {
+    // TODO: Might be able to avoid recomputing this every time, marginal efficiency gain.
+    const auto number_points = R_xlen_t(x.size());
+
+    Rcpp::NumericVector delta_dispersion(number_types);
+    // for(R_xlen_t i{0}; i < number_points; ++i) {
+    //   const auto type_i{types_vector[i] - 1};
+    //   if(delta_dispersion[type_i] < saturation_) {
+    //     const auto delta_x{x[i] - location[0]};
+    //     const auto delta_y{y[i] - location[1]};
+    //     const auto square_distance{delta_x * delta_x + delta_y * delta_y};
+    //     if(square_distance <= square_radius_) {
+    //       delta_dispersion[type_i] += 1.;
+    //     }
+    //   }
+    // }
+
+    return delta_dispersion;
+  }
+};
+
 // [[nodiscard]] inline Rcpp::NumericVector compute_delta_phi_dispersion_geyer_helper(Rcpp::S4 configuration, Rcpp::NumericVector location, R_xlen_t type, R_xlen_t number_types, double square_radius, double saturation) {
 //   return compute_delta_phi_dispersion_geyer_helper(Rcpp::NumericVector(configuration.slot("x")),
 //                                              Rcpp::NumericVector(configuration.slot("y")),

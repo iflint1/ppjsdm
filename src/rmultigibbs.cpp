@@ -116,7 +116,6 @@ template<typename V, typename S>
 template<Window WindowType>
 [[nodiscard]] inline SEXP rmultigibbs_helper(SEXP window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, Rcpp::CharacterVector model, bool drop) {
   const Window_wrapper<WindowType> window_wrapper{window};
-  // TODO: Better string comparison below
   if(model[0] == "identity") {
     // TODO: Might use C++17 class type deduction
     const auto varphi{Exponential_family_model<Varphi_model_papangelou<varphi::Identity>, decltype(lambda), decltype(alpha)>{lambda, alpha}};
