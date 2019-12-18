@@ -164,27 +164,74 @@ private:
   double saturation_;
 };
 
-class Nearest_neighbour_papangelou {
+template<typename Varphi>
+class Nearest_neighbour_papangelou: public Varphi {
 public:
   template<typename X, typename Y, typename T>
   [[nodiscard]] inline Rcpp::NumericVector compute(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, R_xlen_t number_types) const {
+    // TODO: Might want to not initialize
+    Rcpp::NumericVector delta_dispersion(number_types);
+
+    for(R_xlen_t i{0}; i < number_types; ++i) {
+      if(i == type) {
+        const auto d{-compute_dispersion(x, y, types_vector, i, i, number_types)};
+        auto copy_x{x};
+        auto copy_y{y};
+        auto copy_types{types_vector};
+        copy_x.push_back(location[0]);
+        copy_y.push_back(location[1]);
+        copy_types.push_back(type + 1);
+
+        delta_dispersion[i] = d + compute_dispersion(copy_x, copy_y, copy_types, i, i, number_types);
+      } else {
+        auto d{-compute_dispersion(x, y, types_vector, i, type, number_types)};
+        d -= compute_dispersion(x, y, types_vector, type, i, number_types);
+        auto copy_x{x};
+        auto copy_y{y};
+        auto copy_types{types_vector};
+        copy_x.push_back(location[0]);
+        copy_y.push_back(location[1]);
+        copy_types.push_back(type + 1);
+
+        delta_dispersion[i] = 0.5 * (d + compute_dispersion(copy_x, copy_y, copy_types, i, type, number_types) + compute_dispersion(copy_x, copy_y, copy_types, type, i, number_types));
+      }
+    }
+
+    return delta_dispersion;
+  }
+private:
+  // TODO: Make static?
+  template<typename X, typename Y, typename T>
+  [[nodiscard]] inline double compute_dispersion(const X& x, const Y& y,
+                                                 const T& types_vector,
+                                                 R_xlen_t k1, R_xlen_t k2,
+                                                 R_xlen_t number_types) const {
     // TODO: Might be able to avoid recomputing this every time, marginal efficiency gain.
     const auto number_points = R_xlen_t(x.size());
 
-    Rcpp::NumericVector delta_dispersion(number_types);
-    // for(R_xlen_t i{0}; i < number_points; ++i) {
-    //   const auto type_i{types_vector[i] - 1};
-    //   if(delta_dispersion[type_i] < saturation_) {
-    //     const auto delta_x{x[i] - location[0]};
-    //     const auto delta_y{y[i] - location[1]};
-    //     const auto square_distance{delta_x * delta_x + delta_y * delta_y};
-    //     if(square_distance <= square_radius_) {
-    //       delta_dispersion[type_i] += 1.;
-    //     }
-    //   }
-    // }
+    // count_species automatically 0-initialized
+    R_xlen_t count_species;
+    double dispersion{0};
 
-    return delta_dispersion;
+    for(R_xlen_t i{0}; i < number_points; ++i) {
+      const auto type_i{types_vector[i] - 1};
+      if(type_i == k1) {
+        ++count_species;
+        double min_distance{0};
+        for(R_xlen_t j{0}; j < number_points; ++j) {
+          const auto type_j{types_vector[j] - 1};
+          if(type_j == k2) {
+            const auto d{compute_phi_distance(x[i], y[i], x[j], y[j], *this)};
+            if(min_distance > d) {
+              min_distance = d;
+            }
+          }
+        }
+        dispersion += min_distance;
+      }
+    }
+
+    dispersion /= static_cast<double>(count_species);
   }
 };
 
