@@ -203,7 +203,6 @@ public:
     return delta_dispersion;
   }
 private:
-  // TODO: Make static?
   template<typename X, typename Y, typename T>
   [[nodiscard]] inline double compute_dispersion(const X& x, const Y& y,
                                                  const T& types_vector,
@@ -220,13 +219,16 @@ private:
       const auto type_i{types_vector[i] - 1};
       if(type_i == k1) {
         ++count_species;
-        double min_distance{0};
+        // TODO: Change
+        double min_distance{999999};
         for(R_xlen_t j{0}; j < number_points; ++j) {
-          const auto type_j{types_vector[j] - 1};
-          if(type_j == k2) {
-            const auto d{compute_phi_distance(x[i], y[i], x[j], y[j], *this)};
-            if(min_distance > d) {
-              min_distance = d;
+          if(j != i) {
+            const auto type_j{types_vector[j] - 1};
+            if(type_j == k2) {
+              const auto d{compute_phi_distance(x[i], y[i], x[j], y[j], *this)};
+              if(min_distance > d) {
+                min_distance = d;
+              }
             }
           }
         }
