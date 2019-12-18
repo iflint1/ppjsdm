@@ -4,6 +4,7 @@
 #include <Rcpp.h>
 
 #include <utility> // std::forward
+#include <limits> // std::numeric_limits
 
 #include "compute_phi_distance.h"
 // #include "configuration_utilities.h"
@@ -219,8 +220,7 @@ private:
       const auto type_i{types_vector[i] - 1};
       if(type_i == k1) {
         ++count_species;
-        // TODO: Change
-        double min_distance{999999};
+        double min_distance{std::numeric_limits<double>::max()};
         for(R_xlen_t j{0}; j < number_points; ++j) {
           if(j != i) {
             const auto type_j{types_vector[j] - 1};
