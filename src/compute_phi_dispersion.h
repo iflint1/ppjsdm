@@ -158,7 +158,9 @@ private:
             }
           }
         }
-        dispersion += min_distance;
+        if(min_distance < std::numeric_limits<double>::max()) {
+          dispersion += min_distance;
+        }
       }
     }
 
