@@ -1,5 +1,7 @@
 #include <Rcpp.h>
 
+#include <vector> // std::vector
+
 #include "compute_phi_dispersion.h"
 
 //' Compute the delta of the phi-dispersion of a marked configuration.
@@ -33,6 +35,23 @@
     return varphi.compute(x,
                           Rcpp::NumericVector(configuration.slot("y")),
                           Rcpp::IntegerVector(configuration.slot("types")),
+                          location, type, number_types, x.size());
+  } else if(model[0] == "neighbour"){
+    const auto varphi{Nearest_neighbour_papangelou<varphi::Identity>{}};
+    // At the moment, I'm using push_backs in the computation, so I need to convert to std::vector first
+    std::vector<double> x_vector(x.size());
+    std::vector<double> y_vector(x.size());
+    std::vector<double> types_vector(x.size());
+    const auto y{Rcpp::NumericVector(configuration.slot("y"))};
+    const auto types{Rcpp::NumericVector(configuration.slot("types"))};
+    for(int i{0}; i < x.size(); ++i) {
+      x_vector[i] = x[i];
+      y_vector[i] = y[i];
+      types_vector[i] = types[i];
+    }
+    return varphi.compute(x_vector,
+                          y_vector,
+                          types_vector,
                           location, type, number_types, x.size());
   } else {
     Rcpp::stop("Incorrect model entered.\n");

@@ -1,8 +1,8 @@
-alpha <- 0
+alpha <- -0.5
 log_lambda <- 3.6
-nsim <- 1000
+nsim <- 10
 radius <- 0.1
-model <- "Geyer"
+model <- "neighbour"
 steps <- 100000
 window_side <- c(0, 1)
 window <- Rectangle_window(window_side, window_side)

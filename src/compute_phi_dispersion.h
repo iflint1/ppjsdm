@@ -3,6 +3,7 @@
 
 #include <Rcpp.h>
 
+#include <cmath> // std::exp
 #include <utility> // std::forward
 #include <limits> // std::numeric_limits
 
@@ -139,8 +140,7 @@ private:
                                                  R_xlen_t k1, R_xlen_t k2,
                                                  R_xlen_t number_types,
                                                  R_xlen_t number_points) const {
-    // count_species automatically 0-initialized
-    R_xlen_t count_species;
+    int count_species{0};
     double dispersion{0};
 
     for(R_xlen_t i{0}; i < number_points; ++i) {
