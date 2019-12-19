@@ -38,16 +38,18 @@
                           location, type, number_types, x.size());
   } else if(model[0] == "neighbour"){
     const auto varphi{Nearest_neighbour_papangelou<varphi::Identity>{}};
-    // At the moment, I'm using push_backs in the computation, so I need to convert to std::vector first
+    // TODO: At the moment, I'm using push_backs in the computation, so I need to convert to std::vector first
+    //Rcpp::Rcout << "size: " << x.size() << '\n';
     std::vector<double> x_vector(x.size());
     std::vector<double> y_vector(x.size());
-    std::vector<double> types_vector(x.size());
+    std::vector<int> types_vector(x.size());
     const auto y{Rcpp::NumericVector(configuration.slot("y"))};
-    const auto types{Rcpp::NumericVector(configuration.slot("types"))};
+    const auto types{Rcpp::IntegerVector(configuration.slot("types"))};
     for(int i{0}; i < x.size(); ++i) {
       x_vector[i] = x[i];
       y_vector[i] = y[i];
       types_vector[i] = types[i];
+      //Rcpp::Rcout << "x_vector[i]: " << x_vector[i] << '\n';
     }
     return varphi.compute(x_vector,
                           y_vector,

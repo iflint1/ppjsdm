@@ -130,7 +130,7 @@ public:
         delta_dispersion[i] = 0.5 * (d + compute_dispersion(copy_x, copy_y, copy_types, i, type, number_types, number_points + 1) + compute_dispersion(copy_x, copy_y, copy_types, type, i, number_types, number_points + 1));
       }
     }
-
+    //Rcpp::Rcout << "delta_dispersion: " << delta_dispersion[0] << '\n';
     return delta_dispersion;
   }
 private:
@@ -164,6 +164,7 @@ private:
     }
 
     dispersion /= static_cast<double>(count_species);
+    //Rcpp::Rcout << "dispersion: " << dispersion << '\n';
   }
 };
 
