@@ -116,7 +116,7 @@ public:
         copy_y.push_back(location[1]);
         copy_types.push_back(type + 1);
 
-        delta_dispersion[i] = d + compute_dispersion(copy_x, copy_y, copy_types, i, i, number_types, number_points);
+        delta_dispersion[i] = d + compute_dispersion(copy_x, copy_y, copy_types, i, i, number_types, number_points + 1);
       } else {
         auto d{-compute_dispersion(x, y, types_vector, i, type, number_types, number_points)};
         d -= compute_dispersion(x, y, types_vector, type, i, number_types, number_points);
@@ -127,7 +127,7 @@ public:
         copy_y.push_back(location[1]);
         copy_types.push_back(type + 1);
 
-        delta_dispersion[i] = 0.5 * (d + compute_dispersion(copy_x, copy_y, copy_types, i, type, number_types, number_points) + compute_dispersion(copy_x, copy_y, copy_types, type, i, number_types, number_points));
+        delta_dispersion[i] = 0.5 * (d + compute_dispersion(copy_x, copy_y, copy_types, i, type, number_types, number_points + 1) + compute_dispersion(copy_x, copy_y, copy_types, type, i, number_types, number_points + 1));
       }
     }
 
