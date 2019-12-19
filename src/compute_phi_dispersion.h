@@ -108,7 +108,7 @@ public:
 
     for(R_xlen_t i{0}; i < number_types; ++i) {
       if(i == type) {
-        const auto d{-compute_dispersion(x, y, types_vector, i, i, number_types, number_points)};
+        const double d{-compute_dispersion(x, y, types_vector, i, i, number_types, number_points)};
         auto copy_x{x};
         auto copy_y{y};
         auto copy_types{types_vector};
@@ -130,7 +130,6 @@ public:
         delta_dispersion[i] = 0.5 * (d + compute_dispersion(copy_x, copy_y, copy_types, i, type, number_types, number_points + 1) + compute_dispersion(copy_x, copy_y, copy_types, type, i, number_types, number_points + 1));
       }
     }
-    //Rcpp::Rcout << "delta_dispersion: " << delta_dispersion[0] << '\n';
     return delta_dispersion;
   }
 private:
@@ -163,8 +162,10 @@ private:
       }
     }
 
-    dispersion /= static_cast<double>(count_species);
-    //Rcpp::Rcout << "dispersion: " << dispersion << '\n';
+    if(count_species > 0) {
+      dispersion /= static_cast<double>(count_species);
+    }
+    return dispersion;
   }
 };
 

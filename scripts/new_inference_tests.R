@@ -1,6 +1,6 @@
 alpha <- 0
 log_lambda <- 3.6
-nsim <- 10
+nsim <- 100
 radius <- 0.1
 model <- "neighbour"
 steps <- 100000

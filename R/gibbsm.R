@@ -78,6 +78,8 @@ gibbsm <- function(configuration, window, model = "identity", radius = 0, print 
     }
   }
 
+
+  #print(alpha_list)
   data <- as.data.frame(list(response = response, log_lambda = log_lambda, alpha_list, rho = rho_offset))
 
   formula <- paste("response ~ 0 + log_lambda + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
