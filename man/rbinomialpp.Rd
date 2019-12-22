@@ -4,7 +4,8 @@
 \alias{rbinomialpp}
 \title{Sample a binomial point processes}
 \usage{
-rbinomialpp(window, n = as.integer(c(1)), nsim = 1L, types = NULL, drop = TRUE)
+rbinomialpp(window, n = as.integer(c(1)), nsim = 1L, types = NULL,
+  drop = TRUE)
 }
 \arguments{
 \item{window}{The window.}

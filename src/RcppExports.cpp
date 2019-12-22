@@ -48,21 +48,22 @@ BEGIN_RCPP
 END_RCPP
 }
 // rmultigibbs
-[[nodiscard]] SEXP rmultigibbs(SEXP window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, Rcpp::CharacterVector model, bool drop);
-RcppExport SEXP _ppjsdm_rmultigibbs(SEXP windowSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP radiusSEXP, SEXP stepsSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP modelSEXP, SEXP dropSEXP) {
+[[nodiscard]] SEXP rmultigibbs(SEXP window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericVector nu, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, Rcpp::CharacterVector model, bool drop);
+RcppExport SEXP _ppjsdm_rmultigibbs(SEXP windowSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP radiusSEXP, SEXP stepsSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP modelSEXP, SEXP dropSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type window(windowSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type nu(nuSEXP);
     Rcpp::traits::input_parameter< double >::type radius(radiusSEXP);
     Rcpp::traits::input_parameter< R_xlen_t >::type steps(stepsSEXP);
     Rcpp::traits::input_parameter< R_xlen_t >::type nsim(nsimSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type types(typesSEXP);
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type model(modelSEXP);
     Rcpp::traits::input_parameter< bool >::type drop(dropSEXP);
-    rcpp_result_gen = Rcpp::wrap(rmultigibbs(window, alpha, lambda, radius, steps, nsim, types, model, drop));
+    rcpp_result_gen = Rcpp::wrap(rmultigibbs(window, alpha, lambda, nu, radius, steps, nsim, types, model, drop));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -86,7 +87,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ppjsdm_compute_delta_phi_dispersion", (DL_FUNC) &_ppjsdm_compute_delta_phi_dispersion, 6},
     {"_ppjsdm_has_duplicates", (DL_FUNC) &_ppjsdm_has_duplicates, 1},
     {"_ppjsdm_rbinomialpp", (DL_FUNC) &_ppjsdm_rbinomialpp, 5},
-    {"_ppjsdm_rmultigibbs", (DL_FUNC) &_ppjsdm_rmultigibbs, 9},
+    {"_ppjsdm_rmultigibbs", (DL_FUNC) &_ppjsdm_rmultigibbs, 10},
     {"_ppjsdm_rppp", (DL_FUNC) &_ppjsdm_rppp, 5},
     {NULL, NULL, 0}
 };

@@ -45,6 +45,7 @@ rbinomialpp <- function(window, n = as.integer( c(1)), nsim = 1L, types = NULL, 
 #' @param window The window.
 #' @param alpha Alpha.
 #' @param lambda A vector representing the intensities of the point processes.
+#' @param nu A vector representing the dispersion of the number of points.
 #' @param radius Interaction radius.
 #' @param steps Number of steps in the Metropolis algorithm.
 #' @param nsim Number of samples to generate.
@@ -54,8 +55,8 @@ rbinomialpp <- function(window, n = as.integer( c(1)), nsim = 1L, types = NULL, 
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-rmultigibbs <- function(window, alpha = 1L, lambda = 1L, radius = 0, steps = 30000L, nsim = 1L, types = NULL, model = "identity", drop = TRUE) {
-    .Call('_ppjsdm_rmultigibbs', PACKAGE = 'ppjsdm', window, alpha, lambda, radius, steps, nsim, types, model, drop)
+rmultigibbs <- function(window, alpha = 1L, lambda = 1L, nu = 1L, radius = 0, steps = 30000L, nsim = 1L, types = NULL, model = "identity", drop = TRUE) {
+    .Call('_ppjsdm_rmultigibbs', PACKAGE = 'ppjsdm', window, alpha, lambda, nu, radius, steps, nsim, types, model, drop)
 }
 
 #' Sample a Poisson point processes
