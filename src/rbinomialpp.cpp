@@ -5,7 +5,7 @@
 #include "window_utilities.h"
 
 template<Window WindowType>
-[[nodiscard]] inline SEXP rbinomialpp_helper(Rcpp::S4 window, Rcpp::IntegerVector n, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop) {
+[[nodiscard]] inline SEXP rbinomialpp_helper(SEXP window, Rcpp::IntegerVector n, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop) {
   const auto point_types{n.size()};
   const auto total_number{sum(n)};
 

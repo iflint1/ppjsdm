@@ -5,7 +5,7 @@
 #' @param x Values along the x-axis.
 #' @param y Values along the y-axis.
 #' @param types Types of the points.
-#' @importFrom methods is new
+#' @importFrom methods is
 #' @export
 Configuration <- local({
   function(x, y, types) {
@@ -75,6 +75,7 @@ print.Configuration <- function(x, ...) {
 #' @export
 get_number_points <- function(configuration) {
   # TODO: The code below is horrible, it can definitely be vectorised...
+  # TODO: Can probably add names to the returned vector to identify the types
   types <- configuration$types
   number_types <- length(levels(types))
   result <- rep(NA, number_types)

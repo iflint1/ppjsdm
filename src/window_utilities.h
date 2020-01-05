@@ -13,12 +13,12 @@ class Window_wrapper;
 template <>
 class Window_wrapper<Window::rectangle> {
 public:
-  explicit Window_wrapper(Rcpp::S4 window) {
-    const auto x{Rcpp::NumericVector(window.slot("x_range"))};
+  explicit Window_wrapper(Rcpp::List window) {
+    const auto x{Rcpp::as<Rcpp::NumericVector>(window[0])};
     x_0_ = x[0];
     delta_x_ = x[1] - x_0_;
 
-    const auto y{Rcpp::NumericVector(window.slot("y_range"))};
+    const auto y{Rcpp::as<Rcpp::NumericVector>(window[1])};
     y_0_ = y[0];
     delta_y_ = y[1] - y_0_;
   }
@@ -41,12 +41,12 @@ private:
 template <>
 class Window_wrapper<Window::disk> {
 public:
-  explicit Window_wrapper(Rcpp::S4 window) {
-    const auto centre{Rcpp::NumericVector(window.slot("centre"))};
+  explicit Window_wrapper(Rcpp::List window) {
+    const auto centre{Rcpp::as<Rcpp::NumericVector>(window[0])};
     x_ = centre[0];
     y_ = centre[1];
 
-    radius_ = static_cast<double>(window.slot("radius"));
+    radius_ = static_cast<double>(window[1]);
   }
 
   [[nodiscard]] std::pair<double, double> sample() const {
@@ -69,10 +69,10 @@ private:
   double radius_;
 };
 
-[[nodiscard]] inline Window get_window_type(const Rcpp::S4 window) {
-  if(window.hasSlot("x_range")) {
+[[nodiscard]] inline Window get_window_type(const Rcpp::List window) {
+  if(Rf_inherits(window, "Rectangle_window")) {
     return Window::rectangle;
-  } else if(window.hasSlot("centre")) {
+  } else if(Rf_inherits(window, "Disk_window")) {
     return Window::disk;
   } else {
     Rcpp::stop("Incorrect window type.");

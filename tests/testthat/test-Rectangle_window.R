@@ -6,7 +6,6 @@ test_that("Rectangle_window is an S4 class", {
   window <- Rectangle_window()
 
   expect_is(window, "Rectangle_window")
-  expect_true(isS4(window))
 })
 
 test_that("Rectangle_window accessors", {

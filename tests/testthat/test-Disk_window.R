@@ -6,7 +6,6 @@ test_that("Disk_window is an S4 class", {
   window <- Disk_window()
 
   expect_is(window, "Disk_window")
-  expect_true(isS4(window))
 })
 
 test_that("Disk_window accessors", {
