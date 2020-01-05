@@ -42,23 +42,21 @@
 //   return std::make_pair(saved_location, saved_type);
 // }
 
-[[nodiscard]] inline Rcpp::S4 make_configuration(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector types_vector, Rcpp::CharacterVector types) {
+[[nodiscard]] inline Rcpp::List make_configuration(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector types_vector, Rcpp::CharacterVector types) {
   types_vector.attr("class") = "factor";
   types_vector.attr("levels") = types;
 
-  Rcpp::S4 configuration{"Configuration"};
-  configuration.slot("x") = x;
-  configuration.slot("y") = y;
-  configuration.slot("types") = types_vector;
+  Rcpp::List configuration = Rcpp::List::create(Rcpp::Named("x") = x, Rcpp::Named("y") = y, Rcpp::Named("types") = types_vector);
+  configuration.attr("class") = "Configuration";
   return configuration;
 }
 
 class Configuration_wrapper {
 public:
-  explicit Configuration_wrapper(Rcpp::S4 configuration):
-    x_{Rcpp::NumericVector(configuration.slot("x"))},
-    y_{Rcpp::NumericVector(configuration.slot("y"))},
-    types_{Rcpp::NumericVector(configuration.slot("types"))} {}
+  explicit Configuration_wrapper(Rcpp::List configuration):
+    x_{Rcpp::as<Rcpp::NumericVector>(configuration[0])},
+    y_{Rcpp::as<Rcpp::NumericVector>(configuration[1])},
+    types_{Rcpp::as<Rcpp::IntegerVector>(configuration[2])} {}
 
   [[nodiscard]] Rcpp::NumericVector x() const {
     return x_;

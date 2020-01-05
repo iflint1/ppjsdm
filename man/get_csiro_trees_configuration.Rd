@@ -4,8 +4,12 @@
 \alias{get_csiro_trees_configuration}
 \title{Return a configuration representing the locations of 'ten' species of trees in a given CSIRO experimental plot index by 'index', in a given 'year'.}
 \usage{
-get_csiro_trees_configuration(index = 15, year = 2013,
-  prevalent = 10, jitter = 0.3)
+get_csiro_trees_configuration(
+  index = 15,
+  year = 2013,
+  prevalent = 10,
+  jitter = 0.3
+)
 }
 \arguments{
 \item{index}{An index between 1 and 20 representing the experimental plot.}

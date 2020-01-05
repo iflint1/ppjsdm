@@ -4,8 +4,7 @@
 \alias{rppp}
 \title{Sample a Poisson point processes}
 \usage{
-rppp(window, lambda = as.numeric(c(1)), nsim = 1L, types = NULL,
-  drop = TRUE)
+rppp(window, lambda = as.numeric(c(1)), nsim = 1L, types = NULL, drop = TRUE)
 }
 \arguments{
 \item{window}{The window.}

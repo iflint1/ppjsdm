@@ -6,7 +6,6 @@ test_that("Configuration is an S4 class", {
   configuration <- Configuration(0, 1, factor(c("a")))
 
   expect_is(configuration, "Configuration")
-  expect_true(isS4(configuration))
 })
 
 test_that("Configuration accessors", {
@@ -113,6 +112,5 @@ test_that("Configuration unsupported constructors", {
   expect_error(Configuration(c(0), c(1, 2)))
   expect_error(Configuration(c(1, 2), 0))
   expect_error(Configuration(c('a', 'b'), c(1, 2)))
-  expect_error(Configuration(c(0, 1), c(2, 3), 2))
 })
 

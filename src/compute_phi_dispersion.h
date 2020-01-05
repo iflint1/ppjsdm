@@ -196,8 +196,7 @@ public:
     }
     // TODO: replace x.size() with "number of points of type `type`".
     // TODO: Faster with n ^ nu?
-    // TODO: 1 - nu or nu - 1?
-    return lambda_[type] * std::exp(inner_product - (1 - nu_[type]) * std::log(x.size() + 1));
+    return lambda_[type] * std::exp(inner_product + (1 - nu_[type]) * std::log(x.size() + 1));
   }
 private:
   U lambda_;

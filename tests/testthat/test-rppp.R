@@ -23,11 +23,14 @@ test_that("rppp wrong window type", {
 })
 
 test_that("rppp default n", {
-  lambda <- 1.5
+  lambda <- 2.5
   window <- Rectangle_window()
+  set.seed(42)
   sample <- rppp(window, lambda)
+  set.seed(42)
+  other_sample <- rppp(window, lambda, nsim = 1)
 
-  expect_equal(length(sample), 1)
+  expect_equal(sample, other_sample)
 })
 
 test_that("rppp default lambda", {

@@ -17,10 +17,12 @@ test_that("rbinomialpp return type", {
 
 test_that("rbinomialpp default n", {
   window <- Rectangle_window()
+  set.seed(42)
   sample <- rbinomialpp(window)
+  set.seed(42)
+  other_sample <- rbinomialpp(window, nsim = 1)
 
-  expect_equal(length(sample), 1)
-  expect_equal(length(x_coordinates(sample)), 1)
+  expect_equal(sample, other_sample)
 })
 
 

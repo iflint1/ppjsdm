@@ -1,18 +1,17 @@
 #ifndef INCLUDE_PPJSDM_RBINOMIALPP_SINGLE
 #define INCLUDE_PPJSDM_RBINOMIALPP_SINGLE
 
+#include <Rcpp.h>
+
+#include "configuration_utilities.h"
 #include "sample_from_window.h"
 #include "window_utilities.h"
 
-#include <Rcpp.h>
-
 template<Window WindowType>
-[[nodiscard]] inline Rcpp::S4 rbinomialpp_single(const Window_wrapper<WindowType>& window, Rcpp::IntegerVector n, Rcpp::CharacterVector types, R_xlen_t point_types, R_xlen_t total_number) {
+[[nodiscard]] inline Rcpp::List rbinomialpp_single(const Window_wrapper<WindowType>& window, Rcpp::IntegerVector n, Rcpp::CharacterVector types, R_xlen_t point_types, R_xlen_t total_number) {
   auto x{Rcpp::NumericVector(Rcpp::no_init(total_number))};
   auto y{Rcpp::NumericVector(Rcpp::no_init(total_number))};
   auto factors{Rcpp::IntegerVector(Rcpp::no_init(total_number))};
-  factors.attr("class") = "factor";
-  factors.attr("levels") = types;
 
   int fill{0};
   for(R_xlen_t j{0}; j < point_types; ++j) {
@@ -21,11 +20,7 @@ template<Window WindowType>
     fill += points_to_add;
   }
 
-  Rcpp::S4 configuration{"Configuration"};
-  configuration.slot("x") = x;
-  configuration.slot("y") = y;
-  configuration.slot("types") = factors;
-  return configuration;
+  return make_configuration(x, y, factors, types);
 }
 
 

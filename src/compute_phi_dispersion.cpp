@@ -16,10 +16,10 @@
 //' @useDynLib ppjsdm
 //' @import Rcpp
 // [[Rcpp::export]]
-[[nodiscard]] Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::S4 configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, Rcpp::CharacterVector model = "identity", double radius = 0) {
-  const auto x{Rcpp::NumericVector(configuration.slot("x"))};
-  const auto y{Rcpp::NumericVector(configuration.slot("y"))};
-  const auto types{Rcpp::IntegerVector(configuration.slot("types"))};
+[[nodiscard]] Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::List configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, Rcpp::CharacterVector model = "identity", double radius = 0) {
+  const auto x{Rcpp::as<Rcpp::NumericVector>(configuration[0])};
+  const auto y{Rcpp::as<Rcpp::NumericVector>(configuration[1])};
+  const auto types{Rcpp::as<Rcpp::IntegerVector>(configuration[2])};
   if(model[0] == "identity") {
     const auto varphi{Varphi_model_papangelou<varphi::Identity>{}};
     return varphi.compute(x, y, types,

@@ -6,12 +6,12 @@
 using namespace Rcpp;
 
 // compute_delta_phi_dispersion
-[[nodiscard]] Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::S4 configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, Rcpp::CharacterVector model, double radius);
+[[nodiscard]] Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::List configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, Rcpp::CharacterVector model, double radius);
 RcppExport SEXP _ppjsdm_compute_delta_phi_dispersion(SEXP configurationSEXP, SEXP locationSEXP, SEXP typeSEXP, SEXP number_typesSEXP, SEXP modelSEXP, SEXP radiusSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::S4 >::type configuration(configurationSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type configuration(configurationSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type location(locationSEXP);
     Rcpp::traits::input_parameter< R_xlen_t >::type type(typeSEXP);
     Rcpp::traits::input_parameter< int >::type number_types(number_typesSEXP);
@@ -22,12 +22,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // has_duplicates
-[[nodiscard]] bool has_duplicates(Rcpp::S4 configuration);
+[[nodiscard]] bool has_duplicates(Rcpp::List configuration);
 RcppExport SEXP _ppjsdm_has_duplicates(SEXP configurationSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::S4 >::type configuration(configurationSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type configuration(configurationSEXP);
     rcpp_result_gen = Rcpp::wrap(has_duplicates(configuration));
     return rcpp_result_gen;
 END_RCPP

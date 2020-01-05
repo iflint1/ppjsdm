@@ -4,8 +4,7 @@
 \alias{gibbsm}
 \title{Fit a multivariate Gibbs model to a dataset.}
 \usage{
-gibbsm(configuration, window, model = "identity", radius = 0,
-  print = TRUE)
+gibbsm(configuration, window, model = "identity", radius = 0, print = TRUE)
 }
 \arguments{
 \item{configuration}{A configuration assumed to be a draw from the multivariate Gibbs.}
