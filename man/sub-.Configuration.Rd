@@ -2,7 +2,7 @@
 % Please edit documentation in R/Configuration.R
 \name{[.Configuration}
 \alias{[.Configuration}
-\title{Configuration subset operator.}
+\title{Subset of the configuration consisting only of points of the i-th type.}
 \usage{
 \method{[}{Configuration}(x, i)
 }
@@ -12,5 +12,5 @@
 \item{i}{Subscript index.}
 }
 \description{
-Configuration subset operator.
+Subset of the configuration consisting only of points of the i-th type.
 }

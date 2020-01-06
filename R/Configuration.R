@@ -32,7 +32,7 @@ Configuration <- local({
 })
 
 
-#' Configuration subset operator.
+#' Subset of the configuration consisting only of points of the i-th type.
 #'
 #' @param x Configuration.
 #' @param i Subscript index.
@@ -43,29 +43,32 @@ Configuration <- local({
   Configuration(x = x$x[subset_indices], y = x$y[subset_indices], types = factor(types[subset_indices]))
 }
 
+format <- function(configuration) {
+  number_points <- length(configuration$x)
+  str <- paste0("An S3 object representing a configuration.\n\n")
+  str <- paste0(str, "Number of points: ")
+  str <- paste0(str, paste0(number_points, collapse = ", "))
+  str <- paste0(str, ".\n")
+  if(number_points > 0 && number_points < 50) {
+    str <- paste0(str, "\nPoints in the format (x-coordinate, y-coordinate, type): ")
+    str <- paste0(str, paste0("(", configuration$x, ", ", configuration$y, ", ", configuration$types, ")", collapse = ", "))
+    str <- paste0(str, ".\n\nCoordinate(s) along the x-axis: ")
+    str <- paste0(str, paste0(configuration$x, collapse = ", "))
+    str <- paste0(str, ".\n\nCoordinate(s) along the y-axis: ")
+    str <- paste0(str, paste0(configuration$y, collapse = ", "))
+    str <- paste0(str, ".\n\nType(s) of the point(s): ")
+    str <- paste0(str, paste0(configuration$types, collapse = ", "))
+    str <- paste0(str, ".\n")
+  }
+  cat(str)
+}
+
 #' Print a configuration class.
 #' @param x Configuration to print.
 #' @param ... Other arguments not yet used.
 #' @export
 print.Configuration <- function(x, ...) {
-  number_points <- length(x$x)
-  cat("An S3 object representing a configuration.\n\n")
-  cat("Number of points:", paste0(number_points, ".\n"))
-  if(number_points > 0 && number_points < 50) {
-    cat("\n")
-    cat("Points in the format (x-coordinate, y-coordinate, type): ")
-    cat(paste0("(", x$x, ", ", x$y, ", ", x$types, ")"), sep =", ")
-    cat(".\n\n")
-    cat("Coordinate(s) along the x-axis: ")
-    cat(x$x, sep = ", ")
-    cat(".\n\n")
-    cat("Coordinate(s) along the y-axis: ")
-    cat(x$y, sep = ", ")
-    cat(".\n\n")
-    cat("Type(s) of the point(s): ")
-    cat(x$types, sep = ", ")
-    cat(".\n")
-  }
+  format(x)
 }
 
 #' Number of points in a configuration
