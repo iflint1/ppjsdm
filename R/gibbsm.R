@@ -8,8 +8,10 @@
 #' @importFrom stats as.formula binomial glm
 #' @export
 gibbsm <- function(configuration, window, model = "identity", radius = 0, print = TRUE) {
+  num <- get_number_points(configuration)
+  num <- unlist(num, use.names = FALSE)
   # This is the guideline from the Baddeley et al. paper
-  rho <- 4 * get_number_points(configuration) / window_volume(window)
+  rho <- 4 * num / window_volume(window)
 
   types <- types(configuration)
   distinct_types <- levels(types)
@@ -45,14 +47,14 @@ gibbsm <- function(configuration, window, model = "identity", radius = 0, print 
   # TODO: Horrible, vectorise
   for(i in seq_len(n_Z + n_D)) {
     if(i <= n_Z) {
-      location <- c(configuration@x[i], configuration@y[i])
+      location <- c(x_coordinates(configuration)[i], y_coordinates(configuration)[i])
       type <- types(configuration)[i]
       type_index <- match(type, distinct_types)
 
       # TODO: We have i, should be quicker to remove from configuration
       disp <- compute_delta_phi_dispersion(remove_from_configuration(configuration, location, type), location, type_index - 1, p, model, radius)
     } else {
-      location <- c(D@x[i - n_Z], D@y[i - n_Z])
+      location <- c(x_coordinates(D)[i - n_Z], y_coordinates(D)[i - n_Z])
       type_index <- match(types(D)[i - n_Z], distinct_types)
 
       disp <- compute_delta_phi_dispersion(configuration, location, type_index - 1, p, model, radius)

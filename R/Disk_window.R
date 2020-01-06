@@ -17,7 +17,7 @@ Disk_window <- local({
         stop("radius should be a non-negative numeric vector of length 1 representing the radius.")
       }
 
-      structure(list(centre = centre, radius = radius), class = c("Disk_window", "Window"))
+      structure(list(centre = centre, radius = radius), class = c("Disk_window"))
     }
   }
 })

@@ -122,8 +122,8 @@ test_that("Configuration number of points", {
   types <- factor(c(rep("a", n1), rep("b", n2), rep("c", n3)))
   configuration <- Configuration(x = x_coordinates, y = y_coordinates, types = types)
 
-  expect_equal(get_number_points(configuration), c(n1, n2, n3))
-  expect_equal(get_number_points(configuration, total = FALSE), c(n1, n2, n3))
+  expect_equal(get_number_points(configuration), list(a = n1, b = n2, c = n3))
+  expect_equal(get_number_points(configuration, total = FALSE), list(a = n1, b = n2, c = n3))
   expect_equal(get_number_points(configuration, total = TRUE), n)
 })
 

@@ -68,11 +68,14 @@ test_that("rbinomialpp has correct number of points.", {
   n <- c(7, 2, 9, 4)
 
   sample <- rbinomialpp(window, n = n, nsim = 1)
-  expect_equal(get_number_points(sample), c(n[1], n[2], n[3], n[4]))
-  expect_equal(get_number_points(sample[1]), n[1])
-  expect_equal(get_number_points(sample[2]), n[2])
-  expect_equal(get_number_points(sample[3]), n[3])
-  expect_equal(get_number_points(sample[4]), n[4])
+  num <- get_number_points(sample)
+  num <- unlist(num, use.names = FALSE)
+
+  expect_equal(num, c(n[1], n[2], n[3], n[4]))
+  expect_equal(get_number_points(sample[1], total = TRUE), n[1])
+  expect_equal(get_number_points(sample[2], total = TRUE), n[2])
+  expect_equal(get_number_points(sample[3], total = TRUE), n[3])
+  expect_equal(get_number_points(sample[4], total = TRUE), n[4])
 })
 
 test_that("rbinomialpp Samples from the window populated by right amount of calls to runif", {

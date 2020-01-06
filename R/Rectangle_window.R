@@ -18,7 +18,7 @@ Rectangle_window <- local({
         stop("y_range should be a numeric vector of length 2 representing an interval (y_min, y_max).")
       }
 
-      structure(list(x_range = x_range, y_range = y_range), class = c("Rectangle_window", "Window"))
+      structure(list(x_range = x_range, y_range = y_range), class = c("Rectangle_window"))
     }
   }
 })
@@ -43,7 +43,7 @@ y_range <- function(window) {
 #'
 #' @param window The window.
 #' @export
-window_volume.Rectangle_Window <- function(window) {
+window_volume.Rectangle_window <- function(window) {
   x <- window$x_range
   y <- window$y_range
   (x[2] - x[1]) * (y[2] - y[1])

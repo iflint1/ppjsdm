@@ -87,14 +87,15 @@ get_number_points <- function(configuration, total = FALSE) {
   # TODO: Can probably add names to the returned vector to identify the types
   types <- configuration$types
   number_types <- length(levels(types))
-  result <- rep(NA, number_types)
+  result <- vector(mode = "list", length = number_types)
   index <- 1
   for(i in levels(types)) {
-    result[index] <- length(configuration$x[configuration$types == i])
+    result[[index]] <- length(configuration$x[configuration$types == i])
+    names(result)[index] <- i
     index <- index + 1
   }
   if(total) {
-    sum(result)
+    Reduce("+", result)
   } else {
     result
   }
