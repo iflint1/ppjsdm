@@ -72,6 +72,8 @@ test_that("Configuration unsupported constructors", {
   expect_error(Configuration(c(0), c(1, 2)))
   expect_error(Configuration(c(1, 2), 0))
   expect_error(Configuration(c('a', 'b'), c(1, 2)))
+  expect_error(Configuration(x = c(0, 0.2), y = c(1, 2), types = factor("a")))
+  expect_error(Configuration(x = c(0, 0.2), y = c(1, 2), types = factor(c("a", "a", "a"))))
 })
 
 

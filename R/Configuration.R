@@ -1,5 +1,3 @@
-# TODO : Add check for length(factor)
-
 #' Configuration constructor.
 #'
 #' @param x Values along the x-axis.
@@ -23,6 +21,10 @@ Configuration <- local({
         types <- factor(rep("default", length(x)))
       } else if(!is.factor(types)) {
         types <- factor(rep(types, length(x)))
+      } else {
+        if(length(types) != length(x)) {
+          stop("The types argument should be a factor with the same length as that of x.")
+        }
       }
       configuration <- structure(list(x = x, y = y, types = types), class = "Configuration")
     }
