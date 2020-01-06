@@ -18,8 +18,8 @@ gibbsm <- function(configuration, window, model = "identity", radius = 0, print 
   # TODO: binomial process should give better results, easy change.
   D <- rppp(window, lambda = rho, types = distinct_types)
 
-  n_Z <- sum(get_number_points(configuration))
-  n_D <- sum(get_number_points(D))
+  n_Z <- get_number_points(configuration, total = TRUE)
+  n_D <- get_number_points(D, total = TRUE)
   response <- c(rep.int(1, n_Z), rep.int(0, n_D))
 
   log_lambda <- matrix(0, n_Z + n_D, p)

@@ -60,7 +60,7 @@ format <- function(configuration) {
     str <- paste0(str, paste0(configuration$types, collapse = ", "))
     str <- paste0(str, ".\n")
   }
-  cat(str)
+  str
 }
 
 #' Print a configuration class.
@@ -68,13 +68,17 @@ format <- function(configuration) {
 #' @param ... Other arguments not yet used.
 #' @export
 print.Configuration <- function(x, ...) {
-  format(x)
+  str <- format(x)
+  cat(str)
 }
 
 #' Number of points in a configuration
-#' @param configuration The configuration.
+#'
+#' @param configuration Configuration.
+#' @param total If set to `FALSE`, returns a list containing the number of points of the different types;
+#' else returns the total number of points.
 #' @export
-get_number_points <- function(configuration) {
+get_number_points <- function(configuration, total = FALSE) {
   # TODO: The code below is horrible, it can definitely be vectorised...
   # TODO: Can probably add names to the returned vector to identify the types
   types <- configuration$types
@@ -85,18 +89,23 @@ get_number_points <- function(configuration) {
     result[index] <- length(configuration$x[configuration$types == i])
     index <- index + 1
   }
-  result
+  if(total) {
+    sum(result)
+  } else {
+    result
+  }
 }
 
 
 #' Plot a configuration class.
+#'
 #' @param x Configuration to plot.
 #' @param window Window the configuration belongs to.
 #' @param ... Other arguments not yet used.
 #' @importFrom graphics plot par legend
 #' @export
 plot.Configuration <- function(x, window = NULL, ...) {
-  if(sum(get_number_points(x)) > 0) {
+  if(get_number_points(x, total = TRUE) > 0) {
     if(missing(window)) {
       plot(x$x, x$y, col = x$types, xlab = "x", ylab = "y", main = "Points in the configuration")
     } else {
@@ -110,6 +119,7 @@ plot.Configuration <- function(x, window = NULL, ...) {
 }
 
 #' Access x-coordinates of a configuration
+#'
 #' @param configuration The configuration.
 #' @export
 x_coordinates <- function(configuration) {
@@ -117,6 +127,7 @@ x_coordinates <- function(configuration) {
 }
 
 #' Access y-coordinates of a configuration
+#'
 #' @param configuration The configuration.
 #' @export
 y_coordinates <- function(configuration) {
@@ -124,6 +135,7 @@ y_coordinates <- function(configuration) {
 }
 
 #' Access types of a configuration
+#'
 #' @param configuration The configuration.
 #' @export
 types <- function(configuration) {
@@ -131,6 +143,7 @@ types <- function(configuration) {
 }
 
 #' Convert a configuration class to a ppp from the SpatStat package.
+#'
 #' @param X Configuration.
 #' @param W Window on which the points are located.
 #' @param ... Not used.
@@ -142,6 +155,7 @@ as.ppp.Configuration <- function(X, W, ..., fatal = TRUE) {
 }
 
 #' Add a point to a configuration.
+#'
 #' @param configuration Configuration.
 #' @param x Point.
 #' @param type Point type.
@@ -154,6 +168,7 @@ add_to_configuration <- function(configuration, x, type) {
 }
 
 #' Remove a point from configuration (if it is in the configuration).
+#'
 #' @param configuration Configuration.
 #' @param x Point.
 #' @param type Point type.
@@ -169,6 +184,7 @@ remove_from_configuration <- function(configuration, x, type) {
 }
 
 #' Check whether a configuration is empty.
+#'
 #' @param configuration Configuration.
 #' @export
 is_empty <- function(configuration) {
@@ -176,6 +192,7 @@ is_empty <- function(configuration) {
 }
 
 #' Remove random point from the configuration.
+#'
 #' @param configuration Configuration.
 #' @export
 remove_random_point <- function(configuration) {

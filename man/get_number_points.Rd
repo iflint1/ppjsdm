@@ -4,10 +4,13 @@
 \alias{get_number_points}
 \title{Number of points in a configuration}
 \usage{
-get_number_points(configuration)
+get_number_points(configuration, total = FALSE)
 }
 \arguments{
-\item{configuration}{The configuration.}
+\item{configuration}{Configuration.}
+
+\item{total}{If set to `FALSE`, returns a list containing the number of points of the different types;
+else returns the total number of points.}
 }
 \description{
 Number of points in a configuration
