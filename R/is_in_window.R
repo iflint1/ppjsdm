@@ -5,19 +5,17 @@
 #' @param points Points.
 #' @param window Window.
 #' @export
-setGeneric("is_in_window", function(points, window) {
-  standardGeneric("is_in_window")
-})
+is_in_window <- function(points, window) UseMethod("is_in_window", window)
 
 #' Check if points are in rectangle window
 #'
 #' @param points Points.
 #' @param window Window
 #' @export
-setMethod("is_in_window", signature(window = "Rectangle_window"), function(points, window) {
+is_in_window.Rectangle_window <- function(points, window) {
   if(NROW(points) != 2) {
     stop("The points should have 2 rows and N columns, where N is the number of points and the rows are their coordinates.")
   }
   range <- cbind(x_range(window), y_range(window))
   all(points >= range[1,] & points <= range[2,])
-})
+}

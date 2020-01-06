@@ -16,8 +16,8 @@ Configuration <- local({
         configuration <- structure(list(x = x[, 1], y = x[, 2], types = factor(rep("default", length(x[, 1])))), class = "Configuration")
       }
     } else {
-      if(length(x) != length(y) || !is.vector(x) || !is.vector(y)) {
-        stop("x and y should be vectors with the same length.")
+      if(length(x) != length(y) || !is.vector(x) || !is.vector(y) || !is.numeric(x) || !is.numeric(y)) {
+        stop("x and y should be numeric vectors with the same length.")
       }
       if(missing(types)) {
         types <- factor(rep("default", length(x)))

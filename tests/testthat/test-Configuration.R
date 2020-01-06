@@ -2,7 +2,7 @@ library(ppjsdm)
 
 context("Configuration")
 
-test_that("Configuration is an S4 class", {
+test_that("Configuration is an S3 class", {
   configuration <- Configuration(0, 1, factor(c("a")))
 
   expect_is(configuration, "Configuration")
@@ -22,6 +22,17 @@ test_that("Configuration accessors", {
 
   expect_true(is.factor(types(configuration)))
   expect_true(all.equal(types(configuration), types))
+})
+
+test_that("Coerce type to factor", {
+  x_coordinates <- 0:2
+  y_coordinates <- 3:5
+  default_tag <- "a"
+  expect_equal(Configuration(x_coordinates, y_coordinates, default_tag),
+               Configuration(x_coordinates, y_coordinates, factor(c(default_tag, default_tag, default_tag))))
+  default_tag <- 3.3
+  expect_equal(Configuration(x_coordinates, y_coordinates, default_tag),
+               Configuration(x_coordinates, y_coordinates, factor(c(default_tag, default_tag, default_tag))))
 })
 
 test_that("Configuration copy-constructor", {
