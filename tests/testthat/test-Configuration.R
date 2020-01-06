@@ -51,6 +51,30 @@ test_that("Configuration constructor from matrix", {
   expect_identical(y_coordinates(configuration), c(1, 3))
 })
 
+test_that("Configuration default type", {
+  configuration <- Configuration(x = c(0, 1), y = c(2, 3))
+  other_configuration <- Configuration(x = c(0, 1), y = c(2, 3), types = factor(c("default", "default")))
+
+  expect_equal(configuration, other_configuration)
+})
+
+test_that("Configuration warning on duplicate points", {
+  x_coordinates <- c(0, 1, 1, 2)
+  y_coordinates <- c(2, 1, 1, 0)
+  types <- factor(c("a", "b", "b", "c"))
+
+  expect_warning(configuration <- Configuration(x = x_coordinates, y = y_coordinates, types = types))
+  expect_warning(Configuration(configuration))
+})
+
+test_that("Configuration unsupported constructors", {
+  expect_error(Configuration())
+  expect_error(Configuration(c(0), c(1, 2)))
+  expect_error(Configuration(c(1, 2), 0))
+  expect_error(Configuration(c('a', 'b'), c(1, 2)))
+})
+
+
 test_that("Configuration constructor specified arguments", {
   x_coordinates <- c(0, 1)
   y_coordinates <- c(2, 3)
@@ -96,15 +120,6 @@ test_that("Configuration number of points", {
   expect_equal(get_number_points(configuration), n)
 })
 
-test_that("Configuration warning on duplicate points", {
-  x_coordinates <- c(0, 1, 1, 2)
-  y_coordinates <- c(2, 1, 1, 0)
-  types <- factor(c("a", "b", "b", "c"))
-
-  expect_warning(configuration <- Configuration(x = x_coordinates, y = y_coordinates, types = types))
-  expect_warning(Configuration(configuration))
-})
-
 test_that("Configuration vectorised subscript operator", {
   x_coordinates <- 0:3
   y_coordinates <- 4:7
@@ -117,11 +132,3 @@ test_that("Configuration vectorised subscript operator", {
   expect_equal(configuration[-1], configuration[2:3])
   expect_equal(configuration[c(1, 3)], Configuration(x = c(0, 2, 3), y = c(4, 6, 7), types = factor(c("a", "a", "c"))))
 })
-
-test_that("Configuration unsupported constructors", {
-  expect_error(Configuration())
-  expect_error(Configuration(c(0), c(1, 2)))
-  expect_error(Configuration(c(1, 2), 0))
-  expect_error(Configuration(c('a', 'b'), c(1, 2)))
-})
-

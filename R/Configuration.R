@@ -1,5 +1,3 @@
-# TODO: Test factors
-
 #' Configuration constructor.
 #'
 #' @param x Values along the x-axis.
