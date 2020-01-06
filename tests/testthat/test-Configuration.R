@@ -111,13 +111,18 @@ test_that("Configuration subscript operator", {
 })
 
 test_that("Configuration number of points", {
-  n <- 72
+  n1 <- 12
+  n2 <- 41
+  n3 <- 4
+  n <- n1 + n2 + n3
   x_coordinates <- 0:(n - 1)
   y_coordinates <- 2:(n + 1)
-  types <- factor(rep("a", n))
+  types <- factor(c(rep("a", n1), rep("b", n2), rep("c", n3)))
   configuration <- Configuration(x = x_coordinates, y = y_coordinates, types = types)
 
-  expect_equal(get_number_points(configuration), n)
+  expect_equal(get_number_points(configuration), c(n1, n2, n3))
+  expect_equal(get_number_points(configuration, total = FALSE), c(n1, n2, n3))
+  expect_equal(get_number_points(configuration, total = TRUE), n)
 })
 
 test_that("Configuration vectorised subscript operator", {

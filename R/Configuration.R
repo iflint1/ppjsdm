@@ -1,3 +1,5 @@
+# TODO : Add check for length(factor)
+
 #' Configuration constructor.
 #'
 #' @param x Values along the x-axis.
