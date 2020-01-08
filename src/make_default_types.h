@@ -17,6 +17,14 @@ inline Rcpp::CharacterVector make_default_types(R_xlen_t size) {
   return default_types;
 }
 
+inline Rcpp::CharacterVector make_default_types(Rcpp::Nullable<Rcpp::CharacterVector> types, R_xlen_t size) {
+  if(types.isNull()) {
+    return make_default_types(size);
+  } else {
+    return types.as();
+  }
+}
+
 } // namespace ppjsdm
 
 #endif // INCLUDE_PPJSDM_MAKE_CONFIGURATION

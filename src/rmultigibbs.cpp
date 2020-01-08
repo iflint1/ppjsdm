@@ -14,14 +14,9 @@
 namespace ppjsdm {
 
 template<typename V, typename S>
-inline SEXP rmultigibbs_helper2(const S& window, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop, const V& varphi, R_xlen_t number_types) {
+inline SEXP rmultigibbs_helper2(const S& window, R_xlen_t steps, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, const V& varphi, R_xlen_t point_types) {
   const auto volume(window.volume());
   const double prob(0.5);
-
-  if(types.isNull()) {
-    types = Rcpp::wrap(make_default_types(number_types));
-  }
-  const auto types_char_vector(types.as());
 
   Rcpp::List samples(nsim);
 
@@ -39,13 +34,13 @@ inline SEXP rmultigibbs_helper2(const S& window, R_xlen_t steps, R_xlen_t nsim, 
       const auto u(unif_rand());
       const auto v(unif_rand());
       if(u <= prob) {
-        const R_xlen_t type(Rcpp::sample(number_types, 1, false, R_NilValue, false)[0]);
+        const R_xlen_t type(Rcpp::sample(point_types, 1, false, R_NilValue, false)[0]);
         const auto location_pair(window.sample());
         const Rcpp::NumericVector location{location_pair.first, location_pair.second};
 
         // TODO: You can avoid taking the exp by reorganising the ratio, and sampling an exponential r.v. instead.
-        const auto papangelou(varphi.compute_papangelou(x, y, types_vector, location, type, number_types));
-        const auto birth_ratio(papangelou * (1 - prob) * volume * number_types / (prob * (1 + total_number)));
+        const auto papangelou(varphi.compute_papangelou(x, y, types_vector, location, type, point_types));
+        const auto birth_ratio(papangelou * (1 - prob) * volume * point_types / (prob * (1 + total_number)));
 
         if(v <= birth_ratio) {
           // Add point to configuration
@@ -63,8 +58,8 @@ inline SEXP rmultigibbs_helper2(const S& window, R_xlen_t steps, R_xlen_t nsim, 
           y.erase(y.begin() + index);
           types_vector.erase(types_vector.begin() + index);
 
-          const auto papangelou(varphi.compute_papangelou(x, y, types_vector, saved_location, saved_type, number_types));
-          const auto death_ratio(prob * total_number / (number_types * (1 - prob) * volume * papangelou));
+          const auto papangelou(varphi.compute_papangelou(x, y, types_vector, saved_location, saved_type, point_types));
+          const auto death_ratio(prob * total_number / (point_types * (1 - prob) * volume * papangelou));
           if(v <= death_ratio) {
             --total_number;
           } else {
@@ -76,7 +71,7 @@ inline SEXP rmultigibbs_helper2(const S& window, R_xlen_t steps, R_xlen_t nsim, 
       }
     }
 
-    samples[i] = make_configuration(Rcpp::wrap(x), Rcpp::wrap(y), Rcpp::wrap(types_vector), types_char_vector);
+    samples[i] = make_configuration(Rcpp::wrap(x), Rcpp::wrap(y), Rcpp::wrap(types_vector), types);
   }
 
   if(nsim == 1 && drop == true) {
@@ -89,22 +84,24 @@ inline SEXP rmultigibbs_helper2(const S& window, R_xlen_t steps, R_xlen_t nsim, 
 template<typename W>
 inline SEXP rmultigibbs_helper(const W& window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericVector nu, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, Rcpp::CharacterVector model, bool drop) {
   // TODO: Use dispatcher as in windows_utilities.h?
+  const auto point_types(lambda.size());
+  const auto types_vector(ppjsdm::make_default_types(types, point_types));
   if(model[0] == "identity") {
     const Exponential_family_model<Varphi_model_papangelou<varphi::Identity>,
                                    decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha);
-    return rmultigibbs_helper2(window, steps, nsim, types, drop, varphi, lambda.size());
+    return rmultigibbs_helper2(window, steps, nsim, types_vector, drop, varphi, point_types);
   } else if(model[0] == "Strauss") {
     const Exponential_family_model<Varphi_model_papangelou<varphi::Strauss>,
                                    decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha, radius);
-    return rmultigibbs_helper2(window, steps, nsim, types, drop, varphi, lambda.size());
+    return rmultigibbs_helper2(window, steps, nsim, types_vector, drop, varphi, point_types);
   } else if(model[0] == "Geyer") {
     const Exponential_family_model<Geyer_papangelou,
                                    decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha, radius, 2.0);
-    return rmultigibbs_helper2(window, steps, nsim, types, drop, varphi, lambda.size());
+    return rmultigibbs_helper2(window, steps, nsim, types_vector, drop, varphi, point_types);
   } else if(model[0] == "neighbour") {
     const Exponential_family_model<Nearest_neighbour_papangelou<varphi::Identity>,
                                    decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha);
-    return rmultigibbs_helper2(window, steps, nsim, types, drop, varphi, lambda.size());
+    return rmultigibbs_helper2(window, steps, nsim, types_vector, drop, varphi, point_types);
   } else {
     Rcpp::stop("Incorrect model entered.\n");
   }

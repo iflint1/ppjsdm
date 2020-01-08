@@ -8,13 +8,8 @@
 namespace ppjsdm {
 
 template<typename S, typename T>
-inline SEXP rppp_helper2(const S& window, T lambda, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop) {
-  const auto point_types(lambda.size());
+inline SEXP rppp_helper2(const S& window, T lambda, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
   const auto volume(window.volume());
-
-  if(types.isNull()) {
-    types = Rcpp::wrap(make_default_types(point_types));
-  }
 
   Rcpp::List samples(nsim);
   Rcpp::IntegerVector number_points(Rcpp::no_init(point_types));
@@ -27,7 +22,7 @@ inline SEXP rppp_helper2(const S& window, T lambda, R_xlen_t nsim, Rcpp::Nullabl
       total_number += points_to_add;
     }
 
-    samples[i] = rbinomialpp_single(window, number_points, types.as(), point_types, total_number);
+    samples[i] = rbinomialpp_single(window, number_points, types, point_types, total_number);
   }
   if(nsim == 1 && drop == true) {
     return Rcpp::wrap(samples[0]);
@@ -40,10 +35,14 @@ template<typename W>
 inline SEXP rppp_helper(const W& window, SEXP lambda, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop) {
   if(Rf_isNewList(lambda)) {
     const Rcpp::List lambda_list(lambda);
-    return rppp_helper2(window, lambda_list, nsim, types, drop);
+    const auto point_types(lambda_list.size());
+    const auto types_vector(ppjsdm::make_default_types(types, point_types));
+    return rppp_helper2(window, lambda_list, nsim, types_vector, drop, point_types);
   } else {
     const Rcpp::NumericVector lambda_vector(lambda);
-    return rppp_helper2(window, lambda_vector, nsim, types, drop);
+    const auto point_types(lambda_vector.size());
+    const auto types_vector(ppjsdm::make_default_types(types, point_types));
+    return rppp_helper2(window, lambda_vector, nsim, types_vector, drop, point_types);
   }
 }
 
@@ -61,5 +60,7 @@ inline SEXP rppp_helper(const W& window, SEXP lambda, R_xlen_t nsim, Rcpp::Nulla
 //' @import Rcpp
 // [[Rcpp::export]]
 SEXP rppp(SEXP window, SEXP lambda = Rcpp::NumericVector::create(1), R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, bool drop = true) {
-  return ppjsdm::call_on_wrapped_window(window, [&lambda, nsim, &types, drop](const auto& w) { return ppjsdm::rppp_helper(w, lambda, nsim, types, drop); });
+  return ppjsdm::call_on_wrapped_window(window, [&lambda, nsim, &types, drop](const auto& w) {
+    return ppjsdm::rppp_helper(w, lambda, nsim, types, drop);
+  });
 }
