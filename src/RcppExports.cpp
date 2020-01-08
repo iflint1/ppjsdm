@@ -33,7 +33,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // rbinomialpp
-[[nodiscard]] SEXP rbinomialpp(SEXP window, Rcpp::IntegerVector n, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop);
+SEXP rbinomialpp(SEXP window, Rcpp::IntegerVector n, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop);
 RcppExport SEXP _ppjsdm_rbinomialpp(SEXP windowSEXP, SEXP nSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP dropSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -48,7 +48,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // rmultigibbs
-[[nodiscard]] SEXP rmultigibbs(SEXP window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericVector nu, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, Rcpp::CharacterVector model, bool drop);
+SEXP rmultigibbs(SEXP window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericVector nu, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, Rcpp::CharacterVector model, bool drop);
 RcppExport SEXP _ppjsdm_rmultigibbs(SEXP windowSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP radiusSEXP, SEXP stepsSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP modelSEXP, SEXP dropSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -68,7 +68,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // rppp
-[[nodiscard]] SEXP rppp(SEXP window, SEXP lambda, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop);
+SEXP rppp(SEXP window, SEXP lambda, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop);
 RcppExport SEXP _ppjsdm_rppp(SEXP windowSEXP, SEXP lambdaSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP dropSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

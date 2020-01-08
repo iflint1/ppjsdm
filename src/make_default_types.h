@@ -5,10 +5,10 @@
 
 #include <string> // std::to_string
 
-[[nodiscard]] inline Rcpp::CharacterVector make_default_types(R_xlen_t size) {
-  auto default_types{Rcpp::CharacterVector(Rcpp::no_init(size))};
+inline Rcpp::CharacterVector make_default_types(R_xlen_t size) {
+  Rcpp::CharacterVector default_types(Rcpp::no_init(size));
 
-  for(R_xlen_t i{0}; i < size; ++i) {
+  for(R_xlen_t i(0); i < size; ++i) {
     default_types[i] = std::to_string(i);
   }
 

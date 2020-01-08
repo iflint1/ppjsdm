@@ -12,7 +12,7 @@
 #include "window_utilities.h"
 
 template<typename V, typename S>
-[[nodiscard]] inline SEXP rmultigibbs_helper2(const S& window, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop, const V& varphi, R_xlen_t number_types) {
+inline SEXP rmultigibbs_helper2(const S& window, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop, const V& varphi, R_xlen_t number_types) {
   const auto volume(window.volume());
   const double prob(0.5);
 
@@ -85,7 +85,7 @@ template<typename V, typename S>
 }
 
 template<typename W>
-[[nodiscard]] inline SEXP rmultigibbs_helper(const W& window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericVector nu, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, Rcpp::CharacterVector model, bool drop) {
+inline SEXP rmultigibbs_helper(const W& window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericVector nu, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, Rcpp::CharacterVector model, bool drop) {
   // TODO: Use dispatcher as in windows_utilities.h?
   if(model[0] == "identity") {
     const Exponential_family_model<Varphi_model_papangelou<varphi::Identity>,
@@ -124,6 +124,6 @@ template<typename W>
 //' @useDynLib ppjsdm
 //' @import Rcpp
 // [[Rcpp::export]]
-[[nodiscard]] SEXP rmultigibbs(SEXP window, Rcpp::NumericMatrix alpha = 1, Rcpp::NumericVector lambda = 1, Rcpp::NumericVector nu = 1, double radius = 0, R_xlen_t steps = 30000, R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, Rcpp::CharacterVector model = "identity", bool drop = true) {
+SEXP rmultigibbs(SEXP window, Rcpp::NumericMatrix alpha = 1, Rcpp::NumericVector lambda = 1, Rcpp::NumericVector nu = 1, double radius = 0, R_xlen_t steps = 30000, R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, Rcpp::CharacterVector model = "identity", bool drop = true) {
   return call_on_wrapped_window(window, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop](const auto& w) { return rmultigibbs_helper(w, alpha, lambda, nu, radius, steps, nsim, types, model, drop); });
 }

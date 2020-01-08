@@ -5,7 +5,7 @@
 #include "window_utilities.h"
 
 template<typename W>
-[[nodiscard]] inline SEXP rbinomialpp_helper(const W& window, Rcpp::IntegerVector n, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop) {
+inline SEXP rbinomialpp_helper(const W& window, Rcpp::IntegerVector n, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop) {
   const auto point_types(n.size());
   const auto total_number(sum(n));
 
@@ -36,6 +36,6 @@ template<typename W>
 //' @useDynLib ppjsdm
 //' @import Rcpp
 // [[Rcpp::export]]
-[[nodiscard]] SEXP rbinomialpp(SEXP window, Rcpp::IntegerVector n = Rcpp::IntegerVector::create(1), R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, bool drop = true) {
+SEXP rbinomialpp(SEXP window, Rcpp::IntegerVector n = Rcpp::IntegerVector::create(1), R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, bool drop = true) {
   return call_on_wrapped_window(window, [&n, nsim, &types, drop](const auto& w) { return rbinomialpp_helper(w, n, nsim, types, drop); });
 }

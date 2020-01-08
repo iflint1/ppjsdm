@@ -6,7 +6,7 @@
 #include "window_utilities.h"
 
 template<typename S, typename T>
-[[nodiscard]] inline SEXP rppp_helper2(const S& window, T lambda, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop) {
+inline SEXP rppp_helper2(const S& window, T lambda, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop) {
   const auto point_types(lambda.size());
   const auto volume(window.volume());
 
@@ -35,7 +35,7 @@ template<typename S, typename T>
 }
 
 template<typename W>
-[[nodiscard]] inline SEXP rppp_helper(const W& window, SEXP lambda, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop) {
+inline SEXP rppp_helper(const W& window, SEXP lambda, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop) {
   if(Rf_isNewList(lambda)) {
     const Rcpp::List lambda_list(lambda);
     return rppp_helper2(window, lambda_list, nsim, types, drop);
@@ -56,6 +56,6 @@ template<typename W>
 //' @useDynLib ppjsdm
 //' @import Rcpp
 // [[Rcpp::export]]
-[[nodiscard]] SEXP rppp(SEXP window, SEXP lambda = Rcpp::NumericVector::create(1), R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, bool drop = true) {
+SEXP rppp(SEXP window, SEXP lambda = Rcpp::NumericVector::create(1), R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, bool drop = true) {
   return call_on_wrapped_window(window, [&lambda, nsim, &types, drop](const auto& w) { return rppp_helper(w, lambda, nsim, types, drop); });
 }
