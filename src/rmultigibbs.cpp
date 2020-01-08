@@ -7,6 +7,7 @@
 
 #include "compute_phi_dispersion.h"
 #include "configuration_utilities.h"
+#include "get_list_or_first_element.h"
 #include "rbinomialpp_single.h"
 #include "make_default_types.h"
 #include "window_utilities.h"
@@ -74,11 +75,7 @@ inline SEXP rmultigibbs_helper2(const S& window, R_xlen_t steps, R_xlen_t nsim, 
     samples[i] = make_configuration(Rcpp::wrap(x), Rcpp::wrap(y), Rcpp::wrap(types_vector), types);
   }
 
-  if(nsim == 1 && drop == true) {
-    return Rcpp::wrap(samples[0]);
-  } else {
-    return Rcpp::wrap(samples);
-  }
+  return get_list_or_first_element(samples, nsim, drop);
 }
 
 template<typename W>

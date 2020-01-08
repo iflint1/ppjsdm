@@ -1,5 +1,6 @@
 #include <Rcpp.h>
 
+#include "get_list_or_first_element.h"
 #include "rbinomialpp_single.h"
 #include "make_default_types.h"
 #include "window_utilities.h"
@@ -14,11 +15,7 @@ inline SEXP rbinomialpp_helper(const W& window, Rcpp::IntegerVector n, R_xlen_t 
   for(R_xlen_t i(0); i < nsim; ++i) {
     samples[i] = rbinomialpp_single(window, n, types, point_types, total_number);
   }
-  if(nsim == 1 && drop == true) {
-    return Rcpp::wrap(samples[0]);
-  } else {
-    return Rcpp::wrap(samples);
-  }
+  return get_list_or_first_element(samples, nsim, drop);
 }
 
 } // namespace ppjsdm

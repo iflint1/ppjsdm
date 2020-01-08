@@ -2,6 +2,7 @@
 #include <Rmath.h>
 
 #include "call_on_list_or_vector.h"
+#include "get_list_or_first_element.h"
 #include "rbinomialpp_single.h"
 #include "make_default_types.h"
 #include "window_utilities.h"
@@ -25,11 +26,7 @@ inline SEXP rppp_helper2(const S& window, T lambda, R_xlen_t nsim, Rcpp::Charact
 
     samples[i] = rbinomialpp_single(window, number_points, types, point_types, total_number);
   }
-  if(nsim == 1 && drop == true) {
-    return Rcpp::wrap(samples[0]);
-  } else {
-    return Rcpp::wrap(samples);
-  }
+  return get_list_or_first_element(samples, nsim, drop);
 }
 
 } // namespace ppjsdm
