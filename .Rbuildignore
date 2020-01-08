@@ -4,3 +4,4 @@
 benchmarks
 ^data-raw$
 ^scripts$
+^\.travis\.yml$
