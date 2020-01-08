@@ -54,8 +54,8 @@ public:
 
   std::pair<double, double> sample() const {
     while(true) {
-      const auto x{2 * unif_rand() - 1.0};
-      const auto y{2 * unif_rand() - 1.0};
+      const auto x(2 * unif_rand() - 1.0);
+      const auto y(2 * unif_rand() - 1.0);
       if(x * x + y * y <= 1) {
         return std::make_pair(x_ + radius_ * x,  y_ + radius_ * y);
       }

@@ -6,7 +6,13 @@
 #include <tuple> // std::tuple
 #include <vector> // std::vector
 
+namespace ppjsdm {
+namespace detail {
+
 using Marked_point = std::tuple<double, double, int>;
+
+} // namespace detail
+} // namespace ppjsdm
 
 //' Check if a configuration contains duplicates.
 //'
@@ -16,6 +22,7 @@ using Marked_point = std::tuple<double, double, int>;
 //' @import Rcpp
 // [[Rcpp::export]]
 bool has_duplicates(Rcpp::List configuration) {
+  typedef ppjsdm::detail::Marked_point Marked_point;
   const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
   const R_xlen_t number_points(wrapped_configuration.get_number_points());
   std::vector<Marked_point> points(number_points);
