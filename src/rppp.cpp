@@ -5,6 +5,8 @@
 #include "make_default_types.h"
 #include "window_utilities.h"
 
+namespace ppjsdm {
+
 template<typename S, typename T>
 inline SEXP rppp_helper2(const S& window, T lambda, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop) {
   const auto point_types(lambda.size());
@@ -45,6 +47,8 @@ inline SEXP rppp_helper(const W& window, SEXP lambda, R_xlen_t nsim, Rcpp::Nulla
   }
 }
 
+} // namespace ppjsdm
+
 //' Sample a Poisson point processes
 //'
 //' @param window The window.
@@ -57,5 +61,5 @@ inline SEXP rppp_helper(const W& window, SEXP lambda, R_xlen_t nsim, Rcpp::Nulla
 //' @import Rcpp
 // [[Rcpp::export]]
 SEXP rppp(SEXP window, SEXP lambda = Rcpp::NumericVector::create(1), R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, bool drop = true) {
-  return call_on_wrapped_window(window, [&lambda, nsim, &types, drop](const auto& w) { return rppp_helper(w, lambda, nsim, types, drop); });
+  return ppjsdm::call_on_wrapped_window(window, [&lambda, nsim, &types, drop](const auto& w) { return ppjsdm::rppp_helper(w, lambda, nsim, types, drop); });
 }

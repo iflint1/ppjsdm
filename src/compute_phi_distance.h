@@ -3,6 +3,7 @@
 
 #include <cmath> // std::sqrt
 
+namespace ppjsdm {
 namespace varphi {
 
 class Identity {
@@ -34,7 +35,7 @@ private:
   double square_radius_;
 };
 
-}
+} // namespace varphi
 
 template<typename V>
 double compute_phi_distance(double x1, double y1, double x2, double y2, const V& varphi) {
@@ -43,5 +44,7 @@ double compute_phi_distance(double x1, double y1, double x2, double y2, const V&
   const auto square_distance(delta_x * delta_x + delta_y * delta_y);
   return varphi.apply(square_distance);
 }
+
+} // namespace ppjsdm
 
 #endif // INCLUDE_PPJSDM_PHI_DISTANCE

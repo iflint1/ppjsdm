@@ -21,19 +21,19 @@ Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::List configuration, Rcpp:
   const auto y(Rcpp::as<Rcpp::NumericVector>(configuration["y"]));
   const auto types(Rcpp::as<Rcpp::IntegerVector>(configuration["types"]));
   if(model[0] == "identity") {
-    const Varphi_model_papangelou<varphi::Identity> varphi{};
+    const ppjsdm::Varphi_model_papangelou<ppjsdm::varphi::Identity> varphi{};
     return varphi.compute(x, y, types,
                           location, type, number_types, x.size());
   } else if(model[0] == "Strauss") {
-    const Varphi_model_papangelou<varphi::Strauss> varphi(radius);
+    const ppjsdm::Varphi_model_papangelou<ppjsdm::varphi::Strauss> varphi(radius);
     return varphi.compute(x, y, types,
                           location, type, number_types, x.size());
   } else if(model[0] == "Geyer"){
-    const Geyer_papangelou varphi(radius, 2.0);
+    const ppjsdm::Geyer_papangelou varphi(radius, 2.0);
     return varphi.compute(x, y, types,
                           location, type, number_types, x.size());
   } else if(model[0] == "neighbour"){
-    const Nearest_neighbour_papangelou<varphi::Identity> varphi{};
+    const ppjsdm::Nearest_neighbour_papangelou<ppjsdm::varphi::Identity> varphi{};
     // TODO: At the moment, I'm using push_backs in the computation, so I need to convert to std::vector first
     std::vector<double> x_vector(x.size());
     std::vector<double> y_vector(x.size());

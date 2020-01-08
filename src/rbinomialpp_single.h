@@ -6,6 +6,8 @@
 #include "configuration_utilities.h"
 #include "sample_from_window.h"
 
+namespace ppjsdm {
+
 template<typename W>
 inline Rcpp::List rbinomialpp_single(const W& window, Rcpp::IntegerVector n, Rcpp::CharacterVector types, R_xlen_t point_types, R_xlen_t total_number) {
   Rcpp::NumericVector x(Rcpp::no_init(total_number));
@@ -22,5 +24,6 @@ inline Rcpp::List rbinomialpp_single(const W& window, Rcpp::IntegerVector n, Rcp
   return make_configuration(x, y, factors, types);
 }
 
+} // namespace ppjsdm
 
 #endif // INCLUDE_PPJSDM_RBINOMIALPP_SINGLE

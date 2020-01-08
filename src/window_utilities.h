@@ -6,6 +6,8 @@
 #include <tuple> // std::pair
 #include <utility> // std::forward
 
+namespace ppjsdm {
+
 enum class Window {rectangle, disk};
 
 template <Window WindowType>
@@ -84,5 +86,7 @@ inline auto call_on_wrapped_window(Rcpp::List window, F&& f, Args&&... args)
     Rcpp::stop("Incorrect window type.");
   }
 }
+
+} // namespace ppjsdm
 
 #endif // INCLUDE_PPJSDM_WINDOW_UTILITIES

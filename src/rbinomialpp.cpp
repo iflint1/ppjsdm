@@ -4,6 +4,8 @@
 #include "make_default_types.h"
 #include "window_utilities.h"
 
+namespace ppjsdm {
+
 template<typename W>
 inline SEXP rbinomialpp_helper(const W& window, Rcpp::IntegerVector n, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop) {
   const auto point_types(n.size());
@@ -24,6 +26,7 @@ inline SEXP rbinomialpp_helper(const W& window, Rcpp::IntegerVector n, R_xlen_t 
   }
 }
 
+} // namespace ppjsdm
 
 //' Sample a binomial point processes
 //'
@@ -37,5 +40,7 @@ inline SEXP rbinomialpp_helper(const W& window, Rcpp::IntegerVector n, R_xlen_t 
 //' @import Rcpp
 // [[Rcpp::export]]
 SEXP rbinomialpp(SEXP window, Rcpp::IntegerVector n = Rcpp::IntegerVector::create(1), R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, bool drop = true) {
-  return call_on_wrapped_window(window, [&n, nsim, &types, drop](const auto& w) { return rbinomialpp_helper(w, n, nsim, types, drop); });
+  return ppjsdm::call_on_wrapped_window(window, [&n, nsim, &types, drop](const auto& w) {
+    return ppjsdm::rbinomialpp_helper(w, n, nsim, types, drop);
+  });
 }

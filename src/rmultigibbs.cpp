@@ -11,6 +11,8 @@
 #include "make_default_types.h"
 #include "window_utilities.h"
 
+namespace ppjsdm {
+
 template<typename V, typename S>
 inline SEXP rmultigibbs_helper2(const S& window, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop, const V& varphi, R_xlen_t number_types) {
   const auto volume(window.volume());
@@ -108,6 +110,8 @@ inline SEXP rmultigibbs_helper(const W& window, Rcpp::NumericMatrix alpha, Rcpp:
   }
 }
 
+} // namespace ppjsdm
+
 //' Sample a multivariate Gibbs point processes
 //'
 //' @param window The window.
@@ -125,5 +129,7 @@ inline SEXP rmultigibbs_helper(const W& window, Rcpp::NumericMatrix alpha, Rcpp:
 //' @import Rcpp
 // [[Rcpp::export]]
 SEXP rmultigibbs(SEXP window, Rcpp::NumericMatrix alpha = 1, Rcpp::NumericVector lambda = 1, Rcpp::NumericVector nu = 1, double radius = 0, R_xlen_t steps = 30000, R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, Rcpp::CharacterVector model = "identity", bool drop = true) {
-  return call_on_wrapped_window(window, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop](const auto& w) { return rmultigibbs_helper(w, alpha, lambda, nu, radius, steps, nsim, types, model, drop); });
+  return ppjsdm::call_on_wrapped_window(window, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop](const auto& w) {
+    return ppjsdm::rmultigibbs_helper(w, alpha, lambda, nu, radius, steps, nsim, types, model, drop);
+  });
 }

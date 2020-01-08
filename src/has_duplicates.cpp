@@ -16,7 +16,7 @@ using Marked_point = std::tuple<double, double, int>;
 //' @import Rcpp
 // [[Rcpp::export]]
 bool has_duplicates(Rcpp::List configuration) {
-  const Configuration_wrapper wrapped_configuration(configuration);
+  const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
   const R_xlen_t number_points(wrapped_configuration.get_number_points());
   std::vector<Marked_point> points(number_points);
   for(R_xlen_t i(0); i < number_points; ++i) {

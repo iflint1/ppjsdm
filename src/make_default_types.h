@@ -5,6 +5,8 @@
 
 #include <string> // std::to_string
 
+namespace ppjsdm {
+
 inline Rcpp::CharacterVector make_default_types(R_xlen_t size) {
   Rcpp::CharacterVector default_types(Rcpp::no_init(size));
 
@@ -15,5 +17,6 @@ inline Rcpp::CharacterVector make_default_types(R_xlen_t size) {
   return default_types;
 }
 
+} // namespace ppjsdm
 
 #endif // INCLUDE_PPJSDM_MAKE_CONFIGURATION

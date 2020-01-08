@@ -3,6 +3,8 @@
 
 #include <Rcpp.h>
 
+namespace ppjsdm {
+
 inline Rcpp::List make_configuration(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector types_vector, Rcpp::CharacterVector types) {
   types_vector.attr("class") = "factor";
   types_vector.attr("levels") = types;
@@ -40,5 +42,7 @@ private:
   Rcpp::NumericVector y_;
   Rcpp::IntegerVector types_;
 };
+
+} // namespace ppjsdm
 
 #endif // INCLUDE_PPJSDM_CONFIGURATION_UTILITIES

@@ -9,6 +9,8 @@
 
 #include "compute_phi_distance.h"
 
+namespace ppjsdm {
+
 template<typename Varphi>
 class Varphi_model_papangelou: public Varphi {
 public:
@@ -185,5 +187,7 @@ private:
   V nu_;
   W alpha_;
 };
+
+} // namespace ppjsdm
 
 #endif // INCLUDE_PPJSDM_PHI_DISPERSION
