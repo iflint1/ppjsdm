@@ -75,7 +75,7 @@ class Geyer_papangelou {
 public:
   Geyer_papangelou(double radius, double saturation) noexcept: square_radius_(radius * radius), saturation_(saturation) {}
   template<typename X, typename Y, typename T>
-  inline Rcpp::NumericVector compute(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, [[maybe_unused]] R_xlen_t type, R_xlen_t number_types, R_xlen_t number_points) const {
+  inline Rcpp::NumericVector compute(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location,R_xlen_t, R_xlen_t number_types, R_xlen_t number_points) const {
     Rcpp::NumericVector delta_dispersion(number_types);
     for(R_xlen_t i(0); i < number_points; ++i) {
       const auto type_i(types_vector[i] - 1);

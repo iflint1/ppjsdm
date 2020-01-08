@@ -23,7 +23,7 @@ bool has_duplicates(Rcpp::List configuration) {
     points[i] = Marked_point(wrapped_configuration.x()[i], wrapped_configuration.y()[i], wrapped_configuration.types()[i]);
   }
   std::sort(points.begin(), points.end());
-  const auto unique_end{std::unique(points.begin(), points.end())};
+  const auto unique_end(std::unique(points.begin(), points.end()));
 
   return unique_end != points.end();
 }
