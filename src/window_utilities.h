@@ -7,6 +7,7 @@
 #include <utility> // std::forward
 
 namespace ppjsdm {
+namespace detail {
 
 enum class Window {rectangle, disk};
 
@@ -72,18 +73,19 @@ private:
   double radius_;
 };
 
+} // namespace detail
+
 template<typename F, typename... Args>
-inline auto call_on_wrapped_window(Rcpp::List window, F&& f, Args&&... args)
-  -> decltype(std::forward<F>(f)(Window_wrapper<Window::rectangle>(window, std::forward<Args>(args)...))) {
+inline auto call_on_wrapped_window(Rcpp::List window, F&& f, Args&&... args) {
   // TODO: Better to do a switch on attr("class")
   if(Rf_inherits(window, "Rectangle_window")) {
-    const Window_wrapper<Window::rectangle> wrapped_window(window);
+    const detail::Window_wrapper<detail::Window::rectangle> wrapped_window(window);
     return std::forward<F>(f)(wrapped_window, std::forward<Args>(args)...);
   } else if(Rf_inherits(window, "Disk_window")) {
-    const Window_wrapper<Window::disk> wrapped_window(window);
+    const detail::Window_wrapper<detail::Window::disk> wrapped_window(window);
     return std::forward<F>(f)(wrapped_window, std::forward<Args>(args)...);
   } else {
-    Rcpp::stop("Incorrect window type.");
+    Rcpp::stop("Unrecognised window type.");
   }
 }
 
