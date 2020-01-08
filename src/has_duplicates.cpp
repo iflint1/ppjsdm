@@ -15,12 +15,12 @@ using Marked_point = std::tuple<double, double, int>;
 //' @useDynLib ppjsdm
 //' @import Rcpp
 // [[Rcpp::export]]
-[[nodiscard]] bool has_duplicates(Rcpp::List configuration) {
-  const Configuration_wrapper wrapped_configuration{configuration};
-  const R_xlen_t number_points{wrapped_configuration.get_number_points()};
+bool has_duplicates(Rcpp::List configuration) {
+  const Configuration_wrapper wrapped_configuration(configuration);
+  const R_xlen_t number_points(wrapped_configuration.get_number_points());
   std::vector<Marked_point> points(number_points);
-  for(R_xlen_t i{0}; i < number_points; ++i) {
-    points[i] = Marked_point{wrapped_configuration.x()[i], wrapped_configuration.y()[i], wrapped_configuration.types()[i]};
+  for(R_xlen_t i(0); i < number_points; ++i) {
+    points[i] = Marked_point(wrapped_configuration.x()[i], wrapped_configuration.y()[i], wrapped_configuration.types()[i]);
   }
   std::sort(points.begin(), points.end());
   const auto unique_end{std::unique(points.begin(), points.end())};
