@@ -4,7 +4,6 @@
 #include <Rcpp.h>
 
 #include "configuration_utilities.h"
-#include "sample_from_window.h"
 
 namespace ppjsdm {
 
@@ -17,7 +16,12 @@ inline Rcpp::List rbinomialpp_single(const W& window, Rcpp::IntegerVector n, Rcp
   int fill(0);
   for(R_xlen_t j(0); j < point_types; ++j) {
     const auto points_to_add(n[j]);
-    sample_from_window(window, x, y, factors, points_to_add, fill, j + 1);
+    for(R_xlen_t i(0); i < points_to_add; ++i) {
+      const auto sample(window.sample());
+      x[fill + i] = sample.first;
+      y[fill + i] = sample.second;
+      factors[fill + i] = j + 1;
+    }
     fill += points_to_add;
   }
 
