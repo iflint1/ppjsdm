@@ -22,7 +22,7 @@ public:
 
 class Strauss {
 public:
-  explicit Strauss(double radius) noexcept: square_radius_{radius * radius} {}
+  explicit Strauss(double radius) noexcept: square_radius_(radius * radius) {}
   double apply(double square_distance) const {
     if(square_distance <= square_radius_) {
       return 1.;
