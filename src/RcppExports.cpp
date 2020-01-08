@@ -6,7 +6,7 @@
 using namespace Rcpp;
 
 // compute_delta_phi_dispersion
-[[nodiscard]] Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::List configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, Rcpp::CharacterVector model, double radius);
+Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::List configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, Rcpp::CharacterVector model, double radius);
 RcppExport SEXP _ppjsdm_compute_delta_phi_dispersion(SEXP configurationSEXP, SEXP locationSEXP, SEXP typeSEXP, SEXP number_typesSEXP, SEXP modelSEXP, SEXP radiusSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -22,7 +22,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // has_duplicates
-[[nodiscard]] bool has_duplicates(Rcpp::List configuration);
+bool has_duplicates(Rcpp::List configuration);
 RcppExport SEXP _ppjsdm_has_duplicates(SEXP configurationSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
