@@ -21,16 +21,16 @@ public:
     y_(Rcpp::as<Rcpp::NumericVector>(configuration["y"])),
     types_(Rcpp::as<Rcpp::IntegerVector>(configuration["types"])) {}
 
-  Rcpp::NumericVector x() const {
-    return x_;
+  double x(R_xlen_t index) const {
+    return x_[index];
   }
 
-  Rcpp::NumericVector y() const {
-    return y_;
+  double y(R_xlen_t index) const {
+    return y_[index];
   }
 
-  Rcpp::IntegerVector types() const {
-    return types_;
+  int types(R_xlen_t index) const {
+    return types_[index];
   }
 
   R_xlen_t get_number_points() const {
