@@ -33,6 +33,18 @@ public:
     return types_[index];
   }
 
+  Rcpp::NumericVector x() const {
+    return x_;
+  }
+
+  Rcpp::NumericVector y() const {
+    return y_;
+  }
+
+  Rcpp::IntegerVector types() const {
+    return types_;
+  }
+
   R_xlen_t get_number_points() const {
     return x_.size();
   }
