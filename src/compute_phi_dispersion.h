@@ -57,7 +57,7 @@ public:
     }
 
     for(R_xlen_t i(0); i < number_types; ++i) {
-      const auto count_species_i{count_species[i]};
+      const auto count_species_i(count_species[i]);
       if(count_species_i > 0) {
         if(i == type) {
           delta_dispersion[i] *= 2. / (count_species_i * (count_species_i + 1));
