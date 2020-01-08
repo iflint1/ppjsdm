@@ -37,12 +37,10 @@ private:
 }
 
 template<typename V>
-[[nodiscard]] double compute_phi_distance(double x1, double y1, double x2, double y2, const V& varphi) {
-  const auto delta_x{x2 - x1};
-  const auto delta_y{y2 - y1};
-
-  const auto square_distance{delta_x * delta_x + delta_y * delta_y};
-
+double compute_phi_distance(double x1, double y1, double x2, double y2, const V& varphi) {
+  const auto delta_x(x2 - x1);
+  const auto delta_y(y2 - y1);
+  const auto square_distance(delta_x * delta_x + delta_y * delta_y);
   return varphi.apply(square_distance);
 }
 
