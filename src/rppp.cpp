@@ -7,20 +7,20 @@
 
 template<typename S, typename T>
 [[nodiscard]] inline SEXP rppp_helper2(const S& window, T lambda, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop) {
-  const auto point_types{lambda.size()};
-  const auto volume{window.volume()};
+  const auto point_types(lambda.size());
+  const auto volume(window.volume());
 
   if(types.isNull()) {
     types = Rcpp::wrap(make_default_types(point_types));
   }
 
-  Rcpp::List samples{nsim};
-  auto number_points{Rcpp::IntegerVector(Rcpp::no_init(point_types))};
+  Rcpp::List samples(nsim);
+  Rcpp::IntegerVector number_points(Rcpp::no_init(point_types));
 
-  for(R_xlen_t i{0}; i < nsim; ++i) {
-    R_xlen_t total_number{0};
-    for(R_xlen_t j{0}; j < point_types; ++j) {
-      const auto points_to_add{R::rpois(volume * static_cast<double>(lambda[j]))};
+  for(R_xlen_t i(0); i < nsim; ++i) {
+    R_xlen_t total_number(0);
+    for(R_xlen_t j(0); j < point_types; ++j) {
+      const auto points_to_add(R::rpois(volume * static_cast<double>(lambda[j])));
       number_points[j] = points_to_add;
       total_number += points_to_add;
     }
