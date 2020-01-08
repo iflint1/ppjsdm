@@ -4,6 +4,7 @@
 #include <Rcpp.h>
 
 #include <tuple> // std::pair
+#include <utility> // std::forward
 
 enum class Window {rectangle, disk};
 
@@ -14,20 +15,20 @@ template <>
 class Window_wrapper<Window::rectangle> {
 public:
   explicit Window_wrapper(Rcpp::List window) {
-    const auto x{Rcpp::as<Rcpp::NumericVector>(window[0])};
+    const Rcpp::NumericVector x(Rcpp::as<Rcpp::NumericVector>(window["x_range"]));
     x_0_ = x[0];
     delta_x_ = x[1] - x_0_;
 
-    const auto y{Rcpp::as<Rcpp::NumericVector>(window[1])};
+    const Rcpp::NumericVector y(Rcpp::as<Rcpp::NumericVector>(window["y_range"]));
     y_0_ = y[0];
     delta_y_ = y[1] - y_0_;
   }
 
-  [[nodiscard]] std::pair<double, double> sample() const {
+  std::pair<double, double> sample() const {
     return std::make_pair(x_0_ + unif_rand() * delta_x_,  y_0_ + unif_rand() * delta_y_);
   }
 
-  [[nodiscard]] double volume() const {
+  double volume() const {
     return delta_x_ * delta_y_;
   }
 
@@ -42,14 +43,14 @@ template <>
 class Window_wrapper<Window::disk> {
 public:
   explicit Window_wrapper(Rcpp::List window) {
-    const auto centre{Rcpp::as<Rcpp::NumericVector>(window[0])};
+    const Rcpp::NumericVector centre(Rcpp::as<Rcpp::NumericVector>(window["centre"]));
     x_ = centre[0];
     y_ = centre[1];
 
-    radius_ = static_cast<double>(window[1]);
+    radius_ = static_cast<double>(window["radius"]);
   }
 
-  [[nodiscard]] std::pair<double, double> sample() const {
+  std::pair<double, double> sample() const {
     while(true) {
       const auto x{2 * unif_rand() - 1.0};
       const auto y{2 * unif_rand() - 1.0};
@@ -59,7 +60,7 @@ public:
     }
   }
 
-  [[nodiscard]] double volume() const {
+  double volume() const {
     return M_PI * radius_ * radius_;
   }
 
@@ -69,11 +70,16 @@ private:
   double radius_;
 };
 
-[[nodiscard]] inline Window get_window_type(const Rcpp::List window) {
+template<typename F, typename... Args>
+inline auto call_on_wrapped_window(Rcpp::List window, F&& f, Args&&... args)
+  -> decltype(std::forward<F>(f)(Window_wrapper<Window::rectangle>(window, std::forward<Args>(args)...))) {
+  // TODO: Better to do a switch on attr("class")
   if(Rf_inherits(window, "Rectangle_window")) {
-    return Window::rectangle;
+    const Window_wrapper<Window::rectangle> wrapped_window(window);
+    return std::forward<F>(f)(wrapped_window, std::forward<Args>(args)...);
   } else if(Rf_inherits(window, "Disk_window")) {
-    return Window::disk;
+    const Window_wrapper<Window::disk> wrapped_window(window);
+    return std::forward<F>(f)(wrapped_window, std::forward<Args>(args)...);
   } else {
     Rcpp::stop("Incorrect window type.");
   }

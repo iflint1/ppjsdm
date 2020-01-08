@@ -34,15 +34,14 @@ template<typename S, typename T>
   }
 }
 
-template<Window WindowType>
-[[nodiscard]] inline SEXP rppp_helper(SEXP window, SEXP lambda, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop) {
-  const Window_wrapper<WindowType> window_wrapper{window};
+template<typename W>
+[[nodiscard]] inline SEXP rppp_helper(const W& window, SEXP lambda, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop) {
   if(Rf_isNewList(lambda)) {
     const Rcpp::List lambda_list(lambda);
-    return rppp_helper2(window_wrapper, lambda_list, nsim, types, drop);
+    return rppp_helper2(window, lambda_list, nsim, types, drop);
   } else {
     const Rcpp::NumericVector lambda_vector(lambda);
-    return rppp_helper2(window_wrapper, lambda_vector, nsim, types, drop);
+    return rppp_helper2(window, lambda_vector, nsim, types, drop);
   }
 }
 
@@ -58,11 +57,5 @@ template<Window WindowType>
 //' @import Rcpp
 // [[Rcpp::export]]
 [[nodiscard]] SEXP rppp(SEXP window, SEXP lambda = Rcpp::NumericVector::create(1), R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, bool drop = true) {
-  if(Rf_inherits(window, "Rectangle_window")) {
-    return rppp_helper<Window::rectangle>(window, lambda, nsim, types, drop);
-  } else if(Rf_inherits(window, "Disk_window")) {
-    return rppp_helper<Window::disk>(window, lambda, nsim, types, drop);
-  } else {
-    Rcpp::stop("Only rectangle/disk window implemented for now.");
-  }
+  return call_on_wrapped_window(window, [&lambda, nsim, &types, drop](const auto& w) { return rppp_helper(w, lambda, nsim, types, drop); });
 }
