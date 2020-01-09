@@ -6,9 +6,9 @@
 \usage{
 rmultigibbs(
   window,
-  alpha = 1L,
-  lambda = 1L,
-  nu = 1L,
+  alpha,
+  lambda,
+  nu,
   radius = 0,
   steps = 30000L,
   nsim = 1L,

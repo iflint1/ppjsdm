@@ -7,9 +7,8 @@
 
 namespace ppjsdm {
 
-template<typename T>
-inline Rcpp::CharacterVector make_default_types(const T& might_contain_names, R_xlen_t size) {
-  const SEXP potential_names(might_contain_names.names());
+inline Rcpp::CharacterVector make_default_types(SEXP might_contain_names, R_xlen_t size) {
+  const SEXP potential_names(RCPP_GET_NAMES(might_contain_names));
   const auto given_names = Rf_isNull(potential_names)?
                             Rcpp::CharacterVector(size):
                             Rcpp::as<Rcpp::CharacterVector>(potential_names);

@@ -36,7 +36,7 @@ has_duplicates <- function(configuration) {
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-rbinomialpp <- function(window, n = as.integer( c(1)), nsim = 1L, types = NULL, drop = TRUE) {
+rbinomialpp <- function(window, n = NULL, nsim = 1L, types = NULL, drop = TRUE) {
     .Call('_ppjsdm_rbinomialpp', PACKAGE = 'ppjsdm', window, n, nsim, types, drop)
 }
 

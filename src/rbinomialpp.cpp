@@ -4,6 +4,7 @@
 #include "get_list_or_first_element.h"
 #include "rbinomialpp_single.h"
 #include "make_default_types.h"
+#include "resolve_defaults.h"
 #include "sum.h"
 #include "window_utilities.h"
 
@@ -33,11 +34,13 @@ inline SEXP rbinomialpp_helper(const W& window, const T& n, R_xlen_t nsim, Rcpp:
 //' @useDynLib ppjsdm
 //' @import Rcpp
 // [[Rcpp::export]]
-SEXP rbinomialpp(SEXP window, SEXP n = Rcpp::IntegerVector::create(1), R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, bool drop = true) {
-  return ppjsdm::call_on_wrapped_window(window, [&n, nsim, &types, drop](const auto& w) {
-    return ppjsdm::call_on_list_or_vector(n, [&w, nsim, &types, drop](const auto& m) {
-      const auto point_types(m.size());
-      return ppjsdm::rbinomialpp_helper(w, m, nsim, ppjsdm::make_default_types(types, m, point_types), drop, point_types);
+SEXP rbinomialpp(SEXP window, SEXP n = R_NilValue, R_xlen_t nsim = 1, SEXP types = R_NilValue, bool drop = true) {
+  const auto point_types(ppjsdm::get_number_types_and_check_conformance(n, types));
+  n = ppjsdm::default_construct_if_missing<Rcpp::IntegerVector>(point_types, n, 1);
+  types = ppjsdm::make_default_types(types, n, point_types);
+  return ppjsdm::call_on_wrapped_window(window, [&n, nsim, &types, drop, point_types](const auto& w) {
+    return ppjsdm::call_on_list_or_vector(n, [&w, nsim, &types, drop, point_types](const auto& m) {
+      return ppjsdm::rbinomialpp_helper(w, m, nsim, types, drop, point_types);
     });
   });
 }

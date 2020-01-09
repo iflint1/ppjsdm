@@ -44,11 +44,11 @@ inline SEXP rppp_helper(const S& window, const T& lambda, R_xlen_t nsim, Rcpp::C
 // [[Rcpp::export]]
 SEXP rppp(SEXP window, SEXP lambda = R_NilValue, R_xlen_t nsim = 1, SEXP types = R_NilValue, bool drop = true) {
   const auto point_types(ppjsdm::get_number_types_and_check_conformance(lambda, types));
-  Rcpp::NumericVector new_lambda(ppjsdm::default_construct_if_missing<Rcpp::NumericVector>(point_types, lambda, 1));
-  return ppjsdm::call_on_wrapped_window(window, [point_types, &new_lambda, nsim, &types, drop](const auto& w) {
-    return ppjsdm::call_on_list_or_vector(new_lambda, [point_types, &w, nsim, &types, drop](const auto& l) {
-      const auto types_vector(ppjsdm::make_default_types(types, l, point_types));
-      return ppjsdm::rppp_helper(w, l, nsim, types_vector, drop, point_types);
+  lambda = ppjsdm::default_construct_if_missing<Rcpp::NumericVector>(point_types, lambda, 1);
+  types = ppjsdm::make_default_types(types, lambda, point_types);
+  return ppjsdm::call_on_wrapped_window(window, [point_types, &lambda, nsim, &types, drop](const auto& w) {
+    return ppjsdm::call_on_list_or_vector(lambda, [point_types, &w, nsim, &types, drop](const auto& l) {
+      return ppjsdm::rppp_helper(w, l, nsim, types, drop, point_types);
     });
   });
 }
