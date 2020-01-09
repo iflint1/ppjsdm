@@ -55,7 +55,7 @@ rbinomialpp <- function(window, n = as.integer( c(1)), nsim = 1L, types = NULL, 
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-rmultigibbs <- function(window, alpha = 1L, lambda = 1L, nu = 1L, radius = 0, steps = 30000L, nsim = 1L, types = NULL, model = "identity", drop = TRUE) {
+rmultigibbs <- function(window, alpha, lambda, nu, radius = 0, steps = 30000L, nsim = 1L, types = NULL, model = "identity", drop = TRUE) {
     .Call('_ppjsdm_rmultigibbs', PACKAGE = 'ppjsdm', window, alpha, lambda, nu, radius, steps, nsim, types, model, drop)
 }
 
@@ -69,7 +69,7 @@ rmultigibbs <- function(window, alpha = 1L, lambda = 1L, nu = 1L, radius = 0, st
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-rppp <- function(window, lambda = as.numeric( c(1)), nsim = 1L, types = NULL, drop = TRUE) {
+rppp <- function(window, lambda = NULL, nsim = 1L, types = NULL, drop = TRUE) {
     .Call('_ppjsdm_rppp', PACKAGE = 'ppjsdm', window, lambda, nsim, types, drop)
 }
 

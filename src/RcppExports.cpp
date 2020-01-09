@@ -68,7 +68,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // rppp
-SEXP rppp(SEXP window, SEXP lambda, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop);
+SEXP rppp(SEXP window, SEXP lambda, R_xlen_t nsim, SEXP types, bool drop);
 RcppExport SEXP _ppjsdm_rppp(SEXP windowSEXP, SEXP lambdaSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP dropSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -76,7 +76,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type window(windowSEXP);
     Rcpp::traits::input_parameter< SEXP >::type lambda(lambdaSEXP);
     Rcpp::traits::input_parameter< R_xlen_t >::type nsim(nsimSEXP);
-    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type types(typesSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type types(typesSEXP);
     Rcpp::traits::input_parameter< bool >::type drop(dropSEXP);
     rcpp_result_gen = Rcpp::wrap(rppp(window, lambda, nsim, types, drop));
     return rcpp_result_gen;

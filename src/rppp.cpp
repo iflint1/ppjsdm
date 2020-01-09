@@ -5,10 +5,12 @@
 #include "get_list_or_first_element.h"
 #include "rbinomialpp_single.h"
 #include "make_default_types.h"
+#include "resolve_defaults.h"
 #include "window_utilities.h"
 
 namespace ppjsdm {
 
+// TODO: This overcomplication can be avoided by calling R internals to calls lambda[j]
 template<typename S, typename T>
 inline SEXP rppp_helper(const S& window, const T& lambda, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
   Rcpp::List samples(nsim);
@@ -40,10 +42,11 @@ inline SEXP rppp_helper(const S& window, const T& lambda, R_xlen_t nsim, Rcpp::C
 //' @useDynLib ppjsdm
 //' @import Rcpp
 // [[Rcpp::export]]
-SEXP rppp(SEXP window, SEXP lambda = Rcpp::NumericVector::create(1), R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, bool drop = true) {
-  return ppjsdm::call_on_wrapped_window(window, [&lambda, nsim, &types, drop](const auto& w) {
-    return ppjsdm::call_on_list_or_vector(lambda, [&w, nsim, &types, drop](const auto& l) {
-      const auto point_types(l.size());
+SEXP rppp(SEXP window, SEXP lambda = R_NilValue, R_xlen_t nsim = 1, SEXP types = R_NilValue, bool drop = true) {
+  const auto point_types(ppjsdm::get_number_types_and_check_conformance(lambda, types));
+  Rcpp::NumericVector new_lambda(ppjsdm::default_construct_if_missing<Rcpp::NumericVector>(point_types, lambda, 1));
+  return ppjsdm::call_on_wrapped_window(window, [point_types, &new_lambda, nsim, &types, drop](const auto& w) {
+    return ppjsdm::call_on_list_or_vector(new_lambda, [point_types, &w, nsim, &types, drop](const auto& l) {
       const auto types_vector(ppjsdm::make_default_types(types, l, point_types));
       return ppjsdm::rppp_helper(w, l, nsim, types_vector, drop, point_types);
     });
