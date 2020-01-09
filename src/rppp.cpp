@@ -10,16 +10,14 @@
 namespace ppjsdm {
 
 template<typename S, typename T>
-inline SEXP rppp_helper(const S& window, T lambda, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
-  const auto volume(window.volume());
-
+inline SEXP rppp_helper(const S& window, const T& lambda, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
   Rcpp::List samples(nsim);
   Rcpp::IntegerVector number_points(Rcpp::no_init(point_types));
 
   for(R_xlen_t i(0); i < nsim; ++i) {
     R_xlen_t total_number(0);
     for(R_xlen_t j(0); j < point_types; ++j) {
-      const auto points_to_add(R::rpois(volume * static_cast<double>(lambda[j])));
+      const auto points_to_add(R::rpois(window.volume() * static_cast<double>(lambda[j])));
       number_points[j] = points_to_add;
       total_number += points_to_add;
     }

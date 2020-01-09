@@ -123,6 +123,8 @@ inline SEXP rmultigibbs_helper(const W& window, Rcpp::NumericMatrix alpha, Rcpp:
 //' @import Rcpp
 // [[Rcpp::export]]
 SEXP rmultigibbs(SEXP window, Rcpp::NumericMatrix alpha = 1, Rcpp::NumericVector lambda = 1, Rcpp::NumericVector nu = 1, double radius = 0, R_xlen_t steps = 30000, R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, Rcpp::CharacterVector model = "identity", bool drop = true) {
+  // TODO: Add check for size of alpha.
+  // TODO: I'm getting a crash on multiple point types -- debug.
   return ppjsdm::call_on_wrapped_window(window, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop](const auto& w) {
     return ppjsdm::rmultigibbs_helper(w, alpha, lambda, nu, radius, steps, nsim, types, model, drop);
   });

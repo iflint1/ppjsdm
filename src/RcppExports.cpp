@@ -33,13 +33,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // rbinomialpp
-SEXP rbinomialpp(SEXP window, Rcpp::IntegerVector n, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop);
+SEXP rbinomialpp(SEXP window, SEXP n, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, bool drop);
 RcppExport SEXP _ppjsdm_rbinomialpp(SEXP windowSEXP, SEXP nSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP dropSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type window(windowSEXP);
-    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type n(nSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type n(nSEXP);
     Rcpp::traits::input_parameter< R_xlen_t >::type nsim(nsimSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::CharacterVector> >::type types(typesSEXP);
     Rcpp::traits::input_parameter< bool >::type drop(dropSEXP);
