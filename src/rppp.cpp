@@ -10,7 +10,7 @@
 namespace ppjsdm {
 
 template<typename S, typename T>
-inline SEXP rppp_helper2(const S& window, T lambda, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
+inline SEXP rppp_helper(const S& window, T lambda, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
   const auto volume(window.volume());
 
   Rcpp::List samples(nsim);
@@ -46,8 +46,8 @@ SEXP rppp(SEXP window, SEXP lambda = Rcpp::NumericVector::create(1), R_xlen_t ns
   return ppjsdm::call_on_wrapped_window(window, [&lambda, nsim, &types, drop](const auto& w) {
     return ppjsdm::call_on_list_or_vector(lambda, [&w, nsim, &types, drop](const auto& l) {
       const auto point_types(l.size());
-      const auto types_vector(ppjsdm::make_default_types(types, point_types));
-      return ppjsdm::rppp_helper2(w, l, nsim, types_vector, drop, point_types);
+      const auto types_vector(ppjsdm::make_default_types(types, l, point_types));
+      return ppjsdm::rppp_helper(w, l, nsim, types_vector, drop, point_types);
     });
   });
 }

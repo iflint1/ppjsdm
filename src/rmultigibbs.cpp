@@ -82,7 +82,7 @@ template<typename W>
 inline SEXP rmultigibbs_helper(const W& window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericVector nu, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, Rcpp::CharacterVector model, bool drop) {
   // TODO: Use dispatcher as in windows_utilities.h?
   const auto point_types(lambda.size());
-  const auto types_vector(ppjsdm::make_default_types(types, point_types));
+  const auto types_vector(ppjsdm::make_default_types(types, lambda, point_types));
   if(model[0] == "identity") {
     const Exponential_family_model<Varphi_model_papangelou<varphi::Identity>,
                                    decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha);

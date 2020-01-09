@@ -3,26 +3,40 @@
 
 #include <Rcpp.h>
 
-#include <string> // std::to_string
+#include <string> // std::string, std::to_string
 
 namespace ppjsdm {
 
-inline Rcpp::CharacterVector make_default_types(R_xlen_t size) {
+template<typename T>
+inline Rcpp::CharacterVector make_default_types(const T& might_contain_names, R_xlen_t size) {
+  const SEXP potential_names(might_contain_names.names());
+  const auto given_names = Rf_isNull(potential_names)?
+                            Rcpp::CharacterVector(size):
+                            Rcpp::as<Rcpp::CharacterVector>(potential_names);
   Rcpp::CharacterVector default_types(Rcpp::no_init(size));
-
   for(R_xlen_t i(0); i < size; ++i) {
-    default_types[i] = std::to_string(i);
+    if(given_names[i] != "") {
+      default_types[i] = given_names[i];
+    } else {
+      default_types[i] = std::string("type").append(std::to_string(i));
+    }
   }
 
   return default_types;
 }
 
-inline Rcpp::CharacterVector make_default_types(Rcpp::Nullable<Rcpp::CharacterVector> types, R_xlen_t size) {
+template<typename T>
+inline Rcpp::CharacterVector make_default_types(Rcpp::Nullable<Rcpp::CharacterVector> types, const T& might_contain_names, R_xlen_t size) {
   if(types.isNull()) {
-    return make_default_types(size);
+    return make_default_types(might_contain_names, size);
   } else {
     return types.as();
   }
+}
+
+template<typename T>
+inline Rcpp::CharacterVector make_default_types(Rcpp::Nullable<Rcpp::CharacterVector> types, const T& might_contain_names) {
+  return make_default_types(types, might_contain_names, might_contain_names.size());
 }
 
 } // namespace ppjsdm

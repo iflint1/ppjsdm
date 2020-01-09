@@ -34,6 +34,6 @@ inline SEXP rbinomialpp_helper(const W& window, Rcpp::IntegerVector n, R_xlen_t 
 SEXP rbinomialpp(SEXP window, Rcpp::IntegerVector n = Rcpp::IntegerVector::create(1), R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, bool drop = true) {
   return ppjsdm::call_on_wrapped_window(window, [&n, nsim, &types, drop](const auto& w) {
     const auto point_types(n.size());
-    return ppjsdm::rbinomialpp_helper(w, n, nsim, ppjsdm::make_default_types(types, point_types), drop, point_types);
+    return ppjsdm::rbinomialpp_helper(w, n, nsim, ppjsdm::make_default_types(types, n, point_types), drop, point_types);
   });
 }
