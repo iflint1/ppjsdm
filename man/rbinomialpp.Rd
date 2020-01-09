@@ -7,15 +7,17 @@
 rbinomialpp(window = NULL, n = NULL, nsim = 1L, types = NULL, drop = TRUE)
 }
 \arguments{
-\item{window}{The window.}
+\item{window}{The window. Default is a Rectangle window [0, 1]^2.}
 
-\item{n}{A vector representing the number of points of each types of the multipoint binomial point processes.}
+\item{n}{A vector representing the number of points of each types of the multipoint binomial point processes.
+Default is a vector of same size as types, filled with ones.}
 
-\item{nsim}{Number of samples to generate.}
+\item{nsim}{Number of samples to generate. Default is 1.}
 
-\item{types}{Types of the points.}
+\item{types}{Types of the points. Default is a vector (type1, type2, ...) of same size as n.}
 
-\item{drop}{If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration.}
+\item{drop}{If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration.
+Default is TRUE.}
 }
 \description{
 Sample a binomial point processes

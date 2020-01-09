@@ -28,11 +28,13 @@ has_duplicates <- function(configuration) {
 
 #' Sample a binomial point processes
 #'
-#' @param window The window.
+#' @param window The window. Default is a Rectangle window [0, 1]^2.
 #' @param n A vector representing the number of points of each types of the multipoint binomial point processes.
-#' @param nsim Number of samples to generate.
-#' @param types Types of the points.
+#' Default is a vector of same size as types, filled with ones.
+#' @param nsim Number of samples to generate. Default is 1.
+#' @param types Types of the points. Default is a vector (type1, type2, ...) of same size as n.
 #' @param drop If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration.
+#' Default is TRUE.
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
