@@ -3,7 +3,7 @@ library(methods)
 
 context("rbinomialpp")
 
-test_that("rbinomialpp return type.", {
+test_that("Return type.", {
   n <- 19
   nsim <- 14
   sample <- rbinomialpp(n = n, nsim = nsim, drop = FALSE)
@@ -19,7 +19,12 @@ test_that("rbinomialpp return type.", {
   expect_equal(length(x_coordinates(sample)), n)
 })
 
-test_that("rbinomialpp default arguments.", {
+test_that("rppp wrong window type.", {
+  window <- structure(list(x_range = x_range, y_range = y_range))
+  expect_error(rbinomialpp(window = window))
+})
+
+test_that("Default arguments.", {
   set.seed(42)
   sample <- rbinomialpp()
   set.seed(42)
@@ -84,8 +89,7 @@ test_that("Look for inconsistencies in arguments n and types.", {
   expect_error(rbinomialpp(n = list(1, 1), types = c("a")))
 })
 
-
-test_that("rbinomialpp is in correct range (rectangle window).", {
+test_that("Is in correct range (rectangle window).", {
   x_range <- c(-0.5, 4.5)
   y_range <- c(-0.8, -0.5)
   number_tests <- 100
@@ -103,7 +107,7 @@ test_that("rbinomialpp is in correct range (rectangle window).", {
   expect_true(expect_true_condition)
 })
 
-test_that("rbinomialpp is in correct range (disk window).", {
+test_that("Is in correct range (disk window).", {
   centre <- c(-0.5, 4.5)
   radius <- 1.9
   number_tests <- 100
@@ -120,7 +124,7 @@ test_that("rbinomialpp is in correct range (disk window).", {
   expect_true(expect_true_condition)
 })
 
-test_that("rbinomialpp has correct number of points.", {
+test_that("Has correct number of points.", {
   x_range <- c(-0.5, 4.5)
   y_range <- c(-0.8, -0.5)
   window <- Rectangle_window(x_range, y_range)
@@ -137,7 +141,7 @@ test_that("rbinomialpp has correct number of points.", {
   expect_equal(get_number_points(sample[4], total = TRUE), n[4])
 })
 
-test_that("rbinomialpp Samples from the window populated by right amount of calls to runif.", {
+test_that("Samples from the window populated by right amount of calls to runif.", {
   default_range <- c(0, 1)
   arbitrary_seed <- 42
   window <- Rectangle_window(default_range, default_range)
