@@ -1,6 +1,7 @@
 #ifndef INCLUDE_PPJSDM_RESOLVE_DEFAULTS
 #define INCLUDE_PPJSDM_RESOLVE_DEFAULTS
 
+#include <Rcpp.h>
 #include <Rinternals.h>
 
 namespace ppjsdm {
@@ -33,7 +34,13 @@ inline auto get_number_types_and_check_conformance(Args&... args) {
 template<typename Type, typename U>
 inline SEXP default_construct_if_missing(R_xlen_t number_types, SEXP x, U def) {
   if(Rf_isNull(x)) {
-    return Rcpp::wrap(Type(number_types, def));
+    // The constructor that default-constructs to a given value does not work on Windows with RTools,
+    // so do the construction by hand.
+    Type new_value(number_types);
+    for(R_xlen_t i(0); i < number_types; ++i) {
+      new_value[i] = def;
+    }
+    return Rcpp::wrap(new_value);
   } else {
     return x;
   }
