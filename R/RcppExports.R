@@ -36,7 +36,7 @@ has_duplicates <- function(configuration) {
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-rbinomialpp <- function(window, n = NULL, nsim = 1L, types = NULL, drop = TRUE) {
+rbinomialpp <- function(window = NULL, n = NULL, nsim = 1L, types = NULL, drop = TRUE) {
     .Call('_ppjsdm_rbinomialpp', PACKAGE = 'ppjsdm', window, n, nsim, types, drop)
 }
 
@@ -69,7 +69,7 @@ rmultigibbs <- function(window, alpha, lambda, nu, radius = 0, steps = 30000L, n
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-rppp <- function(window, lambda = NULL, nsim = 1L, types = NULL, drop = TRUE) {
+rppp <- function(window = NULL, lambda = NULL, nsim = 1L, types = NULL, drop = TRUE) {
     .Call('_ppjsdm_rppp', PACKAGE = 'ppjsdm', window, lambda, nsim, types, drop)
 }
 

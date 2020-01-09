@@ -2,6 +2,7 @@
 #define INCLUDE_PPJSDM_WINDOW_UTILITIES
 
 #include <Rcpp.h>
+#include <Rinternals.h>
 
 #include <tuple> // std::pair
 #include <utility> // std::forward
@@ -17,6 +18,7 @@ class Window_wrapper;
 template <>
 class Window_wrapper<Window::rectangle> {
 public:
+  Window_wrapper(): x_0_(0), delta_x_(1), y_0_(0), delta_y_(1) {}
   explicit Window_wrapper(Rcpp::List window) {
     const Rcpp::NumericVector x(Rcpp::as<Rcpp::NumericVector>(window["x_range"]));
     x_0_ = x[0];
@@ -45,6 +47,7 @@ private:
 template <>
 class Window_wrapper<Window::disk> {
 public:
+  Window_wrapper(): x_(0), y_(0), radius_(1) {}
   explicit Window_wrapper(Rcpp::List window) {
     const Rcpp::NumericVector centre(Rcpp::as<Rcpp::NumericVector>(window["centre"]));
     x_ = centre[0];
@@ -76,9 +79,12 @@ private:
 } // namespace detail
 
 template<typename F, typename... Args>
-inline auto call_on_wrapped_window(Rcpp::List window, F&& f, Args&&... args) {
-  // TODO: Better to do a switch on attr("class")
-  if(Rf_inherits(window, "Rectangle_window")) {
+inline auto call_on_wrapped_window(SEXP window, F&& f, Args&&... args) {
+  if(Rf_isNull(window)) {
+    const detail::Window_wrapper<detail::Window::rectangle> wrapped_window{};
+    return std::forward<F>(f)(wrapped_window, std::forward<Args>(args)...);
+  }
+  else if(Rf_inherits(window, "Rectangle_window")) { // TODO: Better to do a switch on attr("class")
     const detail::Window_wrapper<detail::Window::rectangle> wrapped_window(window);
     return std::forward<F>(f)(wrapped_window, std::forward<Args>(args)...);
   } else if(Rf_inherits(window, "Disk_window")) {

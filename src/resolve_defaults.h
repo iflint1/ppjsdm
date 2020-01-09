@@ -32,7 +32,7 @@ inline auto get_number_types_and_check_conformance(Args&... args) {
 }
 
 template<typename Type, typename U>
-inline SEXP default_construct_if_missing(R_xlen_t number_types, SEXP x, U def) {
+inline SEXP construct_if_missing(R_xlen_t number_types, SEXP x, U def) {
   if(Rf_isNull(x)) {
     // The constructor that default-constructs to a given value does not work on Windows with RTools,
     // so do the construction by hand.
