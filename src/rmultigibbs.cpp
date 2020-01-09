@@ -3,7 +3,6 @@
 
 #include <cmath> // std::exp
 #include <vector> // std::vector
-#include <cstring> // std::strcmp
 
 #include "compute_phi_dispersion.h"
 #include "configuration_utilities.h"
@@ -21,7 +20,7 @@ inline SEXP rmultigibbs_helper2(const S& window, R_xlen_t steps, R_xlen_t nsim, 
 
   Rcpp::List samples(nsim);
 
-  for(R_xlen_t i{0}; i < nsim; ++i) {
+  for(R_xlen_t i(0); i < nsim; ++i) {
     // TODO: This can likely be made faster by using one unique vector, since all 3 have the same length.
     // TODO: Make an std_vector_configuration wrapper to make everything more straightforward.
     // TODO: Preallocate with a rough estimate of final size?
@@ -29,9 +28,9 @@ inline SEXP rmultigibbs_helper2(const S& window, R_xlen_t steps, R_xlen_t nsim, 
     std::vector<double> y;
     std::vector<int> types_vector;
 
-    R_xlen_t total_number{0};
+    R_xlen_t total_number(0);
 
-    for(R_xlen_t step{0}; step < steps; ++step) {
+    for(R_xlen_t step(0); step < steps; ++step) {
       const auto u(unif_rand());
       const auto v(unif_rand());
       if(u <= prob) {
@@ -122,7 +121,7 @@ inline SEXP rmultigibbs_helper(const W& window, Rcpp::NumericMatrix alpha, Rcpp:
 //' @useDynLib ppjsdm
 //' @import Rcpp
 // [[Rcpp::export]]
-SEXP rmultigibbs(SEXP window, Rcpp::NumericMatrix alpha = 1, Rcpp::NumericVector lambda = 1, Rcpp::NumericVector nu = 1, double radius = 0, R_xlen_t steps = 30000, R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, Rcpp::CharacterVector model = "identity", bool drop = true) {
+SEXP rmultigibbs(SEXP window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericVector nu, double radius = 0, R_xlen_t steps = 30000, R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, Rcpp::CharacterVector model = "identity", bool drop = true) {
   // TODO: Add check for size of alpha.
   // TODO: I'm getting a crash on multiple point types -- debug.
   return ppjsdm::call_on_wrapped_window(window, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop](const auto& w) {
