@@ -1,7 +1,5 @@
 #include <Rcpp.h>
 
-#include <vector> // std::vector
-
 #include "compute_phi_dispersion.h"
 #include "configuration_utilities.h"
 
@@ -20,20 +18,7 @@
 Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::List configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, Rcpp::CharacterVector model = "identity", double radius = 0) {
   const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
   const auto number_points(wrapped_configuration.get_number_points());
-  if(model[0] == "identity") {
-    const ppjsdm::Varphi_model_papangelou<ppjsdm::varphi::Identity> varphi{};
-    return varphi.compute(wrapped_configuration.x(), wrapped_configuration.y(), wrapped_configuration.types(), location, type, number_types, number_points);
-  } else if(model[0] == "Strauss") {
-    const ppjsdm::Varphi_model_papangelou<ppjsdm::varphi::Strauss> varphi(radius);
-    return varphi.compute(wrapped_configuration.x(), wrapped_configuration.y(), wrapped_configuration.types(), location, type, number_types, number_points);
-  } else if(model[0] == "Geyer"){
-    const ppjsdm::Geyer_papangelou varphi(radius, 2.0);
-    return varphi.compute(wrapped_configuration.x(), wrapped_configuration.y(), wrapped_configuration.types(), location, type, number_types, number_points);
-  } else if(model[0] == "neighbour"){
-    const ppjsdm::Nearest_neighbour_papangelou<ppjsdm::varphi::Identity> varphi{};
-    return varphi.compute(wrapped_configuration.x(), wrapped_configuration.y(), wrapped_configuration.types(),
-                          location, type, number_types, number_points);
-  } else {
-    Rcpp::stop("Incorrect model entered.\n");
-  }
+  return ppjsdm::call_on_papangelou(model, radius, [&wrapped_configuration, &location, type, number_types, number_points](const auto& papangelou) {
+    return papangelou.compute(wrapped_configuration.x(), wrapped_configuration.y(), wrapped_configuration.types(), location, type, number_types, number_points);
+  });
 }
