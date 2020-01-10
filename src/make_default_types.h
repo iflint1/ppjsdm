@@ -5,14 +5,28 @@
 #include <Rinternals.h>
 
 #include <string> // std::string, std::to_string
+#include <utility> // std::forward
 
 namespace ppjsdm {
 
-inline SEXP make_default_types(SEXP might_contain_names, R_xlen_t size) {
+inline Rcpp::CharacterVector get_best_names(R_xlen_t size) {
+  return Rcpp::CharacterVector(size);
+}
+
+template<typename... Args>
+inline Rcpp::CharacterVector get_best_names(R_xlen_t size, SEXP might_contain_names, Args&&... other) {
   const SEXP potential_names(RCPP_GET_NAMES(might_contain_names));
-  const auto given_names = Rf_isNull(potential_names)?
-                            Rcpp::CharacterVector(size):
-                            Rcpp::as<Rcpp::CharacterVector>(potential_names);
+  Rcpp::CharacterVector given_names;
+  if(Rf_isNull(potential_names)) {
+    return get_best_names(size, std::forward<Args>(other)...);
+  } else {
+    return Rcpp::as<Rcpp::CharacterVector>(potential_names);
+  }
+}
+
+template<typename... Args>
+inline SEXP make_default_types(R_xlen_t size, Args&&... might_contain_names) {
+  Rcpp::CharacterVector given_names(get_best_names(size, std::forward<Args>(might_contain_names)...));
   Rcpp::CharacterVector default_types(Rcpp::no_init(size));
   for(R_xlen_t i(0); i < size; ++i) {
     if(given_names[i] != "") {
@@ -25,10 +39,10 @@ inline SEXP make_default_types(SEXP might_contain_names, R_xlen_t size) {
   return Rcpp::wrap(default_types);
 }
 
-template<typename T>
-inline SEXP make_default_types(SEXP types, const T& might_contain_names, R_xlen_t size) {
+template<typename... Args>
+inline SEXP make_default_types(SEXP types, R_xlen_t size, Args&&... might_contain_names) {
   if(Rf_isNull(types)) {
-    return make_default_types(might_contain_names, size);
+    return make_default_types(size, std::forward<Args>(might_contain_names)...);
   } else if (Rf_isNewList(types)) {
     Rcpp::List list(types);
     const auto length_types(list.size());
@@ -40,11 +54,6 @@ inline SEXP make_default_types(SEXP types, const T& might_contain_names, R_xlen_
   } else {
     return types;
   }
-}
-
-template<typename T>
-inline SEXP make_default_types(SEXP types, const T& might_contain_names) {
-  return make_default_types(types, might_contain_names, might_contain_names.size());
 }
 
 } // namespace ppjsdm

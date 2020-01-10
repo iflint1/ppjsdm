@@ -79,26 +79,24 @@ inline SEXP rmultigibbs_helper2(const S& window, R_xlen_t steps, R_xlen_t nsim, 
 }
 
 template<typename W>
-inline SEXP rmultigibbs_helper(const W& window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericVector nu, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::Nullable<Rcpp::CharacterVector> types, Rcpp::CharacterVector model, bool drop) {
+inline SEXP rmultigibbs_helper(const W& window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericVector nu, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::CharacterVector types, Rcpp::CharacterVector model, bool drop, R_xlen_t point_types) {
   // TODO: Use dispatcher as in windows_utilities.h?
-  const auto point_types(lambda.size());
-  const auto types_vector(ppjsdm::make_default_types(types, lambda, point_types));
   if(model[0] == "identity") {
     const Exponential_family_model<Varphi_model_papangelou<varphi::Identity>,
                                    decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha);
-    return rmultigibbs_helper2(window, steps, nsim, types_vector, drop, varphi, point_types);
+    return rmultigibbs_helper2(window, steps, nsim, types, drop, varphi, point_types);
   } else if(model[0] == "Strauss") {
     const Exponential_family_model<Varphi_model_papangelou<varphi::Strauss>,
                                    decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha, radius);
-    return rmultigibbs_helper2(window, steps, nsim, types_vector, drop, varphi, point_types);
+    return rmultigibbs_helper2(window, steps, nsim, types, drop, varphi, point_types);
   } else if(model[0] == "Geyer") {
     const Exponential_family_model<Geyer_papangelou,
                                    decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha, radius, 2.0);
-    return rmultigibbs_helper2(window, steps, nsim, types_vector, drop, varphi, point_types);
+    return rmultigibbs_helper2(window, steps, nsim, types, drop, varphi, point_types);
   } else if(model[0] == "neighbour") {
     const Exponential_family_model<Nearest_neighbour_papangelou<varphi::Identity>,
                                    decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha);
-    return rmultigibbs_helper2(window, steps, nsim, types_vector, drop, varphi, point_types);
+    return rmultigibbs_helper2(window, steps, nsim, types, drop, varphi, point_types);
   } else {
     Rcpp::stop("Incorrect model entered.\n");
   }
@@ -130,9 +128,8 @@ SEXP rmultigibbs(SEXP window = R_NilValue, SEXP alpha = R_NilValue, SEXP lambda 
   alpha = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(point_types, alpha, 0.);
   lambda = ppjsdm::construct_if_missing<Rcpp::NumericVector>(point_types, lambda, 1.);
   nu = ppjsdm::construct_if_missing<Rcpp::NumericVector>(point_types, nu, 1.);
-  // TODO: Look for name info in types other than lambda
-  types = ppjsdm::make_default_types(types, lambda, point_types);
-  return ppjsdm::call_on_wrapped_window(window, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop](const auto& w) {
-    return ppjsdm::rmultigibbs_helper(w, alpha, lambda, nu, radius, steps, nsim, types, model, drop);
+  types = ppjsdm::make_default_types(types, point_types, lambda, nu);
+  return ppjsdm::call_on_wrapped_window(window, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop, point_types](const auto& w) {
+    return ppjsdm::rmultigibbs_helper(w, alpha, lambda, nu, radius, steps, nsim, types, model, drop, point_types);
   });
 }

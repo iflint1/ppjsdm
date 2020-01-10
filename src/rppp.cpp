@@ -46,7 +46,7 @@ inline SEXP rppp_helper(const S& window, const T& lambda, R_xlen_t nsim, Rcpp::C
 SEXP rppp(SEXP window = R_NilValue, SEXP lambda = R_NilValue, R_xlen_t nsim = 1, SEXP types = R_NilValue, bool drop = true) {
   const auto point_types(ppjsdm::get_number_types_and_check_conformance(lambda, types));
   lambda = ppjsdm::construct_if_missing<Rcpp::NumericVector>(point_types, lambda, 1.);
-  types = ppjsdm::make_default_types(types, lambda, point_types);
+  types = ppjsdm::make_default_types(types, point_types, lambda);
   return ppjsdm::call_on_wrapped_window(window, [point_types, &lambda, nsim, &types, drop](const auto& w) {
     return ppjsdm::call_on_list_or_vector(lambda, [point_types, &w, nsim, &types, drop](const auto& l) {
       return ppjsdm::rppp_helper(w, l, nsim, types, drop, point_types);
