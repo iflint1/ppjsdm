@@ -4,8 +4,7 @@
 \alias{rppp}
 \title{Sample a Poisson point processes}
 \usage{
-rppp(window = NULL, lambda = NULL, nsim = 1L, types = NULL,
-  drop = TRUE)
+rppp(window = NULL, lambda = NULL, nsim = 1L, types = NULL, drop = TRUE)
 }
 \arguments{
 \item{window}{Simulation window. Default is a Rectangle window [0, 1]^2.}

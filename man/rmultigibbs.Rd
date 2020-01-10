@@ -4,9 +4,18 @@
 \alias{rmultigibbs}
 \title{Sample a multivariate Gibbs point processes}
 \usage{
-rmultigibbs(window = NULL, alpha = NULL, lambda = NULL, nu = NULL,
-  radius = 0, steps = 30000L, nsim = 1L, types = NULL,
-  model = "identity", drop = TRUE)
+rmultigibbs(
+  window = NULL,
+  alpha = NULL,
+  lambda = NULL,
+  nu = NULL,
+  radius = 0,
+  steps = 30000L,
+  nsim = 1L,
+  types = NULL,
+  model = "identity",
+  drop = TRUE
+)
 }
 \arguments{
 \item{window}{Simulation window.}

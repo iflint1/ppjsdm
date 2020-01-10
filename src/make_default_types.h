@@ -8,6 +8,7 @@
 #include <utility> // std::forward
 
 namespace ppjsdm {
+namespace detail {
 
 inline Rcpp::CharacterVector get_best_names(R_xlen_t size) {
   return Rcpp::CharacterVector(size);
@@ -39,10 +40,12 @@ inline SEXP make_default_types(R_xlen_t size, Args&&... might_contain_names) {
   return Rcpp::wrap(default_types);
 }
 
+} // namespace detail
+
 template<typename... Args>
 inline SEXP make_default_types(SEXP types, R_xlen_t size, Args&&... might_contain_names) {
   if(Rf_isNull(types)) {
-    return make_default_types(size, std::forward<Args>(might_contain_names)...);
+    return detail::make_default_types(size, std::forward<Args>(might_contain_names)...);
   } else if (Rf_isNewList(types)) {
     Rcpp::List list(types);
     const auto length_types(list.size());
