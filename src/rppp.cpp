@@ -1,12 +1,12 @@
 #include <Rcpp.h>
 #include <Rmath.h>
 
-#include "call_on_list_or_vector.h"
-#include "get_list_or_first_element.h"
-#include "rbinomialpp_single.h"
-#include "make_default_types.h"
-#include "resolve_defaults.h"
-#include "window_utilities.h"
+#include "utility/call_on_list_or_vector.h"
+#include "utility/get_list_or_first_element.h"
+#include "utility/rbinomialpp_single.h"
+#include "utility/make_default_types.h"
+#include "utility/resolve_defaults.h"
+#include "utility/window_utilities.h"
 
 namespace ppjsdm {
 

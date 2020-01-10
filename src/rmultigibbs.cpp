@@ -4,14 +4,14 @@
 #include <cmath> // std::exp
 #include <vector> // std::vector
 
-#include "call_on_list_or_vector.h"
-#include "compute_phi_dispersion.h"
-#include "configuration_utilities.h"
-#include "get_list_or_first_element.h"
-#include "rbinomialpp_single.h"
-#include "make_default_types.h"
-#include "resolve_defaults.h"
-#include "window_utilities.h"
+#include "utility/call_on_list_or_vector.h"
+#include "utility/compute_phi_dispersion.h"
+#include "utility/configuration_utilities.h"
+#include "utility/get_list_or_first_element.h"
+#include "utility/rbinomialpp_single.h"
+#include "utility/make_default_types.h"
+#include "utility/resolve_defaults.h"
+#include "utility/window_utilities.h"
 
 namespace ppjsdm {
 

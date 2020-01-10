@@ -1,6 +1,6 @@
 #include <Rcpp.h>
 
-#include "configuration_utilities.h"
+#include "utility/configuration_utilities.h"
 
 #include <algorithm> // std::sort, std::unique
 #include <tuple> // std::tuple

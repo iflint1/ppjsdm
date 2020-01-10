@@ -1,7 +1,7 @@
 #include <Rcpp.h>
 
-#include "compute_phi_dispersion.h"
-#include "configuration_utilities.h"
+#include "utility/compute_phi_dispersion.h"
+#include "utility/configuration_utilities.h"
 
 //' Compute the delta of the phi-dispersion of a marked configuration.
 //'

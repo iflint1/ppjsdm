@@ -7,7 +7,7 @@
 has_duplicates(configuration)
 }
 \arguments{
-\item{configuration}{The configuration.}
+\item{configuration}{Configuration.}
 }
 \description{
 Check if a configuration contains duplicates.
