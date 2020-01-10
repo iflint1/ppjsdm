@@ -105,8 +105,7 @@ public:
 
   template<typename X, typename Y, typename T>
   inline Rcpp::NumericVector compute(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, R_xlen_t number_types, R_xlen_t number_points) const {
-    // TODO: Might want to not initialize
-    Rcpp::NumericVector delta_dispersion(number_types);
+    Rcpp::NumericVector delta_dispersion(Rcpp::no_init(number_types));
 
     auto x_plus(x);
     auto y_plus(y);
@@ -187,6 +186,30 @@ private:
   V nu_;
   W alpha_;
 };
+
+template<typename F, typename L, typename N, typename... Args>
+inline auto call_on_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix alpha, const L& lambda, const N& nu, double radius, F&& f, Args&&... args) {
+  // TODO: switch
+  if(model[0] == "identity") {
+    const Exponential_family_model<Varphi_model_papangelou<varphi::Identity>,
+                                   decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha);
+    return std::forward<F>(f)(varphi, std::forward<Args>(args)...);
+  } else if(model[0] == "Strauss") {
+    const Exponential_family_model<Varphi_model_papangelou<varphi::Strauss>,
+                                   decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha, radius);
+    return std::forward<F>(f)(varphi, std::forward<Args>(args)...);
+  } else if(model[0] == "Geyer") {
+    const Exponential_family_model<Geyer_papangelou,
+                                   decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha, radius, 2.0);
+    return std::forward<F>(f)(varphi, std::forward<Args>(args)...);
+  } else if(model[0] == "neighbour") {
+    const Exponential_family_model<Nearest_neighbour_papangelou<varphi::Identity>,
+                                   decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha);
+    return std::forward<F>(f)(varphi, std::forward<Args>(args)...);
+  } else {
+    Rcpp::stop("Incorrect model entered.\n");
+  }
+}
 
 } // namespace ppjsdm
 

@@ -16,9 +16,9 @@
 namespace ppjsdm {
 
 template<typename V, typename S>
-inline SEXP rmultigibbs_helper2(const S& window, R_xlen_t steps, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, const V& varphi, R_xlen_t point_types) {
+inline SEXP rmultigibbs_helper(const V& varphi, const S& window, R_xlen_t steps, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
   const auto volume(window.volume());
-  const double prob(0.5);
+  constexpr double prob(0.5);
 
   Rcpp::List samples(nsim);
 
@@ -79,30 +79,6 @@ inline SEXP rmultigibbs_helper2(const S& window, R_xlen_t steps, R_xlen_t nsim, 
   return get_list_or_first_element(samples, nsim, drop);
 }
 
-template<typename W, typename L, typename N>
-inline SEXP rmultigibbs_helper(const W& window, Rcpp::NumericMatrix alpha, const L& lambda, const N& nu, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::CharacterVector types, Rcpp::CharacterVector model, bool drop, R_xlen_t point_types) {
-  // TODO: Use dispatcher as in windows_utilities.h?
-  if(model[0] == "identity") {
-    const Exponential_family_model<Varphi_model_papangelou<varphi::Identity>,
-                                   decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha);
-    return rmultigibbs_helper2(window, steps, nsim, types, drop, varphi, point_types);
-  } else if(model[0] == "Strauss") {
-    const Exponential_family_model<Varphi_model_papangelou<varphi::Strauss>,
-                                   decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha, radius);
-    return rmultigibbs_helper2(window, steps, nsim, types, drop, varphi, point_types);
-  } else if(model[0] == "Geyer") {
-    const Exponential_family_model<Geyer_papangelou,
-                                   decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha, radius, 2.0);
-    return rmultigibbs_helper2(window, steps, nsim, types, drop, varphi, point_types);
-  } else if(model[0] == "neighbour") {
-    const Exponential_family_model<Nearest_neighbour_papangelou<varphi::Identity>,
-                                   decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha);
-    return rmultigibbs_helper2(window, steps, nsim, types, drop, varphi, point_types);
-  } else {
-    Rcpp::stop("Incorrect model entered.\n");
-  }
-}
-
 } // namespace ppjsdm
 
 //' Sample a multivariate Gibbs point processes
@@ -133,7 +109,9 @@ SEXP rmultigibbs(SEXP window = R_NilValue, SEXP alpha = R_NilValue, SEXP lambda 
   return ppjsdm::call_on_wrapped_window(window, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop, point_types](const auto& w) {
     return ppjsdm::call_on_list_or_vector(lambda, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop, point_types, &w](const auto& l) {
       return ppjsdm::call_on_list_or_vector(nu, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop, point_types, &w, &l](const auto& n) {
-        return ppjsdm::rmultigibbs_helper(w, alpha, l, n, radius, steps, nsim, types, model, drop, point_types);
+        return ppjsdm::call_on_model(model, alpha, l, n, radius, [&w, steps, nsim, &types, drop, point_types](const auto& varphi){
+          return ppjsdm::rmultigibbs_helper(varphi, w, steps, nsim, types, drop, point_types);
+        });
       });
     });
   });
