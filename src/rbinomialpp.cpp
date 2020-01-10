@@ -8,20 +8,16 @@
 #include "utility/sum.h"
 #include "utility/window_utilities.h"
 
-namespace ppjsdm {
-
 template<typename W, typename T>
 inline SEXP rbinomialpp_helper(const W& window, const T& n, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
   const auto total_number(ppjsdm::sum<int>(n, point_types));
 
   Rcpp::List samples(nsim);
   for(R_xlen_t i(0); i < nsim; ++i) {
-    samples[i] = rbinomialpp_single(window, n, types, point_types, total_number);
+    samples[i] = ppjsdm::rbinomialpp_single(window, n, types, point_types, total_number);
   }
-  return get_list_or_first_element(samples, nsim, drop);
+  return ppjsdm::get_list_or_first_element(samples, nsim, drop);
 }
-
-} // namespace ppjsdm
 
 //' Sample a binomial point processes
 //'
@@ -42,7 +38,7 @@ SEXP rbinomialpp(SEXP window = R_NilValue, SEXP n = R_NilValue, R_xlen_t nsim = 
   types = ppjsdm::make_types(types, point_types, n);
   return ppjsdm::call_on_wrapped_window(window, [&n, nsim, &types, drop, point_types](const auto& w) {
     return ppjsdm::call_on_list_or_vector(n, [&w, nsim, &types, drop, point_types](const auto& m) {
-      return ppjsdm::rbinomialpp_helper(w, m, nsim, types, drop, point_types);
+      return rbinomialpp_helper(w, m, nsim, types, drop, point_types);
     });
   });
 }

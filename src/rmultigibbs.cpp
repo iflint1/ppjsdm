@@ -13,8 +13,6 @@
 #include "utility/resolve_defaults.h"
 #include "utility/window_utilities.h"
 
-namespace ppjsdm {
-
 template<typename V, typename S>
 inline SEXP rmultigibbs_helper(const V& varphi, const S& window, R_xlen_t steps, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
   const auto volume(window.volume());
@@ -73,13 +71,11 @@ inline SEXP rmultigibbs_helper(const V& varphi, const S& window, R_xlen_t steps,
       }
     }
 
-    samples[i] = make_configuration(Rcpp::wrap(x), Rcpp::wrap(y), Rcpp::wrap(types_vector), types);
+    samples[i] = ppjsdm::make_configuration(Rcpp::wrap(x), Rcpp::wrap(y), Rcpp::wrap(types_vector), types);
   }
 
-  return get_list_or_first_element(samples, nsim, drop);
+  return ppjsdm::get_list_or_first_element(samples, nsim, drop);
 }
-
-} // namespace ppjsdm
 
 //' Sample a multivariate Gibbs point processes
 //'
@@ -110,7 +106,7 @@ SEXP rmultigibbs(SEXP window = R_NilValue, SEXP alpha = R_NilValue, SEXP lambda 
     return ppjsdm::call_on_list_or_vector(lambda, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop, point_types, &w](const auto& l) {
       return ppjsdm::call_on_list_or_vector(nu, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop, point_types, &w, &l](const auto& n) {
         return ppjsdm::call_on_model(model, alpha, l, n, radius, [&w, steps, nsim, &types, drop, point_types](const auto& varphi){
-          return ppjsdm::rmultigibbs_helper(varphi, w, steps, nsim, types, drop, point_types);
+          return rmultigibbs_helper(varphi, w, steps, nsim, types, drop, point_types);
         });
       });
     });
