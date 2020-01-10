@@ -9,6 +9,7 @@
 #include "get_list_or_first_element.h"
 #include "rbinomialpp_single.h"
 #include "make_default_types.h"
+#include "resolve_defaults.h"
 #include "window_utilities.h"
 
 namespace ppjsdm {
@@ -121,9 +122,13 @@ inline SEXP rmultigibbs_helper(const W& window, Rcpp::NumericMatrix alpha, Rcpp:
 //' @useDynLib ppjsdm
 //' @import Rcpp
 // [[Rcpp::export]]
-SEXP rmultigibbs(SEXP window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericVector nu, double radius = 0, R_xlen_t steps = 30000, R_xlen_t nsim = 1, Rcpp::Nullable<Rcpp::CharacterVector> types = R_NilValue, Rcpp::CharacterVector model = "identity", bool drop = true) {
-  // TODO: Add check for size of alpha.
-  // TODO: I'm getting a crash on multiple point types -- debug.
+SEXP rmultigibbs(SEXP window = R_NilValue, SEXP alpha = R_NilValue, SEXP lambda = R_NilValue, SEXP nu = R_NilValue, double radius = 0, R_xlen_t steps = 30000, R_xlen_t nsim = 1, SEXP types = R_NilValue, Rcpp::CharacterVector model = "identity", bool drop = true) {
+  const auto point_types(ppjsdm::get_number_types_and_check_conformance(alpha, lambda, nu, types));
+  lambda = ppjsdm::construct_if_missing<Rcpp::NumericVector>(point_types, lambda, 1.);
+  nu = ppjsdm::construct_if_missing<Rcpp::NumericVector>(point_types, nu, 1.);
+  // TODO: Set alpha to default
+  // TODO: Look for name info in types other than lambda
+  types = ppjsdm::make_default_types(types, lambda, point_types);
   return ppjsdm::call_on_wrapped_window(window, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop](const auto& w) {
     return ppjsdm::rmultigibbs_helper(w, alpha, lambda, nu, radius, steps, nsim, types, model, drop);
   });

@@ -15,8 +15,16 @@ template<typename... Args>
 inline R_xlen_t get_number_types_helper(R_xlen_t number_types, SEXP x, Args&... args) {
   if(Rf_isNull(x)) {
     return get_number_types_helper(number_types, args...);
-  } else { // TODO: This doesn't work with matrices.
-    const auto length_x(LENGTH(x));
+  } else {
+    R_xlen_t length_x;
+    if(Rf_isMatrix(x)) {
+      length_x = Rf_nrows(x);
+      if(length_x != Rf_ncols(x)) {
+        Rcpp::stop("Found a non-square matrix in the arguments.");
+      }
+    } else {
+      length_x = Rf_length(x);
+    }
     if(number_types != 0 && length_x != number_types) {
       Rcpp::stop("Two of the given arguments have incompatible sizes");
     }
