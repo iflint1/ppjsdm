@@ -31,18 +31,7 @@ Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::List configuration, Rcpp:
     return varphi.compute(wrapped_configuration.x(), wrapped_configuration.y(), wrapped_configuration.types(), location, type, number_types, number_points);
   } else if(model[0] == "neighbour"){
     const ppjsdm::Nearest_neighbour_papangelou<ppjsdm::varphi::Identity> varphi{};
-    // TODO: At the moment, I'm using push_backs in the computation, so I need to convert to std::vector first
-    std::vector<double> x_vector(number_points);
-    std::vector<double> y_vector(number_points);
-    std::vector<int> types_vector(number_points);
-    for(R_xlen_t i(0); i < number_points; ++i) {
-      x_vector[i] = wrapped_configuration.x(i);
-      y_vector[i] = wrapped_configuration.y(i);
-      types_vector[i] = wrapped_configuration.types(i);
-    }
-    return varphi.compute(x_vector,
-                          y_vector,
-                          types_vector,
+    return varphi.compute(wrapped_configuration.x(), wrapped_configuration.y(), wrapped_configuration.types(),
                           location, type, number_types, number_points);
   } else {
     Rcpp::stop("Incorrect model entered.\n");
