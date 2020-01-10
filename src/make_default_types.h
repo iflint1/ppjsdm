@@ -43,7 +43,7 @@ inline SEXP make_default_types(R_xlen_t size, Args&&... might_contain_names) {
 } // namespace detail
 
 template<typename... Args>
-inline SEXP make_default_types(SEXP types, R_xlen_t size, Args&&... might_contain_names) {
+inline SEXP make_types(SEXP types, R_xlen_t size, Args&&... might_contain_names) {
   if(Rf_isNull(types)) {
     return detail::make_default_types(size, std::forward<Args>(might_contain_names)...);
   } else if (Rf_isNewList(types)) {

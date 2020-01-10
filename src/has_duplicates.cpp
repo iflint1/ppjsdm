@@ -16,7 +16,7 @@ using Marked_point = std::tuple<double, double, int>;
 
 //' Check if a configuration contains duplicates.
 //'
-//' @param configuration The configuration.
+//' @param configuration Configuration.
 //' @export
 //' @useDynLib ppjsdm
 //' @import Rcpp

@@ -18,7 +18,7 @@ compute_delta_phi_dispersion <- function(configuration, location, type, number_t
 
 #' Check if a configuration contains duplicates.
 #'
-#' @param configuration The configuration.
+#' @param configuration Configuration.
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
