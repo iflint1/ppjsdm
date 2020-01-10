@@ -5,7 +5,6 @@
 #include <Rinternals.h>
 
 #include <tuple> // std::pair
-#include <utility> // std::forward
 
 namespace ppjsdm {
 namespace detail {
@@ -20,11 +19,11 @@ class Window_wrapper<Window::rectangle> {
 public:
   Window_wrapper(): x_0_(0), delta_x_(1), y_0_(0), delta_y_(1) {}
   explicit Window_wrapper(Rcpp::List window) {
-    const Rcpp::NumericVector x(Rcpp::as<Rcpp::NumericVector>(window["x_range"]));
+    const auto x(Rcpp::as<Rcpp::NumericVector>(window["x_range"]));
     x_0_ = x[0];
     delta_x_ = x[1] - x_0_;
 
-    const Rcpp::NumericVector y(Rcpp::as<Rcpp::NumericVector>(window["y_range"]));
+    const auto y(Rcpp::as<Rcpp::NumericVector>(window["y_range"]));
     y_0_ = y[0];
     delta_y_ = y[1] - y_0_;
   }
@@ -49,7 +48,7 @@ class Window_wrapper<Window::disk> {
 public:
   Window_wrapper(): x_(0), y_(0), radius_(1) {}
   explicit Window_wrapper(Rcpp::List window) {
-    const Rcpp::NumericVector centre(Rcpp::as<Rcpp::NumericVector>(window["centre"]));
+    const auto centre(Rcpp::as<Rcpp::NumericVector>(window["centre"]));
     x_ = centre[0];
     y_ = centre[1];
 
@@ -79,17 +78,14 @@ private:
 } // namespace detail
 
 template<typename F>
-inline auto call_on_wrapped_window(SEXP window, F&& f) {
+inline auto call_on_wrapped_window(SEXP window, const F& f) {
   if(Rf_isNull(window)) {
-    const detail::Window_wrapper<detail::Window::rectangle> wrapped_window{};
-    return std::forward<F>(f)(wrapped_window);
+    return f(detail::Window_wrapper<detail::Window::rectangle>{});
   }
   else if(Rf_inherits(window, "Rectangle_window")) { // TODO: Better to do a switch on attr("class")
-    const detail::Window_wrapper<detail::Window::rectangle> wrapped_window(window);
-    return std::forward<F>(f)(wrapped_window);
+    return f(detail::Window_wrapper<detail::Window::rectangle>(window));
   } else if(Rf_inherits(window, "Disk_window")) {
-    const detail::Window_wrapper<detail::Window::disk> wrapped_window(window);
-    return std::forward<F>(f)(wrapped_window);
+    return f(detail::Window_wrapper<detail::Window::disk>(window));
   } else {
     Rcpp::stop("Unrecognised window type.");
   }

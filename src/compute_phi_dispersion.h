@@ -192,30 +192,26 @@ private:
 };
 
 template<typename F>
-inline auto call_on_papangelou(Rcpp::CharacterVector model, double radius, F&& f) {
+inline auto call_on_papangelou(Rcpp::CharacterVector model, double radius, const F& f) {
   const auto model_string(model[0]);
   if(model_string == "identity") {
-    const Varphi_model_papangelou<varphi::Identity> varphi{};
-    return std::forward<F>(f)(varphi);
+    return f(Varphi_model_papangelou<varphi::Identity>{});
   } else if(model_string == "Strauss") {
-    const Varphi_model_papangelou<varphi::Strauss> varphi(radius);
-    return std::forward<F>(f)(varphi);
+    return f(Varphi_model_papangelou<varphi::Strauss>(radius));
   } else if(model_string == "Geyer") {
-    const Geyer_papangelou varphi(radius, 2.0);
-    return std::forward<F>(f)(varphi);
+    return f(Geyer_papangelou(radius, 2.0));
   } else if(model_string == "neighbour") {
-    const Nearest_neighbour_papangelou<varphi::Identity> varphi{};
-    return std::forward<F>(f)(varphi);
+    return f(Nearest_neighbour_papangelou<varphi::Identity>{});
   } else {
     Rcpp::stop("Incorrect model entered.\n");
   }
 }
 
 template<typename F, typename L, typename N, typename... Args>
-inline auto call_on_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix alpha, const L& lambda, const N& nu, double radius, F&& f) {
-  return call_on_papangelou(model, radius, [&alpha, &lambda, &nu, &f](const auto& varphi){
-    const Exponential_family_model<std::remove_cv_t<std::remove_reference_t<decltype(varphi)>>, L, N, decltype(alpha)> model(lambda, nu, alpha, varphi);
-    return std::forward<F>(f)(model);
+inline auto call_on_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix alpha, const L& lambda, const N& nu, double radius, const F& f) {
+  return call_on_papangelou(model, radius, [&alpha, &lambda, &nu, &f](auto&& varphi){
+    const Exponential_family_model<std::remove_cv_t<std::remove_reference_t<decltype(varphi)>>, L, N, decltype(alpha)> model(lambda, nu, alpha, std::forward<decltype(varphi)>(varphi));
+    return f(model);
   });
 }
 
