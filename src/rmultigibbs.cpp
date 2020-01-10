@@ -4,6 +4,7 @@
 #include <cmath> // std::exp
 #include <vector> // std::vector
 
+#include "call_on_list_or_vector.h"
 #include "compute_phi_dispersion.h"
 #include "configuration_utilities.h"
 #include "get_list_or_first_element.h"
@@ -78,8 +79,8 @@ inline SEXP rmultigibbs_helper2(const S& window, R_xlen_t steps, R_xlen_t nsim, 
   return get_list_or_first_element(samples, nsim, drop);
 }
 
-template<typename W>
-inline SEXP rmultigibbs_helper(const W& window, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericVector nu, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::CharacterVector types, Rcpp::CharacterVector model, bool drop, R_xlen_t point_types) {
+template<typename W, typename L, typename N>
+inline SEXP rmultigibbs_helper(const W& window, Rcpp::NumericMatrix alpha, const L& lambda, const N& nu, double radius, R_xlen_t steps, R_xlen_t nsim, Rcpp::CharacterVector types, Rcpp::CharacterVector model, bool drop, R_xlen_t point_types) {
   // TODO: Use dispatcher as in windows_utilities.h?
   if(model[0] == "identity") {
     const Exponential_family_model<Varphi_model_papangelou<varphi::Identity>,
@@ -130,6 +131,10 @@ SEXP rmultigibbs(SEXP window = R_NilValue, SEXP alpha = R_NilValue, SEXP lambda 
   nu = ppjsdm::construct_if_missing<Rcpp::NumericVector>(point_types, nu, 1.);
   types = ppjsdm::make_default_types(types, point_types, lambda, nu);
   return ppjsdm::call_on_wrapped_window(window, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop, point_types](const auto& w) {
-    return ppjsdm::rmultigibbs_helper(w, alpha, lambda, nu, radius, steps, nsim, types, model, drop, point_types);
+    return ppjsdm::call_on_list_or_vector(lambda, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop, point_types, &w](const auto& l) {
+      return ppjsdm::call_on_list_or_vector(nu, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop, point_types, &w, &l](const auto& n) {
+        return ppjsdm::rmultigibbs_helper(w, alpha, l, n, radius, steps, nsim, types, model, drop, point_types);
+      });
+    });
   });
 }
