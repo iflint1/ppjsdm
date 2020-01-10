@@ -193,17 +193,17 @@ private:
 
 template<typename F>
 inline auto call_on_papangelou(Rcpp::CharacterVector model, double radius, F&& f) {
-  // TODO: switch
-  if(model[0] == "identity") {
+  const auto model_string(model[0]);
+  if(model_string == "identity") {
     const Varphi_model_papangelou<varphi::Identity> varphi{};
     return std::forward<F>(f)(varphi);
-  } else if(model[0] == "Strauss") {
+  } else if(model_string == "Strauss") {
     const Varphi_model_papangelou<varphi::Strauss> varphi(radius);
     return std::forward<F>(f)(varphi);
-  } else if(model[0] == "Geyer") {
+  } else if(model_string == "Geyer") {
     const Geyer_papangelou varphi(radius, 2.0);
     return std::forward<F>(f)(varphi);
-  } else if(model[0] == "neighbour") {
+  } else if(model_string == "neighbour") {
     const Nearest_neighbour_papangelou<varphi::Identity> varphi{};
     return std::forward<F>(f)(varphi);
   } else {
