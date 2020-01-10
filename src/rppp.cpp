@@ -8,10 +8,12 @@
 #include "utility/resolve_defaults.h"
 #include "utility/window_utilities.h"
 
+#include <vector> // std::vector
+
 template<typename S, typename T>
 inline SEXP rppp_helper(const S& window, const T& lambda, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
   Rcpp::List samples(nsim);
-  Rcpp::IntegerVector number_points(Rcpp::no_init(point_types));
+  std::vector<R_xlen_t> number_points(point_types);
 
   for(R_xlen_t i(0); i < nsim; ++i) {
     R_xlen_t total_number(0);

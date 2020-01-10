@@ -7,6 +7,7 @@
 
 namespace ppjsdm {
 
+// TODO: Make version of this that returns directly a given type to be able to e.g. use it to produce std::vectors
 template<typename W, typename T>
 inline auto rbinomialpp_single(const W& window, const T& n, Rcpp::CharacterVector types, R_xlen_t point_types, R_xlen_t total_number) {
   Rcpp::NumericVector x(Rcpp::no_init(total_number));
