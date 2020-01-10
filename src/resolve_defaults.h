@@ -32,6 +32,34 @@ inline R_xlen_t get_number_types_helper(R_xlen_t number_types, SEXP x, Args&... 
   }
 }
 
+template<typename Type>
+struct make_type {
+  template<typename U>
+  SEXP operator()(R_xlen_t number_types, U val) {
+    // The constructor that default-constructs to a given value does not work on Windows with RTools,
+    // so do the construction by hand.
+    Type new_value(number_types);
+    for(R_xlen_t i(0); i < number_types; ++i) {
+      new_value[i] = val;
+    }
+    return Rcpp::wrap(new_value);
+  }
+};
+
+template<>
+struct make_type<Rcpp::NumericMatrix> {
+  template<typename U>
+  SEXP operator()(R_xlen_t number_types, U val) {
+    Rcpp::NumericMatrix new_value(number_types, number_types);
+    for(R_xlen_t i(0); i < number_types; ++i) {
+      for(R_xlen_t j(0); j < number_types; ++j) {
+        new_value(i, j) = val;
+      }
+    }
+    return Rcpp::wrap(new_value);
+  }
+};
+
 } // namespace detail
 
 template<typename... Args>
@@ -42,13 +70,7 @@ inline auto get_number_types_and_check_conformance(Args&... args) {
 template<typename Type, typename U>
 inline SEXP construct_if_missing(R_xlen_t number_types, SEXP x, U def) {
   if(Rf_isNull(x)) {
-    // The constructor that default-constructs to a given value does not work on Windows with RTools,
-    // so do the construction by hand.
-    Type new_value(number_types);
-    for(R_xlen_t i(0); i < number_types; ++i) {
-      new_value[i] = def;
-    }
-    return Rcpp::wrap(new_value);
+    return detail::make_type<Type>{}(number_types, def);
   } else {
     return x;
   }

@@ -124,9 +124,9 @@ inline SEXP rmultigibbs_helper(const W& window, Rcpp::NumericMatrix alpha, Rcpp:
 // [[Rcpp::export]]
 SEXP rmultigibbs(SEXP window = R_NilValue, SEXP alpha = R_NilValue, SEXP lambda = R_NilValue, SEXP nu = R_NilValue, double radius = 0, R_xlen_t steps = 30000, R_xlen_t nsim = 1, SEXP types = R_NilValue, Rcpp::CharacterVector model = "identity", bool drop = true) {
   const auto point_types(ppjsdm::get_number_types_and_check_conformance(alpha, lambda, nu, types));
+  alpha = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(point_types, alpha, 0.);
   lambda = ppjsdm::construct_if_missing<Rcpp::NumericVector>(point_types, lambda, 1.);
   nu = ppjsdm::construct_if_missing<Rcpp::NumericVector>(point_types, nu, 1.);
-  // TODO: Set alpha to default
   // TODO: Look for name info in types other than lambda
   types = ppjsdm::make_default_types(types, lambda, point_types);
   return ppjsdm::call_on_wrapped_window(window, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop](const auto& w) {
