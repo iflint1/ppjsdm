@@ -4,8 +4,9 @@
 #include <Rcpp.h>
 
 #include <cmath> // std::exp, std::log
-#include <utility> // std::forward
 #include <limits> // std::numeric_limits
+#include <type_traits> // std::remove_const, std::remove_cv
+#include <utility> // std::forward
 
 #include "compute_phi_distance.h"
 
@@ -169,6 +170,9 @@ class Exponential_family_model: public Varphi {
 public:
   template<typename... Args>
   Exponential_family_model(const U& lambda, const V& nu, const W& alpha, Args&&... args): Varphi(std::forward<Args>(args)...), lambda_(lambda), nu_(nu), alpha_(alpha) {}
+  Exponential_family_model(const U& lambda, const V& nu, const W& alpha, const Varphi& varphi): Varphi(varphi), lambda_(lambda), nu_(nu), alpha_(alpha) {}
+  Exponential_family_model(const U& lambda, const V& nu, const W& alpha, Varphi&& varphi): Varphi(std::move(varphi)), lambda_(lambda), nu_(nu), alpha_(alpha) {}
+
   template<typename X, typename Y, typename T>
   double compute_papangelou(const X& x, const Y& y, const T& types_vector, Rcpp::NumericVector location, R_xlen_t type, R_xlen_t number_types) const {
     const auto delta_D(Varphi::compute(x, y, types_vector, location, type, number_types, x.size()));
@@ -187,29 +191,34 @@ private:
   W alpha_;
 };
 
-template<typename F, typename L, typename N, typename... Args>
-inline auto call_on_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix alpha, const L& lambda, const N& nu, double radius, F&& f, Args&&... args) {
+template<typename F>
+inline auto call_on_papangelou(Rcpp::CharacterVector model, double radius, F&& f) {
   // TODO: switch
   if(model[0] == "identity") {
-    const Exponential_family_model<Varphi_model_papangelou<varphi::Identity>,
-                                   decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha);
-    return std::forward<F>(f)(varphi, std::forward<Args>(args)...);
+    const Varphi_model_papangelou<varphi::Identity> varphi{};
+    return std::forward<F>(f)(varphi);
   } else if(model[0] == "Strauss") {
-    const Exponential_family_model<Varphi_model_papangelou<varphi::Strauss>,
-                                   decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha, radius);
-    return std::forward<F>(f)(varphi, std::forward<Args>(args)...);
+    const Varphi_model_papangelou<varphi::Strauss> varphi(radius);
+    return std::forward<F>(f)(varphi);
   } else if(model[0] == "Geyer") {
-    const Exponential_family_model<Geyer_papangelou,
-                                   decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha, radius, 2.0);
-    return std::forward<F>(f)(varphi, std::forward<Args>(args)...);
+    const Geyer_papangelou varphi(radius, 2.0);
+    return std::forward<F>(f)(varphi);
   } else if(model[0] == "neighbour") {
-    const Exponential_family_model<Nearest_neighbour_papangelou<varphi::Identity>,
-                                   decltype(lambda), decltype(nu), decltype(alpha)> varphi(lambda, nu, alpha);
-    return std::forward<F>(f)(varphi, std::forward<Args>(args)...);
+    const Nearest_neighbour_papangelou<varphi::Identity> varphi{};
+    return std::forward<F>(f)(varphi);
   } else {
     Rcpp::stop("Incorrect model entered.\n");
   }
 }
+
+template<typename F, typename L, typename N, typename... Args>
+inline auto call_on_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix alpha, const L& lambda, const N& nu, double radius, F&& f) {
+  return call_on_papangelou(model, radius, [&alpha, &lambda, &nu, &f](const auto& varphi){
+    const Exponential_family_model<std::remove_cv_t<std::remove_reference_t<decltype(varphi)>>, L, N, decltype(alpha)> model(lambda, nu, alpha, varphi);
+    return std::forward<F>(f)(model);
+  });
+}
+
 
 } // namespace ppjsdm
 

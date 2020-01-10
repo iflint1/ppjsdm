@@ -78,18 +78,18 @@ private:
 
 } // namespace detail
 
-template<typename F, typename... Args>
-inline auto call_on_wrapped_window(SEXP window, F&& f, Args&&... args) {
+template<typename F>
+inline auto call_on_wrapped_window(SEXP window, F&& f) {
   if(Rf_isNull(window)) {
     const detail::Window_wrapper<detail::Window::rectangle> wrapped_window{};
-    return std::forward<F>(f)(wrapped_window, std::forward<Args>(args)...);
+    return std::forward<F>(f)(wrapped_window);
   }
   else if(Rf_inherits(window, "Rectangle_window")) { // TODO: Better to do a switch on attr("class")
     const detail::Window_wrapper<detail::Window::rectangle> wrapped_window(window);
-    return std::forward<F>(f)(wrapped_window, std::forward<Args>(args)...);
+    return std::forward<F>(f)(wrapped_window);
   } else if(Rf_inherits(window, "Disk_window")) {
     const detail::Window_wrapper<detail::Window::disk> wrapped_window(window);
-    return std::forward<F>(f)(wrapped_window, std::forward<Args>(args)...);
+    return std::forward<F>(f)(wrapped_window);
   } else {
     Rcpp::stop("Unrecognised window type.");
   }
