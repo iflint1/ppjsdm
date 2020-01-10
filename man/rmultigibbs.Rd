@@ -4,39 +4,33 @@
 \alias{rmultigibbs}
 \title{Sample a multivariate Gibbs point processes}
 \usage{
-rmultigibbs(
-  window,
-  alpha,
-  lambda,
-  nu,
-  radius = 0,
-  steps = 30000L,
-  nsim = 1L,
-  types = NULL,
-  model = "identity",
-  drop = TRUE
-)
+rmultigibbs(window = NULL, alpha = NULL, lambda = NULL, nu = NULL,
+  radius = 0, steps = 30000L, nsim = 1L, types = NULL,
+  model = "identity", drop = TRUE)
 }
 \arguments{
-\item{window}{The window.}
+\item{window}{Simulation window.}
 
-\item{alpha}{Alpha.}
+\item{alpha}{Repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.}
 
-\item{lambda}{A vector representing the intensities of the point processes.}
+\item{lambda}{A vector representing the intensities of the point processes.
+Default is a vector of same size as types, filled with ones.}
 
-\item{nu}{A vector representing the dispersion of the number of points.}
+\item{nu}{A vector representing the dispersion of the number of points.
+Default is a vector of same size as types, filled with ones.}
 
-\item{radius}{Interaction radius.}
+\item{radius}{Interaction radius. Default is zero.}
 
-\item{steps}{Number of steps in the Metropolis algorithm.}
+\item{steps}{Number of steps in the Metropolis algorithm. Default is 30000.}
 
-\item{nsim}{Number of samples to generate.}
+\item{nsim}{Number of samples to generate. Default is 1.}
 
-\item{types}{Types of the points.}
+\item{types}{Types of the points. Default is a vector (type1, type2, ...) of same size as n.}
 
-\item{model}{String representing the model to simulate from. At the moment, either "identity", "Strauss" or "Geyer".}
+\item{model}{String representing the model to simulate from. At the moment, either "identity", "Strauss", "Geyer" or "neighbour",
+with default beign "identity".}
 
-\item{drop}{If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration.}
+\item{drop}{If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration. Default is TRUE.}
 }
 \description{
 Sample a multivariate Gibbs point processes

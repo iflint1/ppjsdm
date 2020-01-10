@@ -108,16 +108,19 @@ inline SEXP rmultigibbs_helper(const W& window, Rcpp::NumericMatrix alpha, Rcpp:
 
 //' Sample a multivariate Gibbs point processes
 //'
-//' @param window The window.
-//' @param alpha Alpha.
+//' @param window Simulation window.
+//' @param alpha Repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.
 //' @param lambda A vector representing the intensities of the point processes.
+//' Default is a vector of same size as types, filled with ones.
 //' @param nu A vector representing the dispersion of the number of points.
-//' @param radius Interaction radius.
-//' @param steps Number of steps in the Metropolis algorithm.
-//' @param nsim Number of samples to generate.
-//' @param types Types of the points.
-//' @param model String representing the model to simulate from. At the moment, either "identity", "Strauss" or "Geyer".
-//' @param drop If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration.
+//' Default is a vector of same size as types, filled with ones.
+//' @param radius Interaction radius. Default is zero.
+//' @param steps Number of steps in the Metropolis algorithm. Default is 30000.
+//' @param nsim Number of samples to generate. Default is 1.
+//' @param types Types of the points. Default is a vector (type1, type2, ...) of same size as n.
+//' @param model String representing the model to simulate from. At the moment, either "identity", "Strauss", "Geyer" or "neighbour",
+//' with default beign "identity".
+//' @param drop If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration. Default is TRUE.
 //' @export
 //' @useDynLib ppjsdm
 //' @import Rcpp

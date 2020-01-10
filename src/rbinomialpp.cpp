@@ -25,7 +25,7 @@ inline SEXP rbinomialpp_helper(const W& window, const T& n, R_xlen_t nsim, Rcpp:
 
 //' Sample a binomial point processes
 //'
-//' @param window The window. Default is a Rectangle window [0, 1]^2.
+//' @param window Simulation window. Default is a Rectangle window [0, 1]^2.
 //' @param n A vector representing the number of points of each types of the multipoint binomial point processes.
 //' Default is a vector of same size as types, filled with ones.
 //' @param nsim Number of samples to generate. Default is 1.
