@@ -8,7 +8,7 @@
 namespace ppjsdm {
 
 template<typename W, typename T>
-inline Rcpp::List rbinomialpp_single(const W& window, const T& n, Rcpp::CharacterVector types, R_xlen_t point_types, R_xlen_t total_number) {
+inline auto rbinomialpp_single(const W& window, const T& n, Rcpp::CharacterVector types, R_xlen_t point_types, R_xlen_t total_number) {
   Rcpp::NumericVector x(Rcpp::no_init(total_number));
   Rcpp::NumericVector y(Rcpp::no_init(total_number));
   Rcpp::IntegerVector factors(Rcpp::no_init(total_number));
