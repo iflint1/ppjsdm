@@ -24,10 +24,11 @@ inline Rcpp::List make_R_configuration(const Configuration& configuration, Rcpp:
   Rcpp::NumericVector y(Rcpp::no_init(configuration_size));
   Rcpp::IntegerVector types_vector(Rcpp::no_init(configuration_size));
   for(size_type i(0); i < configuration_size; ++i) {
-    x[i] = configuration.x(i);
-    y[i] = configuration.y(i);
+    const auto point(configuration[i]);
+    x[i] = get_x(point);
+    y[i] = get_y(point);
     // TODO: This does not work for Configuration_wrapper which should be treated separately anyhow.
-    types_vector[i] = configuration.types(i) + 1;
+    types_vector[i] = get_type(point) + 1;
   }
   return make_R_configuration(x, y, types_vector, types);
 }

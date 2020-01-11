@@ -14,7 +14,6 @@
 #include "utility/window_utilities.h"
 
 #include <cmath> // std::exp
-#include <tuple> // std::make_tuple
 #include <vector> // std::vector
 
 template<typename V, typename S>
@@ -28,7 +27,7 @@ inline SEXP rmultigibbs_helper(const V& varphi, const S& window, R_xlen_t steps,
     // TODO: This can likely be made faster by using one unique vector, since all 3 have the same length.
     // TODO: Make an std_vector_configuration wrapper to make everything more straightforward.
     // TODO: Preallocate with a rough estimate of final size?
-    ppjsdm::StdVector_configuration_wrapper points{};
+    std::vector<ppjsdm::Marked_point> points{};
 
     R_xlen_t total_number(0);
 
@@ -38,7 +37,7 @@ inline SEXP rmultigibbs_helper(const V& varphi, const S& window, R_xlen_t steps,
       if(u <= prob) {
         const R_xlen_t type(Rcpp::sample(point_types, 1, false, R_NilValue, false)[0]);
         const auto location_pair(window.sample());
-        const auto point(std::make_tuple(location_pair.first, location_pair.second, type));
+        const auto point(ppjsdm::Marked_point(location_pair.first, location_pair.second, type));
 
         // TODO: You can avoid taking the exp by reorganising the ratio, and sampling an exponential r.v. instead.
         const auto papangelou(varphi.compute_papangelou(points, point, point_types));

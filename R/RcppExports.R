@@ -3,7 +3,7 @@
 
 #' Compute the delta of the phi-dispersion of a marked configuration.
 #'
-#' @param configuration The configuration.
+#' @param configuration Configuration.
 #' @param location Point to be added.
 #' @param type Type of point to be added.
 #' @param number_types Number of different types.

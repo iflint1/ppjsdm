@@ -1,9 +1,12 @@
 #ifndef INCLUDE_PPJSDM_POINT_MANIPULATION
 #define INCLUDE_PPJSDM_POINT_MANIPULATION
 
-#include <tuple> // std::get
+#include <tuple> // std::tuple, std::get
 
 namespace ppjsdm {
+
+using Marked_point = std::tuple<double, double, int>;
+
 namespace traits {
 
 template<typename Point>

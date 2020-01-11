@@ -14,7 +14,7 @@ compute_delta_phi_dispersion(
 )
 }
 \arguments{
-\item{configuration}{The configuration.}
+\item{configuration}{Configuration.}
 
 \item{location}{Point to be added.}
 

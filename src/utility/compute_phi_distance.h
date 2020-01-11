@@ -1,6 +1,8 @@
 #ifndef INCLUDE_PPJSDM_PHI_DISTANCE
 #define INCLUDE_PPJSDM_PHI_DISTANCE
 
+#include "point_manipulation.h"
+
 #include <cmath> // std::sqrt
 
 namespace ppjsdm {
@@ -37,10 +39,10 @@ private:
 
 } // namespace varphi
 
-template<typename V>
-double compute_phi_distance(double x1, double y1, double x2, double y2, const V& varphi) {
-  const auto delta_x(x2 - x1);
-  const auto delta_y(y2 - y1);
+template<typename V, typename Point>
+double compute_phi_distance(const Point& point1, const Point& point2, const V& varphi) {
+  const auto delta_x(get_x(point1) - get_x(point2));
+  const auto delta_y(get_y(point1) - get_y(point2));
   const auto square_distance(delta_x * delta_x + delta_y * delta_y);
   return varphi.apply(square_distance);
 }

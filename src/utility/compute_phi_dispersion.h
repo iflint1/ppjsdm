@@ -23,7 +23,7 @@ public:
   inline Rcpp::NumericVector compute(const Configuration& configuration, const Point& point, R_xlen_t number_types, R_xlen_t number_points) const {
     R_xlen_t same_type_points(0);
     for(R_xlen_t i(0); i < number_points; ++i) {
-      const auto type_i(configuration.types(i) - 1);
+      const auto type_i(get_type(configuration[i]));
       if(type_i == get_type(point)) {
         ++same_type_points;
       }
@@ -34,15 +34,17 @@ public:
     Rcpp::IntegerVector count_species(number_types);
 
     for(R_xlen_t i(0); i < number_points; ++i) {
-      const auto type_i(configuration.types(i) - 1);
+      const auto point_i(configuration[i]);
+      const auto type_i(get_type(point_i));
       ++count_species[type_i];
 
       double average_dispersion(0);
 
       for(R_xlen_t j(0); j < number_points; ++j) {
-        const auto type_j(configuration.types(j) - 1);
+        const auto point_j(configuration[j]);
+        const auto type_j(get_type(point_j));
         if(type_j == get_type(point) && j != i) {
-          const auto phi_distance(compute_phi_distance(configuration.x(i), configuration.y(i), configuration.x(j), configuration.y(j), *this));
+          const auto phi_distance(compute_phi_distance(point_i, point_j, *this));
 
           average_dispersion += phi_distance;
         }
@@ -56,7 +58,7 @@ public:
           average_dispersion /= same_type_points;
         }
       }
-      delta_dispersion[type_i] += average_dispersion - compute_phi_distance(configuration.x(i), configuration.y(i), get_x(point), get_y(point), *this);
+      delta_dispersion[type_i] += average_dispersion - compute_phi_distance(point_i, point, *this);
     }
 
     for(R_xlen_t i(0); i < number_types; ++i) {
@@ -81,10 +83,11 @@ public:
   inline Rcpp::NumericVector compute(const Configuration& configuration, const Point& point, R_xlen_t number_types, R_xlen_t number_points) const {
     Rcpp::NumericVector delta_dispersion(number_types);
     for(R_xlen_t i(0); i < number_points; ++i) {
-      const auto type_i(configuration.types(i) - 1);
+      const auto point_i(configuration[i]);
+      const auto type_i(get_type(point_i));
       if(delta_dispersion[type_i] < saturation_) {
-        const auto delta_x(configuration.x(i) - get_x(point));
-        const auto delta_y(configuration.y(i) - get_y(point));
+        const auto delta_x(get_x(point_i) - get_x(point));
+        const auto delta_y(get_y(point_i) - get_y(point));
         const auto square_distance(delta_x * delta_x + delta_y * delta_y);
         if(square_distance <= square_radius_) {
           delta_dispersion[type_i] += 1.;
@@ -134,15 +137,17 @@ private:
     double dispersion(0);
 
     for(R_xlen_t i(0); i < number_points; ++i) {
-      const auto type_i(configuration.types(i) - 1);
+      const auto point_i(configuration[i]);
+      const auto type_i(get_type(point_i));
       if(type_i == k1) {
         ++count_species;
         double min_distance(std::numeric_limits<double>::max());
         for(R_xlen_t j(0); j < number_points; ++j) {
           if(j != i) {
-            const auto type_j(configuration.types(j) - 1);
+            const auto point_j(configuration[j]);
+            const auto type_j(get_type(point_j));
             if(type_j == k2) {
-              const auto d(compute_phi_distance(configuration.x(i), configuration.y(i), configuration.x(j), configuration.y(j), *this));
+              const auto d(compute_phi_distance(point_i, point_j, *this));
               if(min_distance > d) {
                 min_distance = d;
               }

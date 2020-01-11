@@ -1,6 +1,7 @@
 #ifndef INCLUDE_PPJSDM_CONFIGURATION_MANIPULATION
 #define INCLUDE_PPJSDM_CONFIGURATION_MANIPULATION
 
+#include <iterator> // std::next
 #include <utility> // std::forward
 
 namespace ppjsdm {

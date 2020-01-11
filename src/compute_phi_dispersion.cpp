@@ -4,11 +4,9 @@
 #include "utility/configuration_manipulation.h"
 #include "utility/configuration_wrappers.h"
 
-#include <tuple> // std::make_tuple
-
 //' Compute the delta of the phi-dispersion of a marked configuration.
 //'
-//' @param configuration The configuration.
+//' @param configuration Configuration.
 //' @param location Point to be added.
 //' @param type Type of point to be added.
 //' @param number_types Number of different types.
@@ -19,9 +17,9 @@
 //' @import Rcpp
 // [[Rcpp::export]]
 Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::List configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, Rcpp::CharacterVector model = "identity", double radius = 0) {
-  const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
-  const auto number_points(ppjsdm::size(wrapped_configuration));
-  return ppjsdm::call_on_papangelou(model, radius, [&wrapped_configuration, &location, type, number_types, number_points](const auto& papangelou) {
-    return papangelou.compute(wrapped_configuration, std::make_tuple(location[0], location[1], type), number_types, number_points);
+  return ppjsdm::call_on_papangelou(model, radius, [&configuration, &location, type, number_types](const auto& papangelou) {
+    const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
+    const auto number_points(ppjsdm::size(wrapped_configuration));
+    return papangelou.compute(wrapped_configuration, ppjsdm::Marked_point(location[0], location[1], type), number_types, number_points);
   });
 }
