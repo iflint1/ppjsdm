@@ -1,8 +1,6 @@
 #ifndef INCLUDE_PPJSDM_CONFIGURATION_MANIPULATION
 #define INCLUDE_PPJSDM_CONFIGURATION_MANIPULATION
 
-#include "configuration_wrappers.h"
-
 #include <utility> // std::forward
 
 namespace ppjsdm {
@@ -24,9 +22,13 @@ struct configuration_manipulation_defaults {
     return configuration.size();
   }
 
-  template<typename Iterator>
-  static inline auto erase(Configuration& configuration, Iterator it) {
-    return configuration.erase(it);
+  static inline auto remove_random_point(Configuration& configuration) {
+    using difference_type = typename std::iterator_traits<decltype(configuration.begin())>::difference_type;
+    const difference_type index(Rcpp::sample(size(configuration), 1, false, R_NilValue, false)[0]);
+    auto iterator(std::next(configuration.begin(), index));
+    const auto point(*iterator);
+    configuration.erase(iterator);
+    return point;
   }
 };
 
@@ -43,6 +45,11 @@ inline void add_point(Configuration& configuration, Point&& point) {
 template<typename Configuration, typename... Args>
 inline void emplace_point(Configuration& configuration, Args... args) {
   traits::configuration_manipulation<Configuration>::emplace_point(configuration, args...);
+}
+
+template<typename Configuration>
+inline auto remove_random_point(Configuration& configuration) {
+  return traits::configuration_manipulation<Configuration>::remove_random_point(configuration);
 }
 
 template<typename Configuration>

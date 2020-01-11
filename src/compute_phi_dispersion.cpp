@@ -2,6 +2,7 @@
 
 #include "utility/compute_phi_dispersion.h"
 #include "utility/configuration_manipulation.h"
+#include "utility/configuration_wrappers.h"
 
 #include <tuple> // std::make_tuple
 

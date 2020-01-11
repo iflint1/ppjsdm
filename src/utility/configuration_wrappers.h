@@ -3,6 +3,7 @@
 
 #include <Rcpp.h>
 
+#include "configuration_manipulation.h"
 #include "point_manipulation.h"
 
 #include <tuple> // std::tuple
@@ -27,6 +28,16 @@ public:
 
   int types(R_xlen_t index) const {
     return types_[index];
+  }
+
+  auto operator[](R_xlen_t index) const {
+    return std::make_tuple(x_[index], y_[index], types_[index]);
+  }
+
+  void erase(R_xlen_t index) {
+    x_.erase(x_.begin() + index);
+    y_.erase(y_.begin() + index);
+    types_.erase(types_.begin() + index);
   }
 
   Rcpp::NumericVector x() const {
@@ -120,6 +131,19 @@ private:
   vector_type points_;
 };
 
+namespace traits {
+
+template<>
+struct configuration_manipulation<Configuration_wrapper>: public configuration_manipulation_defaults<Configuration_wrapper> {
+  static inline auto remove_random_point(Configuration_wrapper& configuration) {
+    const auto index(Rcpp::sample(size(configuration), 1, false, R_NilValue, false)[0]);
+    auto point(configuration[index]);
+    configuration.erase(index);
+    return point;
+  }
+};
+
+} // namespace traits
 } // namespace ppjsdm
 
 #endif // INCLUDE_PPJSDM_CONFIGURATION_WRAPPERS

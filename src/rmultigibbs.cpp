@@ -4,12 +4,12 @@
 #include "utility/call_on_list_or_vector.h"
 #include "utility/compute_phi_dispersion.h"
 #include "utility/configuration_manipulation.h"
+#include "utility/configuration_wrappers.h"
 #include "utility/get_list_or_first_element.h"
 #include "utility/make_default_types.h"
 #include "utility/make_R_configuration.h"
 #include "utility/point_manipulation.h"
 #include "utility/rbinomialpp_single.h"
-#include "utility/remove_random_point.h"
 #include "utility/resolve_defaults.h"
 #include "utility/window_utilities.h"
 
@@ -50,7 +50,7 @@ inline SEXP rmultigibbs_helper(const V& varphi, const S& window, R_xlen_t steps,
         }
       } else {
         if(total_number != 0) {
-          const auto saved_point(remove_random_point(points));
+          const auto saved_point(ppjsdm::remove_random_point(points));
 
           const auto papangelou(varphi.compute_papangelou(points, saved_point, point_types));
           const auto death_ratio(prob * total_number / (point_types * (1 - prob) * volume * papangelou));
