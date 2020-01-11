@@ -1,5 +1,5 @@
-#ifndef INCLUDE_PPJSDM_CONFIGURATION_UTILITIES
-#define INCLUDE_PPJSDM_CONFIGURATION_UTILITIES
+#ifndef INCLUDE_PPJSDM_CONFIGURATION_WRAPPERS
+#define INCLUDE_PPJSDM_CONFIGURATION_WRAPPERS
 
 #include <Rcpp.h>
 
@@ -7,29 +7,6 @@
 #include <vector> // std::vector
 
 namespace ppjsdm {
-
-inline Rcpp::List make_configuration(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector types_vector, Rcpp::CharacterVector types) {
-  types_vector.attr("class") = "factor";
-  types_vector.attr("levels") = types;
-
-  Rcpp::List configuration = Rcpp::List::create(Rcpp::Named("x") = x, Rcpp::Named("y") = y, Rcpp::Named("types") = types_vector);
-  configuration.attr("class") = "Configuration";
-  return configuration;
-}
-
-template<typename Configuration>
-inline Rcpp::List make_configuration(const Configuration& configuration, Rcpp::CharacterVector types) {
-  const auto configuration_size(configuration.get_number_points());
-  Rcpp::NumericVector x(Rcpp::no_init(configuration_size));
-  Rcpp::NumericVector y(Rcpp::no_init(configuration_size));
-  Rcpp::IntegerVector types_vector(Rcpp::no_init(configuration_size));
-  for(R_xlen_t i(0); i < configuration_size; ++i) {
-    x[i] = configuration.x(i);
-    y[i] = configuration.y(i);
-    types_vector[i] = configuration.types(i);
-  }
-  return make_configuration(x, y, types_vector, types);
-}
 
 class Configuration_wrapper {
 public:
@@ -62,13 +39,13 @@ public:
     return types_;
   }
 
-  auto emplace_back(double x, double y, int types) {
+  auto push_back(double x, double y, int types) {
     x_.push_back(x);
     y_.push_back(y);
     types_.push_back(types);
   }
 
-  R_xlen_t get_number_points() const {
+  auto size() const {
     return x_.size();
   }
 
@@ -88,7 +65,7 @@ class StdVector_configuration_wrapper {
   using vector_type = std::vector<detail::Marked_point>;
 public:
   StdVector_configuration_wrapper():
-    points_{} {}
+  points_{} {}
   // explicit StdVector_configuration_wrapper(const Configuration_wrapper& other) {
   //   const auto other_size(other.get_number_points());
   //   points_ = vector_type(other_size);
@@ -117,7 +94,7 @@ public:
     return points_.erase(points_.begin() + index);
   }
 
-  R_xlen_t get_number_points() const {
+  auto size() const {
     return points_.size();
   }
 
@@ -127,4 +104,4 @@ private:
 
 } // namespace ppjsdm
 
-#endif // INCLUDE_PPJSDM_CONFIGURATION_UTILITIES
+#endif // INCLUDE_PPJSDM_CONFIGURATION_WRAPPERS

@@ -1,5 +1,5 @@
-#ifndef INCLUDE_PPJSDM_MAKE_CONFIGURATION
-#define INCLUDE_PPJSDM_MAKE_CONFIGURATION
+#ifndef INCLUDE_PPJSDM_MAKE_DEFAULT_TYPES
+#define INCLUDE_PPJSDM_MAKE_DEFAULT_TYPES
 
 #include <Rcpp.h>
 #include <Rinternals.h>
@@ -61,4 +61,4 @@ inline SEXP make_types(SEXP types, R_xlen_t size, Args&&... might_contain_names)
 
 } // namespace ppjsdm
 
-#endif // INCLUDE_PPJSDM_MAKE_CONFIGURATION
+#endif // INCLUDE_PPJSDM_MAKE_DEFAULT_TYPES

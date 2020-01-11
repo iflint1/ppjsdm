@@ -1,6 +1,7 @@
 #include <Rcpp.h>
 
-#include "utility/configuration_utilities.h"
+#include "utility/configuration_manipulation.h"
+#include "utility/configuration_wrappers.h"
 
 #include <algorithm> // std::sort, std::unique
 #include <tuple> // std::tuple
@@ -24,7 +25,7 @@ using Marked_point = std::tuple<double, double, int>;
 bool has_duplicates(Rcpp::List configuration) {
   using Marked_point = ppjsdm::detail::Marked_point;
   const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
-  const R_xlen_t number_points(wrapped_configuration.get_number_points());
+  const R_xlen_t number_points(ppjsdm::size(wrapped_configuration));
   std::vector<Marked_point> points(number_points);
   for(R_xlen_t i(0); i < number_points; ++i) {
     points[i] = Marked_point(wrapped_configuration.x(i), wrapped_configuration.y(i), wrapped_configuration.types(i));

@@ -9,7 +9,6 @@
 #include <utility> // std::forward
 
 #include "compute_phi_distance.h"
-#include "configuration_utilities.h"
 
 namespace ppjsdm {
 
@@ -110,7 +109,7 @@ public:
     Rcpp::NumericVector delta_dispersion(Rcpp::no_init(number_types));
 
     auto configuration_plus(configuration);
-    configuration_plus.emplace_back(location[0], location[1], type + 1);
+    emplace_point(configuration_plus, location[0], location[1], type + 1);
 
     for(R_xlen_t i(0); i < number_types; ++i) {
       if(i == type) {
@@ -171,7 +170,7 @@ public:
 
   template<typename Configuration>
   double compute_papangelou(const Configuration& configuration, Rcpp::NumericVector location, R_xlen_t type, R_xlen_t number_types) const {
-    const auto delta_D(Varphi::compute(configuration, location, type, number_types, configuration.get_number_points()));
+    const auto delta_D(Varphi::compute(configuration, location, type, number_types, size(configuration)));
 
     double inner_product(0);
     for(R_xlen_t i(0); i < number_types; ++i) {
@@ -179,7 +178,7 @@ public:
     }
     // TODO: replace x.size() with "number of points of type `type`".
     // TODO: Faster with n ^ nu?
-    return lambda_[type] * std::exp(inner_product + (1 - nu_[type]) * std::log(configuration.get_number_points() + 1));
+    return lambda_[type] * std::exp(inner_product + (1 - nu_[type]) * std::log(size(configuration) + 1));
   }
 private:
   U lambda_;

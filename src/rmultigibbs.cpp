@@ -6,10 +6,11 @@
 
 #include "utility/call_on_list_or_vector.h"
 #include "utility/compute_phi_dispersion.h"
-#include "utility/configuration_utilities.h"
+#include "utility/configuration_manipulation.h"
 #include "utility/get_list_or_first_element.h"
-#include "utility/rbinomialpp_single.h"
 #include "utility/make_default_types.h"
+#include "utility/make_R_configuration.h"
+#include "utility/rbinomialpp_single.h"
 #include "utility/resolve_defaults.h"
 #include "utility/window_utilities.h"
 
@@ -41,13 +42,13 @@ inline SEXP rmultigibbs_helper(const V& varphi, const S& window, R_xlen_t steps,
         const auto birth_ratio(papangelou * (1 - prob) * volume * point_types / (prob * (1 + total_number)));
 
         if(v <= birth_ratio) {
-          points.emplace_back(location[0], location[1], type + 1);
+          emplace_point(points, location[0], location[1], type + 1);
           ++total_number;
         }
       } else {
         if(total_number != 0) {
           // TODO: Add a member function to erase random point
-          const R_xlen_t index(Rcpp::sample(points.get_number_points(), 1, false, R_NilValue, false)[0]);
+          const R_xlen_t index(Rcpp::sample(size(points), 1, false, R_NilValue, false)[0]);
           const Rcpp::NumericVector saved_location{points.x(index), points.y(index)};
           const R_xlen_t saved_type(points.types(index) - 1);
           points.erase(i);
@@ -57,13 +58,13 @@ inline SEXP rmultigibbs_helper(const V& varphi, const S& window, R_xlen_t steps,
           if(v <= death_ratio) {
             --total_number;
           } else {
-            points.emplace_back(saved_location[0], saved_location[1], saved_type + 1);
+            emplace_point(points, saved_location[0], saved_location[1], saved_type + 1);
           }
         }
       }
     }
 
-    samples[i] = ppjsdm::make_configuration(points, types);
+    samples[i] = ppjsdm::make_R_configuration(points, types);
   }
 
   return ppjsdm::get_list_or_first_element(samples, nsim, drop);

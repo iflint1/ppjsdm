@@ -3,7 +3,7 @@
 
 #include <Rcpp.h>
 
-#include "configuration_utilities.h"
+#include "make_R_configuration.h"
 
 namespace ppjsdm {
 
@@ -26,7 +26,7 @@ inline auto rbinomialpp_single(const W& window, const T& n, Rcpp::CharacterVecto
     fill += points_to_add;
   }
 
-  return make_configuration(x, y, factors, types);
+  return make_R_configuration(x, y, factors, types);
 }
 
 } // namespace ppjsdm
