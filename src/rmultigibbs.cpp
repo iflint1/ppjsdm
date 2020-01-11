@@ -1,19 +1,21 @@
 #include <Rcpp.h>
 #include <Rmath.h>
 
-#include <cmath> // std::exp
-#include <vector> // std::vector
-
 #include "utility/call_on_list_or_vector.h"
 #include "utility/compute_phi_dispersion.h"
 #include "utility/configuration_manipulation.h"
 #include "utility/get_list_or_first_element.h"
 #include "utility/make_default_types.h"
 #include "utility/make_R_configuration.h"
+#include "utility/point_manipulation.h"
 #include "utility/rbinomialpp_single.h"
 #include "utility/remove_random_point.h"
 #include "utility/resolve_defaults.h"
 #include "utility/window_utilities.h"
+
+#include <cmath> // std::exp
+#include <tuple> // std::make_tuple
+#include <vector> // std::vector
 
 template<typename V, typename S>
 inline SEXP rmultigibbs_helper(const V& varphi, const S& window, R_xlen_t steps, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
@@ -36,29 +38,26 @@ inline SEXP rmultigibbs_helper(const V& varphi, const S& window, R_xlen_t steps,
       if(u <= prob) {
         const R_xlen_t type(Rcpp::sample(point_types, 1, false, R_NilValue, false)[0]);
         const auto location_pair(window.sample());
-        const Rcpp::NumericVector location{location_pair.first, location_pair.second};
+        const auto point(std::make_tuple(location_pair.first, location_pair.second, type));
 
         // TODO: You can avoid taking the exp by reorganising the ratio, and sampling an exponential r.v. instead.
-        const auto papangelou(varphi.compute_papangelou(points, location, type, point_types));
+        const auto papangelou(varphi.compute_papangelou(points, point, point_types));
         const auto birth_ratio(papangelou * (1 - prob) * volume * point_types / (prob * (1 + total_number)));
 
         if(v <= birth_ratio) {
-          emplace_point(points, location[0], location[1], type + 1);
+          ppjsdm::add_point(points, point);
           ++total_number;
         }
       } else {
         if(total_number != 0) {
           const auto saved_point(remove_random_point(points));
-          // TODO: Send the generic point to the function instead.
-          const Rcpp::NumericVector saved_location{std::get<0>(saved_point), std::get<1>(saved_point)};
-          const R_xlen_t saved_type(std::get<2>(saved_point) - 1);
 
-          const auto papangelou(varphi.compute_papangelou(points, saved_location, saved_type, point_types));
+          const auto papangelou(varphi.compute_papangelou(points, saved_point, point_types));
           const auto death_ratio(prob * total_number / (point_types * (1 - prob) * volume * papangelou));
           if(v <= death_ratio) {
             --total_number;
           } else {
-            add_point(points, saved_point);
+            ppjsdm::add_point(points, saved_point);
           }
         }
       }

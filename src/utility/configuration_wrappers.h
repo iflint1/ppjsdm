@@ -3,6 +3,8 @@
 
 #include <Rcpp.h>
 
+#include "point_manipulation.h"
+
 #include <tuple> // std::tuple
 #include <vector> // std::vector
 
@@ -81,15 +83,15 @@ public:
   //   }
 
   double x(R_xlen_t index) const {
-    return std::get<0>(points_[index]);
+    return get_x(points_[index]);
   }
 
   double y(R_xlen_t index) const {
-    return std::get<1>(points_[index]);
+    return get_y(points_[index]);
   }
 
   int types(R_xlen_t index) const {
-    return std::get<2>(points_[index]);
+    return get_type(points_[index]);
   }
 
   auto begin() const {

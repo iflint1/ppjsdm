@@ -26,7 +26,8 @@ inline Rcpp::List make_R_configuration(const Configuration& configuration, Rcpp:
   for(size_type i(0); i < configuration_size; ++i) {
     x[i] = configuration.x(i);
     y[i] = configuration.y(i);
-    types_vector[i] = configuration.types(i);
+    // TODO: This does not work for Configuration_wrapper which should be treated separately anyhow.
+    types_vector[i] = configuration.types(i) + 1;
   }
   return make_R_configuration(x, y, types_vector, types);
 }

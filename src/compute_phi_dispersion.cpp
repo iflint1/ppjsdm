@@ -3,6 +3,8 @@
 #include "utility/compute_phi_dispersion.h"
 #include "utility/configuration_manipulation.h"
 
+#include <tuple> // std::make_tuple
+
 //' Compute the delta of the phi-dispersion of a marked configuration.
 //'
 //' @param configuration The configuration.
@@ -19,6 +21,6 @@ Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::List configuration, Rcpp:
   const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
   const auto number_points(ppjsdm::size(wrapped_configuration));
   return ppjsdm::call_on_papangelou(model, radius, [&wrapped_configuration, &location, type, number_types, number_points](const auto& papangelou) {
-    return papangelou.compute(wrapped_configuration, location, type, number_types, number_points);
+    return papangelou.compute(wrapped_configuration, std::make_tuple(location[0], location[1], type), number_types, number_points);
   });
 }
