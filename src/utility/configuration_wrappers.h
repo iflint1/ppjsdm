@@ -39,10 +39,16 @@ public:
     return types_;
   }
 
-  auto push_back(double x, double y, int types) {
+  auto emplace_back(double x, double y, int types) {
     x_.push_back(x);
     y_.push_back(y);
     types_.push_back(types);
+  }
+
+  auto push_back(const std::tuple<double, double, int>& point) {
+    x_.push_back(std::get<0>(point));
+    y_.push_back(std::get<1>(point));
+    types_.push_back(std::get<2>(point));
   }
 
   auto size() const {
@@ -86,12 +92,22 @@ public:
     return std::get<2>(points_[index]);
   }
 
-  auto emplace_back(double x, double y, int types) {
-    return points_.emplace_back(x, y, types);
+  auto begin() const {
+    return points_.begin();
   }
 
-  auto erase(R_xlen_t index) {
-    return points_.erase(points_.begin() + index);
+  void emplace_back(double x, double y, int types) {
+    points_.emplace_back(x, y, types);
+  }
+
+  template<typename Point>
+  auto push_back(const Point& point) {
+    return points_.push_back(point);
+  }
+
+  template<typename Iterator>
+  auto erase(Iterator iterator) {
+    return points_.erase(iterator);
   }
 
   auto size() const {

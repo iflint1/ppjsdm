@@ -11,6 +11,7 @@
 #include "utility/make_default_types.h"
 #include "utility/make_R_configuration.h"
 #include "utility/rbinomialpp_single.h"
+#include "utility/remove_random_point.h"
 #include "utility/resolve_defaults.h"
 #include "utility/window_utilities.h"
 
@@ -47,18 +48,17 @@ inline SEXP rmultigibbs_helper(const V& varphi, const S& window, R_xlen_t steps,
         }
       } else {
         if(total_number != 0) {
-          // TODO: Add a member function to erase random point
-          const R_xlen_t index(Rcpp::sample(size(points), 1, false, R_NilValue, false)[0]);
-          const Rcpp::NumericVector saved_location{points.x(index), points.y(index)};
-          const R_xlen_t saved_type(points.types(index) - 1);
-          points.erase(i);
+          const auto saved_point(remove_random_point(points));
+          // TODO: Send the generic point to the function instead.
+          const Rcpp::NumericVector saved_location{std::get<0>(saved_point), std::get<1>(saved_point)};
+          const R_xlen_t saved_type(std::get<2>(saved_point) - 1);
 
           const auto papangelou(varphi.compute_papangelou(points, saved_location, saved_type, point_types));
           const auto death_ratio(prob * total_number / (point_types * (1 - prob) * volume * papangelou));
           if(v <= death_ratio) {
             --total_number;
           } else {
-            emplace_point(points, saved_location[0], saved_location[1], saved_type + 1);
+            add_point(points, saved_point);
           }
         }
       }
