@@ -24,9 +24,7 @@ inline SEXP rmultigibbs_helper(const V& varphi, const S& window, R_xlen_t steps,
     // TODO: This can likely be made faster by using one unique vector, since all 3 have the same length.
     // TODO: Make an std_vector_configuration wrapper to make everything more straightforward.
     // TODO: Preallocate with a rough estimate of final size?
-    std::vector<double> x;
-    std::vector<double> y;
-    std::vector<int> types_vector;
+    ppjsdm::StdVector_configuration_wrapper points{};
 
     R_xlen_t total_number(0);
 
@@ -39,39 +37,33 @@ inline SEXP rmultigibbs_helper(const V& varphi, const S& window, R_xlen_t steps,
         const Rcpp::NumericVector location{location_pair.first, location_pair.second};
 
         // TODO: You can avoid taking the exp by reorganising the ratio, and sampling an exponential r.v. instead.
-        const auto papangelou(varphi.compute_papangelou(x, y, types_vector, location, type, point_types));
+        const auto papangelou(varphi.compute_papangelou(points, location, type, point_types));
         const auto birth_ratio(papangelou * (1 - prob) * volume * point_types / (prob * (1 + total_number)));
 
         if(v <= birth_ratio) {
-          // Add point to configuration
-          x.push_back(location[0]);
-          y.push_back(location[1]);
-          types_vector.push_back(type + 1);
+          points.emplace_back(location[0], location[1], type + 1);
           ++total_number;
         }
       } else {
         if(total_number != 0) {
-          const R_xlen_t index(Rcpp::sample(x.size(), 1, false, R_NilValue, false)[0]);
-          const Rcpp::NumericVector saved_location{x[index], y[index]};
-          const R_xlen_t saved_type(types_vector[index] - 1);
-          x.erase(x.begin() + index);
-          y.erase(y.begin() + index);
-          types_vector.erase(types_vector.begin() + index);
+          // TODO: Add a member function to erase random point
+          const R_xlen_t index(Rcpp::sample(points.get_number_points(), 1, false, R_NilValue, false)[0]);
+          const Rcpp::NumericVector saved_location{points.x(index), points.y(index)};
+          const R_xlen_t saved_type(points.types(index) - 1);
+          points.erase(i);
 
-          const auto papangelou(varphi.compute_papangelou(x, y, types_vector, saved_location, saved_type, point_types));
+          const auto papangelou(varphi.compute_papangelou(points, saved_location, saved_type, point_types));
           const auto death_ratio(prob * total_number / (point_types * (1 - prob) * volume * papangelou));
           if(v <= death_ratio) {
             --total_number;
           } else {
-            x.push_back(saved_location[0]);
-            y.push_back(saved_location[1]);
-            types_vector.push_back(saved_type + 1);
+            points.emplace_back(saved_location[0], saved_location[1], saved_type + 1);
           }
         }
       }
     }
 
-    samples[i] = ppjsdm::make_configuration(Rcpp::wrap(x), Rcpp::wrap(y), Rcpp::wrap(types_vector), types);
+    samples[i] = ppjsdm::make_configuration(points, types);
   }
 
   return ppjsdm::get_list_or_first_element(samples, nsim, drop);

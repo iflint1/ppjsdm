@@ -19,6 +19,6 @@ Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::List configuration, Rcpp:
   const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
   const auto number_points(wrapped_configuration.get_number_points());
   return ppjsdm::call_on_papangelou(model, radius, [&wrapped_configuration, &location, type, number_types, number_points](const auto& papangelou) {
-    return papangelou.compute(wrapped_configuration.x(), wrapped_configuration.y(), wrapped_configuration.types(), location, type, number_types, number_points);
+    return papangelou.compute(wrapped_configuration, location, type, number_types, number_points);
   });
 }
