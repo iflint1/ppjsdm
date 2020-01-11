@@ -210,7 +210,7 @@ inline auto call_on_papangelou(Rcpp::CharacterVector model, double radius, const
 template<typename F, typename L, typename N, typename... Args>
 inline auto call_on_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix alpha, const L& lambda, const N& nu, double radius, const F& f) {
   return call_on_papangelou(model, radius, [&alpha, &lambda, &nu, &f](auto&& varphi){
-    const Exponential_family_model<std::remove_cv_t<std::remove_reference_t<decltype(varphi)>>, L, N, decltype(alpha)> model(lambda, nu, alpha, std::forward<decltype(varphi)>(varphi));
+    const Exponential_family_model<std::remove_cv_t<std::remove_reference_t<decltype(varphi)>>, L, N, Rcpp::NumericMatrix> model(lambda, nu, alpha, std::forward<decltype(varphi)>(varphi));
     return f(model);
   });
 }
