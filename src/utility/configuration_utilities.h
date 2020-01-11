@@ -3,6 +3,9 @@
 
 #include <Rcpp.h>
 
+#include <tuple> // std::tuple
+#include <vector> // std::vector
+
 namespace ppjsdm {
 
 inline Rcpp::List make_configuration(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector types_vector, Rcpp::CharacterVector types) {
@@ -53,6 +56,47 @@ private:
   Rcpp::NumericVector x_;
   Rcpp::NumericVector y_;
   Rcpp::IntegerVector types_;
+};
+
+namespace detail {
+
+using Marked_point = std::tuple<double, double, int>;
+
+} // namespace detail
+
+class StdVector_configuration_wrapper {
+  using vector_type = std::vector<detail::Marked_point>;
+  using const_iterator = typename vector_type::const_iterator;
+public:
+  explicit StdVector_configuration_wrapper():
+    points_{} {}
+
+  double x(R_xlen_t index) const {
+    return std::get<0>(points_[index]);
+  }
+
+  double y(R_xlen_t index) const {
+    return std::get<1>(points_[index]);
+  }
+
+  int types(R_xlen_t index) const {
+    return std::get<2>(points_[index]);
+  }
+
+  auto emplace_back(double x, double y, int types) {
+    return points_.emplace_back(x, y, types);
+  }
+
+  auto erase(const_iterator i) {
+    return points_.erase(i);
+  }
+
+  R_xlen_t get_number_points() const {
+    return points_.size();
+  }
+
+private:
+  vector_type points_;
 };
 
 } // namespace ppjsdm
