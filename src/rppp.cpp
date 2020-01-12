@@ -11,8 +11,8 @@
 #include "utility/resolve_defaults.h"
 #include "utility/window_utilities.h"
 
-template<typename S, typename T>
-inline SEXP rppp_helper(const S& window, const T& lambda, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
+template<typename Window, typename Lambda>
+inline SEXP rppp_helper(const Window& window, const Lambda& lambda, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
   Rcpp::List samples(nsim);
 
   for(R_xlen_t i(0); i < nsim; ++i) {

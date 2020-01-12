@@ -12,8 +12,8 @@
 #include "utility/sum.h"
 #include "utility/window_utilities.h"
 
-template<typename W, typename T>
-inline SEXP rbinomialpp_helper(const W& window, const T& n, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
+template<typename Window, typename N>
+inline SEXP rbinomialpp_helper(const Window& window, const N& n, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
   const auto total_number(ppjsdm::sum<int>(n, point_types));
 
   Rcpp::List samples(nsim);

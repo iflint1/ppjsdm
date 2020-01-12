@@ -14,8 +14,8 @@
 
 #include <vector> // std::vector
 
-template<typename Model, typename S>
-inline SEXP rmultigibbs_helper(const Model& model, const S& window, R_xlen_t steps, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
+template<typename Model, typename Window>
+inline SEXP rmultigibbs_helper(const Model& model, const Window& window, R_xlen_t steps, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
   Rcpp::List samples(nsim);
 
   for(R_xlen_t i(0); i < nsim; ++i) {
