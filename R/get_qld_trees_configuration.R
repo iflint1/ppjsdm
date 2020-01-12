@@ -6,22 +6,22 @@
 #' @param jitter Variance of the shifts applied to the locations of the trees.
 #' @importFrom stats rnorm
 #' @export
-get_csiro_trees_configuration <- function(index = 15, year = 2013, prevalent = 10, jitter = 0.3) {
+get_qld_trees_configuration <- function(index = 15, year = 2013, prevalent = 10, jitter = 0.3) {
   stopifnot(index >= 1, index <= 20, year >= 1971, year <= 2013)
-  raw_csiro_trees <- ppjsdm::raw_csiro_trees
+  raw_qld_trees <- ppjsdm::raw_qld_trees
 
-  index_epNumber <- unique(raw_csiro_trees$epNumber)[index]
+  index_epNumber <- unique(raw_qld_trees$epNumber)[index]
   message("The chosen index corresponds to ", paste(index_epNumber, collapse = ", "), ".")
-  modified_csiro_trees <- raw_csiro_trees[raw_csiro_trees$epNumber %in% index_epNumber, ]
+  modified_qld_trees <- raw_qld_trees[raw_qld_trees$epNumber %in% index_epNumber, ]
 
   used_year <- year
   repeat {
     if(year < 1971) {
       stop("There was no data for any year less than or equal to the requested year.")
     }
-    condition <- modified_csiro_trees$year == used_year
+    condition <- modified_qld_trees$year == used_year
     if(any(condition)) {
-      modified_csiro_trees <- modified_csiro_trees[condition, ]
+      modified_qld_trees <- modified_qld_trees[condition, ]
       break
     } else {
       used_year <- used_year - 1
@@ -33,14 +33,14 @@ get_csiro_trees_configuration <- function(index = 15, year = 2013, prevalent = 1
   }
 
 
-  sp_prevalence <- rev(sort(table(modified_csiro_trees$taxon)))
+  sp_prevalence <- rev(sort(table(modified_qld_trees$taxon)))
   sp_keep <- names(sp_prevalence)[1:prevalent]
-  modified_csiro_trees <- modified_csiro_trees[modified_csiro_trees$taxon %in% sp_keep, ]
+  modified_qld_trees <- modified_qld_trees[modified_qld_trees$taxon %in% sp_keep, ]
 
-  number_locations <- length(modified_csiro_trees$coordinates_x_metres)
+  number_locations <- length(modified_qld_trees$coordinates_x_metres)
   jiggle <- rnorm(2 * number_locations, 0, jitter)
-  modified_csiro_trees$coordinates_x_metres <- modified_csiro_trees$coordinates_x_metres + jiggle[1:number_locations]
-  modified_csiro_trees$coordinates_y_metres <- modified_csiro_trees$coordinates_y_metres + jiggle[-(1:number_locations)]
+  modified_qld_trees$coordinates_x_metres <- modified_qld_trees$coordinates_x_metres + jiggle[1:number_locations]
+  modified_qld_trees$coordinates_y_metres <- modified_qld_trees$coordinates_y_metres + jiggle[-(1:number_locations)]
 
-  Configuration(modified_csiro_trees$coordinates_x_metres, modified_csiro_trees$coordinates_y_metres, factor(modified_csiro_trees$taxon))
+  Configuration(modified_qld_trees$coordinates_x_metres, modified_qld_trees$coordinates_y_metres, factor(modified_qld_trees$taxon))
 }

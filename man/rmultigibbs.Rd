@@ -9,7 +9,7 @@ rmultigibbs(
   alpha = NULL,
   lambda = NULL,
   nu = NULL,
-  radius = 0,
+  radius = NULL,
   steps = 30000L,
   nsim = 1L,
   types = NULL,
@@ -28,7 +28,7 @@ Default is a vector of same size as types, filled with ones.}
 \item{nu}{A vector representing the dispersion of the number of points.
 Default is a vector of same size as types, filled with ones.}
 
-\item{radius}{Interaction radius. Default is zero.}
+\item{radius}{Symmetric matrix of interaction radii. Filled by zeroes by default;}
 
 \item{steps}{Number of steps in the Metropolis algorithm. Default is 30000.}
 
