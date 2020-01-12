@@ -3,7 +3,7 @@
 
 #include <Rinternals.h>
 
-#include "point_manipulation.h"
+#include "../utility/point_manipulation.h"
 
 namespace ppjsdm {
 
