@@ -34,7 +34,7 @@ inline SEXP rmultigibbs_helper(const Model& model, const Window& window, R_xlen_
 //' Default is a vector of same size as types, filled with ones.
 //' @param nu A vector representing the dispersion of the number of points.
 //' Default is a vector of same size as types, filled with ones.
-//' @param radius Interaction radius. Default is zero.
+//' @param radius Symmetric matrix of interaction radii. Filled by zeroes by default;
 //' @param steps Number of steps in the Metropolis algorithm. Default is 30000.
 //' @param nsim Number of samples to generate. Default is 1.
 //' @param types Types of the points. Default is a vector (type1, type2, ...) of same size as n.
@@ -45,15 +45,16 @@ inline SEXP rmultigibbs_helper(const Model& model, const Window& window, R_xlen_
 //' @useDynLib ppjsdm
 //' @import Rcpp
 // [[Rcpp::export]]
-SEXP rmultigibbs(SEXP window = R_NilValue, SEXP alpha = R_NilValue, SEXP lambda = R_NilValue, SEXP nu = R_NilValue, double radius = 0, R_xlen_t steps = 30000, R_xlen_t nsim = 1, SEXP types = R_NilValue, Rcpp::CharacterVector model = "identity", bool drop = true) {
-  const auto point_types(ppjsdm::get_number_types_and_check_conformance(alpha, lambda, nu, types));
+SEXP rmultigibbs(SEXP window = R_NilValue, SEXP alpha = R_NilValue, SEXP lambda = R_NilValue, SEXP nu = R_NilValue, SEXP radius = R_NilValue, R_xlen_t steps = 30000, R_xlen_t nsim = 1, SEXP types = R_NilValue, Rcpp::CharacterVector model = "identity", bool drop = true) {
+  const auto point_types(ppjsdm::get_number_types_and_check_conformance(alpha, lambda, nu, radius, types));
   alpha = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(point_types, alpha, 0.);
   lambda = ppjsdm::construct_if_missing<Rcpp::NumericVector>(point_types, lambda, 1.);
   nu = ppjsdm::construct_if_missing<Rcpp::NumericVector>(point_types, nu, 1.);
+  radius = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(point_types, radius, 0.);
   types = ppjsdm::make_types(types, point_types, lambda, nu);
-  return ppjsdm::call_on_wrapped_window(window, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop, point_types](const auto& w) {
-    return ppjsdm::call_on_list_or_vector(lambda, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop, point_types, &w](const auto& l) {
-      return ppjsdm::call_on_list_or_vector(nu, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop, point_types, &w, &l](const auto& n) {
+  return ppjsdm::call_on_wrapped_window(window, [&alpha, &lambda, &nu, &radius, steps, nsim, &types, &model, drop, point_types](const auto& w) {
+    return ppjsdm::call_on_list_or_vector(lambda, [&alpha, &lambda, &nu, &radius, steps, nsim, &types, &model, drop, point_types, &w](const auto& l) {
+      return ppjsdm::call_on_list_or_vector(nu, [&alpha, &lambda, &nu, &radius, steps, nsim, &types, &model, drop, point_types, &w, &l](const auto& n) {
         return ppjsdm::call_on_model(model, alpha, l, n, radius, [&w, steps, nsim, &types, drop, point_types](const auto& model){
           return rmultigibbs_helper(model, w, steps, nsim, types, drop, point_types);
         });

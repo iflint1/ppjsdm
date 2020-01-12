@@ -78,10 +78,15 @@ public:
 
 class Geyer_papangelou {
 public:
-  Geyer_papangelou(double radius, double saturation) noexcept: square_radius_(radius * radius), saturation_(saturation) {}
+  Geyer_papangelou(Rcpp::NumericMatrix radius, double saturation) noexcept: square_radius_(radius), saturation_(saturation) {
+    for(auto& entry: square_radius_) {
+      entry *= entry;
+    }
+  }
   template<typename Configuration, typename Point>
   inline Rcpp::NumericVector compute(const Configuration& configuration, const Point& point, R_xlen_t number_types, R_xlen_t number_points) const {
     Rcpp::NumericVector delta_dispersion(number_types);
+    const auto type_point(get_type(point));
     for(R_xlen_t i(0); i < number_points; ++i) {
       const auto point_i(configuration[i]);
       const auto type_i(get_type(point_i));
@@ -89,17 +94,16 @@ public:
         const auto delta_x(get_x(point_i) - get_x(point));
         const auto delta_y(get_y(point_i) - get_y(point));
         const auto square_distance(delta_x * delta_x + delta_y * delta_y);
-        if(square_distance <= square_radius_) {
+        if(square_distance <= square_radius_(type_i, type_point)) {
           delta_dispersion[type_i] += 1.;
         }
       }
     }
-
     return delta_dispersion;
   }
 
 private:
-  double square_radius_;
+  Rcpp::NumericMatrix square_radius_;
   double saturation_;
 };
 
@@ -194,7 +198,7 @@ private:
 };
 
 template<typename F>
-inline auto call_on_papangelou(Rcpp::CharacterVector model, double radius, const F& f) {
+inline auto call_on_papangelou(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, const F& f) {
   const auto model_string(model[0]);
   if(model_string == "identity") {
     return f(Varphi_model_papangelou<varphi::Identity>{});
@@ -210,7 +214,7 @@ inline auto call_on_papangelou(Rcpp::CharacterVector model, double radius, const
 }
 
 template<typename F, typename L, typename N, typename... Args>
-inline auto call_on_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix alpha, const L& lambda, const N& nu, double radius, const F& f) {
+inline auto call_on_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix alpha, const L& lambda, const N& nu, Rcpp::NumericMatrix radius, const F& f) {
   return call_on_papangelou(model, radius, [&alpha, &lambda, &nu, &f](auto&& varphi){
     const Exponential_family_model<std::remove_cv_t<std::remove_reference_t<decltype(varphi)>>, L, N, Rcpp::NumericMatrix> model(lambda, nu, alpha, std::forward<decltype(varphi)>(varphi));
     return f(model);
