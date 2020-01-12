@@ -14,8 +14,8 @@
 
 #include <vector> // std::vector
 
-template<typename V, typename S>
-inline SEXP rmultigibbs_helper(const V& varphi, const S& window, R_xlen_t steps, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
+template<typename Model, typename S>
+inline SEXP rmultigibbs_helper(const Model& model, const S& window, R_xlen_t steps, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
   const auto volume(window.volume());
   constexpr double prob(0.5);
 
@@ -37,7 +37,7 @@ inline SEXP rmultigibbs_helper(const V& varphi, const S& window, R_xlen_t steps,
         const auto point(ppjsdm::Marked_point(location_pair.first, location_pair.second, type));
 
         // TODO: You can avoid taking the exp by reorganising the ratio, and sampling an exponential r.v. instead.
-        const auto papangelou(varphi.compute_papangelou(points, point, point_types));
+        const auto papangelou(model.compute_papangelou(points, point, point_types));
         const auto birth_ratio(papangelou * (1 - prob) * volume * point_types / (prob * (1 + total_number)));
 
         if(v <= birth_ratio) {
@@ -48,7 +48,7 @@ inline SEXP rmultigibbs_helper(const V& varphi, const S& window, R_xlen_t steps,
         if(total_number != 0) {
           const auto saved_point(ppjsdm::remove_random_point(points));
 
-          const auto papangelou(varphi.compute_papangelou(points, saved_point, point_types));
+          const auto papangelou(model.compute_papangelou(points, saved_point, point_types));
           const auto death_ratio(prob * total_number / (point_types * (1 - prob) * volume * papangelou));
           if(v <= death_ratio) {
             --total_number;
@@ -93,8 +93,8 @@ SEXP rmultigibbs(SEXP window = R_NilValue, SEXP alpha = R_NilValue, SEXP lambda 
   return ppjsdm::call_on_wrapped_window(window, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop, point_types](const auto& w) {
     return ppjsdm::call_on_list_or_vector(lambda, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop, point_types, &w](const auto& l) {
       return ppjsdm::call_on_list_or_vector(nu, [&alpha, &lambda, &nu, radius, steps, nsim, &types, &model, drop, point_types, &w, &l](const auto& n) {
-        return ppjsdm::call_on_model(model, alpha, l, n, radius, [&w, steps, nsim, &types, drop, point_types](const auto& varphi){
-          return rmultigibbs_helper(varphi, w, steps, nsim, types, drop, point_types);
+        return ppjsdm::call_on_model(model, alpha, l, n, radius, [&w, steps, nsim, &types, drop, point_types](const auto& model){
+          return rmultigibbs_helper(model, w, steps, nsim, types, drop, point_types);
         });
       });
     });
