@@ -17,7 +17,6 @@ inline Rcpp::CharacterVector get_best_names(R_xlen_t size) {
 template<typename... Args>
 inline Rcpp::CharacterVector get_best_names(R_xlen_t size, SEXP might_contain_names, Args&&... other) {
   const SEXP potential_names(RCPP_GET_NAMES(might_contain_names));
-  Rcpp::CharacterVector given_names;
   if(Rf_isNull(potential_names)) {
     return get_best_names(size, std::forward<Args>(other)...);
   } else {

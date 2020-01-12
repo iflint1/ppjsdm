@@ -69,11 +69,9 @@ inline auto get_number_types_and_check_conformance(Args&... args) {
 
 template<typename Type, typename U>
 inline SEXP construct_if_missing(R_xlen_t number_types, SEXP x, U def) {
-  if(Rf_isNull(x)) {
-    return detail::make_type<Type>{}(number_types, def);
-  } else {
-    return x;
-  }
+  return Rf_isNull(x)
+          ? detail::make_type<Type>{}(number_types, def)
+          : x;
 }
 
 } // namespace ppjsdm

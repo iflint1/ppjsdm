@@ -1,29 +1,21 @@
 #include <Rcpp.h>
-#include <Rmath.h>
+#include <Rinternals.h>
 
 #include "utility/call_on_list_or_vector.h"
+#include "utility/configuration_wrapper.h"
 #include "utility/get_list_or_first_element.h"
-#include "utility/rbinomialpp_single.h"
+#include "utility/rppp_single.h"
 #include "utility/make_default_types.h"
 #include "utility/make_R_configuration.h"
 #include "utility/resolve_defaults.h"
 #include "utility/window_utilities.h"
 
-#include <vector> // std::vector
-
 template<typename S, typename T>
 inline SEXP rppp_helper(const S& window, const T& lambda, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
   Rcpp::List samples(nsim);
-  std::vector<R_xlen_t> number_points(point_types);
 
   for(R_xlen_t i(0); i < nsim; ++i) {
-    R_xlen_t total_number(0);
-    for(R_xlen_t j(0); j < point_types; ++j) {
-      const auto points_to_add(R::rpois(window.volume() * static_cast<double>(lambda[j])));
-      number_points[j] = points_to_add;
-      total_number += points_to_add;
-    }
-    const auto sample(ppjsdm::rbinomialpp_single<ppjsdm::Configuration_wrapper>(window, number_points, point_types, total_number));
+    const auto sample(ppjsdm::rppp_single<ppjsdm::Configuration_wrapper>(window, lambda, point_types));
     samples[i] = ppjsdm::make_R_configuration(sample, types);
   }
   return ppjsdm::get_list_or_first_element(samples, nsim, drop);

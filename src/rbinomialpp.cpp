@@ -1,4 +1,5 @@
 #include <Rcpp.h>
+#include <Rinternals.h>
 
 #include "utility/call_on_list_or_vector.h"
 #include "utility/configuration_wrapper.h"

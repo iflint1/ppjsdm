@@ -2,6 +2,7 @@
 #define INCLUDE_PPJSDM_CONFIGURATION_WRAPPER
 
 #include <Rcpp.h>
+#include <Rinternals.h>
 
 #include "configuration_manipulation.h"
 #include "point_manipulation.h"

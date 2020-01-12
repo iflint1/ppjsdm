@@ -2,6 +2,7 @@
 #define INCLUDE_PPJSDM_GET_LIST_OR_FIRST_ELEMENT
 
 #include <Rcpp.h>
+#include <Rinternals.h>
 
 namespace ppjsdm {
 
