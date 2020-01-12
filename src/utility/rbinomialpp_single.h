@@ -5,15 +5,13 @@
 #include <Rinternals.h>
 
 #include "configuration_wrapper.h"
-#include "make_R_configuration.h"
 #include "point_manipulation.h"
 
 namespace ppjsdm {
 
-// TODO: Make version of this that returns directly a given type to be able to e.g. use it to produce std::vectors
-template<typename W, typename T>
-inline auto rbinomialpp_single(const W& window, const T& n, Rcpp::CharacterVector types, R_xlen_t point_types, R_xlen_t total_number) {
-  Configuration_wrapper r_configuration(total_number);
+template<typename Configuration, typename W, typename T>
+inline auto rbinomialpp_single(const W& window, const T& n, R_xlen_t point_types, R_xlen_t total_number) {
+  Configuration r_configuration(total_number);
 
   R_xlen_t fill(0);
   for(R_xlen_t j(0); j < point_types; ++j) {
@@ -25,7 +23,7 @@ inline auto rbinomialpp_single(const W& window, const T& n, Rcpp::CharacterVecto
     fill += points_to_add;
   }
 
-  return make_R_configuration(r_configuration, types);
+  return r_configuration;
 }
 
 } // namespace ppjsdm

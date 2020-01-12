@@ -1,9 +1,11 @@
 #include <Rcpp.h>
 
 #include "utility/call_on_list_or_vector.h"
+#include "utility/configuration_wrapper.h"
 #include "utility/get_list_or_first_element.h"
 #include "utility/rbinomialpp_single.h"
 #include "utility/make_default_types.h"
+#include "utility/make_R_configuration.h"
 #include "utility/resolve_defaults.h"
 #include "utility/sum.h"
 #include "utility/window_utilities.h"
@@ -14,7 +16,8 @@ inline SEXP rbinomialpp_helper(const W& window, const T& n, R_xlen_t nsim, Rcpp:
 
   Rcpp::List samples(nsim);
   for(R_xlen_t i(0); i < nsim; ++i) {
-    samples[i] = ppjsdm::rbinomialpp_single(window, n, types, point_types, total_number);
+    const auto sample(ppjsdm::rbinomialpp_single<ppjsdm::Configuration_wrapper>(window, n, point_types, total_number));
+    samples[i] = ppjsdm::make_R_configuration(sample, types);
   }
   return ppjsdm::get_list_or_first_element(samples, nsim, drop);
 }

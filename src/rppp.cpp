@@ -5,6 +5,7 @@
 #include "utility/get_list_or_first_element.h"
 #include "utility/rbinomialpp_single.h"
 #include "utility/make_default_types.h"
+#include "utility/make_R_configuration.h"
 #include "utility/resolve_defaults.h"
 #include "utility/window_utilities.h"
 
@@ -22,7 +23,8 @@ inline SEXP rppp_helper(const S& window, const T& lambda, R_xlen_t nsim, Rcpp::C
       number_points[j] = points_to_add;
       total_number += points_to_add;
     }
-    samples[i] = ppjsdm::rbinomialpp_single(window, number_points, types, point_types, total_number);
+    const auto sample(ppjsdm::rbinomialpp_single<ppjsdm::Configuration_wrapper>(window, number_points, point_types, total_number));
+    samples[i] = ppjsdm::make_R_configuration(sample, types);
   }
   return ppjsdm::get_list_or_first_element(samples, nsim, drop);
 }
