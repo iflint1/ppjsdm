@@ -3,7 +3,9 @@
 
 #include <Rcpp.h>
 
-#include <type_traits> //std::remove_cv_t, std::remove_reference_t
+#include "configuration_wrapper.h"
+
+#include <type_traits> // std::is_same, std::remove_cv_t, std::remove_reference_t
 
 namespace ppjsdm {
 
@@ -16,21 +18,19 @@ inline Rcpp::List make_R_configuration(Rcpp::NumericVector x, Rcpp::NumericVecto
   return configuration;
 }
 
+inline auto make_R_configuration(const Configuration_wrapper& configuration, Rcpp::CharacterVector types) {
+  return make_R_configuration(configuration.x(), configuration.y(), configuration.types(), types);
+}
+
 template<typename Configuration>
-inline Rcpp::List make_R_configuration(const Configuration& configuration, Rcpp::CharacterVector types) {
+inline auto make_R_configuration(const Configuration& configuration, Rcpp::CharacterVector types) {
   const auto configuration_size(size(configuration));
   using size_type = std::remove_cv_t<std::remove_reference_t<decltype(configuration_size)>>;
-  Rcpp::NumericVector x(Rcpp::no_init(configuration_size));
-  Rcpp::NumericVector y(Rcpp::no_init(configuration_size));
-  Rcpp::IntegerVector types_vector(Rcpp::no_init(configuration_size));
+  Configuration_wrapper r_configuration(configuration_size);
   for(size_type i(0); i < configuration_size; ++i) {
-    const auto point(configuration[i]);
-    x[i] = get_x(point);
-    y[i] = get_y(point);
-    // TODO: This does not work for Configuration_wrapper which should be treated separately anyhow.
-    types_vector[i] = get_type(point) + 1;
+    r_configuration.set(i, configuration[i]);
   }
-  return make_R_configuration(x, y, types_vector, types);
+  return make_R_configuration(r_configuration, types);
 }
 
 } // namespace ppjsdm

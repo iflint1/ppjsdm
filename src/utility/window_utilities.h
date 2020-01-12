@@ -4,7 +4,7 @@
 #include <Rcpp.h>
 #include <Rinternals.h>
 
-#include <tuple> // std::pair
+#include <tuple> // std::make_pair, std::pair
 
 namespace ppjsdm {
 namespace detail {

@@ -2,7 +2,7 @@
 
 #include "utility/compute_phi_dispersion.h"
 #include "utility/configuration_manipulation.h"
-#include "utility/configuration_wrappers.h"
+#include "utility/configuration_wrapper.h"
 
 //' Compute the delta of the phi-dispersion of a marked configuration.
 //'

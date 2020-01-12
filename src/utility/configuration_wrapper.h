@@ -1,5 +1,5 @@
-#ifndef INCLUDE_PPJSDM_CONFIGURATION_WRAPPERS
-#define INCLUDE_PPJSDM_CONFIGURATION_WRAPPERS
+#ifndef INCLUDE_PPJSDM_CONFIGURATION_WRAPPER
+#define INCLUDE_PPJSDM_CONFIGURATION_WRAPPER
 
 #include <Rcpp.h>
 
@@ -41,16 +41,23 @@ public:
     return types_;
   }
 
-  auto emplace_back(double x, double y, int types) {
+  template<typename Point>
+  void set(R_xlen_t index, const Point& point) {
+    x_[index] = get_x(point);
+    y_[index] = get_y(point);
+    types_[index] = get_type(point) + 1;
+  }
+
+  auto emplace_back(double x, double y, int type) {
     x_.push_back(x);
     y_.push_back(y);
-    types_.push_back(types);
+    types_.push_back(type + 1);
   }
 
   auto push_back(const Marked_point& point) {
     x_.push_back(std::get<0>(point));
     y_.push_back(std::get<1>(point));
-    types_.push_back(std::get<2>(point));
+    types_.push_back(std::get<2>(point) + 1);
   }
 
   auto size() const {
@@ -78,4 +85,4 @@ struct configuration_manipulation<Configuration_wrapper>: public configuration_m
 } // namespace traits
 } // namespace ppjsdm
 
-#endif // INCLUDE_PPJSDM_CONFIGURATION_WRAPPERS
+#endif // INCLUDE_PPJSDM_CONFIGURATION_WRAPPER

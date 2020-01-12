@@ -4,7 +4,7 @@
 #include "utility/call_on_list_or_vector.h"
 #include "utility/compute_phi_dispersion.h"
 #include "utility/configuration_manipulation.h"
-#include "utility/configuration_wrappers.h"
+#include "utility/configuration_wrapper.h"
 #include "utility/get_list_or_first_element.h"
 #include "utility/make_default_types.h"
 #include "utility/make_R_configuration.h"
