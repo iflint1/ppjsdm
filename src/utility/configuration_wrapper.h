@@ -9,6 +9,25 @@
 namespace ppjsdm {
 
 class Configuration_wrapper {
+private:
+  class Marked_point_reference {
+  public:
+    Marked_point_reference(double& x, double& y, int& type):
+    x_(x), y_(y), type_(type) {}
+
+    Marked_point_reference& operator=(const Marked_point& point) {
+      x_ = std::get<0>(point);
+      y_ = std::get<1>(point);
+      type_ = std::get<2>(point) + 1;
+      return *this;
+    }
+
+  private:
+    double& x_;
+    double& y_;
+    int& type_;
+  };
+
 public:
   explicit Configuration_wrapper(Rcpp::List configuration):
     x_(Rcpp::as<Rcpp::NumericVector>(configuration["x"])),
@@ -41,11 +60,8 @@ public:
     return types_;
   }
 
-  template<typename Point>
-  void set(R_xlen_t index, const Point& point) {
-    x_[index] = get_x(point);
-    y_[index] = get_y(point);
-    types_[index] = get_type(point) + 1;
+  Marked_point_reference operator[](R_xlen_t index) {
+    return {x_[index], y_[index], types_[index]};
   }
 
   auto emplace_back(double x, double y, int type) {

@@ -28,7 +28,7 @@ inline auto make_R_configuration(const Configuration& configuration, Rcpp::Chara
   using size_type = std::remove_cv_t<std::remove_reference_t<decltype(configuration_size)>>;
   Configuration_wrapper r_configuration(configuration_size);
   for(size_type i(0); i < configuration_size; ++i) {
-    r_configuration.set(i, configuration[i]);
+    r_configuration[i] = configuration[i];
   }
   return make_R_configuration(r_configuration, types);
 }

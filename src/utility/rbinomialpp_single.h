@@ -20,7 +20,7 @@ inline auto rbinomialpp_single(const W& window, const T& n, Rcpp::CharacterVecto
     const auto points_to_add(n[j]);
     for(R_xlen_t i(0); i < points_to_add; ++i) {
       const auto sample(window.sample());
-      r_configuration.set(fill + i, Marked_point(sample.first, sample.second, j));
+      r_configuration[fill + i] = Marked_point(sample.first, sample.second, j);
     }
     fill += points_to_add;
   }
