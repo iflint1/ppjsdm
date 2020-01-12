@@ -7,6 +7,7 @@
 #include <limits> // std::numeric_limits
 #include <type_traits> // std::remove_const, std::remove_cv
 #include <utility> // std::forward
+#include <vector> // std::vector
 
 #include "compute_phi_distance.h"
 #include "configuration_manipulation.h"
@@ -78,9 +79,19 @@ public:
 
 class Geyer_papangelou {
 public:
-  Geyer_papangelou(Rcpp::NumericMatrix radius, double saturation) noexcept: square_radius_(radius), saturation_(saturation) {
-    for(auto& entry: square_radius_) {
-      entry *= entry;
+private:
+  auto access_square_radii(R_xlen_t i, R_xlen_t j) const {
+    return square_radii_[i * dim_ + j];
+  }
+  void set_square_radii(R_xlen_t i, R_xlen_t j, double r) {
+    square_radii_[i * dim_ + j] = r;
+  }
+public:
+  Geyer_papangelou(Rcpp::NumericMatrix radius, double saturation): dim_(radius.ncol()), square_radii_(dim_ * dim_), saturation_(saturation) {
+    for(R_xlen_t i(0); i < dim_; ++i) {
+      for(R_xlen_t j(0); j < dim_; ++j) {
+        set_square_radii(i, j, radius(i, j));
+      }
     }
   }
   template<typename Configuration, typename Point>
@@ -94,7 +105,7 @@ public:
         const auto delta_x(get_x(point_i) - get_x(point));
         const auto delta_y(get_y(point_i) - get_y(point));
         const auto square_distance(delta_x * delta_x + delta_y * delta_y);
-        if(square_distance <= square_radius_(type_i, type_point)) {
+        if(square_distance <= access_square_radii(type_i, type_point)) {
           delta_dispersion[type_i] += 1.;
         }
       }
@@ -103,7 +114,8 @@ public:
   }
 
 private:
-  Rcpp::NumericMatrix square_radius_;
+  R_xlen_t dim_;
+  std::vector<double> square_radii_;
   double saturation_;
 };
 

@@ -16,7 +16,7 @@
 //' @useDynLib ppjsdm
 //' @import Rcpp
 // [[Rcpp::export]]
-Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::List configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, Rcpp::CharacterVector model = "identity", double radius = 0) {
+Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::List configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, Rcpp::CharacterVector model = "identity", Rcpp::NumericMatrix radius = Rcpp::NumericMatrix(1, 1)) {
   return ppjsdm::call_on_papangelou(model, radius, [&configuration, &location, type, number_types](const auto& papangelou) {
     const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
     const auto number_points(ppjsdm::size(wrapped_configuration));

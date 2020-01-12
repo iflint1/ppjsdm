@@ -6,7 +6,7 @@
 using namespace Rcpp;
 
 // compute_delta_phi_dispersion
-Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::List configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, Rcpp::CharacterVector model, double radius);
+Rcpp::NumericVector compute_delta_phi_dispersion(Rcpp::List configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, Rcpp::CharacterVector model, Rcpp::NumericMatrix radius);
 RcppExport SEXP _ppjsdm_compute_delta_phi_dispersion(SEXP configurationSEXP, SEXP locationSEXP, SEXP typeSEXP, SEXP number_typesSEXP, SEXP modelSEXP, SEXP radiusSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -16,7 +16,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< R_xlen_t >::type type(typeSEXP);
     Rcpp::traits::input_parameter< int >::type number_types(number_typesSEXP);
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type model(modelSEXP);
-    Rcpp::traits::input_parameter< double >::type radius(radiusSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type radius(radiusSEXP);
     rcpp_result_gen = Rcpp::wrap(compute_delta_phi_dispersion(configuration, location, type, number_types, model, radius));
     return rcpp_result_gen;
 END_RCPP

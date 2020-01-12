@@ -12,7 +12,7 @@
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-compute_delta_phi_dispersion <- function(configuration, location, type, number_types, model = "identity", radius = 0) {
+compute_delta_phi_dispersion <- function(configuration, location, type, number_types, model = "identity", radius = matrix(1, 1)) {
     .Call('_ppjsdm_compute_delta_phi_dispersion', PACKAGE = 'ppjsdm', configuration, location, type, number_types, model, radius)
 }
 

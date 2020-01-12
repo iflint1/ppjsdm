@@ -10,7 +10,7 @@ compute_delta_phi_dispersion(
   type,
   number_types,
   model = "identity",
-  radius = 0
+  radius = matrix(1, 1)
 )
 }
 \arguments{
