@@ -1,10 +1,10 @@
 #include <Rcpp.h>
 #include <Rinternals.h>
 
+#include "simulation/simulate_metropolis_hastings.h"
+
 #include "utility/call_on_list_or_vector.h"
 #include "utility/compute_phi_dispersion.h"
-#include "utility/configuration_manipulation.h"
-#include "utility/configuration_wrapper.h"
 #include "utility/get_list_or_first_element.h"
 #include "utility/make_default_types.h"
 #include "utility/make_R_configuration.h"
@@ -16,50 +16,11 @@
 
 template<typename Model, typename S>
 inline SEXP rmultigibbs_helper(const Model& model, const S& window, R_xlen_t steps, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
-  const auto volume(window.volume());
-  constexpr double prob(0.5);
-
   Rcpp::List samples(nsim);
 
   for(R_xlen_t i(0); i < nsim; ++i) {
-    // TODO: Preallocate with a rough estimate of final size?
-    // TODO: Start from non-empty configuration?
-    std::vector<ppjsdm::Marked_point> points{};
-
-    R_xlen_t total_number(0);
-
-    for(R_xlen_t step(0); step < steps; ++step) {
-      const auto u(unif_rand());
-      const auto v(unif_rand());
-      if(u <= prob) {
-        const R_xlen_t type(Rcpp::sample(point_types, 1, false, R_NilValue, false)[0]);
-        const auto location_pair(window.sample());
-        const auto point(ppjsdm::Marked_point(location_pair.first, location_pair.second, type));
-
-        // TODO: You can avoid taking the exp by reorganising the ratio, and sampling an exponential r.v. instead.
-        const auto papangelou(model.compute_papangelou(points, point, point_types));
-        const auto birth_ratio(papangelou * (1 - prob) * volume * point_types / (prob * (1 + total_number)));
-
-        if(v <= birth_ratio) {
-          ppjsdm::add_point(points, point);
-          ++total_number;
-        }
-      } else {
-        if(total_number != 0) {
-          const auto saved_point(ppjsdm::remove_random_point(points));
-
-          const auto papangelou(model.compute_papangelou(points, saved_point, point_types));
-          const auto death_ratio(prob * total_number / (point_types * (1 - prob) * volume * papangelou));
-          if(v <= death_ratio) {
-            --total_number;
-          } else {
-            ppjsdm::add_point(points, saved_point);
-          }
-        }
-      }
-    }
-
-    samples[i] = ppjsdm::make_R_configuration(points, types);
+    const auto sample(ppjsdm::simulate_metropolis_hastings<std::vector<ppjsdm::Marked_point>>(model, window, steps, point_types));
+    samples[i] = ppjsdm::make_R_configuration(sample, types);
   }
 
   return ppjsdm::get_list_or_first_element(samples, nsim, drop);

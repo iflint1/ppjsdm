@@ -10,8 +10,8 @@
 
 namespace ppjsdm {
 
-template<typename Configuration, typename W, typename T>
-inline auto rppp_single(const W& window, const T& lambda, R_xlen_t point_types) {
+template<typename Configuration, typename Window, typename Lambda>
+inline auto rppp_single(const Window& window, const Lambda& lambda, R_xlen_t point_types) {
   std::vector<R_xlen_t> number_points(point_types);
   R_xlen_t total_number(0);
   for(R_xlen_t j(0); j < point_types; ++j) {
