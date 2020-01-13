@@ -4,8 +4,9 @@
 #include <Rcpp.h>
 #include <Rinternals.h>
 
+#include "point_manipulation.h"
+
 #include <string> // std::string
-#include <tuple> // std::make_pair, std::pair
 
 namespace ppjsdm {
 namespace detail {
@@ -29,8 +30,8 @@ public:
     delta_y_ = y[1] - y_0_;
   }
 
-  std::pair<double, double> sample() const {
-    return std::make_pair(x_0_ + unif_rand() * delta_x_,  y_0_ + unif_rand() * delta_y_);
+  Marked_point sample(int type = 0) const {
+    return {x_0_ + unif_rand() * delta_x_,  y_0_ + unif_rand() * delta_y_, type};
   }
 
   double volume() const {
@@ -56,12 +57,12 @@ public:
     radius_ = static_cast<double>(window["radius"]);
   }
 
-  std::pair<double, double> sample() const {
+  Marked_point sample(int type = 0) const {
     while(true) {
       const auto x(2 * unif_rand() - 1.0);
       const auto y(2 * unif_rand() - 1.0);
       if(x * x + y * y <= 1) {
-        return std::make_pair(x_ + radius_ * x,  y_ + radius_ * y);
+        return {x_ + radius_ * x,  y_ + radius_ * y, type};
       }
     }
   }

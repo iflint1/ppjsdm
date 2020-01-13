@@ -5,7 +5,6 @@
 #include <Rmath.h>
 
 #include "../utility/configuration_manipulation.h"
-#include "../utility/point_manipulation.h"
 
 namespace ppjsdm {
 
@@ -24,8 +23,7 @@ inline auto simulate_metropolis_hastings(const Model& model, const Window& windo
     const auto v(unif_rand());
     if(u <= prob) {
       const R_xlen_t type(Rcpp::sample(point_types, 1, false, R_NilValue, false)[0]);
-      const auto location_pair(window.sample());
-      const ppjsdm::Marked_point point(location_pair.first, location_pair.second, type);
+      const auto point(window.sample(type));
 
       // TODO: You can avoid taking the exp by reorganising the ratio, and sampling an exponential r.v. instead.
       const auto papangelou(model.compute_papangelou(points, point, point_types));
