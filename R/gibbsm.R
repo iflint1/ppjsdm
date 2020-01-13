@@ -7,18 +7,17 @@
 #' @param print Print the fitting summary?
 #' @importFrom stats as.formula binomial glm
 #' @export
-gibbsm <- function(configuration, window, model = "identity", radius = 0, print = TRUE) {
+gibbsm <- function(configuration, window = Rectangle_window(), model = "identity", radius = matrix(0), print = TRUE) {
   num <- get_number_points(configuration)
   num <- unlist(num, use.names = FALSE)
-  # This is the guideline from the Baddeley et al. paper
+  # This is the guideline from the Baddeley et al. paper, see p. 8 therein.
   rho <- 4 * num / window_volume(window)
 
   types <- types(configuration)
   distinct_types <- levels(types)
   p <- length(distinct_types)
 
-  # TODO: binomial process should give better results, easy change.
-  D <- rppp(window, lambda = rho, types = distinct_types)
+  D <- rbinomialpp(window = window, n = rho * window_volume(window), types = distinct_types)
 
   n_Z <- get_number_points(configuration, total = TRUE)
   n_D <- get_number_points(D, total = TRUE)
@@ -27,6 +26,13 @@ gibbsm <- function(configuration, window, model = "identity", radius = 0, print 
   rho_offset <- rep(0, n_Z + n_D, p)
   alpha_list <- vector(mode = "list", length = p * (p + 1) / 2)
   alpha_list <- lapply(alpha_list, function(x) rep(0, n_Z + n_D))
+  index <- 1
+  for(j in seq_len(p)) {
+    for(k in j:p) {
+      names(alpha_list)[index] <- paste0("alpha_", j, k)
+      index <- index + 1
+    }
+  }
 
   # TODO: Might be able to vectorise -- Not urgent since this will be converted to C++ in the longer term.
   for(i in seq_len(n_Z + n_D)) {
@@ -52,10 +58,6 @@ gibbsm <- function(configuration, window, model = "identity", radius = 0, print 
         log_lambda[i, j] <- 1
       }
       for(k in j:p) {
-        # TODO: Resetting names too many times in the `i` for loop.
-        names(alpha_list)[index] <- paste0("alpha_", j, k)
-
-        #alpha_list[[index]][i] <-  disp[j, k]
         if(j == type_index) {
           alpha_list[[index]][i] <- disp[k]
         } else if(k == type_index) {
@@ -67,8 +69,6 @@ gibbsm <- function(configuration, window, model = "identity", radius = 0, print 
     }
   }
 
-
-  #print(alpha_list)
   data <- as.data.frame(list(response = response, log_lambda = log_lambda, alpha_list, rho = rho_offset))
 
   formula <- paste("response ~ 0 + log_lambda + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
