@@ -23,28 +23,12 @@ gibbsm <- function(configuration, window, model = "identity", radius = 0, print 
   n_Z <- get_number_points(configuration, total = TRUE)
   n_D <- get_number_points(D, total = TRUE)
   response <- c(rep.int(1, n_Z), rep.int(0, n_D))
-
   log_lambda <- matrix(0, n_Z + n_D, p)
-  # TODO: Horrible, vectorise
-  for(i in seq_len(n_Z + n_D)) {
-    for(j in seq_len(p)) {
-      if(i <= n_Z) {
-        if(types(configuration)[i] == distinct_types[j]) {
-          log_lambda[i, j] <- 1
-        }
-      } else {
-        if(types(D)[i - n_Z] == distinct_types[j]) {
-          log_lambda[i, j] <- 1
-        }
-      }
-    }
-  }
-
   rho_offset <- rep(0, n_Z + n_D, p)
   alpha_list <- vector(mode = "list", length = p * (p + 1) / 2)
   alpha_list <- lapply(alpha_list, function(x) rep(0, n_Z + n_D))
 
-  # TODO: Horrible, vectorise
+  # TODO: Might be able to vectorise -- Not urgent since this will be converted to C++ in the longer term.
   for(i in seq_len(n_Z + n_D)) {
     if(i <= n_Z) {
       location <- c(x_coordinates(configuration)[i], y_coordinates(configuration)[i])
@@ -55,7 +39,8 @@ gibbsm <- function(configuration, window, model = "identity", radius = 0, print 
       disp <- compute_delta_phi_dispersion(remove_from_configuration(configuration, location, type), location, type_index - 1, p, model, radius)
     } else {
       location <- c(x_coordinates(D)[i - n_Z], y_coordinates(D)[i - n_Z])
-      type_index <- match(types(D)[i - n_Z], distinct_types)
+      type <- types(D)[i - n_Z]
+      type_index <- match(type, distinct_types)
 
       disp <- compute_delta_phi_dispersion(configuration, location, type_index - 1, p, model, radius)
     }
@@ -64,6 +49,9 @@ gibbsm <- function(configuration, window, model = "identity", radius = 0, print 
 
     index <- 1
     for(j in seq_len(p)) {
+      if(type == distinct_types[j]) {
+        log_lambda[i, j] <- 1
+      }
       for(k in j:p) {
         # TODO: Resetting names too many times in the `i` for loop.
         names(alpha_list)[index] <- paste0("alpha_", j, k)
