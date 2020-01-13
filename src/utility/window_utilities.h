@@ -4,7 +4,7 @@
 #include <Rcpp.h>
 #include <Rinternals.h>
 
-#include "point_manipulation.h"
+#include "../point/point_manipulation.h"
 
 #include <string> // std::string
 

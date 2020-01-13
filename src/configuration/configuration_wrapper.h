@@ -5,7 +5,7 @@
 #include <Rinternals.h>
 
 #include "configuration_manipulation.h"
-#include "point_manipulation.h"
+#include "../point/point_manipulation.h"
 
 namespace ppjsdm {
 

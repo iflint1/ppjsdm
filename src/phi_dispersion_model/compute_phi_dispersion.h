@@ -10,9 +10,9 @@
 #include <vector> // std::vector
 
 #include "compute_phi_distance.h"
-#include "configuration_manipulation.h"
-#include "get_number_points.h"
-#include "point_manipulation.h"
+#include "../configuration/configuration_manipulation.h"
+#include "../configuration/get_number_points.h"
+#include "../point/point_manipulation.h"
 
 namespace ppjsdm {
 

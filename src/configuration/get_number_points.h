@@ -2,7 +2,7 @@
 #define INCLUDE_PPJSDM_GET_NUMBER_POINTS
 
 #include "configuration_manipulation.h"
-#include "point_manipulation.h"
+#include "../point/point_manipulation.h"
 
 #include <type_traits> // std::remove_const
 

@@ -1,8 +1,9 @@
 #include <Rcpp.h>
 
-#include "utility/compute_phi_dispersion.h"
-#include "utility/configuration_manipulation.h"
-#include "utility/configuration_wrapper.h"
+#include "configuration/configuration_manipulation.h"
+#include "configuration/configuration_wrapper.h"
+#include "phi_dispersion_model/compute_phi_dispersion.h"
+#include "point/point_manipulation.h"
 
 //' Compute the delta of the phi-dispersion of a marked configuration.
 //'

@@ -4,7 +4,7 @@
 #include <Rinternals.h>
 #include <Rmath.h>
 
-#include "../utility/configuration_manipulation.h"
+#include "../configuration/configuration_manipulation.h"
 
 namespace ppjsdm {
 

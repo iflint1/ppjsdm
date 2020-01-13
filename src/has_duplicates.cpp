@@ -1,7 +1,7 @@
 #include <Rcpp.h>
 
-#include "utility/configuration_manipulation.h"
-#include "utility/configuration_wrapper.h"
+#include "configuration/configuration_manipulation.h"
+#include "configuration/configuration_wrapper.h"
 
 #include <algorithm> // std::sort, std::unique
 #include <tuple> // std::tuple

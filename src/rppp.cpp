@@ -1,14 +1,17 @@
 #include <Rcpp.h>
 #include <Rinternals.h>
 
+#include "configuration/configuration_wrapper.h"
+#include "configuration/make_R_configuration.h"
+
 #include "simulation/rppp_single.h"
 
 #include "utility/call_on_list_or_vector.h"
-#include "utility/configuration_wrapper.h"
+
+#include "utility/construct_if_missing.h"
 #include "utility/get_list_or_first_element.h"
+#include "utility/get_number_types.h"
 #include "utility/make_default_types.h"
-#include "utility/make_R_configuration.h"
-#include "utility/resolve_defaults.h"
 #include "utility/window_utilities.h"
 
 template<typename Window, typename Lambda>

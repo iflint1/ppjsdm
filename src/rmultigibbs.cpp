@@ -1,15 +1,19 @@
 #include <Rcpp.h>
 #include <Rinternals.h>
 
+#include "configuration/make_R_configuration.h"
+
+#include "phi_dispersion_model/compute_phi_dispersion.h"
+
+#include "point/point_manipulation.h"
+
 #include "simulation/simulate_metropolis_hastings.h"
 
 #include "utility/call_on_list_or_vector.h"
-#include "utility/compute_phi_dispersion.h"
+#include "utility/construct_if_missing.h"
 #include "utility/get_list_or_first_element.h"
+#include "utility/get_number_types.h"
 #include "utility/make_default_types.h"
-#include "utility/make_R_configuration.h"
-#include "utility/point_manipulation.h"
-#include "utility/resolve_defaults.h"
 #include "utility/window_utilities.h"
 
 #include <vector> // std::vector
