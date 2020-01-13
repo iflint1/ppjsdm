@@ -4,6 +4,7 @@
 #include <Rcpp.h>
 #include <Rinternals.h>
 
+#include <string> // std::string
 #include <tuple> // std::make_pair, std::pair
 
 namespace ppjsdm {
@@ -82,12 +83,15 @@ inline auto call_on_wrapped_window(SEXP window, const F& f) {
   if(Rf_isNull(window)) {
     return f(detail::Window_wrapper<detail::Window::rectangle>{});
   }
-  else if(Rf_inherits(window, "Rectangle_window")) { // TODO: Better to do a switch on attr("class")
-    return f(detail::Window_wrapper<detail::Window::rectangle>(window));
-  } else if(Rf_inherits(window, "Disk_window")) {
-    return f(detail::Window_wrapper<detail::Window::disk>(window));
-  } else {
-    Rcpp::stop("Unrecognised window type.");
+  else {
+    const std::string window_class = Rcpp::as<Rcpp::RObject>(window).attr("class");
+    if(window_class == "Rectangle_window") {
+      return f(detail::Window_wrapper<detail::Window::rectangle>(window));
+    } else if(window_class == "Disk_window") {
+      return f(detail::Window_wrapper<detail::Window::disk>(window));
+    } else {
+      Rcpp::stop("Unrecognised window type.");
+    }
   }
 }
 
