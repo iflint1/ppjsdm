@@ -11,6 +11,7 @@
 
 #include "compute_phi_distance.h"
 #include "configuration_manipulation.h"
+#include "get_number_points.h"
 #include "point_manipulation.h"
 
 namespace ppjsdm {
@@ -183,30 +184,29 @@ private:
   }
 };
 
-template<typename Varphi, typename U, typename V, typename W>
+template<typename Varphi, typename Lambda, typename Nu, typename Alpha>
 class Exponential_family_model: public Varphi {
 public:
   template<typename... Args>
-  Exponential_family_model(const U& lambda, const V& nu, const W& alpha, Args&&... args): Varphi(std::forward<Args>(args)...), lambda_(lambda), nu_(nu), alpha_(alpha) {}
-  Exponential_family_model(const U& lambda, const V& nu, const W& alpha, const Varphi& varphi): Varphi(varphi), lambda_(lambda), nu_(nu), alpha_(alpha) {}
-  Exponential_family_model(const U& lambda, const V& nu, const W& alpha, Varphi&& varphi): Varphi(std::move(varphi)), lambda_(lambda), nu_(nu), alpha_(alpha) {}
+  Exponential_family_model(const Lambda& lambda, const Nu& nu, const Alpha& alpha, Args&&... args): Varphi(std::forward<Args>(args)...), lambda_(lambda), nu_(nu), alpha_(alpha) {}
+  Exponential_family_model(const Lambda& lambda, const Nu& nu, const Alpha& alpha, const Varphi& varphi): Varphi(varphi), lambda_(lambda), nu_(nu), alpha_(alpha) {}
+  Exponential_family_model(const Lambda& lambda, const Nu& nu, const Alpha& alpha, Varphi&& varphi): Varphi(std::move(varphi)), lambda_(lambda), nu_(nu), alpha_(alpha) {}
 
   template<typename Configuration, typename Point>
   double compute_papangelou(const Configuration& configuration, const Point& point, R_xlen_t number_types) const {
     const auto delta_D(Varphi::compute(configuration, point, number_types, size(configuration)));
 
     double inner_product(0);
+    const auto type(get_type(point));
     for(R_xlen_t i(0); i < number_types; ++i) {
-      inner_product += alpha_(i, get_type(point)) * delta_D[i];
+      inner_product += alpha_(i, type) * delta_D[i];
     }
-    // TODO: replace x.size() with "number of points of type `type`".
-    // TODO: Faster with n ^ nu?
-    return lambda_[get_type(point)] * std::exp(inner_product + (1 - nu_[get_type(point)]) * std::log(size(configuration) + 1));
+    return lambda_[type] * std::exp(inner_product + (1 - nu_[type]) * std::log(get_number_points(configuration, type) + 1));
   }
 private:
-  U lambda_;
-  V nu_;
-  W alpha_;
+  Lambda lambda_;
+  Nu nu_;
+  Alpha alpha_;
 };
 
 template<typename F>

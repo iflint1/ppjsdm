@@ -54,7 +54,7 @@ private:
 } // namespace varphi
 
 template<typename Varphi, typename Point>
-double compute_phi_distance(const Point& point1, const Point& point2, const Varphi& varphi) {
+inline double compute_phi_distance(const Point& point1, const Point& point2, const Varphi& varphi) {
   const auto delta_x(get_x(point1) - get_x(point2));
   const auto delta_y(get_y(point1) - get_y(point2));
   const auto square_distance(delta_x * delta_x + delta_y * delta_y);
