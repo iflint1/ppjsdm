@@ -30,8 +30,8 @@ public:
     delta_y_ = y[1] - y_0_;
   }
 
-  Marked_point sample(int type = 0) const {
-    return {x_0_ + unif_rand() * delta_x_,  y_0_ + unif_rand() * delta_y_, type};
+  auto sample(int type = 0) const {
+    return Marked_point(x_0_ + unif_rand() * delta_x_,  y_0_ + unif_rand() * delta_y_, type);
   }
 
   double volume() const {
@@ -57,12 +57,12 @@ public:
     radius_ = static_cast<double>(window["radius"]);
   }
 
-  Marked_point sample(int type = 0) const {
+  auto sample(int type = 0) const {
     while(true) {
       const auto x(2 * unif_rand() - 1.0);
       const auto y(2 * unif_rand() - 1.0);
       if(x * x + y * y <= 1) {
-        return {x_ + radius_ * x,  y_ + radius_ * y, type};
+        return Marked_point(x_ + radius_ * x,  y_ + radius_ * y, type);
       }
     }
   }
