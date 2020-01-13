@@ -51,6 +51,15 @@ inline R_xlen_t get_number_types_helper(R_xlen_t number_types, SEXP x, Args&... 
   }
 }
 
+template<typename U>
+inline auto treat_as_real(U value) {
+  return value;
+}
+
+inline auto treat_as_real(SEXP value) {
+  return Rf_asReal(value);
+}
+
 template<typename Type>
 struct make_type {
   template<typename U>
@@ -59,14 +68,7 @@ struct make_type {
     // so do the construction by hand.
     Type new_value(number_types);
     for(R_xlen_t i(0); i < number_types; ++i) {
-      new_value[i] = val;
-    }
-    return Rcpp::wrap(new_value);
-  }
-  SEXP operator()(R_xlen_t number_types, SEXP val) {
-    Type new_value(number_types);
-    for(R_xlen_t i(0); i < number_types; ++i) {
-      new_value[i] = Rf_asReal(val);
+      new_value[i] = treat_as_real(val);
     }
     return Rcpp::wrap(new_value);
   }
@@ -79,16 +81,7 @@ struct make_type<Rcpp::NumericMatrix> {
     Rcpp::NumericMatrix new_value(number_types, number_types);
     for(R_xlen_t i(0); i < number_types; ++i) {
       for(R_xlen_t j(0); j < number_types; ++j) {
-        new_value(i, j) = val;
-      }
-    }
-    return Rcpp::wrap(new_value);
-  }
-  SEXP operator()(R_xlen_t number_types, SEXP val) {
-    Rcpp::NumericMatrix new_value(number_types, number_types);
-    for(R_xlen_t i(0); i < number_types; ++i) {
-      for(R_xlen_t j(0); j < number_types; ++j) {
-        new_value(i, j) = Rf_asReal(val);
+        new_value(i, j) = treat_as_real(val);
       }
     }
     return Rcpp::wrap(new_value);
