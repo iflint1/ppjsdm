@@ -7,6 +7,7 @@
 gibbsm(
   configuration,
   window = Rectangle_window(),
+  covariates = list(),
   model = "identity",
   radius = matrix(0),
   print = TRUE
@@ -16,6 +17,8 @@ gibbsm(
 \item{configuration}{A configuration assumed to be a draw from the multivariate Gibbs.}
 
 \item{window}{Observation window.}
+
+\item{covariates}{Environmental covariates driving the intensity.}
 
 \item{model}{String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_model()`.}
 

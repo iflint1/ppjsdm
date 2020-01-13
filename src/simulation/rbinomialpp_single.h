@@ -13,7 +13,7 @@ inline auto rbinomialpp_single(const Window& window, const N& n, R_xlen_t point_
 
   R_xlen_t fill(0);
   for(R_xlen_t j(0); j < point_types; ++j) {
-    const auto points_to_add(n[j]);
+    const auto points_to_add = static_cast<R_xlen_t>(n[j]);
     for(R_xlen_t i(0); i < points_to_add; ++i) {
       configuration[fill + i] = window.sample(j);
     }

@@ -7,9 +7,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-
-# Using covariates
-
 ```{r, include = FALSE}
 is_check <- ("CheckExEnv" %in% search()) || any(c("_R_CHECK_TIMINGS_",
              "_R_CHECK_LICENSE_") %in% names(Sys.getenv()))
@@ -21,17 +18,53 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette assumes you have a series of covariates assumed to explain a given dataset. 
-To illustrate how the package works, we define arbitrarily the following covariates.
-
 ```{r setup}
-library(ecodecision)
+library(ppjsdm)
 library(spatstat, quietly = TRUE)
 
 remove(list = ls())
 
 set.seed(1)
+```
 
+# Working with the Queensland trees dataset
+
+This package contains the locations of treets twenty plots located in Queensland, Australia.
+The data is accessed as follows.
+
+```{r}
+index_of_plot <- 3 # Between 1 and 20
+year <- 2013 # Year of census
+number_of_species <- 2 # Includes the most prevalent species from the plot
+
+configuration <- ppjsdm::get_qld_trees_configuration(index = index_of_plot, 
+                                                     year = year, 
+                                                     prevalent = number_of_species)
+```
+
+Our point process class only includes the locations of the trees, so we also need to provide information about the observation window.
+All plots are of size $100\mathrm{m}\times50\mathrm{m}$, so we define the window as follows.
+
+```{r}
+window <- ppjsdm::Rectangle_window(c(0, 100), c(0, 50))
+```
+
+The function `gibbsm` fits a multivariate Gibbs point process to our dataset.
+For example,
+
+```{r}
+ppjsdm::gibbsm(configuration, window = window)
+```
+
+By default, the models fits the model that was introduced in the ARC grant [TODO: Add reference].
+This model has many drawbacks, the most important of which being that the model with the fitted values is degenerate, as can be seen by drawing from the model.
+
+# Using covariates
+
+This section assumes you have a series of covariates assumed to explain a given dataset. 
+To illustrate how the package works, we define arbitrarily the following covariates.
+
+```{r}
 temperature <- function(x, y) 1 - 4 * (x - 0.5)^2
 wetness <- function(x, y) 0.5 * (1 + sin(pi * 2 * (y - 1)))
 
