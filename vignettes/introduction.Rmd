@@ -40,6 +40,7 @@ number_of_species <- 2 # Includes the most prevalent species from the plot
 configuration <- ppjsdm::get_qld_trees_configuration(index = index_of_plot, 
                                                      year = year, 
                                                      prevalent = number_of_species)
+plot(configuration)
 ```
 
 Our point process class only includes the locations of the trees, so we also need to provide information about the observation window.
@@ -53,11 +54,46 @@ The function `gibbsm` fits a multivariate Gibbs point process to our dataset.
 For example,
 
 ```{r}
-ppjsdm::gibbsm(configuration, window = window)
+fit <- ppjsdm::gibbsm(configuration, window = window)
 ```
 
 By default, the models fits the model that was introduced in the ARC grant [TODO: Add reference].
 This model has many drawbacks, the most important of which being that the model with the fitted values is degenerate, as can be seen by drawing from the model.
+
+```{r}
+lambda <- exp(fit$coefficients[1:2])
+alpha <- matrix(c(fit$coefficients[3], 
+                  fit$coefficients[4], 
+                  fit$coefficients[4], 
+                  fit$coefficients[5]), ncol = 2, nrow = 2)
+draw <- ppjsdm::rmultigibbs(window = window, alpha = alpha, lambda = lambda)
+plot(draw)
+```
+
+The Geyer model is better suited to most situations, but the user needs to specify some additional parameters before the fitting may take place.
+
+```{r}
+radii <- matrix(5, 2, 2)
+```
+
+The matrix `radii` models interaction radii within a species, and between species.
+An interaction radius of $5$ gives good results in the fitting procedure.
+
+```{r}
+fit <- ppjsdm::gibbsm(configuration, window = window, model = "Geyer", radius = radii)
+```
+
+Note that we do not have the previous problem here.
+
+```{r}
+lambda <- exp(fit$coefficients[1:2])
+alpha <- matrix(c(fit$coefficients[3], 
+                  fit$coefficients[4], 
+                  fit$coefficients[4], 
+                  fit$coefficients[5]), ncol = 2, nrow = 2)
+draw <- ppjsdm::rmultigibbs(window = window, alpha = alpha, lambda = lambda, model = "Geyer", radius = radii)
+plot(draw)
+```
 
 # Using covariates
 
