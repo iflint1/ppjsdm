@@ -82,6 +82,15 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// show_models
+void show_models();
+RcppExport SEXP _ppjsdm_show_models() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    show_models();
+    return R_NilValue;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ppjsdm_compute_delta_phi_dispersion", (DL_FUNC) &_ppjsdm_compute_delta_phi_dispersion, 6},
@@ -89,6 +98,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ppjsdm_rbinomialpp", (DL_FUNC) &_ppjsdm_rbinomialpp, 5},
     {"_ppjsdm_rmultigibbs", (DL_FUNC) &_ppjsdm_rmultigibbs, 10},
     {"_ppjsdm_rppp", (DL_FUNC) &_ppjsdm_rppp, 5},
+    {"_ppjsdm_show_models", (DL_FUNC) &_ppjsdm_show_models, 0},
     {NULL, NULL, 0}
 };
 

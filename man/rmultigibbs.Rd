@@ -36,8 +36,7 @@ Default is a vector of same size as types, filled with ones.}
 
 \item{types}{Types of the points. Default is a vector (type1, type2, ...) of same size as n.}
 
-\item{model}{String representing the model to simulate from. At the moment, either "identity", "Strauss", "Geyer" or "neighbour",
-with default beign "identity".}
+\item{model}{String representing the model to simulate from. You can check the currently authorised models with a call to `show_model()`.}
 
 \item{drop}{If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration. Default is TRUE.}
 }

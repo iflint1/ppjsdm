@@ -2,7 +2,7 @@
 #'
 #' @param configuration A configuration assumed to be a draw from the multivariate Gibbs.
 #' @param window Observation window.
-#' @param model String to represent the model we're calibrating. At the moment, either "identity", "Strauss" or "Geyer".
+#' @param model String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_model()`.
 #' @param radius Interaction radius.
 #' @param print Print the fitting summary?
 #' @importFrom stats as.formula binomial glm

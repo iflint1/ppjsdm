@@ -11,7 +11,7 @@
 //' @param location Point to be added.
 //' @param type Type of point to be added.
 //' @param number_types Number of different types.
-//' @param model String representing the model to simulate from. At the moment, either "identity", "Strauss" or "Geyer".
+//' @param model String representing the model to simulate from. You can check the currently authorised models with a call to `show_model()`.
 //' @param radius Radius of interaction.
 //' @export
 //' @useDynLib ppjsdm

@@ -11,7 +11,7 @@ gibbsm(configuration, window, model = "identity", radius = 0, print = TRUE)
 
 \item{window}{Observation window.}
 
-\item{model}{String to represent the model we're calibrating. At the moment, either "identity", "Strauss" or "Geyer".}
+\item{model}{String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_model()`.}
 
 \item{radius}{Interaction radius.}
 

@@ -22,7 +22,7 @@ compute_delta_phi_dispersion(
 
 \item{number_types}{Number of different types.}
 
-\item{model}{String representing the model to simulate from. At the moment, either "identity", "Strauss" or "Geyer".}
+\item{model}{String representing the model to simulate from. You can check the currently authorised models with a call to `show_model()`.}
 
 \item{radius}{Radius of interaction.}
 }
