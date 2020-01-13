@@ -2,12 +2,13 @@
 #'
 #' @param configuration A configuration assumed to be a draw from the multivariate Gibbs.
 #' @param window Observation window.
+#' @param covariates Environmental covariates driving the intensity.
 #' @param model String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_model()`.
 #' @param radius Interaction radius.
 #' @param print Print the fitting summary?
 #' @importFrom stats as.formula binomial glm
 #' @export
-gibbsm <- function(configuration, window = Rectangle_window(), model = "identity", radius = matrix(0), print = TRUE) {
+gibbsm <- function(configuration, window = Rectangle_window(), covariates = list(), model = "identity", radius = matrix(0), print = TRUE) {
   num <- get_number_points(configuration)
   num <- unlist(num, use.names = FALSE)
   # This is the guideline from the Baddeley et al. paper, see p. 8 therein.
@@ -16,6 +17,7 @@ gibbsm <- function(configuration, window = Rectangle_window(), model = "identity
   types <- types(configuration)
   distinct_types <- levels(types)
   p <- length(distinct_types)
+  ncovariates <- length(covariates)
 
   D <- rbinomialpp(window = window, n = rho * window_volume(window), types = distinct_types)
 
@@ -24,12 +26,19 @@ gibbsm <- function(configuration, window = Rectangle_window(), model = "identity
   response <- c(rep.int(1, n_Z), rep.int(0, n_D))
   log_lambda <- matrix(0, n_Z + n_D, p)
   rho_offset <- rep(0, n_Z + n_D, p)
+
   alpha_list <- vector(mode = "list", length = p * (p + 1) / 2)
   alpha_list <- lapply(alpha_list, function(x) rep(0, n_Z + n_D))
+
+  covariate_list <- vector(mode = "list", length = ncovariates)
+  covariate_list <- lapply(covariate_list, function(x) rep(0, n_Z + n_D))
+  # TODO: When this is moved to C++, fill in blanks with type1 / type2, etc.
+  names(covariate_list) <- names(covariates)
+
   index <- 1
   for(j in seq_len(p)) {
     for(k in j:p) {
-      names(alpha_list)[index] <- paste0("alpha_", j, k)
+      names(alpha_list)[index] <- paste0("alpha", j, "_", k)
       index <- index + 1
     }
   }
@@ -51,6 +60,9 @@ gibbsm <- function(configuration, window = Rectangle_window(), model = "identity
     }
 
     rho_offset[i] <- rho[type_index]
+    for(j in seq_len(ncovariates)) {
+      covariate_list[[j]][i] <- covariates[[j]](location[1], location[2])
+    }
 
     index <- 1
     for(j in seq_len(p)) {
@@ -69,9 +81,14 @@ gibbsm <- function(configuration, window = Rectangle_window(), model = "identity
     }
   }
 
-  data <- as.data.frame(list(response = response, log_lambda = log_lambda, alpha_list, rho = rho_offset))
 
-  formula <- paste("response ~ 0 + log_lambda + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
+  if(ncovariates > 0) {
+    data <- as.data.frame(list(response = response, log_lambda = log_lambda, covariates = covariate_list, alpha_list, rho = rho_offset))
+    formula <- paste("response ~ 0 + log_lambda + ", paste(names(covariates), collapse = " + "), " + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
+  } else {
+    data <- as.data.frame(list(response = response, log_lambda = log_lambda, alpha_list, rho = rho_offset))
+    formula <- paste("response ~ 0 + log_lambda + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
+  }
   formula <- as.formula(formula)
 
   g <- glm(formula, data = data, family = binomial())
