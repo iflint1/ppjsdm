@@ -83,7 +83,7 @@ gibbsm <- function(configuration, window = Rectangle_window(), covariates = list
 
 
   if(ncovariates > 0) {
-    data <- as.data.frame(list(response = response, log_lambda = log_lambda, covariates = covariate_list, alpha_list, rho = rho_offset))
+    data <- as.data.frame(list(response = response, log_lambda = log_lambda, covariate_list, alpha_list, rho = rho_offset))
     formula <- paste("response ~ 0 + log_lambda + ", paste(names(covariates), collapse = " + "), " + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
   } else {
     data <- as.data.frame(list(response = response, log_lambda = log_lambda, alpha_list, rho = rho_offset))

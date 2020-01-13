@@ -1,0 +1,55 @@
+---
+title: "Introduction"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+# Using covariates
+
+```{r, include = FALSE}
+is_check <- ("CheckExEnv" %in% search()) || any(c("_R_CHECK_TIMINGS_",
+             "_R_CHECK_LICENSE_") %in% names(Sys.getenv()))
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = !is_check,
+  purl = !is_check
+)
+```
+
+This vignette assumes you have a series of covariates assumed to explain a given dataset. 
+To illustrate how the package works, we define arbitrarily the following covariates.
+
+```{r setup}
+library(ecodecision)
+library(spatstat, quietly = TRUE)
+
+remove(list = ls())
+
+set.seed(1)
+
+temperature <- function(x, y) 1 - 4 * (x - 0.5)^2
+wetness <- function(x, y) 0.5 * (1 + sin(pi * 2 * (y - 1)))
+
+covariates <- list(t = wetness)
+```
+
+Finally, we need a dataset to work on.
+In order to properly illustrate our method, we want to use data which is biased according to our given covariates, as given below.
+In general, this part is not necessary -- just use your own data.
+
+```{r}
+configuration <- ppjsdm::rppp(lambda = 50)
+```
+
+The function `gibbsm` fits a multivariate Gibbs point process to our dataset.
+For example,
+
+```{r}
+ppjsdm::gibbsm(configuration, covariates = covariates)
+```
+
