@@ -68,6 +68,7 @@ format <- function(configuration) {
 }
 
 #' Print a configuration class.
+#'
 #' @param x Configuration to print.
 #' @param ... Other arguments not yet used.
 #' @export
@@ -83,17 +84,11 @@ print.Configuration <- function(x, ...) {
 #' else returns the total number of points.
 #' @export
 get_number_points <- function(configuration, total = FALSE) {
-  # TODO: The code below is horrible, it can definitely be vectorised...
-  # TODO: Can probably add names to the returned vector to identify the types
   types <- configuration$types
-  number_types <- length(levels(types))
-  result <- vector(mode = "list", length = number_types)
-  index <- 1
-  for(i in levels(types)) {
-    result[[index]] <- length(configuration$x[configuration$types == i])
-    names(result)[index] <- i
-    index <- index + 1
-  }
+  ltypes <- levels(types)
+  result <- lapply(ltypes, function(l) length(configuration$x[types == l]))
+  names(result) <- ltypes
+
   if(total) {
     Reduce("+", result)
   } else {
