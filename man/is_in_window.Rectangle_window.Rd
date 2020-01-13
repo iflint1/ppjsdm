@@ -4,10 +4,12 @@
 \alias{is_in_window.Rectangle_window}
 \title{Check if points are in rectangle window}
 \usage{
-\method{is_in_window}{Rectangle_window}(points, window)
+\method{is_in_window}{Rectangle_window}(x, y, window)
 }
 \arguments{
-\item{points}{Points.}
+\item{x}{X-coordinates of points.}
+
+\item{y}{Y-coordinates of points.}
 
 \item{window}{Window}
 }

@@ -35,8 +35,7 @@ gibbsm <- function(configuration, window, model = "identity", radius = 0, print 
       type <- types(configuration)[i]
       type_index <- match(type, distinct_types)
 
-      # TODO: We have i, should be quicker to remove from configuration
-      disp <- compute_delta_phi_dispersion(remove_from_configuration(configuration, location, type), location, type_index - 1, p, model, radius)
+      disp <- compute_delta_phi_dispersion(remove_from_configuration_by_index(configuration, i), location, type_index - 1, p, model, radius)
     } else {
       location <- c(x_coordinates(D)[i - n_Z], y_coordinates(D)[i - n_Z])
       type <- types(D)[i - n_Z]

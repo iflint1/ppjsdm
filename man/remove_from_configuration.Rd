@@ -2,7 +2,7 @@
 % Please edit documentation in R/Configuration.R
 \name{remove_from_configuration}
 \alias{remove_from_configuration}
-\title{Remove a point from configuration (if it is in the configuration).}
+\title{Remove a point from a configuration (if it is in the configuration).}
 \usage{
 remove_from_configuration(configuration, x, type)
 }
@@ -14,5 +14,5 @@ remove_from_configuration(configuration, x, type)
 \item{type}{Point type.}
 }
 \description{
-Remove a point from configuration (if it is in the configuration).
+Remove a point from a configuration (if it is in the configuration).
 }

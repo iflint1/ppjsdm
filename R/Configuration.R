@@ -167,7 +167,20 @@ add_to_configuration <- function(configuration, x, type) {
   configuration
 }
 
-#' Remove a point from configuration (if it is in the configuration).
+#' Remove a point from a configuration by index.
+#'
+#' @param configuration Configuration.
+#' @param index Index.
+#' @export
+remove_from_configuration_by_index <- function(configuration, index) {
+  configuration$x <- configuration$x[-index]
+  configuration$y <- configuration$y[-index]
+  configuration$types <- droplevels(configuration$types[-index])
+  configuration
+}
+
+
+#' Remove a point from a configuration (if it is in the configuration).
 #'
 #' @param configuration Configuration.
 #' @param x Point.
@@ -176,9 +189,7 @@ add_to_configuration <- function(configuration, x, type) {
 remove_from_configuration <- function(configuration, x, type) {
   index <- match(x[1], configuration$x)
   if(!is.na(index) && configuration$y[index] == x[2] && configuration$types[index] == type) {
-    configuration$x <- configuration$x[-index]
-    configuration$y <- configuration$y[-index]
-    configuration$types <- droplevels(configuration$types[-index])
+    return(remove_from_configuration_by_index(configuration, index))
   }
   configuration
 }

@@ -4,10 +4,12 @@
 \alias{is_in_window}
 \title{Check if point is in window}
 \usage{
-is_in_window(points, window)
+is_in_window(x, y, window)
 }
 \arguments{
-\item{points}{Points.}
+\item{x}{X-coordinates of points.}
+
+\item{y}{Y-coordinates of points.}
 
 \item{window}{Window.}
 }
