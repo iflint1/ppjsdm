@@ -84,7 +84,7 @@ private:
     return square_radii_[i * dim_ + j];
   }
   void set_square_radii(R_xlen_t i, R_xlen_t j, double r) {
-    square_radii_[i * dim_ + j] = r;
+    square_radii_[i * dim_ + j] = r * r;
   }
 public:
   Geyer_papangelou(Rcpp::NumericMatrix radius, double saturation): dim_(radius.ncol()), square_radii_(dim_ * dim_), saturation_(saturation) {

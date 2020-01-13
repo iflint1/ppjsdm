@@ -9,16 +9,7 @@
 namespace ppjsdm {
 namespace detail {
 
-template<bool CheckSquareMatrix>
-inline auto get_number_types(SEXP x);
-
-template<>
-inline auto get_number_types<false>(SEXP x) {
-  return Rf_isMatrix(x) ? Rf_nrows(x) : Rf_length(x);
-}
-
-template<>
-inline auto get_number_types<true>(SEXP x) {
+inline auto get_number_types_with_check(SEXP x) {
   if(Rf_isMatrix(x)) {
     const auto n(Rf_nrows(x));
     if(n != Rf_ncols(x)) {
@@ -39,13 +30,9 @@ inline R_xlen_t get_number_types_helper(R_xlen_t number_types, SEXP x, Args&... 
   if(Rf_isNull(x)) {
     return get_number_types_helper(number_types, args...);
   } else {
-    const auto length_x(get_number_types<true>(x));
+    const auto length_x(get_number_types_with_check(x));
     if(number_types != 0 && length_x != number_types) {
-      if(number_types == 1 || length_x == 1) {
-        Rcpp::warning("One of the arguments had length 1; extending it to cover the number of types.");
-      } else {
-        Rcpp::stop("Two of the given arguments have incompatible sizes");
-      }
+      Rcpp::stop("Two of the given arguments have incompatible sizes");
     }
     return get_number_types_helper(length_x > number_types ? length_x: number_types, args...);
   }
@@ -100,22 +87,14 @@ inline SEXP construct_if_missing(R_xlen_t number_types, SEXP x, U def) {
   if(Rf_isNull(x)) {
     return detail::make_type<Type>{}(number_types, def);
   } else {
-    const auto length_x(detail::get_number_types<false>(x));
     // TODO: C++17 if constexpr would be better
     if(std::is_same<Type, Rcpp::NumericMatrix>::value) {
-      if((number_types > 1 && length_x == 1) || !Rf_isMatrix(x)) {
-        return detail::make_type<Type>{}(number_types, x);
-      }
-    } else {
-      if(number_types > 1 && length_x == 1) {
+      if(!Rf_isMatrix(x)) {
         return detail::make_type<Type>{}(number_types, x);
       }
     }
     return x;
   }
-  return Rf_isNull(x)
-          ? detail::make_type<Type>{}(number_types, def)
-          : x;
 }
 
 } // namespace ppjsdm
