@@ -1,6 +1,6 @@
 ---
 title: "Introduction"
-output: rmarkdown::html_vignette
+output: pdf_document
 vignette: >
   %\VignetteIndexEntry{introduction}
   %\VignetteEngine{knitr::rmarkdown}
@@ -61,11 +61,11 @@ By default, the function fits the model that was introduced in the ARC grant [TO
 This model has many drawbacks, the most important of which is that the model with the fitted values is degenerate, as can be seen by drawing from the model.
 
 ```{r}
-lambda <- exp(fit$coefficients[1:2])
+lambda <- exp(fit$coefficients[1:number_of_species])
 alpha <- matrix(c(fit$coefficients[3], 
                   fit$coefficients[4], 
                   fit$coefficients[4], 
-                  fit$coefficients[5]), ncol = 2, nrow = 2)
+                  fit$coefficients[5]), ncol = number_of_species, nrow = number_of_species)
 draw <- ppjsdm::rmultigibbs(window = window, alpha = alpha, lambda = lambda)
 plot(draw)
 ```
@@ -73,7 +73,7 @@ plot(draw)
 The Geyer model is better suited to most situations, but the user needs to specify some additional parameters before the fitting may take place.
 
 ```{r}
-radii <- matrix(5, 2, 2)
+radii <- matrix(5, number_of_species, number_of_species)
 ```
 
 The matrix `radii` models interaction radii within a species, and between species.
@@ -86,11 +86,11 @@ fit <- ppjsdm::gibbsm(configuration, window = window, model = "Geyer", radius = 
 Note that we do not have the previous problem here.
 
 ```{r}
-lambda <- exp(fit$coefficients[1:2])
+lambda <- exp(fit$coefficients[1:number_of_species])
 alpha <- matrix(c(fit$coefficients[3], 
                   fit$coefficients[4], 
                   fit$coefficients[4], 
-                  fit$coefficients[5]), ncol = 2, nrow = 2)
+                  fit$coefficients[5]), ncol = number_of_species, nrow = number_of_species)
 draw <- ppjsdm::rmultigibbs(window = window, 
                             alpha = alpha, 
                             lambda = lambda,
