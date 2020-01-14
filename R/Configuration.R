@@ -117,7 +117,7 @@ plot.Configuration <- function(x, window = NULL, ...) {
          x$y,
          xlim = x_range,
          ylim = y_range,
-         col = x$types,
+         col = droplevels(x$types),
          xlab = "x",
          ylab = "y",
          main = "Points in the configuration")

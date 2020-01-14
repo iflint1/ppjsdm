@@ -14,8 +14,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   eval = !is_check,
-  purl = !is_check,
-  global.par = TRUE
+  purl = !is_check
 )
 ```
 
@@ -26,8 +25,6 @@ library(spatstat, quietly = TRUE)
 remove(list = ls())
 
 set.seed(1)
-
-par(mar = c(5, 4, 4, 20) + 0.1)
 ```
 
 # Working with the Queensland trees dataset
