@@ -14,7 +14,8 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   eval = !is_check,
-  purl = !is_check
+  purl = !is_check,
+  global.par = TRUE
 )
 ```
 
@@ -25,6 +26,8 @@ library(spatstat, quietly = TRUE)
 remove(list = ls())
 
 set.seed(1)
+
+par(mar = c(5, 4, 4, 20) + 0.1)
 ```
 
 # Working with the Queensland trees dataset
@@ -40,7 +43,6 @@ number_of_species <- 2 # Includes the most prevalent species from the plot
 configuration <- ppjsdm::get_qld_trees_configuration(index = index_of_plot, 
                                                      year = year, 
                                                      prevalent = number_of_species)
-plot(configuration)
 ```
 
 Our point process class only includes the locations of the trees, so we also need to provide information about the observation window.
@@ -48,6 +50,11 @@ All plots are of size $100\mathrm{m}\times50\mathrm{m}$, so we define the window
 
 ```{r}
 window <- ppjsdm::Rectangle_window(c(0, 100), c(0, 50))
+```
+
+```{r, out.width = '1.3 \\textwidth', fig.height = 4, fig.align = 'center', fig}
+par(mar = c(5, 4, 4, 13) + 0.1)
+plot(configuration, window = window)
 ```
 
 The function `gibbsm` fits a multivariate Gibbs point process to our dataset.
@@ -66,8 +73,15 @@ alpha <- matrix(c(fit$coefficients[3],
                   fit$coefficients[4], 
                   fit$coefficients[4], 
                   fit$coefficients[5]), ncol = number_of_species, nrow = number_of_species)
-draw <- ppjsdm::rmultigibbs(window = window, alpha = alpha, lambda = lambda)
-plot(draw)
+draw <- ppjsdm::rmultigibbs(window = window, 
+                            alpha = alpha, 
+                            lambda = lambda, 
+                            types = levels(types(configuration)))
+```
+
+```{r}
+par(mar = c(5, 4, 4, 13) + 0.1)
+plot(draw, window = window)
 ```
 
 The Geyer model is better suited to most situations, but the user needs to specify some additional parameters before the fitting may take place.
@@ -95,8 +109,13 @@ draw <- ppjsdm::rmultigibbs(window = window,
                             alpha = alpha, 
                             lambda = lambda,
                             model = "Geyer", 
-                            radius = radii)
-plot(draw)
+                            radius = radii,
+                            types = levels(types(configuration)))
+```
+
+```{r}
+par(mar = c(5, 4, 4, 13) + 0.1)
+plot(draw, window = window)
 ```
 
 # Using covariates

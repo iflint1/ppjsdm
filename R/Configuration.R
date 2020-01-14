@@ -107,18 +107,31 @@ get_number_points <- function(configuration, total = FALSE) {
 plot.Configuration <- function(x, window = NULL, ...) {
   if(get_number_points(x, total = TRUE) > 0) {
     if(missing(window)) {
-      plot(x$x, x$y, col = x$types, xlab = "x", ylab = "y", main = "Points in the configuration")
+      x_range <- c(min(x_coordinates(x)), max(x_coordinates(x)))
+      y_range <- c(min(y_coordinates(x)), max(y_coordinates(x)))
     } else {
-      plot(x$x, x$y, xlim = window@x_range, ylim = window@y_range, col = x$types, xlab = "x", ylab = "y", main = "Points in the configuration")
+      x_range <- x_range(window)
+      y_range <- y_range(window)
     }
+    plot(x$x,
+         x$y,
+         xlim = x_range,
+         ylim = y_range,
+         col = x$types,
+         xlab = "x",
+         ylab = "y",
+         main = "Points in the configuration")
+
+    par(mar = c(5, 4, 4, 20) + 0.1)
 
     legend("topleft",
            xpd = TRUE,
-           mar(c(5, 4, 4, 30) + 0.1),
            inset = c(1.03, 0),
            legend = unique(x$types),
            col = 1:length(x$types),
            pch = 1,
+           pt.cex = 1,
+           cex = 0.8,
            title = "Types of the points")
   }
 }
