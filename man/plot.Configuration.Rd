@@ -11,7 +11,7 @@
 
 \item{window}{Window the configuration belongs to.}
 
-\item{...}{Other arguments not yet used.}
+\item{...}{Other arguments sent to `graphics::plot`.}
 }
 \description{
 Plot a configuration class.

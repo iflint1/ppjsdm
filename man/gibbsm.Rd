@@ -8,6 +8,7 @@ gibbsm(
   configuration,
   window = Rectangle_window(),
   covariates = list(),
+  traits = list(),
   model = "identity",
   radius = matrix(0),
   print = TRUE
@@ -19,6 +20,8 @@ gibbsm(
 \item{window}{Observation window.}
 
 \item{covariates}{Environmental covariates driving the intensity.}
+
+\item{traits}{Species' traits.}
 
 \item{model}{String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_model()`.}
 
