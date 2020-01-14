@@ -51,14 +51,9 @@ get_qld_trees_configuration <- function(index = 15, year = 2013, prevalent = 10,
   taxon_factor <- factor(modified_qld_trees$taxon)
   configuration <- Configuration(modified_qld_trees$coordinates_x_metres, modified_qld_trees$coordinates_y_metres, taxon_factor)
   if(average_height) {
-    # TODO: Can vectorise this
-    av <- matrix(0, prevalent, prevalent)
-    for(i in seq_len(prevalent)) {
-      v <- modified_qld_trees$height_metres[taxon_factor == levels(taxon_factor)[i]]
-      v <- v[!is.na(v)]
-      av[i, i] <- mean(v)
-    }
-    list(configuration = configuration, average_height = av)
+    v <- 1:prevalent
+    v <- sapply(v, function(i) mean(modified_qld_trees$height_metres[taxon_factor == levels(taxon_factor)[i]], na.rm = TRUE), USE.NAMES = FALSE)
+    list(configuration = configuration, average_height = diag(v))
   } else {
     configuration
   }
