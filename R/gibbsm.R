@@ -100,8 +100,8 @@ gibbsm <- function(configuration, window = Rectangle_window(), covariates = list
   # TODO: Can probably shorten this, probably with response ~ .
   if(ncovariates > 0) {
     if(ntraits > 0) {
-      data <- as.data.frame(list(response = response, log_lambda = log_lambda, covariate_list, trait_list, alpha_list, rho = rho_offset))
-      formula <- paste("response ~ 0 + log_lambda + ", paste(names(covariate_list), collapse = " + "), " + ", paste(names(trait_list), collapse = " + "), " + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
+      data <- as.data.frame(list(response = response, log_lambda = log_lambda, covariate_list, trait_list, rho = rho_offset))
+      formula <- paste("response ~ 0 + log_lambda + ", paste(names(covariate_list), collapse = " + "), " + ", paste(names(trait_list), collapse = " + "), " + offset(-log(rho))", sep = "")
     } else {
       data <- as.data.frame(list(response = response, log_lambda = log_lambda, covariate_list, alpha_list, rho = rho_offset))
       formula <- paste("response ~ 0 + log_lambda + ", paste(names(covariate_list), collapse = " + "), " + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
@@ -109,8 +109,8 @@ gibbsm <- function(configuration, window = Rectangle_window(), covariates = list
 
   } else {
     if(ntraits > 0) {
-      data <- as.data.frame(list(response = response, log_lambda = log_lambda, trait_list, alpha_list, rho = rho_offset))
-      formula <- paste("response ~ 0 + log_lambda + ", paste(names(trait_list), collapse = " + "), " + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
+      data <- as.data.frame(list(response = response, log_lambda = log_lambda, trait_list, rho = rho_offset))
+      formula <- paste("response ~ 0 + log_lambda + ", paste(names(trait_list), collapse = " + "), " + offset(-log(rho))", sep = "")
     } else {
       data <- as.data.frame(list(response = response, log_lambda = log_lambda, alpha_list, rho = rho_offset))
       formula <- paste("response ~ 0 + log_lambda + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")

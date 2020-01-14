@@ -146,8 +146,9 @@ To illustrate how the package works, we define arbitrarily the following trait.
 
 ```{r}
 average_height <- matrix(c(100, 0, 0, 50), ncol = 2, nrow = 2)
+average_seed_size <- matrix(c(10, 0, 0, 15), ncol = 2, nrow = 2)
 
-traits <- list(average_height = average_height)
+traits <- list(average_height = average_height, average_seed_size = average_seed_size)
 ```
 
 Finally, we need a dataset to work on.
