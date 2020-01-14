@@ -111,10 +111,15 @@ plot.Configuration <- function(x, window = NULL, ...) {
     } else {
       plot(x$x, x$y, xlim = window@x_range, ylim = window@y_range, col = x$types, xlab = "x", ylab = "y", main = "Points in the configuration")
     }
-    # Add extra space to the right of plot area; change clipping to figure
-    par(mar = c(5, 4, 4, 30) + 0.1, xpd = TRUE)
 
-    legend("topleft", inset = c(1.03, 0), legend = unique(x$types), col = 1:length(x$types), pch = 1, title = "Types of the points")
+    legend("topleft",
+           xpd = TRUE,
+           mar(c(5, 4, 4, 30) + 0.1),
+           inset = c(1.03, 0),
+           legend = unique(x$types),
+           col = 1:length(x$types),
+           pch = 1,
+           title = "Types of the points")
   }
 }
 
