@@ -12,8 +12,12 @@
 gibbsm <- function(configuration, window = Rectangle_window(), covariates = list(), traits = list(), model = "identity", radius = matrix(0), print = TRUE) {
   num <- get_number_points(configuration)
   num <- unlist(num, use.names = FALSE)
+  if(all(num == 0)) {
+    stop("Empty configuration.")
+  }
   # This is the guideline from the Baddeley et al. paper, see p. 8 therein.
-  rho <- 4 * num / window_volume(window)
+  rho_times_volume <- 4 * num
+  rho <- rho_times_volume / window_volume(window)
 
   types <- types(configuration)
   distinct_types <- levels(types)
@@ -21,7 +25,7 @@ gibbsm <- function(configuration, window = Rectangle_window(), covariates = list
   ncovariates <- length(covariates)
   ntraits <- length(traits)
 
-  D <- rbinomialpp(window = window, n = rho * window_volume(window), types = distinct_types)
+  D <- rbinomialpp(window = window, n = rho_times_volume, types = distinct_types)
 
   n_Z <- get_number_points(configuration, total = TRUE)
   n_D <- get_number_points(D, total = TRUE)
