@@ -101,7 +101,7 @@ get_number_points <- function(configuration, total = FALSE) {
 #'
 #' @param x Configuration to plot.
 #' @param window Window the configuration belongs to.
-#' @param ... Other arguments not yet used.
+#' @param ... Other arguments sent to `graphics::plot`.
 #' @importFrom graphics plot par legend
 #' @export
 plot.Configuration <- function(x, window = NULL, ...) {
@@ -120,7 +120,8 @@ plot.Configuration <- function(x, window = NULL, ...) {
          col = droplevels(x$types),
          xlab = "x",
          ylab = "y",
-         main = "Points in the configuration")
+         main = "Points in the configuration",
+         ... )
 
     par(mar = c(5, 4, 4, 20) + 0.1)
 

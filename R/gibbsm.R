@@ -3,12 +3,13 @@
 #' @param configuration A configuration assumed to be a draw from the multivariate Gibbs.
 #' @param window Observation window.
 #' @param covariates Environmental covariates driving the intensity.
+#' @param traits Species' traits.
 #' @param model String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_model()`.
 #' @param radius Interaction radius.
 #' @param print Print the fitting summary?
 #' @importFrom stats as.formula binomial glm
 #' @export
-gibbsm <- function(configuration, window = Rectangle_window(), covariates = list(), model = "identity", radius = matrix(0), print = TRUE) {
+gibbsm <- function(configuration, window = Rectangle_window(), covariates = list(), traits = list(), model = "identity", radius = matrix(0), print = TRUE) {
   num <- get_number_points(configuration)
   num <- unlist(num, use.names = FALSE)
   # This is the guideline from the Baddeley et al. paper, see p. 8 therein.
@@ -18,6 +19,7 @@ gibbsm <- function(configuration, window = Rectangle_window(), covariates = list
   distinct_types <- levels(types)
   p <- length(distinct_types)
   ncovariates <- length(covariates)
+  ntraits <- length(traits)
 
   D <- rbinomialpp(window = window, n = rho * window_volume(window), types = distinct_types)
 
@@ -35,6 +37,11 @@ gibbsm <- function(configuration, window = Rectangle_window(), covariates = list
   # TODO: When this is moved to C++, fill in blanks with type1 / type2, etc.
   names(covariate_list) <- names(covariates)
 
+  trait_list <- vector(mode = "list", length = ntraits)
+  trait_list <- lapply(trait_list, function(x) rep(0, n_Z + n_D))
+  # TODO: When this is moved to C++, fill in blanks with type1 / type2, etc.
+  names(trait_list) <- names(traits)
+
   index <- 1
   for(j in seq_len(p)) {
     for(k in j:p) {
@@ -50,18 +57,25 @@ gibbsm <- function(configuration, window = Rectangle_window(), covariates = list
       type <- types(configuration)[i]
       type_index <- match(type, distinct_types)
 
-      disp <- compute_delta_phi_dispersion(remove_from_configuration_by_index(configuration, i), location, type_index - 1, p, model, radius)
+      dispersion <- compute_delta_phi_dispersion(remove_from_configuration_by_index(configuration, i), location, type_index - 1, p, model, radius)
     } else {
       location <- c(x_coordinates(D)[i - n_Z], y_coordinates(D)[i - n_Z])
       type <- types(D)[i - n_Z]
       type_index <- match(type, distinct_types)
 
-      disp <- compute_delta_phi_dispersion(configuration, location, type_index - 1, p, model, radius)
+      dispersion <- compute_delta_phi_dispersion(configuration, location, type_index - 1, p, model, radius)
     }
 
     rho_offset[i] <- rho[type_index]
     for(j in seq_len(ncovariates)) {
       covariate_list[[j]][i] <- covariates[[j]](location[1], location[2])
+    }
+    for(j in seq_len(ntraits)) {
+      tr <- vector(mode = "numeric", length = p)
+      for(k in seq_len(p)) {
+        tr[k] <- traits[[j]](type_index, k)
+      }
+      trait_list[[j]][i] <- tr %*% dispersion
     }
 
     index <- 1
@@ -71,9 +85,9 @@ gibbsm <- function(configuration, window = Rectangle_window(), covariates = list
       }
       for(k in j:p) {
         if(j == type_index) {
-          alpha_list[[index]][i] <- disp[k]
+          alpha_list[[index]][i] <- dispersion[k]
         } else if(k == type_index) {
-          alpha_list[[index]][i] <- disp[j]
+          alpha_list[[index]][i] <- dispersion[j]
         }
 
         index <- index + 1
@@ -82,12 +96,24 @@ gibbsm <- function(configuration, window = Rectangle_window(), covariates = list
   }
 
 
+  # TODO: Can probably write this more succintly, probably with response ~ .
   if(ncovariates > 0) {
-    data <- as.data.frame(list(response = response, log_lambda = log_lambda, covariate_list, alpha_list, rho = rho_offset))
-    formula <- paste("response ~ 0 + log_lambda + ", paste(names(covariates), collapse = " + "), " + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
+    if(ntraits > 0) {
+      data <- as.data.frame(list(response = response, log_lambda = log_lambda, covariate_list, trait_list, alpha_list, rho = rho_offset))
+      formula <- paste("response ~ 0 + log_lambda + ", paste(names(covariates), collapse = " + "), " + ", paste(names(traits), collapse = " + "), " + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
+    } else {
+      data <- as.data.frame(list(response = response, log_lambda = log_lambda, covariate_list, alpha_list, rho = rho_offset))
+      formula <- paste("response ~ 0 + log_lambda + ", paste(names(covariates), collapse = " + "), " + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
+    }
+
   } else {
-    data <- as.data.frame(list(response = response, log_lambda = log_lambda, alpha_list, rho = rho_offset))
-    formula <- paste("response ~ 0 + log_lambda + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
+    if(ntraits > 0) {
+      data <- as.data.frame(list(response = response, log_lambda = log_lambda, trait_list, alpha_list, rho = rho_offset))
+      formula <- paste("response ~ 0 + log_lambda + ", paste(names(traits), collapse = " + "), " + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
+    } else {
+      data <- as.data.frame(list(response = response, log_lambda = log_lambda, alpha_list, rho = rho_offset))
+      formula <- paste("response ~ 0 + log_lambda + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
+    }
   }
   formula <- as.formula(formula)
 

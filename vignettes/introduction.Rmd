@@ -117,7 +117,7 @@ plot(draw, window = window)
 
 # Using covariates
 
-This section assumes you have a series of covariates assumed to explain a given dataset. 
+This section assumes you have a series of covariates explaining a given dataset. 
 To illustrate how the package works, we define arbitrarily the following covariates.
 
 ```{r}
@@ -128,8 +128,6 @@ covariates <- list(temperature = temperature, wetness = wetness)
 ```
 
 Finally, we need a dataset to work on.
-In order to properly illustrate our method, we want to use data which is biased according to our given covariates, as given below.
-In general, this part is not necessary -- just use your own data.
 
 ```{r}
 configuration <- ppjsdm::rppp(lambda = 50)
@@ -140,5 +138,39 @@ For example,
 
 ```{r}
 ppjsdm::gibbsm(configuration, covariates = covariates)
+```
+
+# Using covariates
+
+This section assumes you have a series of traits explaining a given dataset. 
+To illustrate how the package works, we define arbitrarily the following trait.
+
+```{r}
+average_height <- function(i, j) {
+  if(i == j) {
+    0
+  } else {
+    if(i == 1) {
+      1
+    } else {
+      2
+    }
+  }
+}
+
+traits <- list(average_height = average_height)
+```
+
+Finally, we need a dataset to work on.
+
+```{r}
+configuration <- ppjsdm::rppp(lambda = c(50, 50))
+```
+
+The function `gibbsm` fits a multivariate Gibbs point process to our dataset.
+For example,
+
+```{r}
+ppjsdm::gibbsm(configuration, traits = traits)
 ```
 
