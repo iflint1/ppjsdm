@@ -130,7 +130,7 @@ covariates <- list(temperature = temperature, wetness = wetness)
 Finally, we need a dataset to work on.
 
 ```{r}
-configuration <- ppjsdm::rppp(lambda = 50)
+configuration <- ppjsdm::rppp(lambda = c(50, 50))
 ```
 
 The function `gibbsm` fits a multivariate Gibbs point process to our dataset.
@@ -140,23 +140,13 @@ For example,
 ppjsdm::gibbsm(configuration, covariates = covariates)
 ```
 
-# Using covariates
+# Using traits
 
 This section assumes you have a series of traits explaining a given dataset. 
 To illustrate how the package works, we define arbitrarily the following trait.
 
 ```{r}
-average_height <- function(i, j) {
-  if(i == j) {
-    0
-  } else {
-    if(i == 1) {
-      1
-    } else {
-      2
-    }
-  }
-}
+average_height <- matrix(c(100, 0, 0, 50), ncol = 2, nrow = 2)
 
 traits <- list(average_height = average_height)
 ```
@@ -174,3 +164,32 @@ For example,
 ppjsdm::gibbsm(configuration, traits = traits)
 ```
 
+# Using traits on Queensland data
+
+There is also a function to extract the average species height from the Queesland data.
+
+```{r}
+index_of_plot <- 3 # Between 1 and 20
+year <- 2011 # Year of census
+number_of_species <- 3 # Includes the most prevalent species from the plot
+
+ret <- ppjsdm::get_qld_trees_configuration(index = index_of_plot, 
+                                          year = year, 
+                                          prevalent = number_of_species,
+                                          average_height = TRUE)
+
+configuration <- ret$configuration
+traits <- list(average_height = ret$average_height)
+window <- ppjsdm::Rectangle_window(c(0, 100), c(0, 50))
+radii <- matrix(5, number_of_species, number_of_species)
+```
+
+We may then fit our model to this dataset.
+
+```{r}
+fit <- ppjsdm::gibbsm(configuration, 
+                      window = window, 
+                      model = "Geyer", 
+                      radius = radii, 
+                      traits = traits)
+```

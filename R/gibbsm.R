@@ -71,10 +71,7 @@ gibbsm <- function(configuration, window = Rectangle_window(), covariates = list
       covariate_list[[j]][i] <- covariates[[j]](location[1], location[2])
     }
     for(j in seq_len(ntraits)) {
-      tr <- vector(mode = "numeric", length = p)
-      for(k in seq_len(p)) {
-        tr[k] <- traits[[j]](type_index, k)
-      }
+      tr <- traits[[j]][type_index, 1:p]
       trait_list[[j]][i] <- tr %*% dispersion
     }
 
@@ -96,20 +93,20 @@ gibbsm <- function(configuration, window = Rectangle_window(), covariates = list
   }
 
 
-  # TODO: Can probably write this more succintly, probably with response ~ .
+  # TODO: Can probably shorten this, probably with response ~ .
   if(ncovariates > 0) {
     if(ntraits > 0) {
       data <- as.data.frame(list(response = response, log_lambda = log_lambda, covariate_list, trait_list, alpha_list, rho = rho_offset))
-      formula <- paste("response ~ 0 + log_lambda + ", paste(names(covariates), collapse = " + "), " + ", paste(names(traits), collapse = " + "), " + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
+      formula <- paste("response ~ 0 + log_lambda + ", paste(names(covariate_list), collapse = " + "), " + ", paste(names(trait_list), collapse = " + "), " + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
     } else {
       data <- as.data.frame(list(response = response, log_lambda = log_lambda, covariate_list, alpha_list, rho = rho_offset))
-      formula <- paste("response ~ 0 + log_lambda + ", paste(names(covariates), collapse = " + "), " + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
+      formula <- paste("response ~ 0 + log_lambda + ", paste(names(covariate_list), collapse = " + "), " + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
     }
 
   } else {
     if(ntraits > 0) {
       data <- as.data.frame(list(response = response, log_lambda = log_lambda, trait_list, alpha_list, rho = rho_offset))
-      formula <- paste("response ~ 0 + log_lambda + ", paste(names(traits), collapse = " + "), " + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
+      formula <- paste("response ~ 0 + log_lambda + ", paste(names(trait_list), collapse = " + "), " + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")
     } else {
       data <- as.data.frame(list(response = response, log_lambda = log_lambda, alpha_list, rho = rho_offset))
       formula <- paste("response ~ 0 + log_lambda + ", paste(names(alpha_list), collapse = " + "), " + offset(-log(rho))", sep = "")

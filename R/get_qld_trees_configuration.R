@@ -4,9 +4,10 @@
 #' @param year A number between 1971 and 2013 representing the year.
 #' @param prevalent Number of most prevalent species to use.
 #' @param jitter Variance of the shifts applied to the locations of the trees.
+#' @param average_height Return traits corresponding to average heights?
 #' @importFrom stats rnorm
 #' @export
-get_qld_trees_configuration <- function(index = 15, year = 2013, prevalent = 10, jitter = 0.3) {
+get_qld_trees_configuration <- function(index = 15, year = 2013, prevalent = 10, jitter = 0.3, average_height = FALSE) {
   stopifnot(index >= 1, index <= 20, year >= 1971, year <= 2013)
   raw_qld_trees <- ppjsdm::raw_qld_trees
 
@@ -42,5 +43,23 @@ get_qld_trees_configuration <- function(index = 15, year = 2013, prevalent = 10,
   modified_qld_trees$coordinates_x_metres <- modified_qld_trees$coordinates_x_metres + jiggle[1:number_locations]
   modified_qld_trees$coordinates_y_metres <- modified_qld_trees$coordinates_y_metres + jiggle[-(1:number_locations)]
 
-  Configuration(modified_qld_trees$coordinates_x_metres, modified_qld_trees$coordinates_y_metres, factor(modified_qld_trees$taxon))
+  modified_qld_trees$coordinates_x_metres[modified_qld_trees$coordinates_x_metres > 100] <- 100
+  modified_qld_trees$coordinates_x_metres[modified_qld_trees$coordinates_x_metres < 0] <- 0
+  modified_qld_trees$coordinates_y_metres[modified_qld_trees$coordinates_y_metres > 50] <- 50
+  modified_qld_trees$coordinates_y_metres[modified_qld_trees$coordinates_y_metres < 0] <- 0
+
+  taxon_factor <- factor(modified_qld_trees$taxon)
+  configuration <- Configuration(modified_qld_trees$coordinates_x_metres, modified_qld_trees$coordinates_y_metres, taxon_factor)
+  if(average_height) {
+    # TODO: Can vectorise this
+    av <- matrix(0, prevalent, prevalent)
+    for(i in seq_len(prevalent)) {
+      v <- modified_qld_trees$height_metres[taxon_factor == levels(taxon_factor)[i]]
+      v <- v[!is.na(v)]
+      av[i, i] <- mean(v)
+    }
+    list(configuration = configuration, average_height = av)
+  } else {
+    configuration
+  }
 }

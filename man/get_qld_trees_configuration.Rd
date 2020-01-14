@@ -8,7 +8,8 @@ get_qld_trees_configuration(
   index = 15,
   year = 2013,
   prevalent = 10,
-  jitter = 0.3
+  jitter = 0.3,
+  average_height = FALSE
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ get_qld_trees_configuration(
 \item{prevalent}{Number of most prevalent species to use.}
 
 \item{jitter}{Variance of the shifts applied to the locations of the trees.}
+
+\item{average_height}{Return traits corresponding to average heights?}
 }
 \description{
 Return a configuration representing the locations of 'ten' species of trees in a given CSIRO experimental plot index by 'index', in a given 'year'.
