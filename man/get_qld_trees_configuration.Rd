@@ -9,7 +9,8 @@ get_qld_trees_configuration(
   year = 2013,
   prevalent = 10,
   jitter = 0.3,
-  average_height = FALSE
+  average_height = FALSE,
+  average_dbh = FALSE
 )
 }
 \arguments{
@@ -21,7 +22,9 @@ get_qld_trees_configuration(
 
 \item{jitter}{Variance of the shifts applied to the locations of the trees.}
 
-\item{average_height}{Return traits corresponding to average heights?}
+\item{average_height}{Return trait corresponding to average heights?}
+
+\item{average_dbh}{Return trait corresponding to average stem diameters?}
 }
 \description{
 Return a configuration representing the locations of 'ten' species of trees in a given CSIRO experimental plot index by 'index', in a given 'year'.
