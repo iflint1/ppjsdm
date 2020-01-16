@@ -48,6 +48,8 @@ struct make_type<Rcpp::NumericMatrix> {
 
 } // namespace detail
 
+// TODO: I should be calling this on std::vectors in order to get more optimised types later on.
+// TODO: In order to do this, I'll have to overload call_on_list_or_vector when it's given std::vectors.
 template<typename Type, typename U>
 inline SEXP construct_if_missing(R_xlen_t number_types, SEXP x, U def) {
   if(Rf_isNull(x)) {

@@ -5,3 +5,5 @@ benchmarks
 ^data-raw$
 ^scripts$
 ^\.travis\.yml$
+^doc$
+^Meta$

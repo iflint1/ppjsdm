@@ -176,10 +176,11 @@ number_of_species <- 3 # Includes the most prevalent species from the plot
 ret <- ppjsdm::get_qld_trees_configuration(index = index_of_plot, 
                                           year = year, 
                                           prevalent = number_of_species,
-                                          average_height = TRUE)
+                                          average_height = TRUE,
+                                          average_dbh = TRUE)
 
 configuration <- ret$configuration
-traits <- list(average_height = ret$average_height)
+traits <- list(average_height = ret$average_height, average_dbh = ret$average_dbh)
 window <- ppjsdm::Rectangle_window(c(0, 100), c(0, 50))
 radii <- matrix(5, number_of_species, number_of_species)
 ```
