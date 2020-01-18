@@ -9,6 +9,7 @@
 
 namespace ppjsdm {
 
+// TODO: I suspect that I have to protect the private members.
 class Configuration_wrapper {
 private:
   class Marked_point_reference {
@@ -91,11 +92,15 @@ namespace traits {
 
 template<>
 struct configuration_manipulation<Configuration_wrapper>: public configuration_manipulation_defaults<Configuration_wrapper> {
-  static inline auto remove_random_point(Configuration_wrapper& configuration) {
-    const auto index(Rcpp::sample(size(configuration), 1, false, R_NilValue, false)[0]);
+  static inline auto remove_point_by_index(Configuration_wrapper& configuration, R_xlen_t index) {
     auto point(configuration[index]);
     configuration.erase(index);
     return point;
+  }
+
+  static inline auto remove_random_point(Configuration_wrapper& configuration) {
+    const auto index(Rcpp::sample(size(configuration), 1, false, R_NilValue, false)[0]);
+    return remove_point_by_index(configuration, index);
   }
 };
 

@@ -23,13 +23,17 @@ struct configuration_manipulation_defaults {
     return configuration.size();
   }
 
-  static inline auto remove_random_point(Configuration& configuration) {
-    using difference_type = typename std::iterator_traits<decltype(configuration.begin())>::difference_type;
-    const difference_type index(Rcpp::sample(size(configuration), 1, false, R_NilValue, false)[0]);
+  static inline auto remove_point_by_index(Configuration& configuration, R_xlen_t index) {
     auto iterator(std::next(configuration.begin(), index));
     const auto point(*iterator);
     configuration.erase(iterator);
     return point;
+  }
+
+  static inline auto remove_random_point(Configuration& configuration) {
+    using difference_type = typename std::iterator_traits<decltype(configuration.begin())>::difference_type;
+    const difference_type index(Rcpp::sample(size(configuration), 1, false, R_NilValue, false)[0]);
+    return remove_point_by_index(configuration, index);
   }
 };
 
@@ -46,6 +50,11 @@ inline void add_point(Configuration& configuration, Point&& point) {
 template<typename Configuration, typename... Args>
 inline void emplace_point(Configuration& configuration, Args... args) {
   traits::configuration_manipulation<Configuration>::emplace_point(configuration, args...);
+}
+
+template<typename Configuration>
+inline auto remove_point_by_index(Configuration& configuration, R_xlen_t index) {
+  return traits::configuration_manipulation<Configuration>::remove_point_by_index(configuration, index);
 }
 
 template<typename Configuration>

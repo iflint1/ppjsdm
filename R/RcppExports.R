@@ -26,6 +26,10 @@ has_duplicates <- function(configuration) {
     .Call('_ppjsdm_has_duplicates', PACKAGE = 'ppjsdm', configuration)
 }
 
+prepare_gibbsm_data <- function(configuration, window = NULL, covariates, traits, model = "identity", radius = NULL) {
+    .Call('_ppjsdm_prepare_gibbsm_data', PACKAGE = 'ppjsdm', configuration, window, covariates, traits, model, radius)
+}
+
 #' Sample a binomial point processes
 #'
 #' @param window Simulation window. Default is a Rectangle window [0, 1]^2.
