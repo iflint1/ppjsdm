@@ -1,4 +1,5 @@
 #include <Rcpp.h>
+#include <Rinternals.h>
 
 #include "configuration/configuration_manipulation.h"
 #include "configuration/configuration_wrapper.h"
@@ -14,28 +15,38 @@
 #include <vector> // std::vector
 
 template<typename Configuration>
-Rcpp::NumericVector compute_delta_phi_dispersion(const Configuration& configuration, const ppjsdm::Marked_point& point, int number_types, Rcpp::CharacterVector model = "identity", Rcpp::NumericMatrix radius = Rcpp::NumericMatrix(1, 1)) {
-  const auto number_points(ppjsdm::size(configuration));
-  return ppjsdm::call_on_papangelou(model, radius, [&configuration, &point, number_types, number_points](const auto& papangelou) {
-    return papangelou.compute(configuration, point, number_types, number_points);
+inline Rcpp::NumericVector compute_delta_phi_dispersion(const Configuration& configuration, const ppjsdm::Marked_point& point, int number_types, Rcpp::CharacterVector model, Rcpp::NumericMatrix radius) {
+  return ppjsdm::call_on_papangelou(model, radius, [&configuration, &point, number_types](const auto& papangelou) {
+    return papangelou.compute(configuration, point, number_types, ppjsdm::size(configuration));
   });
+}
+
+inline void add_to_formula(std::string& formula, Rcpp::CharacterVector names) {
+  for(R_xlen_t i(0); i < names.size(); ++i) {
+    formula += std::string(" + ") + Rcpp::as<std::string>(names[i]);
+  }
 }
 
 template<typename Configuration, typename Window, typename Vector>
 Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const Window& window, Rcpp::List covariates, Rcpp::List traits, Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, const Vector& points_by_type) {
   const auto length_configuration(ppjsdm::size(configuration));
-  const auto number_types(points_by_type.size());
-  using size_t = std::remove_const_t<decltype(number_types)>;
+  using size_t = std::remove_const_t<decltype(length_configuration)>;
+  const size_t number_types(points_by_type.size());
   const auto covariates_length(covariates.size());
   const auto traits_length(traits.size());
   const auto volume(window.volume());
 
   // Sample the dummy points D.
   // This choice of rho is the guideline from the Baddeley et al. paper, see p. 8 therein.
-  Vector rho_times_volume(points_by_type);
-  for(auto& n: rho_times_volume) {
-    n *= 4;
-  }
+  // Nb: Using a lambda to inisitalise rho in order to make sure it's declared const.
+  const Vector rho_times_volume([&points_by_type](){
+    Vector rho_times_volume(points_by_type);
+    for(auto& n: rho_times_volume) {
+      n *= 4;
+    }
+    return rho_times_volume;
+  }());
+  // Set to sum(rho_times_volume), which in our case is known explicitly.
   const auto sum_rho_times_volume(4 * length_configuration);
   const auto D(ppjsdm::rbinomialpp_single<Configuration>(window, rho_times_volume, number_types, sum_rho_times_volume));
   const auto length_D(sum_rho_times_volume);
@@ -124,38 +135,19 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     }
   }
 
+  // Construct formula
   std::string formula("response ~ 0 + offset(-log(rho))");
-
-  const auto log_lambda_col_names = Rcpp::as<Rcpp::CharacterVector>(Rcpp::colnames(log_lambda));
-  for(R_xlen_t i(0); i < log_lambda_col_names.size(); ++i) {
-    formula += std::string(" + ") + Rcpp::as<std::string>(log_lambda_col_names[i]);
-  }
-
+  add_to_formula(formula, Rcpp::colnames(log_lambda));
   if(covariates_length > 0) {
-    const auto covariates_input_col_names = Rcpp::as<Rcpp::CharacterVector>(Rcpp::colnames(covariates_input));
-    for(R_xlen_t i(0); i < covariates_input_col_names.size(); ++i) {
-      formula += std::string(" + ") + Rcpp::as<std::string>(covariates_input_col_names[i]);
-    }
+    add_to_formula(formula, Rcpp::colnames(covariates_input));
   }
-
   if(traits_length > 0) {
-    const auto traits_input_col_names = Rcpp::as<Rcpp::CharacterVector>(Rcpp::colnames(traits_input));
-    for(R_xlen_t i(0); i < traits_input_col_names.size(); ++i) {
-      formula += std::string(" + ") + Rcpp::as<std::string>(traits_input_col_names[i]);
-    }
+    add_to_formula(formula, Rcpp::colnames(traits_input));
   } else {
-    const auto alpha_col_names = Rcpp::as<Rcpp::CharacterVector>(Rcpp::colnames(alpha_input));
-    for(R_xlen_t i(0); i < alpha_col_names.size(); ++i) {
-      formula += std::string(" + ") + Rcpp::as<std::string>(alpha_col_names[i]);
-    }
+    add_to_formula(formula, Rcpp::colnames(alpha_input));
   }
 
-  return Rcpp::List::create(Rcpp::Named("response") = response,
-                            Rcpp::Named("log_lambda") = log_lambda,
-                            Rcpp::Named("rho") = rho_offset,
-                            Rcpp::Named("alpha") = alpha_input,
-                            Rcpp::Named("covariates") = covariates_input,
-                            Rcpp::Named("traits") = traits_input,
+  return Rcpp::List::create(Rcpp::Named("data") = Rcpp::List::create(covariates_input, traits_input, alpha_input, response, log_lambda, rho_offset),
                             Rcpp::Named("formula") = formula);
 }
 
@@ -166,17 +158,12 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration, SEXP window, Rcpp::List
   if(length_configuration == 0) {
     Rcpp::stop("Empty configuration.");
   }
-  std::vector<ppjsdm::Marked_point> vector_configuration(length_configuration);
-
-  for(R_xlen_t i(0); i < length_configuration; ++i) {
-    vector_configuration[i] = wrapped_configuration[i];
-  }
   // This trick allows us to find the number of different types in the configuration.
   // That number is then used to default construct `radius`.
-  auto points_by_type(ppjsdm::get_number_points(vector_configuration));
+  auto points_by_type(ppjsdm::get_number_points(wrapped_configuration));
   const auto number_types(points_by_type.size());
   radius = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(number_types, radius, 0.);
-  return ppjsdm::call_on_wrapped_window(window, [&vector_configuration, &covariates, &traits, &model, &radius, &points_by_type](const auto& w) {
-    return prepare_gibbsm_data_helper(vector_configuration, w, covariates, traits, model, radius, points_by_type);
+  return ppjsdm::call_on_wrapped_window(window, [&wrapped_configuration, &covariates, &traits, &model, &radius, &points_by_type](const auto& w) {
+    return prepare_gibbsm_data_helper(wrapped_configuration, w, covariates, traits, model, radius, points_by_type);
   });
 }

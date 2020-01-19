@@ -9,19 +9,9 @@
 #' @param print Print the fitting summary?
 #' @importFrom stats as.formula binomial glm
 #' @export
-gibbsm <- function(configuration, window = Rectangle_window(), covariates = list(), traits = list(), model = "identity", radius = matrix(0), print = TRUE) {
+gibbsm <- function(configuration, window = Rectangle_window(), covariates = list(), traits = list(), model = "identity", radius = NULL, print = TRUE) {
   ret <- prepare_gibbsm_data(configuration, window, covariates, traits, model, radius)
-  covariate_list <- ret$covariates
-  trait_list <- ret$traits
-  alpha_list <- ret$alpha
-  response <- ret$response
-  log_lambda <- ret$log_lambda
-  rho <- ret$rho
-  formula <- ret$formula
-
-  data <- cbind(covariate_list, trait_list, alpha_list, response, log_lambda, rho)
-
-  g <- glm(as.formula(formula), data = as.data.frame(data), family = binomial())
+  g <- glm(as.formula(ret$formula), data = as.data.frame(ret$data), family = binomial())
 
   if(print) {
     print(summary(g))

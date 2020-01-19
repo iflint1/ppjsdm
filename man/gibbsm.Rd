@@ -10,7 +10,7 @@ gibbsm(
   covariates = list(),
   traits = list(),
   model = "identity",
-  radius = matrix(0),
+  radius = NULL,
   print = TRUE
 )
 }

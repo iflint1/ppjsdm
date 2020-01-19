@@ -28,7 +28,7 @@ inline auto get_number_points(const Configuration& configuration) {
   using size_t = std::remove_const_t<decltype(configuration_size)>;
   std::vector<size_t> result{};
   for(size_t i(0); i < configuration_size; ++i) {
-    const size_t type(get_type(configuration[i]));
+    const decltype(result.size()) type(get_type(configuration[i]));
     while(type >= result.size()) {
       result.emplace_back(0);
     }
