@@ -97,33 +97,15 @@ gibbsm <- function(configuration, window = Rectangle_window(), covariates = list
   # }
 
   ret <- prepare_gibbsm_data(configuration, window, covariates, traits, model, radius)
-  covariate_list <- ret$covariates_input
-  trait_list <- ret$traits_input
-  alpha_list <- ret$alpha_input
+  covariate_list <- ret$covariates
+  trait_list <- ret$traits
+  alpha_list <- ret$alpha
   response <- ret$response
   log_lambda <- ret$log_lambda
   rho <- ret$rho
+  formula <- ret$formula
 
-  ncovariates <- length(covariates)
-  ntraits <- length(traits)
-
-
-  if(ncovariates > 0) {
-    if(ntraits > 0) {
-      additional_traits <- cbind(covariate_list, trait_list)
-    } else {
-      additional_traits <- cbind(covariate_list, alpha_list)
-    }
-
-  } else {
-    if(ntraits > 0) {
-      additional_traits <- trait_list
-    } else {
-      additional_traits <- alpha_list
-    }
-  }
-  data <- cbind(additional_traits, response, log_lambda, rho)
-  formula <- paste0("response ~ 0 + log_lambda + offset(-log(rho)) + ", paste(colnames(additional_traits), collapse = " + "))
+  data <- cbind(covariate_list, trait_list, alpha_list, response, log_lambda, rho)
 
   g <- glm(as.formula(formula), data = as.data.frame(data), family = binomial())
 
