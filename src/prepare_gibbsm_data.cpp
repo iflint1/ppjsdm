@@ -22,8 +22,8 @@ inline Rcpp::NumericVector compute_delta_phi_dispersion(const Configuration& con
 }
 
 inline void add_to_formula(std::string& formula, Rcpp::CharacterVector names) {
-  for(R_xlen_t i(0); i < names.size(); ++i) {
-    formula += std::string(" + ") + Rcpp::as<std::string>(names[i]);
+  for(const auto& name: names) {
+    formula += std::string(" + ") + Rcpp::as<std::string>(name);
   }
 }
 
@@ -147,7 +147,12 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     add_to_formula(formula, Rcpp::colnames(alpha_input));
   }
 
-  return Rcpp::List::create(Rcpp::Named("data") = Rcpp::List::create(covariates_input, traits_input, alpha_input, response, log_lambda, rho_offset),
+  return Rcpp::List::create(Rcpp::Named("data") = Rcpp::List::create(covariates_input,
+                                        traits_input,
+                                        alpha_input,
+                                        response,
+                                        log_lambda,
+                                        rho_offset),
                             Rcpp::Named("formula") = formula);
 }
 
@@ -158,7 +163,7 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration, SEXP window, Rcpp::List
   if(length_configuration == 0) {
     Rcpp::stop("Empty configuration.");
   }
-  // This trick allows us to find the number of different types in the configuration.
+  // The trick below allows us to find the number of different types in the configuration.
   // That number is then used to default construct `radius`.
   auto points_by_type(ppjsdm::get_number_points(wrapped_configuration));
   const auto number_types(points_by_type.size());
