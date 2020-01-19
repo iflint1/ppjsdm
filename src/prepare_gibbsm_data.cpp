@@ -9,6 +9,7 @@
 #include "utility/construct_if_missing.h"
 #include "utility/window_utilities.h"
 
+#include <string> // std::string
 #include <type_traits> // std::remove_const
 #include <vector> // std::vector
 
@@ -34,15 +35,16 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   const auto traits_length(traits.size());
   const auto volume(window.volume());
 
-  // This is the guideline from the Baddeley et al. paper, see p. 8 therein.
+  // Sample the dummy points D.
+  // This choice of rho is the guideline from the Baddeley et al. paper, see p. 8 therein.
   for(auto& n: rho_times_volume) {
     n *= 4;
   }
   const auto sum_rho_times_volume(4 * length_configuration);
-
   const auto D(ppjsdm::rbinomialpp_single<Configuration>(window, rho_times_volume, number_types, sum_rho_times_volume));
   const auto length_D(sum_rho_times_volume);
 
+  // Default-initialise the data
   Rcpp::IntegerVector response(Rcpp::no_init(length_configuration + length_D));
   Rcpp::NumericMatrix log_lambda(Rcpp::no_init(length_configuration + length_D, number_types));
   Rcpp::NumericVector rho_offset(Rcpp::no_init(length_configuration + length_D));
@@ -50,6 +52,24 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   Rcpp::NumericMatrix covariates_input(Rcpp::no_init(length_configuration + length_D, covariates_length));
   Rcpp::NumericMatrix traits_input(Rcpp::no_init(length_configuration + length_D, traits_length));
 
+  // Set names.
+  size_t index(0);
+  Rcpp::CharacterVector alpha_names(Rcpp::no_init(alpha_input.ncol()));
+  for(size_t j(1); j <= number_types; ++j) {
+    for(size_t k(j); k <= number_types; ++k) {
+      alpha_names[index] = std::string("alpha") + std::to_string(j) + std::string("_") + std::to_string(k);
+      ++index;
+    }
+  }
+  Rcpp::colnames(alpha_input) = alpha_names;
+  if(covariates_length > 0) {
+    Rcpp::colnames(covariates_input) = Rcpp::as<Rcpp::CharacterVector>(covariates.names());
+  }
+  if(traits_length > 0) {
+    Rcpp::colnames(traits_input) = Rcpp::as<Rcpp::CharacterVector>(traits.names());
+  }
+
+  // Fill the data.
   for(size_t i(0); i < length_configuration + length_D; ++i) {
     // TODO: Avoid Rcpp::NumericVector
     Rcpp::NumericVector location;
@@ -101,6 +121,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
       }
     }
   }
+
   return Rcpp::List::create(Rcpp::Named("response") = response,
                             Rcpp::Named("log_lambda") = log_lambda,
                             Rcpp::Named("rho_offset") = rho_offset,

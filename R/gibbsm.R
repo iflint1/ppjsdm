@@ -102,7 +102,7 @@ gibbsm <- function(configuration, window = Rectangle_window(), covariates = list
   alpha_list <- ret$alpha_input
   response <- ret$response
   log_lambda <- ret$log_lambda
-  rho_offset <- ret$rho
+  rho <- ret$rho
 
   ncovariates <- length(covariates)
   ntraits <- length(traits)
@@ -110,20 +110,20 @@ gibbsm <- function(configuration, window = Rectangle_window(), covariates = list
 
   if(ncovariates > 0) {
     if(ntraits > 0) {
-      additional_traits <- list(covariate_list = covariate_list, trait_list = trait_list)
+      additional_traits <- cbind(covariate_list, trait_list)
     } else {
-      additional_traits <- list(covariate_list = covariate_list, alpha_list = alpha_list)
+      additional_traits <- cbind(covariate_list, alpha_list)
     }
 
   } else {
     if(ntraits > 0) {
-      additional_traits <- list(trait_list = trait_list)
+      additional_traits <- trait_list
     } else {
-      additional_traits <- list(alpha_list = alpha_list)
+      additional_traits <- alpha_list
     }
   }
-  data <- append(additional_traits, list(response = response, log_lambda = log_lambda, rho = rho_offset))
-  formula <- paste0("response ~ 0 + log_lambda + offset(-log(rho)) + ", paste(names(additional_traits), collapse = " + "))
+  data <- cbind(additional_traits, response, log_lambda, rho)
+  formula <- paste0("response ~ 0 + log_lambda + offset(-log(rho)) + ", paste(colnames(additional_traits), collapse = " + "))
 
   g <- glm(as.formula(formula), data = as.data.frame(data), family = binomial())
 
