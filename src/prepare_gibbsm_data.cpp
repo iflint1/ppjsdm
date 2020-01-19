@@ -13,23 +13,18 @@
 #include <type_traits> // std::remove_const
 #include <vector> // std::vector
 
-// TODO: Use marked point
 template<typename Configuration>
-Rcpp::NumericVector compute_delta_phi_dispersion(const Configuration& configuration, Rcpp::NumericVector location, R_xlen_t type, int number_types, Rcpp::CharacterVector model = "identity", Rcpp::NumericMatrix radius = Rcpp::NumericMatrix(1, 1)) {
-  return ppjsdm::call_on_papangelou(model, radius, [&configuration, &location, type, number_types](const auto& papangelou) {
-    const auto number_points(ppjsdm::size(configuration));
-    return papangelou.compute(configuration, ppjsdm::Marked_point(location[0], location[1], type), number_types, number_points);
+Rcpp::NumericVector compute_delta_phi_dispersion(const Configuration& configuration, const ppjsdm::Marked_point& point, int number_types, Rcpp::CharacterVector model = "identity", Rcpp::NumericMatrix radius = Rcpp::NumericMatrix(1, 1)) {
+  const auto number_points(ppjsdm::size(configuration));
+  return ppjsdm::call_on_papangelou(model, radius, [&configuration, &point, number_types, number_points](const auto& papangelou) {
+    return papangelou.compute(configuration, point, number_types, number_points);
   });
 }
 
-template<typename Configuration, typename Window>
-Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const Window& window, Rcpp::List covariates, Rcpp::List traits, Rcpp::CharacterVector model, Rcpp::NumericMatrix radius) {
+template<typename Configuration, typename Window, typename Vector>
+Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const Window& window, Rcpp::List covariates, Rcpp::List traits, Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, const Vector& points_by_type) {
   const auto length_configuration(ppjsdm::size(configuration));
-  if(length_configuration == 0) {
-    Rcpp::stop("Empty configuration.");
-  }
-  auto rho_times_volume(ppjsdm::get_number_points(configuration));
-  const auto number_types(rho_times_volume.size());
+  const auto number_types(points_by_type.size());
   using size_t = std::remove_const_t<decltype(number_types)>;
   const auto covariates_length(covariates.size());
   const auto traits_length(traits.size());
@@ -37,6 +32,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 
   // Sample the dummy points D.
   // This choice of rho is the guideline from the Baddeley et al. paper, see p. 8 therein.
+  Vector rho_times_volume(points_by_type);
   for(auto& n: rho_times_volume) {
     n *= 4;
   }
@@ -78,25 +74,24 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 
   // Fill the data.
   for(size_t i(0); i < length_configuration + length_D; ++i) {
-    // TODO: Avoid Rcpp::NumericVector
-    Rcpp::NumericVector location;
-    size_t type_index;
     Rcpp::NumericVector dispersion;
+    ppjsdm::Marked_point point;
     if(i < length_configuration) {
       response(i, 0) = 1;
-      location = Rcpp::NumericVector{ppjsdm::get_x(configuration[i]), ppjsdm::get_y(configuration[i])};
-      type_index = ppjsdm::get_type(configuration[i]);
+      point = configuration[i];
 
       Configuration configuration_copy(configuration);
       ppjsdm::remove_point_by_index(configuration_copy, i);
 
-      dispersion = compute_delta_phi_dispersion(configuration_copy, location, type_index, number_types, model, radius);
+      dispersion = compute_delta_phi_dispersion(configuration_copy, point, number_types, model, radius);
     } else {
       response(i, 0) = 0;
-      location = Rcpp::NumericVector{ppjsdm::get_x(D[i - length_configuration]), ppjsdm::get_y(D[i - length_configuration])};
-      type_index = ppjsdm::get_type(D[i - length_configuration]);
-      dispersion = compute_delta_phi_dispersion(configuration, location, type_index, number_types, model, radius);
+      point = D[i - length_configuration];
+      dispersion = compute_delta_phi_dispersion(configuration, point, number_types, model, radius);
     }
+    Rcpp::NumericVector location{ppjsdm::get_x(point), ppjsdm::get_y(point)};
+    const size_t type_index(ppjsdm::get_type(point));
+
     rho_offset(i, 0) = static_cast<double>(rho_times_volume[type_index]) / volume;
     for(R_xlen_t j(0); j < covariates_length; ++j) {
       // TODO: Use im access function
@@ -165,7 +160,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 }
 
 // [[Rcpp::export]]
-Rcpp::List prepare_gibbsm_data(Rcpp::List configuration, SEXP window = R_NilValue, Rcpp::List covariates = Rcpp::List(), Rcpp::List traits = Rcpp::List(), Rcpp::CharacterVector model = "identity", SEXP radius = R_NilValue) {
+Rcpp::List prepare_gibbsm_data(Rcpp::List configuration, SEXP window, Rcpp::List covariates, Rcpp::List traits, Rcpp::CharacterVector model, SEXP radius = R_NilValue) {
   const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
   const auto length_configuration(ppjsdm::size(wrapped_configuration));
   if(length_configuration == 0) {
@@ -176,11 +171,12 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration, SEXP window = R_NilValu
   for(R_xlen_t i(0); i < length_configuration; ++i) {
     vector_configuration[i] = wrapped_configuration[i];
   }
-  // TODO: Remove this part
-  auto rho_times_volume(ppjsdm::get_number_points(vector_configuration));
-  const auto number_types(rho_times_volume.size());
+  // This trick allows us to find the number of different types in the configuration.
+  // That number is then used to default construct `radius`.
+  auto points_by_type(ppjsdm::get_number_points(vector_configuration));
+  const auto number_types(points_by_type.size());
   radius = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(number_types, radius, 0.);
-  return ppjsdm::call_on_wrapped_window(window, [&vector_configuration, &covariates, &traits, &model, &radius](const auto& w) {
-    return prepare_gibbsm_data_helper(vector_configuration, w, covariates, traits, model, radius);
+  return ppjsdm::call_on_wrapped_window(window, [&vector_configuration, &covariates, &traits, &model, &radius, &points_by_type](const auto& w) {
+    return prepare_gibbsm_data_helper(vector_configuration, w, covariates, traits, model, radius, points_by_type);
   });
 }
