@@ -8,6 +8,7 @@
 #include "point/point_manipulation.h"
 #include "simulation/rbinomialpp_single.h"
 #include "utility/construct_if_missing.h"
+#include "utility/im_wrapper.h"
 #include "utility/window_utilities.h"
 
 #include <string> // std::string, std::to_string
@@ -28,7 +29,7 @@ inline void add_to_formula(std::string& formula, Rcpp::CharacterVector names) {
 }
 
 template<typename Configuration, typename Window, typename Vector>
-Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const Window& window, Rcpp::List covariates, Rcpp::List traits, Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, const Vector& points_by_type) {
+Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const Window& window, const ppjsdm::Im_list_wrapper& covariates, Rcpp::List traits, Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, const Vector& points_by_type) {
   const auto length_configuration(ppjsdm::size(configuration));
   using size_t = std::remove_const_t<decltype(length_configuration)>;
   const size_t number_types(points_by_type.size());
@@ -71,10 +72,10 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   Rcpp::colnames(alpha_input) = alpha_names;
   if(covariates_length > 0) {
     Rcpp::CharacterVector covariates_input_names(Rcpp::no_init(covariates_length * number_types));
+    const auto covariates_names(covariates.names());
     for(size_t i(0); i < covariates_length; ++i) {
-      const auto ith_covariate = Rcpp::as<Rcpp::CharacterVector>(covariates.names())[i];
       for(size_t j(0); j < number_types; ++j) {
-        covariates_input_names[i * number_types + j] = Rcpp::as<std::string>(ith_covariate) + std::string("_") + std::to_string(j + 1);
+        covariates_input_names[i * number_types + j] = covariates_names[i] + std::string("_") + std::to_string(j + 1);
       }
     }
     Rcpp::colnames(covariates_input) = covariates_input_names;
@@ -111,11 +112,11 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     const size_t type_index(ppjsdm::get_type(point));
 
     rho_offset(i, 0) = static_cast<double>(rho_times_volume[type_index]) / volume;
-    for(R_xlen_t j(0); j < covariates_length; ++j) {
+    for(size_t j(0); j < covariates_length; ++j) {
       for(size_t k(0); k < number_types; ++k) {
         if(k == type_index) {
           // TODO: Use im access function
-          covariates_input(i, j * number_types + k) = Rf_asReal(Rcpp::as<Rcpp::Function>(covariates[j])(location[0], location[1]));
+          covariates_input(i, j * number_types + k) = covariates[j](location[0], location[1]);
         } else {
           covariates_input(i, j * number_types + k) = 0;
         }
@@ -182,6 +183,6 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration, SEXP window, Rcpp::List
   const auto number_types(points_by_type.size());
   radius = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(number_types, radius, 0.);
   return ppjsdm::call_on_wrapped_window(window, [&wrapped_configuration, &covariates, &traits, &model, &radius, &points_by_type](const auto& w) {
-    return prepare_gibbsm_data_helper(wrapped_configuration, w, covariates, traits, model, radius, points_by_type);
+    return prepare_gibbsm_data_helper(wrapped_configuration, w, ppjsdm::Im_list_wrapper(covariates), traits, model, radius, points_by_type);
   });
 }
