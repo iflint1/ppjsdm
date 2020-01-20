@@ -15,7 +15,7 @@ coerce_to_im <- function(lst, window) {
 
 #' Fit a multivariate Gibbs model to a dataset.
 #'
-#' @param configuration A configuration assumed to be a draw from the multivariate Gibbs.
+#' @param configuration_list A single configuration or a list of configurations assumed to be drawn from the multivariate Gibbs.
 #' @param window Observation window.
 #' @param covariates Environmental covariates driving the intensity.
 #' @param traits Species' traits.
@@ -25,16 +25,23 @@ coerce_to_im <- function(lst, window) {
 #' @importFrom stats as.formula binomial glm
 #' @importFrom spatstat as.im as.owin
 #' @export
-gibbsm <- function(configuration, window = Rectangle_window(), covariates = list(), traits = list(), model = "identity", radius = NULL, print = TRUE) {
+gibbsm <- function(configuration_list, window = Rectangle_window(), covariates = list(), traits = list(), model = "identity", radius = NULL, print = TRUE) {
   covariates <- coerce_to_im(covariates, window)
   covariates <- add_names("covariates", covariates)
 
-  ret <- prepare_gibbsm_data(configuration, window, covariates, model, radius)
-  g <- glm(as.formula(ret$formula), data = as.data.frame(ret$data), family = binomial())
+  # If we're given a single configuration, convert it to a list.
+  if(inherits(configuration_list, "Configuration")) {
+    configuration_list <- list(configuration_list)
+  }
+  # Make sure we're given a list of configurations.
+  stopifnot(inherits(configuration_list[[1]], "Configuration"))
+
+  gibbsm_data_list <- lapply(configuration_list, function(configuration) prepare_gibbsm_data(configuration, window, covariates, model, radius))
+  glm_fits <- lapply(gibbsm_data_list, function(gibbsm_data) glm(as.formula(gibbsm_data$formula), data = as.data.frame(gibbsm_data$data), family = binomial()))
 
   if(print) {
-    print(summary(g))
+    print(summary(glm_fits[[1]]))
   }
 
-  g
+  glm_fits[[1]]
 }
