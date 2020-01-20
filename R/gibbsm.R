@@ -22,7 +22,7 @@ coerce_to_im <- function(lst, window) {
 #' @param model String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_model()`.
 #' @param radius Interaction radius.
 #' @param print Print the fitting summary?
-#' @importFrom stats as.formula binomial glm
+#' @importFrom stats as.formula binomial coefficients glm lm
 #' @importFrom spatstat as.im as.owin
 #' @export
 gibbsm <- function(configuration_list, window = Rectangle_window(), covariates = list(), traits = list(), model = "identity", radius = NULL, print = TRUE) {
@@ -55,7 +55,7 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   for(i in seq_len(number_configurations)) {
     for(j in seq_len(number_of_species_by_configuration[[i]])) {
       alpha_string <- paste0("alpha", "_", j, "_", j)
-      response[index] <- coef(glm_fits[[i]])[alpha_string]
+      response[index] <- coefficients(glm_fits[[i]])[alpha_string]
       for(k in seq_len(number_traits)) {
         current_name <- species_names_by_configuration[[i]][j]
         # TODO: Why not access with [current_name] and use vectors?
@@ -69,6 +69,7 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   if(print) {
     lapply(glm_fits, function(fit) print(summary(fit)))
     if(number_traits > 0) {
+      # TODO: Better names for regressors
       g <- lm(response ~ 1 + regressors)
       print(summary(g))
     }

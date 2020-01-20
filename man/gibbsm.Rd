@@ -5,7 +5,7 @@
 \title{Fit a multivariate Gibbs model to a dataset.}
 \usage{
 gibbsm(
-  configuration,
+  configuration_list,
   window = Rectangle_window(),
   covariates = list(),
   traits = list(),
@@ -15,7 +15,7 @@ gibbsm(
 )
 }
 \arguments{
-\item{configuration}{A configuration assumed to be a draw from the multivariate Gibbs.}
+\item{configuration_list}{A single configuration or a list of configurations assumed to be drawn from the multivariate Gibbs.}
 
 \item{window}{Observation window.}
 
