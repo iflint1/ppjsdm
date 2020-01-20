@@ -42,11 +42,9 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   number_of_individuals_by_configuration <- lapply(configuration_list, function(configuration) get_number_points(configuration, total = FALSE))
   species_names_by_configuration <- lapply(number_of_individuals_by_configuration, function(n) names(n))
   number_of_species_by_configuration <- lapply(number_of_individuals_by_configuration, function(n) length(n))
-  total_number_of_different_species <- length(unique(Reduce(function(a, b) c(a, b), species_names_by_configuration)))
-  total_number_of_species <- Reduce("+", number_of_species_by_configuration)
   number_configurations <- length(configuration_list)
   number_traits <- length(traits)
-  regression_length <- total_number_of_species
+  regression_length <- Reduce("+", number_of_species_by_configuration)
   response <- vector(mode = "numeric", length = regression_length)
   regressors <- matrix(data = NA, nrow = regression_length, ncol = number_traits)
 
