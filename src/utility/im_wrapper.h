@@ -79,8 +79,7 @@ public:
       const auto names = Rcpp::as<Rcpp::CharacterVector>(im_list.names());
       for(size_t i(0); i < n; ++i) {
         im_list_.emplace_back(Rcpp::as<Rcpp::List>(im_list[i]));
-        // TODO: Might be able to replace emplace?
-        im_names_.push_back(Rcpp::as<std::string>(names[i]));
+        im_names_.emplace_back(names[i]);
       }
     }
   }

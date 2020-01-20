@@ -29,7 +29,7 @@ gibbsm <- function(configuration, window = Rectangle_window(), covariates = list
   covariates <- coerce_to_im(covariates, window)
   covariates <- add_names("covariates", covariates)
 
-  ret <- prepare_gibbsm_data(configuration, window, covariates, traits, model, radius)
+  ret <- prepare_gibbsm_data(configuration, window, covariates, model, radius)
   g <- glm(as.formula(ret$formula), data = as.data.frame(ret$data), family = binomial())
 
   if(print) {

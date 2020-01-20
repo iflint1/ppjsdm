@@ -29,12 +29,11 @@ inline void add_to_formula(std::string& formula, Rcpp::CharacterVector names) {
 }
 
 template<typename Configuration, typename Window, typename Vector>
-Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const Window& window, const ppjsdm::Im_list_wrapper& covariates, Rcpp::List traits, Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, const Vector& points_by_type) {
+Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const Window& window, const ppjsdm::Im_list_wrapper& covariates, Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, const Vector& points_by_type) {
   const auto length_configuration(ppjsdm::size(configuration));
   using size_t = std::remove_const_t<decltype(length_configuration)>;
   const size_t number_types(points_by_type.size());
   const auto covariates_length(covariates.size());
-  const auto traits_length(traits.size());
   const auto volume(window.volume());
 
   // Sample the dummy points D.
@@ -58,7 +57,6 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   Rcpp::NumericMatrix rho_offset(Rcpp::no_init(length_configuration + length_D, 1));
   Rcpp::NumericMatrix alpha_input(Rcpp::no_init(length_configuration + length_D, number_types * (number_types + 1) / 2));
   Rcpp::NumericMatrix covariates_input(Rcpp::no_init(length_configuration + length_D, covariates_length * number_types));
-  Rcpp::NumericMatrix traits_input(Rcpp::no_init(length_configuration + length_D, traits_length));
 
   // Set names.
   size_t index(0);
@@ -79,9 +77,6 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
       }
     }
     Rcpp::colnames(covariates_input) = covariates_input_names;
-  }
-  if(traits_length > 0) {
-    Rcpp::colnames(traits_input) = Rcpp::as<Rcpp::CharacterVector>(traits.names());
   }
   Rcpp::CharacterVector log_lambda_names(Rcpp::no_init(number_types));
   for(size_t i(0); i < number_types; ++i) {
@@ -115,19 +110,11 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     for(size_t j(0); j < covariates_length; ++j) {
       for(size_t k(0); k < number_types; ++k) {
         if(k == type_index) {
-          // TODO: Use im access function
           covariates_input(i, j * number_types + k) = covariates[j](location[0], location[1]);
         } else {
           covariates_input(i, j * number_types + k) = 0;
         }
       }
-    }
-    for(R_xlen_t j(0); j < traits_length; ++j) {
-      double inner_product(0);
-      for(size_t k(0); k < number_types; ++k) {
-        inner_product += dispersion[k] * Rcpp::as<Rcpp::NumericMatrix>(traits[j])(type_index, k);
-      }
-      traits_input(i, j) = inner_product;
     }
     R_xlen_t index(0);
     for(size_t j(0); j < number_types; ++j) {
@@ -155,14 +142,9 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   if(covariates_length > 0) {
     add_to_formula(formula, Rcpp::colnames(covariates_input));
   }
-  if(traits_length > 0) {
-    add_to_formula(formula, Rcpp::colnames(traits_input));
-  } else {
-    add_to_formula(formula, Rcpp::colnames(alpha_input));
-  }
+  add_to_formula(formula, Rcpp::colnames(alpha_input));
 
   return Rcpp::List::create(Rcpp::Named("data") = Rcpp::List::create(covariates_input,
-                                        traits_input,
                                         alpha_input,
                                         response,
                                         log_lambda,
@@ -171,7 +153,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 }
 
 // [[Rcpp::export]]
-Rcpp::List prepare_gibbsm_data(Rcpp::List configuration, SEXP window, Rcpp::List covariates, Rcpp::List traits, Rcpp::CharacterVector model, SEXP radius = R_NilValue) {
+Rcpp::List prepare_gibbsm_data(Rcpp::List configuration, SEXP window, Rcpp::List covariates, Rcpp::CharacterVector model, SEXP radius = R_NilValue) {
   const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
   const auto length_configuration(ppjsdm::size(wrapped_configuration));
   if(length_configuration == 0) {
@@ -182,7 +164,7 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration, SEXP window, Rcpp::List
   auto points_by_type(ppjsdm::get_number_points(wrapped_configuration));
   const auto number_types(points_by_type.size());
   radius = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(number_types, radius, 0.);
-  return ppjsdm::call_on_wrapped_window(window, [&wrapped_configuration, &covariates, &traits, &model, &radius, &points_by_type](const auto& w) {
-    return prepare_gibbsm_data_helper(wrapped_configuration, w, ppjsdm::Im_list_wrapper(covariates), traits, model, radius, points_by_type);
+  return ppjsdm::call_on_wrapped_window(window, [&wrapped_configuration, &covariates, &model, &radius, &points_by_type](const auto& w) {
+    return prepare_gibbsm_data_helper(wrapped_configuration, w, ppjsdm::Im_list_wrapper(covariates), model, radius, points_by_type);
   });
 }

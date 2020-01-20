@@ -9,7 +9,6 @@
 
 namespace ppjsdm {
 
-// TODO: I suspect that I have to protect the private members.
 class Configuration_wrapper {
 private:
   class Marked_point_reference {

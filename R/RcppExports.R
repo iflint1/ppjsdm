@@ -11,8 +11,8 @@ has_duplicates <- function(configuration) {
     .Call('_ppjsdm_has_duplicates', PACKAGE = 'ppjsdm', configuration)
 }
 
-prepare_gibbsm_data <- function(configuration, window, covariates, traits, model, radius = NULL) {
-    .Call('_ppjsdm_prepare_gibbsm_data', PACKAGE = 'ppjsdm', configuration, window, covariates, traits, model, radius)
+prepare_gibbsm_data <- function(configuration, window, covariates, model, radius = NULL) {
+    .Call('_ppjsdm_prepare_gibbsm_data', PACKAGE = 'ppjsdm', configuration, window, covariates, model, radius)
 }
 
 #' Sample a binomial point processes

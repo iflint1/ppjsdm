@@ -17,18 +17,17 @@ BEGIN_RCPP
 END_RCPP
 }
 // prepare_gibbsm_data
-Rcpp::List prepare_gibbsm_data(Rcpp::List configuration, SEXP window, Rcpp::List covariates, Rcpp::List traits, Rcpp::CharacterVector model, SEXP radius);
-RcppExport SEXP _ppjsdm_prepare_gibbsm_data(SEXP configurationSEXP, SEXP windowSEXP, SEXP covariatesSEXP, SEXP traitsSEXP, SEXP modelSEXP, SEXP radiusSEXP) {
+Rcpp::List prepare_gibbsm_data(Rcpp::List configuration, SEXP window, Rcpp::List covariates, Rcpp::CharacterVector model, SEXP radius);
+RcppExport SEXP _ppjsdm_prepare_gibbsm_data(SEXP configurationSEXP, SEXP windowSEXP, SEXP covariatesSEXP, SEXP modelSEXP, SEXP radiusSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::List >::type configuration(configurationSEXP);
     Rcpp::traits::input_parameter< SEXP >::type window(windowSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type covariates(covariatesSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type traits(traitsSEXP);
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type model(modelSEXP);
     Rcpp::traits::input_parameter< SEXP >::type radius(radiusSEXP);
-    rcpp_result_gen = Rcpp::wrap(prepare_gibbsm_data(configuration, window, covariates, traits, model, radius));
+    rcpp_result_gen = Rcpp::wrap(prepare_gibbsm_data(configuration, window, covariates, model, radius));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -94,7 +93,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ppjsdm_has_duplicates", (DL_FUNC) &_ppjsdm_has_duplicates, 1},
-    {"_ppjsdm_prepare_gibbsm_data", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data, 6},
+    {"_ppjsdm_prepare_gibbsm_data", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data, 5},
     {"_ppjsdm_rbinomialpp", (DL_FUNC) &_ppjsdm_rbinomialpp, 5},
     {"_ppjsdm_rmultigibbs", (DL_FUNC) &_ppjsdm_rmultigibbs, 10},
     {"_ppjsdm_rppp", (DL_FUNC) &_ppjsdm_rppp, 5},
