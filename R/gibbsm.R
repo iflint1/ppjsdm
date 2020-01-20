@@ -39,9 +39,44 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   gibbsm_data_list <- lapply(configuration_list, function(configuration) prepare_gibbsm_data(configuration, window, covariates, model, radius))
   glm_fits <- lapply(gibbsm_data_list, function(gibbsm_data) glm(as.formula(gibbsm_data$formula), data = as.data.frame(gibbsm_data$data), family = binomial()))
 
-  if(print) {
-    print(summary(glm_fits[[1]]))
+  number_of_individuals_by_configuration <- lapply(configuration_list, function(configuration) get_number_points(configuration, total = FALSE))
+  species_names_by_configuration <- lapply(number_of_individuals_by_configuration, function(n) names(n))
+  number_of_species_by_configuration <- lapply(number_of_individuals_by_configuration, function(n) length(n))
+  total_number_of_different_species <- length(unique(Reduce(function(a, b) c(a, b), species_names_by_configuration)))
+  total_number_of_species <- Reduce("+", number_of_species_by_configuration)
+  number_configurations <- length(configuration_list)
+  number_traits <- length(traits)
+  regression_length <- total_number_of_species
+  response <- vector(mode = "numeric", length = regression_length)
+  regressors <- matrix(data = NA, nrow = regression_length, ncol = number_traits)
+
+  # TODO: Vectorise / C++
+  index <- 1
+  for(i in seq_len(number_configurations)) {
+    for(j in seq_len(number_of_species_by_configuration[[i]])) {
+      alpha_string <- paste0("alpha", "_", j, "_", j)
+      response[index] <- coef(glm_fits[[i]])[alpha_string]
+      for(k in seq_len(number_traits)) {
+        current_name <- species_names_by_configuration[[i]][j]
+        # TODO: Why not access with [current_name] and use vectors?
+        val <- traits[[k]][[current_name]]
+        regressors[index, k] <- val
+      }
+      index <- index + 1
+    }
   }
 
-  glm_fits[[1]]
+  if(print) {
+    lapply(glm_fits, function(fit) print(summary(fit)))
+    if(number_traits > 0) {
+      g <- lm(response ~ 1 + regressors)
+      print(summary(g))
+    }
+  }
+
+  if(number_configurations > 1) {
+    glm_fits
+  } else {
+    glm_fits[[1]]
+  }
 }

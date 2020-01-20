@@ -145,23 +145,24 @@ This section assumes you have a series of traits explaining a given dataset.
 To illustrate how the package works, we define arbitrarily the following trait.
 
 ```{r}
-average_height <- matrix(c(100, 0, 0, 50), ncol = 2, nrow = 2)
-average_seed_size <- matrix(c(10, 0, 0, 15), ncol = 2, nrow = 2)
+average_height <- list(type1 = 50, type2 = 70, type3 = 60)
+average_seed_size <- list(type1 = 30, type2 = 15, type3 = 20)
 
-traits <- list(average_height = average_height, average_seed_size = average_seed_size)
+traits <- list(average_height, average_seed_size)
 ```
 
 Finally, we need a dataset to work on.
 
 ```{r}
-configuration <- ppjsdm::rppp(lambda = c(50, 50))
+configurations <- append(ppjsdm::rppp(lambda = c(50, 50), nsim = 1, types = c("type1", "type2"), drop = FALSE),
+                         ppjsdm::rppp(lambda = c(50, 50), nsim = 1, types = c("type2", "type3"), drop = FALSE))
 ```
 
 The function `gibbsm` fits a multivariate Gibbs point process to our dataset.
 For example,
 
 ```{r}
-ppjsdm::gibbsm(configuration, traits = traits)
+ppjsdm::gibbsm(configurations, traits = traits)
 ```
 
 # Using traits on Queensland data
@@ -169,28 +170,28 @@ ppjsdm::gibbsm(configuration, traits = traits)
 There is also a function to extract the average species height from the Queesland data.
 
 ```{r}
-index_of_plot <- 3 # Between 1 and 20
-year <- 2011 # Year of census
-number_of_species <- 3 # Includes the most prevalent species from the plot
-
-ret <- ppjsdm::get_qld_trees_configuration(index = index_of_plot, 
-                                          year = year, 
-                                          prevalent = number_of_species,
-                                          average_height = TRUE,
-                                          average_dbh = TRUE)
-
-configuration <- ret$configuration
-traits <- list(average_height = ret$average_height, average_dbh = ret$average_dbh)
-window <- ppjsdm::Rectangle_window(c(0, 100), c(0, 50))
-radii <- matrix(5, number_of_species, number_of_species)
+# index_of_plot <- 3 # Between 1 and 20
+# year <- 2011 # Year of census
+# number_of_species <- 3 # Includes the most prevalent species from the plot
+# 
+# ret <- ppjsdm::get_qld_trees_configuration(index = index_of_plot, 
+#                                           year = year, 
+#                                           prevalent = number_of_species,
+#                                           average_height = TRUE,
+#                                           average_dbh = TRUE)
+# 
+# configuration <- ret$configuration
+# traits <- list(average_height = ret$average_height, average_dbh = ret$average_dbh)
+# window <- ppjsdm::Rectangle_window(c(0, 100), c(0, 50))
+# radii <- matrix(5, number_of_species, number_of_species)
 ```
 
 We may then fit our model to this dataset.
 
 ```{r}
-fit <- ppjsdm::gibbsm(configuration, 
-                      window = window, 
-                      model = "Geyer", 
-                      radius = radii, 
-                      traits = traits)
+# fit <- ppjsdm::gibbsm(configuration, 
+#                       window = window, 
+#                       model = "Geyer", 
+#                       radius = radii, 
+#                       traits = traits)
 ```
