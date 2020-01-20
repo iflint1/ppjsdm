@@ -52,3 +52,14 @@ window_volume.Disk_window <- function(window) {
   r <- window$radius
   pi * r * r
 }
+
+#' Convert a disk window to an owin from the SpatStat package.
+#'
+#' @param W Window.
+#' @param ... Unused.
+#' @param fatal Unused.
+#' @importFrom spatstat disc
+#' @export
+as.owin.Disk_window <- function(W, ..., fatal = TRUE) {
+  disc(radius = W$radius, centre = W$centre)
+}
