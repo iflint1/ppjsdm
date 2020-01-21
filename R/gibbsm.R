@@ -67,21 +67,29 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
     }
   }
 
+  if(number_traits > 0) {
+    colnames(joint_regressors) <- paste0("joint_", names(traits))
+    colnames(additive_regressors) <- paste0("additive_", names(traits))
+    formula <- paste0("response ~ 1 + ", paste(colnames(joint_regressors), collapse = " + "),
+                      " + ", paste(colnames(additive_regressors), collapse = " + "))
+    g <- lm(as.formula(formula), data = data.frame(response, joint_regressors, additive_regressors))
+  }
+
   if(print) {
     lapply(glm_fits, function(fit) print(coefficients(fit)))
     if(number_traits > 0) {
-      colnames(joint_regressors) <- paste0("joint_", names(traits))
-      colnames(additive_regressors) <- paste0("additive_", names(traits))
-      formula <- paste0("response ~ 1 + ", paste(colnames(joint_regressors), collapse = " + "),
-                       " + ", paste(colnames(additive_regressors), collapse = " + "))
-      g <- lm(as.formula(formula), data = data.frame(response, joint_regressors, additive_regressors))
       print(coefficients(g))
     }
   }
 
   if(number_configurations > 1) {
-    glm_fits
+    f <- glm_fits
   } else {
-    glm_fits[[1]]
+    f <- glm_fits[[1]]
+  }
+  if(number_traits > 0) {
+    list(complete = f, traits = g)
+  } else {
+    f
   }
 }
