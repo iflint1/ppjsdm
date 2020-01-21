@@ -21,7 +21,7 @@ coerce_to_im <- function(lst, window) {
 #' @param traits Species' traits.
 #' @param model String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_model()`.
 #' @param radius Interaction radius.
-#' @param print Print the fitting summary?
+#' @param print Print the fitted coefficients?
 #' @importFrom stats as.formula binomial coefficients glm lm
 #' @importFrom spatstat as.im as.owin
 #' @export
@@ -50,33 +50,31 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   joint_regressors <- matrix(data = NA, nrow = regression_length, ncol = number_traits)
   additive_regressors <- matrix(data = NA, nrow = regression_length, ncol = number_traits)
 
-  # TODO: Vectorise / C++
+  # TODO: Move to C++?
   index <- 1
   for(i in seq_len(number_configurations)) {
     for(j in seq_len(number_of_species_by_configuration[[i]])) {
       for(k in j:number_of_species_by_configuration[[i]]) {
         alpha_string <- paste0("alpha", "_", j, "_", k)
         response[index] <- coefficients(glm_fits[[i]])[alpha_string]
-        for(t in seq_len(number_traits)) {
-          current_name_j <- species_names_by_configuration[[i]][j]
-          current_name_k <- species_names_by_configuration[[i]][k]
-          # TODO: Why not access with [current_name] and use vectors?
-          joint_regressors[index, t] <- traits[[t]][[current_name_j]] * traits[[t]][[current_name_k]]
-          additive_regressors[index, t] <- traits[[t]][[current_name_j]] + traits[[t]][[current_name_k]]
-        }
+        current_name_j <- species_names_by_configuration[[i]][j]
+        current_name_k <- species_names_by_configuration[[i]][k]
+        joint_regressors[index, ] <- sapply(traits, function(trait) trait[current_name_j] * trait[current_name_k])
+        additive_regressors[index, ] <- sapply(traits, function(trait) trait[current_name_j] + trait[current_name_k])
         index <- index + 1
       }
     }
   }
-  colnames(joint_regressors) <- names(traits)
-  colnames(additive_regressors) <- names(traits)
 
   if(print) {
-    lapply(glm_fits, function(fit) print(summary(fit)))
+    lapply(glm_fits, function(fit) print(coefficients(fit)))
     if(number_traits > 0) {
-      # TODO: Better names for regressors
-      g <- lm(response ~ 1 + joint_regressors + additive_regressors)
-      print(summary(g))
+      colnames(joint_regressors) <- paste0("joint_", names(traits))
+      colnames(additive_regressors) <- paste0("additive_", names(traits))
+      formula <- paste0("response ~ 1 + ", paste(colnames(joint_regressors), collapse = " + "),
+                       " + ", paste(colnames(additive_regressors), collapse = " + "))
+      g <- lm(as.formula(formula), data = data.frame(response, joint_regressors, additive_regressors))
+      print(coefficients(g))
     }
   }
 
