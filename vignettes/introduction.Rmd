@@ -145,14 +145,14 @@ This section assumes you have a series of traits explaining a given dataset.
 To illustrate how the package works, we define arbitrarily the following trait.
 
 ```{r}
-average_height <- c(type1 = 50, type2 = 70, type3 = 60)
-average_seed_size <- c(type1 = 30, type2 = 15, type3 = 20)
+average_height <- c(type1 = 1, type2 = 7, type3 = 10)
+average_seed_size <- c(type1 = 3, type2 = 5, type3 = 1)
 
 traits <- list(average_height = average_height, average_seed_size = average_seed_size)
 
 traits_matrix <- rbind(average_height, average_seed_size)
   
-gamma <- -0.5
+gamma <- -.5
 beta <- c(0, 0)
 delta <-  c(0, 0)
 
@@ -160,7 +160,7 @@ nspecies <- 3
 alpha <- matrix(NA, nspecies, nspecies)
 for(i in seq_len(nspecies)) {
   for(j in seq_len(nspecies)) {
-    alpha[i, j] <- gamma + beta %*% (traits_matrix[, i] * traits_matrix[, j]) + delta %*% (traits_matrix[, i] + traits_matrix[, j])
+    alpha[i, j] <- gamma + beta %*% (traits_matrix[, i] * traits_matrix[, j] / (traits_matrix[, i] + traits_matrix[, j]))
   }
 }
 print(alpha)

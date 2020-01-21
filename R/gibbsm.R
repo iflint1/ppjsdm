@@ -49,7 +49,7 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   regression_length <- Reduce("+", number_of_alpha_coefficients_by_configuration)
   response <- vector(mode = "numeric", length = regression_length)
   joint_regressors <- matrix(data = NA, nrow = regression_length, ncol = number_traits)
-  additive_regressors <- matrix(data = NA, nrow = regression_length, ncol = number_traits)
+  #additive_regressors <- matrix(data = NA, nrow = regression_length, ncol = number_traits)
 
   # TODO: Move to C++?
   index <- 1
@@ -60,8 +60,8 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
         alpha_string <- paste0("alpha", "_", j, "_", k)
         response[index] <- coefficients(glm_fits[[i]])[alpha_string]
         current_name_k <- species_names_by_configuration[[i]][k]
-        joint_regressors[index, ] <- sapply(traits, function(trait) trait[current_name_j] * trait[current_name_k])
-        additive_regressors[index, ] <- sapply(traits, function(trait) trait[current_name_j] + trait[current_name_k])
+        joint_regressors[index, ] <- sapply(traits, function(trait) trait[current_name_j] * trait[current_name_k] / (trait[current_name_j] + trait[current_name_k]))
+        #additive_regressors[index, ] <- sapply(traits, function(trait) trait[current_name_j] + trait[current_name_k])
         index <- index + 1
       }
     }
@@ -69,10 +69,12 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
 
   if(number_traits > 0) {
     colnames(joint_regressors) <- paste0("joint_", names(traits))
-    colnames(additive_regressors) <- paste0("additive_", names(traits))
-    formula <- paste0("response ~ 1 + ", paste(colnames(joint_regressors), collapse = " + "),
-                      " + ", paste(colnames(additive_regressors), collapse = " + "))
-    g <- lm(as.formula(formula), data = data.frame(response, joint_regressors, additive_regressors))
+    #colnames(additive_regressors) <- paste0("additive_", names(traits))
+    #formula <- paste0("response ~ 1 + ", paste(colnames(joint_regressors), collapse = " + "),
+    #                  " + ", paste(colnames(additive_regressors), collapse = " + "))
+    # g <- lm(as.formula(formula), data = data.frame(response, joint_regressors, additive_regressors))
+    formula <- paste0("response ~ 1 + ", paste(colnames(joint_regressors), collapse = " + "))
+    g <- lm(as.formula(formula), data = data.frame(response, joint_regressors))
   }
 
   if(print) {
