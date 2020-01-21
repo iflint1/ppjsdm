@@ -154,8 +154,14 @@ traits <- list(average_height = average_height, average_seed_size = average_seed
 Finally, we need a dataset to work on.
 
 ```{r}
-configurations <- append(ppjsdm::rppp(lambda = c(50, 50), nsim = 1, types = c("type1", "type2"), drop = FALSE),
-                         ppjsdm::rppp(lambda = c(50, 50), nsim = 1, types = c("type2", "type3"), drop = FALSE))
+configurations <- append(ppjsdm::rppp(lambda = c(50, 50), 
+                                      nsim = 1, 
+                                      types = c("type1", "type2"), 
+                                      drop = FALSE),
+                         ppjsdm::rppp(lambda = c(50, 50), 
+                                      nsim = 1,
+                                      types = c("type2", "type3"), 
+                                      drop = FALSE))
 ```
 
 The function `gibbsm` fits a multivariate Gibbs point process to our dataset.

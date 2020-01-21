@@ -27,7 +27,7 @@ gibbsm(
 
 \item{radius}{Interaction radius.}
 
-\item{print}{Print the fitting summary?}
+\item{print}{Print the fitted coefficients?}
 }
 \description{
 Fit a multivariate Gibbs model to a dataset.

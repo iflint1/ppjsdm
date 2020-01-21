@@ -26,6 +26,7 @@ coerce_to_im <- function(lst, window) {
 #' @importFrom spatstat as.im as.owin
 #' @export
 gibbsm <- function(configuration_list, window = Rectangle_window(), covariates = list(), traits = list(), model = "identity", radius = NULL, print = TRUE) {
+  # Make covariates im objects with proper names.
   covariates <- coerce_to_im(covariates, window)
   covariates <- add_names("covariates", covariates)
 
@@ -54,10 +55,10 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   index <- 1
   for(i in seq_len(number_configurations)) {
     for(j in seq_len(number_of_species_by_configuration[[i]])) {
+      current_name_j <- species_names_by_configuration[[i]][j]
       for(k in j:number_of_species_by_configuration[[i]]) {
         alpha_string <- paste0("alpha", "_", j, "_", k)
         response[index] <- coefficients(glm_fits[[i]])[alpha_string]
-        current_name_j <- species_names_by_configuration[[i]][j]
         current_name_k <- species_names_by_configuration[[i]][k]
         joint_regressors[index, ] <- sapply(traits, function(trait) trait[current_name_j] * trait[current_name_k])
         additive_regressors[index, ] <- sapply(traits, function(trait) trait[current_name_j] + trait[current_name_k])
