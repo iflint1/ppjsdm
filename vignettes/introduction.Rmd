@@ -149,12 +149,15 @@ average_height <- c(type1 = 1, type2 = 7, type3 = 10)
 average_seed_size <- c(type1 = 3, type2 = 5, type3 = 1)
 
 traits <- list(average_height = average_height, average_seed_size = average_seed_size)
+```
 
+In order to illustrate usage of our package, we generate a multivariate Gibbs point process with repulsion paramaters driven by those traits.
+
+```{r}
 traits_matrix <- rbind(average_height, average_seed_size)
   
 gamma <- -.5
 beta <- c(0, 0)
-delta <-  c(0, 0)
 
 nspecies <- 3
 alpha <- matrix(NA, nspecies, nspecies)
@@ -166,7 +169,7 @@ for(i in seq_len(nspecies)) {
 print(alpha)
 ```
 
-Finally, we need a dataset to work on.
+Finally, we sample the biased observations.
 
 ```{r}
 radii <- matrix(0.1, 2, 2)
@@ -188,7 +191,7 @@ configurations <- append(ppjsdm::rmultigibbs(lambda = c(50, 50),
                                              drop = FALSE))
 ```
 
-The function `gibbsm` fits a multivariate Gibbs point process to our dataset.
+The function `gibbsm` then fits a multivariate Gibbs point process to our dataset.
 For example,
 
 ```{r}
@@ -196,33 +199,8 @@ fit <- ppjsdm::gibbsm(configurations, traits = traits, model = "Geyer", radius =
 fit$traits
 ```
 
-# Using traits on Queensland data
-
-There is also a function to extract the average species height from the Queesland data.
+The actual values used are
 
 ```{r}
-# index_of_plot <- 3 # Between 1 and 20
-# year <- 2011 # Year of census
-# number_of_species <- 3 # Includes the most prevalent species from the plot
-# 
-# ret <- ppjsdm::get_qld_trees_configuration(index = index_of_plot, 
-#                                           year = year, 
-#                                           prevalent = number_of_species,
-#                                           average_height = TRUE,
-#                                           average_dbh = TRUE)
-# 
-# configuration <- ret$configuration
-# traits <- list(average_height = ret$average_height, average_dbh = ret$average_dbh)
-# window <- ppjsdm::Rectangle_window(c(0, 100), c(0, 50))
-# radii <- matrix(5, number_of_species, number_of_species)
-```
-
-We may then fit our model to this dataset.
-
-```{r}
-# fit <- ppjsdm::gibbsm(configuration, 
-#                       window = window, 
-#                       model = "Geyer", 
-#                       radius = radii, 
-#                       traits = traits)
+c(gamma, beta)
 ```
