@@ -44,31 +44,38 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   number_of_species_by_configuration <- lapply(number_of_individuals_by_configuration, function(n) length(n))
   number_configurations <- length(configuration_list)
   number_traits <- length(traits)
-  regression_length <- Reduce("+", number_of_species_by_configuration)
+  number_of_alpha_coefficients_by_configuration <- lapply(number_of_species_by_configuration, function(n) n * (n + 1) / 2)
+  regression_length <- Reduce("+", number_of_alpha_coefficients_by_configuration)
   response <- vector(mode = "numeric", length = regression_length)
-  regressors <- matrix(data = NA, nrow = regression_length, ncol = number_traits)
+  joint_regressors <- matrix(data = NA, nrow = regression_length, ncol = number_traits)
+  additive_regressors <- matrix(data = NA, nrow = regression_length, ncol = number_traits)
 
   # TODO: Vectorise / C++
   index <- 1
   for(i in seq_len(number_configurations)) {
     for(j in seq_len(number_of_species_by_configuration[[i]])) {
-      alpha_string <- paste0("alpha", "_", j, "_", j)
-      response[index] <- coefficients(glm_fits[[i]])[alpha_string]
-      for(k in seq_len(number_traits)) {
-        current_name <- species_names_by_configuration[[i]][j]
-        # TODO: Why not access with [current_name] and use vectors?
-        val <- traits[[k]][[current_name]]
-        regressors[index, k] <- val
+      for(k in j:number_of_species_by_configuration[[i]]) {
+        alpha_string <- paste0("alpha", "_", j, "_", k)
+        response[index] <- coefficients(glm_fits[[i]])[alpha_string]
+        for(t in seq_len(number_traits)) {
+          current_name_j <- species_names_by_configuration[[i]][j]
+          current_name_k <- species_names_by_configuration[[i]][k]
+          # TODO: Why not access with [current_name] and use vectors?
+          joint_regressors[index, t] <- traits[[t]][[current_name_j]] * traits[[t]][[current_name_k]]
+          additive_regressors[index, t] <- traits[[t]][[current_name_j]] + traits[[t]][[current_name_k]]
+        }
+        index <- index + 1
       }
-      index <- index + 1
     }
   }
+  colnames(joint_regressors) <- names(traits)
+  colnames(additive_regressors) <- names(traits)
 
   if(print) {
     lapply(glm_fits, function(fit) print(summary(fit)))
     if(number_traits > 0) {
       # TODO: Better names for regressors
-      g <- lm(response ~ 1 + regressors)
+      g <- lm(response ~ 1 + joint_regressors + additive_regressors)
       print(summary(g))
     }
   }
