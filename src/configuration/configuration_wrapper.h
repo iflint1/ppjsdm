@@ -17,9 +17,9 @@ private:
     x_(x), y_(y), type_(type) {}
 
     Marked_point_reference& operator=(const Marked_point& point) {
-      x_ = std::get<0>(point);
-      y_ = std::get<1>(point);
-      type_ = std::get<2>(point) + 1;
+      x_ = get_x(point);
+      y_ = get_y(point);
+      type_ = get_type(point) + 1;
       return *this;
     }
 
@@ -62,7 +62,7 @@ public:
   }
 
   Marked_point_reference operator[](R_xlen_t index) {
-    return {x_[index], y_[index], types_[index]};
+    return Marked_point_reference(x_[index], y_[index], types_[index]);
   }
 
   auto emplace_back(double x, double y, int type) {
@@ -72,9 +72,7 @@ public:
   }
 
   auto push_back(const Marked_point& point) {
-    x_.push_back(std::get<0>(point));
-    y_.push_back(std::get<1>(point));
-    types_.push_back(std::get<2>(point) + 1);
+    emplace_back(get_x(point), get_y(point), get_type(point));
   }
 
   auto size() const {
