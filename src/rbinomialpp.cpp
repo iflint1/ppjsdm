@@ -11,12 +11,13 @@
 #include "utility/get_list_or_first_element.h"
 #include "utility/get_number_types.h"
 #include "utility/make_default_types.h"
-#include "utility/sum.h"
 #include "utility/window_utilities.h"
+
+#include <numeric> // std::accumulate
 
 template<typename Window, typename N>
 inline SEXP rbinomialpp_helper(const Window& window, const N& n, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
-  const auto total_number(ppjsdm::sum<int>(n, point_types));
+  const auto total_number(std::accumulate(n.begin(), n.end(), 0));
 
   Rcpp::List samples(nsim);
   for(R_xlen_t i(0); i < nsim; ++i) {
