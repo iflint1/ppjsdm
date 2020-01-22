@@ -4,13 +4,19 @@
 #include <Rcpp.h>
 #include <Rinternals.h>
 
+#include <utility> // std::forward
+
 namespace ppjsdm {
 
 template<typename F>
 inline auto call_on_list_or_vector(SEXP generic, const F& f) {
-  return Rf_isNewList(generic) ?
-            f(Rcpp::List(generic)) :
-            f(Rcpp::NumericVector(generic));
+  if(Rf_isNewList(generic)) {
+    return f(Rcpp::List(generic));
+  } else if(Rf_isVector(generic)) {
+    return f(Rcpp::NumericVector(generic));
+  } else {
+    Rcpp::stop("Tried to call call_on_list_or_vector on a SEXP that was neither a list nor a vector.");
+  }
 }
 
 } // namespace ppjsdm
