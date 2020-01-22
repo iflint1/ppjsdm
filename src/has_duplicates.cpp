@@ -2,9 +2,9 @@
 
 #include "configuration/configuration_manipulation.h"
 #include "configuration/configuration_wrapper.h"
+#include "point/point_manipulation.h"
 
 #include <algorithm> // std::sort, std::unique
-#include <tuple> // std::tuple
 #include <vector> // std::vector
 
 //' Check if a configuration contains duplicates.
@@ -15,10 +15,9 @@
 //' @import Rcpp
 // [[Rcpp::export]]
 bool has_duplicates(Rcpp::List configuration) {
-  using Marked_point = ppjsdm::Marked_point;
   const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
   const R_xlen_t number_points(ppjsdm::size(wrapped_configuration));
-  std::vector<Marked_point> points(number_points);
+  std::vector<ppjsdm::Marked_point> points(number_points);
   for(R_xlen_t i(0); i < number_points; ++i) {
     points[i] = wrapped_configuration[i];
   }

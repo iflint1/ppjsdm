@@ -40,23 +40,25 @@ public:
     }
   }
 
+  double operator()(double x, double y) const {
+    const R_xlen_t raw_col(std::round((x - xcol_) / xstep_));
+    const R_xlen_t raw_row(std::round((y - yrow_) / ystep_));
+    const R_xlen_t col(std::max<int>(0, std::min<int>(raw_col, number_col_ - 1)));
+    const R_xlen_t row(std::max<int>(0, std::min<int>(raw_row, number_row_ - 1)));
+    return get_matrix(row, col);
+  }
+
   Rcpp::NumericVector operator()(Rcpp::NumericVector x, Rcpp::NumericVector y) const {
     const R_xlen_t length_x(x.size());
     Rcpp::NumericVector result(Rcpp::no_init(length_x));
 
     for(R_xlen_t i(0); i < length_x; ++i) {
-      const R_xlen_t raw_col(std::round((x[i] - xcol_) / xstep_));
-      const R_xlen_t raw_row(std::round((y[i] - yrow_) / ystep_));
-      const R_xlen_t col(std::max<int>(0, std::min<int>(raw_col, number_col_ - 1)));
-      const R_xlen_t row(std::max<int>(0, std::min<int>(raw_row, number_row_ - 1)));
-      result[i] = get_matrix(row, col);
+      result[i] = operator()(x[i], y[i]);
     }
     return result;
   }
 
-  double operator()(double x, double y) const {
-    return operator()(Rcpp::NumericVector{x}, Rcpp::NumericVector{y})[0];
-  }
+
 
   bool is_in(double x, double y) const {
     const auto mat_value(operator()(x, y));

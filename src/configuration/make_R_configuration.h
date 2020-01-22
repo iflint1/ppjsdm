@@ -5,7 +5,7 @@
 
 #include "configuration_wrapper.h"
 
-#include <type_traits> // std::is_same, std::remove_cv_t, std::remove_reference_t
+#include <type_traits> // std::remove_cv_t, std::remove_reference_t
 
 namespace ppjsdm {
 
