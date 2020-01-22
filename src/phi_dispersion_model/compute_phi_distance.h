@@ -4,6 +4,7 @@
 #include "../point/point_manipulation.h"
 
 #include <cmath> // std::sqrt
+#include <utility> // std::forward
 #include <vector> // std::vector
 
 namespace ppjsdm {
@@ -28,6 +29,7 @@ private:
   auto access_square_radii(R_xlen_t i, R_xlen_t j) const {
     return square_radii_[i * dim_ + j];
   }
+
   void set_square_radii(R_xlen_t i, R_xlen_t j, double r) {
     square_radii_[i * dim_ + j] = r * r;
   }
@@ -39,6 +41,7 @@ public:
       }
     }
   }
+
   double apply(double square_distance, R_xlen_t i, R_xlen_t j) const {
     if(square_distance <= access_square_radii(i, j)) {
       return 1.;
@@ -51,16 +54,22 @@ private:
   std::vector<double> square_radii_;
 };
 
+template<typename Varphi>
+class Varphi_model: public Varphi {
+public:
+  template<typename... Args>
+  Varphi_model(Args&&... args): Varphi(std::forward<Args>(args)...) {}
+
+  template<typename Point>
+  double compute_phi_distance(const Point& point1, const Point& point2) const {
+    const auto delta_x(get_x(point1) - get_x(point2));
+    const auto delta_y(get_y(point1) - get_y(point2));
+    const auto square_distance(delta_x * delta_x + delta_y * delta_y);
+    return Varphi::apply(square_distance, get_type(point1), get_type(point2));
+  }
+};
+
 } // namespace varphi
-
-template<typename Varphi, typename Point>
-inline double compute_phi_distance(const Point& point1, const Point& point2, const Varphi& varphi) {
-  const auto delta_x(get_x(point1) - get_x(point2));
-  const auto delta_y(get_y(point1) - get_y(point2));
-  const auto square_distance(delta_x * delta_x + delta_y * delta_y);
-  return varphi.apply(square_distance, get_type(point1), get_type(point2));
-}
-
 } // namespace ppjsdm
 
 #endif // INCLUDE_PPJSDM_PHI_DISTANCE
