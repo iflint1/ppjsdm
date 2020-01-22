@@ -8,9 +8,8 @@
 namespace ppjsdm {
 
 template<typename Configuration, typename Window, typename N>
-inline auto rbinomialpp_single(const Window& window, const N& n, R_xlen_t point_types, R_xlen_t total_number) {
+inline auto rbinomialpp_single(const Window& window, const N& n, R_xlen_t point_types, size_t<Configuration> total_number) {
   Configuration configuration(total_number);
-
   using size_t = size_t<Configuration>;
 
   size_t fill(0);
