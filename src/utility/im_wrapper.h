@@ -57,6 +57,39 @@ public:
   double operator()(double x, double y) const {
     return operator()(Rcpp::NumericVector{x}, Rcpp::NumericVector{y})[0];
   }
+
+  bool is_in(double x, double y) const {
+    const auto mat_value(operator()(x, y));
+    return !R_IsNA(mat_value);
+  }
+
+  double volume() const {
+    R_xlen_t non_na_values(0);
+    for(R_xlen_t i(0); i < number_row_; ++i) {
+      for(R_xlen_t j(0); j < number_col_; ++j) {
+        if(!R_IsNA(get_matrix(i, j))) {
+          ++non_na_values;
+        }
+      }
+    }
+    return static_cast<double>(non_na_values) * xstep_ * ystep_;
+  }
+
+  double x_min() const {
+    return xcol_;
+  }
+
+  double delta_x() const {
+    return static_cast<double>(number_col_) * xstep_;
+  }
+
+  double y_min() const {
+    return yrow_;
+  }
+
+  double delta_y() const {
+    return static_cast<double>(number_row_) * ystep_;
+  }
 private:
   R_xlen_t number_row_;
   R_xlen_t number_col_;

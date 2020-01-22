@@ -5,13 +5,14 @@
 #include <Rinternals.h>
 
 #include "../point/point_manipulation.h"
+#include "../utility/im_wrapper.h"
 
 #include <string> // std::string
 
 namespace ppjsdm {
 namespace detail {
 
-enum class Window {rectangle, disk};
+enum class Window {rectangle, disk, im};
 
 template <Window WindowType>
 class Window_wrapper;
@@ -77,6 +78,32 @@ private:
   double radius_;
 };
 
+template <>
+class Window_wrapper<Window::im> {
+public:
+  explicit Window_wrapper(Rcpp::List im):
+    im_(im),
+    volume_(im_.volume()) {}
+
+  auto sample(int type = 0) const {
+    while(true) {
+      const auto x(im_.delta_x() * unif_rand() + im_.x_min());
+      const auto y(im_.delta_y() * unif_rand() + im_.y_min());
+      if(im_.is_in(x, y)) {
+        return Marked_point(x,  y, type);
+      }
+    }
+  }
+
+  double volume() const {
+    return volume_;
+  }
+
+private:
+  Im_wrapper im_;
+  double volume_;
+};
+
 } // namespace detail
 
 template<typename F>
@@ -90,6 +117,8 @@ inline auto call_on_wrapped_window(SEXP window, const F& f) {
       return f(detail::Window_wrapper<detail::Window::rectangle>(window));
     } else if(window_class == "Disk_window") {
       return f(detail::Window_wrapper<detail::Window::disk>(window));
+    } else if(window_class == "im") {
+      return f(detail::Window_wrapper<detail::Window::im>(window));
     } else {
       Rcpp::stop("Unrecognised window type.");
     }
