@@ -4,7 +4,6 @@
 #include "configuration_manipulation.h"
 #include "../point/point_manipulation.h"
 
-#include <type_traits> // std::remove_const
 #include <vector> // std::vector
 
 namespace ppjsdm {
@@ -12,7 +11,7 @@ namespace ppjsdm {
 template<typename Configuration>
 inline auto get_number_points(const Configuration& configuration, int type) {
   const auto configuration_size(size(configuration));
-  using size_t = std::remove_const_t<decltype(configuration_size)>;
+  using size_t = decltype(size(configuration));
   size_t total(0);
   for(size_t i(0); i < configuration_size; ++i) {
     if(get_type(configuration[i]) == type) {
@@ -25,7 +24,7 @@ inline auto get_number_points(const Configuration& configuration, int type) {
 template<typename Configuration>
 inline auto get_number_points(const Configuration& configuration) {
   const auto configuration_size(size(configuration));
-  using size_t = std::remove_const_t<decltype(configuration_size)>;
+  using size_t = decltype(size(configuration));;
   std::vector<size_t> result{};
   for(size_t i(0); i < configuration_size; ++i) {
     const decltype(result.size()) type(get_type(configuration[i]));
