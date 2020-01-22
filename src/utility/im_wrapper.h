@@ -4,10 +4,11 @@
 #include <Rcpp.h>
 #include <Rinternals.h>
 
+#include "../utility/size_t.h"
+
 #include <algorithm> // std::max, std::min
 #include <cmath> // std::round
 #include <string> // std::string
-#include <type_traits> // std::remove_const
 #include <vector> // std::vector
 
 namespace ppjsdm {
@@ -109,7 +110,7 @@ public:
   // Instead, emplace_back when size is known.
   explicit Im_list_wrapper(Rcpp::List im_list) {
     const auto n(im_list.size());
-    using size_t = std::remove_const_t<decltype(n)>;
+    using size_t = size_t<Rcpp::List>;
     if(n > 0) {
       const auto names = Rcpp::as<Rcpp::CharacterVector>(im_list.names());
       for(size_t i(0); i < n; ++i) {

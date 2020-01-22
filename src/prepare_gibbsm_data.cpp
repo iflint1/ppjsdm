@@ -9,10 +9,10 @@
 #include "simulation/rbinomialpp_single.h"
 #include "utility/construct_if_missing.h"
 #include "utility/im_wrapper.h"
+#include "utility/size_t.h"
 #include "utility/window_utilities.h"
 
 #include <string> // std::string, std::to_string
-#include <type_traits> // std::remove_const
 #include <vector> // std::vector
 
 template<typename Configuration>
@@ -31,7 +31,7 @@ inline void add_to_formula(std::string& formula, Rcpp::CharacterVector names) {
 template<typename Configuration, typename Window, typename Vector>
 Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const Window& window, const ppjsdm::Im_list_wrapper& covariates, Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, const Vector& points_by_type) {
   const auto length_configuration(ppjsdm::size(configuration));
-  using size_t = std::remove_const_t<decltype(length_configuration)>;
+  using size_t = ppjsdm::size_t<Configuration>;
   const size_t number_types(points_by_type.size());
   const auto covariates_length(covariates.size());
   const auto volume(window.volume());
