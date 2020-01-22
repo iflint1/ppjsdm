@@ -3,55 +3,61 @@
 
 #include <Rcpp.h>
 
+#include "compute_phi_distance.h"
+#include "../configuration/configuration_manipulation.h"
+#include "../configuration/get_number_points.h"
+#include "../point/point_manipulation.h"
+#include "../utility/size_t.h"
+
 #include <cmath> // std::exp, std::log
 #include <limits> // std::numeric_limits
 #include <type_traits> // std::remove_const, std::remove_cv
 #include <utility> // std::forward
 #include <vector> // std::vector
 
-#include "compute_phi_distance.h"
-#include "../configuration/configuration_manipulation.h"
-#include "../configuration/get_number_points.h"
-#include "../point/point_manipulation.h"
-
 namespace ppjsdm {
 
+// Note: Use public inheritance to benefit from EBO.
 template<typename Varphi>
 class Varphi_model_papangelou: public Varphi {
 public:
   template<typename... Args>
   Varphi_model_papangelou(Args&&... args): Varphi(std::forward<Args>(args)...) {}
   template<typename Configuration, typename Point>
-  inline Rcpp::NumericVector compute(const Configuration& configuration, const Point& point, R_xlen_t number_types, R_xlen_t number_points) const {
-    R_xlen_t same_type_points(0);
-    for(R_xlen_t i(0); i < number_points; ++i) {
+  inline Rcpp::NumericVector compute(const Configuration& configuration, const Point& point, R_xlen_t number_types, size_t<Configuration> number_points) const {
+    using size_t = size_t<Configuration>;
+    const auto point_type(get_type(point));
+    size_t same_type_points(0);
+    for(size_t i(0); i < number_points; ++i) {
       const auto type_i(get_type(configuration[i]));
-      if(type_i == get_type(point)) {
+      if(type_i == point_type) {
         ++same_type_points;
       }
     }
 
     // delta_dispersion and count_species are automatically 0-initialized
     Rcpp::NumericVector delta_dispersion(number_types);
-    Rcpp::IntegerVector count_species(number_types);
+    std::vector<size_t> count_species(number_types);
 
-    for(R_xlen_t i(0); i < number_points; ++i) {
+    for(size_t i(0); i < number_points; ++i) {
       const auto point_i(configuration[i]);
       const auto type_i(get_type(point_i));
       ++count_species[type_i];
 
       double average_dispersion(0);
 
-      for(R_xlen_t j(0); j < number_points; ++j) {
-        const auto point_j(configuration[j]);
-        const auto type_j(get_type(point_j));
-        if(type_j == get_type(point) && j != i) {
-          const auto phi_distance(compute_phi_distance(point_i, point_j, *this));
+      for(size_t j(0); j < number_points; ++j) {
+        if(j != i) {
+          const auto point_j(configuration[j]);
+          const auto type_j(get_type(point_j));
+          if(type_j == point_type) {
+            const auto phi_distance(compute_phi_distance(point_i, point_j, *this));
 
-          average_dispersion += phi_distance;
+            average_dispersion += phi_distance;
+          }
         }
       }
-      if(type_i == get_type(point)) {
+      if(type_i == point_type) {
         if(same_type_points > 1) {
           average_dispersion /= same_type_points - 1;
         }
@@ -63,10 +69,10 @@ public:
       delta_dispersion[type_i] += average_dispersion - compute_phi_distance(point_i, point, *this);
     }
 
-    for(R_xlen_t i(0); i < number_types; ++i) {
+    for(size_t i(0); i < number_types; ++i) {
       const auto count_species_i(count_species[i]);
       if(count_species_i > 0) {
-        if(i == get_type(point)) {
+        if(i == point_type) {
           delta_dispersion[i] *= 2. / (count_species_i * (count_species_i + 1));
         } else {
           delta_dispersion[i] /= (count_species_i * (same_type_points + 1));
@@ -96,17 +102,18 @@ public:
     }
   }
   template<typename Configuration, typename Point>
-  inline Rcpp::NumericVector compute(const Configuration& configuration, const Point& point, R_xlen_t number_types, R_xlen_t number_points) const {
+  inline Rcpp::NumericVector compute(const Configuration& configuration, const Point& point, R_xlen_t number_types, size_t<Configuration> number_points) const {
+    using size_t = size_t<Configuration>;
     Rcpp::NumericVector delta_dispersion(number_types);
-    const auto type_point(get_type(point));
-    for(R_xlen_t i(0); i < number_points; ++i) {
+    const auto point_type(get_type(point));
+    for(size_t i(0); i < number_points; ++i) {
       const auto point_i(configuration[i]);
       const auto type_i(get_type(point_i));
       if(delta_dispersion[type_i] < saturation_) {
         const auto delta_x(get_x(point_i) - get_x(point));
         const auto delta_y(get_y(point_i) - get_y(point));
         const auto square_distance(delta_x * delta_x + delta_y * delta_y);
-        if(square_distance <= access_square_radii(type_i, type_point)) {
+        if(square_distance <= access_square_radii(type_i, point_type)) {
           delta_dispersion[type_i] += 1.;
         }
       }
@@ -127,20 +134,22 @@ public:
   Nearest_neighbour_papangelou(Args&&... args): Varphi(std::forward<Args>(args)...) {}
 
   template<typename Configuration, typename Point>
-  inline Rcpp::NumericVector compute(const Configuration& configuration, const Point& point, R_xlen_t number_types, R_xlen_t number_points) const {
+  inline Rcpp::NumericVector compute(const Configuration& configuration, const Point& point, R_xlen_t number_types, size_t<Configuration> number_points) const {
+    using size_t = size_t<Configuration>;
     Rcpp::NumericVector delta_dispersion(Rcpp::no_init(number_types));
 
     auto configuration_plus(configuration);
     add_point(configuration_plus, point);
 
+    const auto point_type(get_type(point));
     for(R_xlen_t i(0); i < number_types; ++i) {
-      if(i == get_type(point)) {
+      if(i == point_type) {
         const double d(-compute_dispersion(configuration, i, i, number_points));
         delta_dispersion[i] = d + compute_dispersion(configuration_plus, i, i, number_points + 1);
       } else {
-        auto d(-compute_dispersion(configuration, i, get_type(point), number_points));
-        d -= compute_dispersion(configuration, get_type(point), i, number_points);
-        delta_dispersion[i] = 0.5 * (d + compute_dispersion(configuration_plus, i, get_type(point), number_points + 1) + compute_dispersion(configuration_plus, get_type(point), i, number_points + 1));
+        auto d(-compute_dispersion(configuration, i, point_type, number_points));
+        d -= compute_dispersion(configuration, point_type, i, number_points);
+        delta_dispersion[i] = 0.5 * (d + compute_dispersion(configuration_plus, i, point_type, number_points + 1) + compute_dispersion(configuration_plus, point_type, i, number_points + 1));
       }
     }
     return delta_dispersion;
@@ -149,17 +158,18 @@ private:
   template<typename Configuration>
   inline double compute_dispersion(const Configuration& configuration,
                                                  R_xlen_t k1, R_xlen_t k2,
-                                                 R_xlen_t number_points) const {
-    int count_species(0);
+                                                 size_t<Configuration> number_points) const {
+    using size_t = size_t<Configuration>;
+    size_t count_species(0);
     double dispersion(0);
 
-    for(R_xlen_t i(0); i < number_points; ++i) {
+    for(size_t i(0); i < number_points; ++i) {
       const auto point_i(configuration[i]);
       const auto type_i(get_type(point_i));
       if(type_i == k1) {
         ++count_species;
         double min_distance(std::numeric_limits<double>::max());
-        for(R_xlen_t j(0); j < number_points; ++j) {
+        for(size_t j(0); j < number_points; ++j) {
           if(j != i) {
             const auto point_j(configuration[j]);
             const auto type_j(get_type(point_j));
@@ -197,11 +207,11 @@ public:
     const auto delta_D(Varphi::compute(configuration, point, number_types, size(configuration)));
 
     double inner_product(0);
-    const auto type(get_type(point));
+    const auto point_type(get_type(point));
     for(R_xlen_t i(0); i < number_types; ++i) {
-      inner_product += alpha_(i, type) * delta_D[i];
+      inner_product += alpha_(i, point_type) * delta_D[i];
     }
-    return lambda_[type] * std::exp(inner_product + (1 - nu_[type]) * std::log(get_number_points(configuration, type) + 1));
+    return lambda_[point_type] * std::exp(inner_product + (1 - nu_[point_type]) * std::log(get_number_points(configuration, point_type) + 1));
   }
 private:
   Lambda lambda_;
