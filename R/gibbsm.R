@@ -62,7 +62,9 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
           alpha_string <- paste0("alpha", "_", j, "_", k)
           response[index] <- coefficients(glm_fits[[i]])[alpha_string]
           current_name_k <- species_names_by_configuration[[i]][k]
-          joint_regressors[index, ] <- sapply(traits, function(trait) trait[current_name_j] * trait[current_name_k] / (trait[current_name_j] + trait[current_name_k]))
+          joint_regressors[index, ] <- sapply(traits, function(trait) {
+            (trait[current_name_j] - mean(trait)) * (trait[current_name_k] - mean(trait)) / (mean(trait) * mean(trait))
+          })
           index <- index + 1
         }
       }

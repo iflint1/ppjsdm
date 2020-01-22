@@ -26,94 +26,6 @@ remove(list = ls())
 set.seed(1)
 ```
 
-# Working with the Queensland trees dataset
-
-This package contains the locations of treets twenty plots located in Queensland, Australia.
-The data is accessed as follows.
-
-```{r}
-index_of_plot <- 3 # Between 1 and 20
-year <- 2011 # Year of census
-number_of_species <- 2 # Includes the most prevalent species from the plot
-
-configuration <- ppjsdm::get_qld_trees_configuration(index = index_of_plot, 
-                                                     year = year, 
-                                                     prevalent = number_of_species)
-```
-
-Our point process class only includes the locations of the trees, so we also need to provide information about the observation window.
-All plots are of size $100\mathrm{m}\times50\mathrm{m}$, so we define the window as follows.
-
-```{r}
-window <- ppjsdm::Rectangle_window(c(0, 100), c(0, 50))
-```
-
-```{r, fig.height = 4, fig.align = 'center', fig}
-par(mar = c(5, 4, 4, 13) + 0.1)
-plot(configuration, window = window)
-```
-
-The function `gibbsm` fits a multivariate Gibbs point process to our dataset.
-For example,
-
-```{r}
-fit <- ppjsdm::gibbsm(configuration, window = window)
-```
-
-By default, the function fits the model that was introduced in the ARC grant [TODO: Add reference].
-This model has many drawbacks, the most important of which is that the model with the fitted values is degenerate, as can be seen by drawing from the model.
-
-```{r}
-lambda <- exp(fit$coefficients[1:number_of_species])
-alpha <- matrix(c(fit$coefficients[3], 
-                  fit$coefficients[4], 
-                  fit$coefficients[4], 
-                  fit$coefficients[5]), ncol = number_of_species, nrow = number_of_species)
-draw <- ppjsdm::rmultigibbs(window = window, 
-                            alpha = alpha, 
-                            lambda = lambda, 
-                            types = levels(types(configuration)))
-```
-
-```{r}
-par(mar = c(5, 4, 4, 13) + 0.1)
-plot(draw, window = window)
-```
-
-The Geyer model is better suited to most situations, but the user needs to specify some additional parameters before the fitting may take place.
-
-```{r}
-radii <- matrix(5, number_of_species, number_of_species)
-```
-
-The matrix `radii` models interaction radii within a species, and between species.
-An interaction radius of $5$ gives good results in the fitting procedure.
-
-```{r}
-fit <- ppjsdm::gibbsm(configuration, window = window, model = "Geyer", radius = radii)
-```
-
-Note that we do not have the previous problem here.
-
-```{r}
-lambda <- exp(fit$coefficients[1:number_of_species])
-alpha <- matrix(c(fit$coefficients[3], 
-                  fit$coefficients[4], 
-                  fit$coefficients[4], 
-                  fit$coefficients[5]), ncol = number_of_species, nrow = number_of_species)
-draw <- ppjsdm::rmultigibbs(window = window, 
-                            alpha = alpha, 
-                            lambda = lambda,
-                            model = "Geyer", 
-                            radius = radii,
-                            types = levels(types(configuration)))
-```
-
-```{r}
-par(mar = c(5, 4, 4, 13) + 0.1)
-plot(draw, window = window)
-```
-
 # Using covariates
 
 This section assumes you have a series of covariates explaining a given dataset. 
@@ -155,15 +67,16 @@ In order to illustrate usage of our package, we generate a multivariate Gibbs po
 
 ```{r}
 traits_matrix <- rbind(average_height, average_seed_size)
+traits_means <- apply(traits_matrix, 1, mean)
   
-gamma <- -.5
-beta <- c(0, 0)
+gamma <- 0
+beta <- c(1, -1)
 
 nspecies <- 3
 alpha <- matrix(NA, nspecies, nspecies)
 for(i in seq_len(nspecies)) {
   for(j in seq_len(nspecies)) {
-    alpha[i, j] <- gamma + beta %*% (traits_matrix[, i] * traits_matrix[, j] / (traits_matrix[, i] + traits_matrix[, j]))
+    alpha[i, j] <- gamma + beta %*% ((traits_matrix[, i] - traits_means) * (traits_matrix[, j] - traits_means) / (traits_means * traits_means))
   }
 }
 print(alpha)
