@@ -86,9 +86,13 @@ public:
     volume_(im_.volume()) {}
 
   auto sample(int type = 0) const {
+    const auto x_min(im_.x_min());
+    const auto y_min(im_.y_min());
+    const auto delta_x(im_.delta_x());
+    const auto delta_y(im_.delta_y());
     while(true) {
-      const auto x(im_.delta_x() * unif_rand() + im_.x_min());
-      const auto y(im_.delta_y() * unif_rand() + im_.y_min());
+      const auto x(delta_x * unif_rand() + x_min);
+      const auto y(delta_y * unif_rand() + y_min);
       if(im_.is_in(x, y)) {
         return Marked_point(x,  y, type);
       }
