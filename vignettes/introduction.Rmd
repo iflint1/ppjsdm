@@ -20,6 +20,7 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(ppjsdm)
+library(spatstat)
 
 remove(list = ls())
 
@@ -35,15 +36,31 @@ To illustrate how the package works, we define arbitrarily the following covaria
 temperature <- function(x, y) 1 - 4 * (x - 0.5)^2
 wetness <- function(x, y) 0.5 * (1 + sin(pi * 2 * (y - 1)))
 
-covariates <- list(temperature = temperature, wetness = wetness)
+covariates <- list(temperature = as.im(temperature, owin()), wetness = as.im(wetness, owin()))
 
-radii <- matrix(0.1, 2, 2)
+radii <- matrix(0.01, 2, 2)
+```
+
+We generate a multivariate Gibbs point process with intensity driven by those covariates
+We begin by defining the parameters of the point process.
+
+```{r}
+beta <- cbind(c(1, -1), c(-1, 0))
+
+nspecies <- 2
+alpha <- matrix(cbind(c(-0.5, 0.1), c(0.1, -0.5)), nspecies, nspecies)
+log_lambda <- rep(8, nspecies)
 ```
 
 Finally, we need a dataset to work on.
 
 ```{r}
-configuration <- ppjsdm::rppp(lambda = c(50, 50))
+configuration <- ppjsdm::rmultigibbs(lambda = exp(log_lambda), 
+                                     alpha = alpha, 
+                                     covariates = covariates, 
+                                     coefs = beta,
+                                     model = "Geyer",
+                                     radius = radii)
 ```
 
 The dataset is plotted below.
@@ -54,13 +71,20 @@ plot(configuration)
 ```
 
 The function `gibbsm` fits a multivariate Gibbs point process to our dataset.
-For example,
 
 ```{r}
 fit <- ppjsdm::gibbsm(configuration, 
                       covariates = covariates,
                       model = "Geyer",
                       radius = radii)
+```
+
+For reference, the actual values used are
+
+```{r}
+print(log_lambda)
+print(beta)
+print(alpha)
 ```
 
 # Using traits

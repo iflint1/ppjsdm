@@ -39,6 +39,8 @@ rbinomialpp <- function(window = NULL, n = NULL, nsim = 1L, types = NULL, drop =
 #' Default is a vector of same size as types, filled with ones.
 #' @param nu A vector representing the dispersion of the number of points.
 #' Default is a vector of same size as types, filled with ones.
+#' @param covariates Covariates, with an empty list as a default.
+#' @param coefs Fitted coefficients related to covariates. Default is vector of zeroes of the same size as the covariates.
 #' @param radius Symmetric matrix of interaction radii. Filled by zeroes by default;
 #' @param steps Number of steps in the Metropolis algorithm. Default is 30000.
 #' @param nsim Number of samples to generate. Default is 1.
@@ -48,8 +50,8 @@ rbinomialpp <- function(window = NULL, n = NULL, nsim = 1L, types = NULL, drop =
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-rmultigibbs <- function(window = NULL, alpha = NULL, lambda = NULL, nu = NULL, radius = NULL, steps = 30000L, nsim = 1L, types = NULL, model = "identity", drop = TRUE) {
-    .Call('_ppjsdm_rmultigibbs', PACKAGE = 'ppjsdm', window, alpha, lambda, nu, radius, steps, nsim, types, model, drop)
+rmultigibbs <- function(window = NULL, alpha = NULL, lambda = NULL, nu = NULL, covariates = NULL, coefs = NULL, radius = NULL, steps = 30000L, nsim = 1L, types = NULL, model = "identity", drop = TRUE) {
+    .Call('_ppjsdm_rmultigibbs', PACKAGE = 'ppjsdm', window, alpha, lambda, nu, covariates, coefs, radius, steps, nsim, types, model, drop)
 }
 
 #' Sample a Poisson point processes

@@ -9,6 +9,8 @@ rmultigibbs(
   alpha = NULL,
   lambda = NULL,
   nu = NULL,
+  covariates = NULL,
+  coefs = NULL,
   radius = NULL,
   steps = 30000L,
   nsim = 1L,
@@ -27,6 +29,10 @@ Default is a vector of same size as types, filled with ones.}
 
 \item{nu}{A vector representing the dispersion of the number of points.
 Default is a vector of same size as types, filled with ones.}
+
+\item{covariates}{Covariates, with an empty list as a default.}
+
+\item{coefs}{Fitted coefficients related to covariates. Default is vector of zeroes of the same size as the covariates.}
 
 \item{radius}{Symmetric matrix of interaction radii. Filled by zeroes by default;}
 

@@ -7,6 +7,7 @@
 #include "../configuration/configuration_manipulation.h"
 #include "../configuration/get_number_points.h"
 #include "../point/point_manipulation.h"
+#include "../utility/im_wrapper.h"
 #include "../utility/size_t.h"
 
 #include <cmath> // std::exp, std::log
@@ -206,35 +207,48 @@ private:
   }
 };
 
-template<typename Varphi, typename Lambda, typename Nu, typename Alpha>
+template<typename Varphi, typename Lambda, typename Nu, typename Alpha, typename Coefs>
 class Exponential_family_model: public Varphi {
 public:
   template<typename... Args>
   Exponential_family_model(const Lambda& lambda,
                            const Nu& nu,
                            const Alpha& alpha,
+                           const Coefs& coefs,
+                           Rcpp::List covariates,
                            Args&&... args):
     Varphi(std::forward<Args>(args)...),
-    lambda_(lambda), nu_(nu),
-    alpha_(alpha) {}
+    lambda_(lambda),
+    nu_(nu),
+    alpha_(alpha),
+    coefs_(coefs),
+    covariates_(covariates) {}
 
   Exponential_family_model(const Lambda& lambda,
                            const Nu& nu,
                            const Alpha& alpha,
+                           const Coefs& coefs,
+                           Rcpp::List covariates,
                            const Varphi& varphi):
     Varphi(varphi),
     lambda_(lambda),
     nu_(nu),
-    alpha_(alpha) {}
+    alpha_(alpha),
+    coefs_(coefs),
+    covariates_(covariates) {}
 
   Exponential_family_model(const Lambda& lambda,
                            const Nu& nu,
                            const Alpha& alpha,
+                           const Coefs& coefs,
+                           Rcpp::List covariates,
                            Varphi&& varphi):
     Varphi(std::move(varphi)),
     lambda_(lambda),
     nu_(nu),
-    alpha_(alpha) {}
+    alpha_(alpha),
+    coefs_(coefs),
+    covariates_(covariates) {}
 
   template<typename Configuration, typename Point>
   double compute_papangelou(const Configuration& configuration,
@@ -247,6 +261,9 @@ public:
     for(R_xlen_t i(0); i < number_types; ++i) {
       inner_product += alpha_(i, point_type) * delta_D[i];
     }
+    for(R_xlen_t i(0); i < covariates_.size(); ++i) {
+      inner_product += coefs_(i, point_type) * covariates_[i](get_x(point), get_y(point));
+    }
     return lambda_[point_type] * std::exp(inner_product
             + (1 - nu_[point_type]) * std::log(get_number_points(configuration, point_type) + 1));
   }
@@ -254,6 +271,8 @@ private:
   Lambda lambda_;
   Nu nu_;
   Alpha alpha_;
+  Coefs coefs_;
+  Im_list_wrapper covariates_;
 };
 
 const constexpr char* const models[] = {
@@ -279,18 +298,22 @@ inline auto call_on_papangelou(Rcpp::CharacterVector model, Rcpp::NumericMatrix 
   }
 }
 
-template<typename F, typename Lambda, typename Nu, typename... Args>
+template<typename F, typename Lambda, typename Nu>
 inline auto call_on_model(Rcpp::CharacterVector model,
                           Rcpp::NumericMatrix alpha,
                           const Lambda& lambda,
                           const Nu& nu,
-                          Rcpp::NumericMatrix radius, const F& f) {
-  return call_on_papangelou(model, radius, [&alpha, &lambda, &nu, &f](auto&& varphi){
+                          Rcpp::NumericMatrix coefs,
+                          Rcpp::List covariates,
+                          Rcpp::NumericMatrix radius,
+                          const F& f) {
+  return call_on_papangelou(model, radius, [&alpha, &lambda, &nu, &f, &coefs, covariates](auto&& varphi) {
     using Model_type = Exponential_family_model<std::remove_cv_t<std::remove_reference_t<decltype(varphi)>>,
                                        Lambda,
                                        Nu,
+                                       Rcpp::NumericMatrix,
                                        Rcpp::NumericMatrix>;
-    const Model_type model(lambda, nu, alpha, std::forward<decltype(varphi)>(varphi));
+    const Model_type model(lambda, nu, alpha, coefs, covariates, std::forward<decltype(varphi)>(varphi));
     return f(model);
   });
 }
