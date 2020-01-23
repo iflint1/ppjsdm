@@ -1,5 +1,5 @@
-#ifndef INCLUDE_PPJSDM_RMULTIGIBBS_SINGLE
-#define INCLUDE_PPJSDM_RMULTIGIBBS_SINGLE
+#ifndef INCLUDE_PPJSDM_SIMULATE_METROPOLIS
+#define INCLUDE_PPJSDM_SIMULATE_METROPOLIS
 
 #include <Rcpp.h>
 #include <Rinternals.h>
@@ -55,4 +55,4 @@ inline auto simulate_metropolis_hastings(const Model& model, const Window& windo
 
 } // namespace ppjsdm
 
-#endif // INCLUDE_PPJSDM_RMULTIGIBBS_SINGLE
+#endif // INCLUDE_PPJSDM_SIMULATE_METROPOLIS

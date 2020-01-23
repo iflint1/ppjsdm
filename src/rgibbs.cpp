@@ -19,7 +19,7 @@
 #include <vector> // std::vector
 
 template<typename Model, typename Window>
-inline SEXP rmultigibbs_helper(const Model& model, const Window& window, R_xlen_t steps, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
+inline SEXP rgibbs_helper(const Model& model, const Window& window, R_xlen_t steps, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
   Rcpp::List samples(nsim);
 
   for(R_xlen_t i(0); i < nsim; ++i) {
@@ -30,29 +30,8 @@ inline SEXP rmultigibbs_helper(const Model& model, const Window& window, R_xlen_
   return ppjsdm::get_list_or_first_element(samples, nsim, drop);
 }
 
-//' Sample a multivariate Gibbs point processes
-//'
-//' @param window Simulation window.
-//' @param alpha Repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.
-//' @param lambda A vector representing the intensities of the point processes.
-//' Default is a vector of same size as types, filled with ones.
-//' @param nu A vector representing the dispersion of the number of points.
-//' Default is a vector of same size as types, filled with ones.
-//' @param covariates Covariates, with an empty list as a default.
-//' @param coefs Fitted coefficients related to covariates. Default is square matrix of zeroes of the same
-//' number of rows/columns as the covariates.
-//' @param radius Symmetric matrix of interaction radii. Filled by zeroes by default;
-//' @param steps Number of steps in the Metropolis algorithm. Default is 30000.
-//' @param nsim Number of samples to generate. Default is 1.
-//' @param types Types of the points. Default is a vector (type1, type2, ...) of same size as n.
-//' @param model String representing the model to simulate from. You can check the currently authorised models with a call to `show_model()`.
-//' @param drop If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration. Default is TRUE.
-//' @export
-//' @useDynLib ppjsdm
-//' @import Rcpp
 // [[Rcpp::export]]
-SEXP rmultigibbs(SEXP window = R_NilValue, SEXP alpha = R_NilValue, SEXP lambda = R_NilValue, SEXP nu = R_NilValue, SEXP covariates = R_NilValue, SEXP coefs = R_NilValue, SEXP radius = R_NilValue, R_xlen_t steps = 30000, R_xlen_t nsim = 1, SEXP types = R_NilValue, Rcpp::CharacterVector model = "identity", bool drop = true) {
-  // TODO: Call as.im to convert functions to `im` objects; add missing names.
+SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP nu, SEXP covariates, SEXP coefs, SEXP radius, R_xlen_t steps, R_xlen_t nsim, SEXP types, Rcpp::CharacterVector model, bool drop) {
   if(Rf_isNull(covariates)) {
     covariates = Rcpp::wrap(Rcpp::List(0));
   }
@@ -69,7 +48,7 @@ SEXP rmultigibbs(SEXP window = R_NilValue, SEXP alpha = R_NilValue, SEXP lambda 
     return ppjsdm::call_on_list_or_vector(lambda, [alpha, lambda, nu, coefs, covariates, radius, steps, nsim, types, model, drop, point_types, &w](const auto& l) {
       return ppjsdm::call_on_list_or_vector(nu, [alpha, lambda, nu, coefs, covariates, radius, steps, nsim, types, model, drop, point_types, &w, &l](const auto& n) {
         return ppjsdm::call_on_model(model, alpha, l, n, coefs, covariates, radius, [&w, steps, nsim, types, drop, point_types](const auto& model){
-          return rmultigibbs_helper(model, w, steps, nsim, types, drop, point_types);
+          return rgibbs_helper(model, w, steps, nsim, types, drop, point_types);
         });
       });
     });
