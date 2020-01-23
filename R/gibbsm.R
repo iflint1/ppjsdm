@@ -1,19 +1,5 @@
 #TODO: Add benchmark of this vs ppm.
 
-add_names <- function(str, covariates) {
-  if(is.null(names(covariates))) {
-    no_name <- rep(TRUE, length(covariates))
-  } else {
-    no_name <- names(covariates) == ""
-  }
-  names(covariates)[no_name] <- sprintf(paste0(str, "%d"), seq_len(length(which(no_name))))
-  covariates
-}
-
-coerce_to_im <- function(lst, window) {
-  lapply(as.list(lst), function(element) as.im(element, W = as.owin(window)))
-}
-
 #' Fit a multivariate Gibbs model to a dataset.
 #'
 #' @param configuration_list A single configuration or a list of configurations assumed to be drawn from the multivariate Gibbs.
@@ -28,8 +14,7 @@ coerce_to_im <- function(lst, window) {
 #' @export
 gibbsm <- function(configuration_list, window = Rectangle_window(), covariates = list(), traits = list(), model = "identity", radius = NULL, print = TRUE) {
   # Make covariates im objects with proper names.
-  covariates <- coerce_to_im(covariates, window)
-  covariates <- add_names("covariates", covariates)
+  covariates <- coerce_to_named_im_objects(covariates, "unnamed_covariate", window)
 
   # If we're given a single configuration, convert it to a list.
   if(inherits(configuration_list, "Configuration")) {
@@ -46,6 +31,7 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   # If traits have been given, proceed to fit our submodel for alpha ~ traits.
   number_traits <- length(traits)
   if(number_traits > 0) {
+    # TODO: Move to C++?
     number_of_individuals_by_configuration <- lapply(configuration_list, function(configuration) get_number_points(configuration, total = FALSE))
     species_names_by_configuration <- lapply(number_of_individuals_by_configuration, function(n) names(n))
     number_of_species_by_configuration <- lapply(number_of_individuals_by_configuration, function(n) length(n))
@@ -54,7 +40,6 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
     response <- vector(mode = "numeric", length = regression_length)
     joint_regressors <- matrix(data = NA, nrow = regression_length, ncol = number_traits)
 
-    # TODO: Move to C++?
     index <- 1
     for(i in seq_len(number_configurations)) {
       for(j in seq_len(number_of_species_by_configuration[[i]])) {
