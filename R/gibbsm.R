@@ -1,3 +1,4 @@
+#TODO: Add benchmark of this vs ppm.
 
 add_names <- function(str, covariates) {
   if(is.null(names(covariates))) {

@@ -210,20 +210,6 @@ private:
 template<typename Varphi, typename Lambda, typename Nu, typename Alpha, typename Coefs>
 class Exponential_family_model: public Varphi {
 public:
-  template<typename... Args>
-  Exponential_family_model(const Lambda& lambda,
-                           const Nu& nu,
-                           const Alpha& alpha,
-                           const Coefs& coefs,
-                           Rcpp::List covariates,
-                           Args&&... args):
-    Varphi(std::forward<Args>(args)...),
-    lambda_(lambda),
-    nu_(nu),
-    alpha_(alpha),
-    coefs_(coefs),
-    covariates_(covariates) {}
-
   Exponential_family_model(const Lambda& lambda,
                            const Nu& nu,
                            const Alpha& alpha,
@@ -250,6 +236,15 @@ public:
     coefs_(coefs),
     covariates_(covariates) {}
 
+  template<typename... Args>
+  Exponential_family_model(const Lambda& lambda,
+                           const Nu& nu,
+                           const Alpha& alpha,
+                           const Coefs& coefs,
+                           Rcpp::List covariates,
+                           Args&&... args):
+    Exponential_family_model(lambda, nu, alpha, coefs, covariates, Varphi(std::forward<Args>(args)...)) {}
+
   template<typename Configuration, typename Point>
   double compute_papangelou(const Configuration& configuration,
                             const Point& point,
@@ -261,7 +256,7 @@ public:
     for(R_xlen_t i(0); i < number_types; ++i) {
       inner_product += alpha_(i, point_type) * delta_D[i];
     }
-    for(R_xlen_t i(0); i < covariates_.size(); ++i) {
+    for(decltype(covariates_.size()) i(0); i < covariates_.size(); ++i) {
       inner_product += coefs_(i, point_type) * covariates_[i](get_x(point), get_y(point));
     }
     return lambda_[point_type] * std::exp(inner_product
