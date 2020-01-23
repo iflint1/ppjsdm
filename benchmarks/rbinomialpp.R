@@ -3,6 +3,8 @@ library(ppjsdm)
 
 window <-Rectangle_window()
 
+set.seed(42)
+
 fast_sample <- function(n) {
   A <- matrix(c(0, 1, 0, 1), nrow = 2, ncol = 2)
   A[1,] + A[2,] * runif(2)
