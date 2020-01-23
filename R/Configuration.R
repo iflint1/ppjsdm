@@ -186,9 +186,17 @@ as.Configuration.Configuration <- function(configuration) {
 #' @rdname as.Configuration
 #' @export
 as.Configuration.ppp <- function(configuration) {
-  structure(list(x = configuration$x,
-                 y = configuration$y,
-                 types = configuration$marks), class = "Configuration")
+  marks <- configuration$marks
+  if(is.null(marks)) {
+    structure(list(x = configuration$x,
+                   y = configuration$y,
+                   types = factor(rep("default", length(configuration$x)))), class = "Configuration")
+  } else {
+    structure(list(x = configuration$x,
+                   y = configuration$y,
+                   types = configuration$marks), class = "Configuration")
+  }
+
 }
 
 #' @rdname as.Configuration

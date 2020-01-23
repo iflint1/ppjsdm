@@ -5,7 +5,7 @@ library(spatstat)
 window = Rectangle_window()
 window_spatstat <- owin()
 
-configuration_spatstat <- rmpoispp(lambda = list(a = 100), win = window_spatstat)
+configuration_spatstat <- rpoispp(lambda = 100, win = window_spatstat)
 configuration <- as.Configuration(configuration_spatstat)
 
 plot(configuration_spatstat)

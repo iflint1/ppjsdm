@@ -7,7 +7,7 @@ window_spatstat <- owin()
 
 temperature <- function(x, y) x + y
 
-configuration_spatstat <- rmpoispp(lambda = list(a = function(x, y) exp(4 + temperature(x, y))), win = window_spatstat)
+configuration_spatstat <- rpoispp(lambda = function(x, y) exp(4 + temperature(x, y)), win = window_spatstat)
 configuration <- as.Configuration(configuration_spatstat)
 
 plot(configuration_spatstat)
