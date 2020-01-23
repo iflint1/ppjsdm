@@ -8,11 +8,7 @@
 Configuration <- local({
   function(x, y, types) {
     if(nargs() == 1 && !missing(x)) {
-      if(is(x, "Configuration")) {
-        configuration <- x
-      } else {
-        configuration <- structure(list(x = x[, 1], y = x[, 2], types = factor(rep("default", length(x[, 1])))), class = "Configuration")
-      }
+      configuration <- as.Configuration(x)
     } else {
       if(length(x) != length(y) || !is.vector(x) || !is.vector(y) || !is.numeric(x) || !is.numeric(y)) {
         stop("x and y should be numeric vectors with the same length.")
@@ -172,6 +168,38 @@ types <- function(configuration) {
 as.ppp.Configuration <- function(X, W, ..., fatal = TRUE) {
   ppp(X$x, X$y, window = as.owin(W), marks = X$types)
 }
+
+#' Convert a configuration to our configuration class.
+#'
+#' @param configuration Configuration.
+#' @export
+as.Configuration <- function(configuration) {
+  UseMethod("as.Configuration", configuration)
+}
+
+#' @rdname as.Configuration
+#' @export
+as.Configuration.Configuration <- function(configuration) {
+  configuration
+}
+
+#' @rdname as.Configuration
+#' @export
+as.Configuration.ppp <- function(configuration) {
+  structure(list(x = configuration$x,
+                 y = configuration$y,
+                 types = configuration$marks), class = "Configuration")
+}
+
+#' @rdname as.Configuration
+#' @export
+as.Configuration.default <- function(configuration) {
+  structure(list(x = configuration[, 1],
+                 y = configuration[, 2],
+                 types = factor(rep("default", length(configuration[, 1])))), class = "Configuration")
+
+}
+
 
 #' Add a point to a configuration.
 #'

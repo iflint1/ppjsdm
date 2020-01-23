@@ -44,11 +44,10 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     const auto mult_by_four(n * 4);
     if(mult_by_four < 500) {
       n = 500;
-      length_rho_times_volume += 500;
     } else {
       n = mult_by_four;
-      length_rho_times_volume += n;
     }
+    length_rho_times_volume += n;
   }
   const auto D(ppjsdm::rbinomialpp_single<Configuration>(window, rho_times_volume, number_types, length_rho_times_volume));
   const auto length_D(length_rho_times_volume);
@@ -163,7 +162,7 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration, SEXP window, Rcpp::List
   }
   // The trick below allows us to find the number of different types in the configuration.
   // That number is then used to default construct `radius`.
-  auto points_by_type(ppjsdm::get_number_points(wrapped_configuration));
+  const auto points_by_type(ppjsdm::get_number_points(wrapped_configuration));
   const auto number_types(points_by_type.size());
   radius = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(number_types, radius, 0.);
   return ppjsdm::call_on_wrapped_window(window, [&wrapped_configuration, &covariates, &model, &radius, &points_by_type](const auto& w) {
