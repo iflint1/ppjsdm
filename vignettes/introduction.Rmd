@@ -36,7 +36,8 @@ To illustrate how the package works, we define arbitrarily the following covaria
 temperature <- function(x, y) 1 - 4 * (x - 0.5)^2
 wetness <- function(x, y) 0.5 * (1 + sin(pi * 2 * (y - 1)))
 
-covariates <- list(temperature = as.im(temperature, owin()), wetness = as.im(wetness, owin()))
+covariates <- list(temperature = as.im(temperature, owin()), 
+                   wetness = as.im(wetness, owin()))
 
 radii <- matrix(0.01, 2, 2)
 ```
@@ -45,9 +46,9 @@ We generate a multivariate Gibbs point process with intensity driven by those co
 We begin by defining the parameters of the point process.
 
 ```{r}
-beta <- cbind(c(1, -1), c(-1, 0))
-
 nspecies <- 2
+
+beta <- cbind(c(1, -1), c(-1, 0))
 alpha <- matrix(cbind(c(-0.5, 0.1), c(0.1, -0.5)), nspecies, nspecies)
 log_lambda <- rep(8, nspecies)
 ```
@@ -93,6 +94,8 @@ This section assumes you have a series of traits explaining a given dataset.
 To illustrate how the package works, we define arbitrarily the following traits.
 
 ```{r}
+radii <- matrix(0.1, 2, 2)
+
 average_height <- c(type1 = 1, type2 = 7, type3 = 10)
 average_seed_size <- c(type1 = 3, type2 = 5, type3 = 1)
 
