@@ -10,7 +10,6 @@
 #include "utility/construct_if_missing.h"
 #include "utility/im_wrapper.h"
 #include "utility/size_t.h"
-#include "utility/sum.h"
 #include "utility/window_utilities.h"
 
 #include <string> // std::string, std::to_string
@@ -39,22 +38,20 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 
   // Sample the dummy points D.
   // This choice of rho is the guideline from the Baddeley et al. paper, see p. 8 therein.
-  // Nb: Using a lambda to inisitalise rho in order to make sure it's declared const.
-  const Vector rho_times_volume([&points_by_type](){
-    Vector rho_times_volume(points_by_type);
-    for(auto& n: rho_times_volume) {
-      const auto mult_by_four(n * 4);
-      if(mult_by_four < 500) {
-        n = 500;
-      } else {
-        n = mult_by_four;
-      }
+  Vector rho_times_volume(points_by_type);
+  size_t length_rho_times_volume(0);
+  for(auto& n: rho_times_volume) {
+    const auto mult_by_four(n * 4);
+    if(mult_by_four < 500) {
+      n = 500;
+      length_rho_times_volume += 500;
+    } else {
+      n = mult_by_four;
+      length_rho_times_volume += n;
     }
-    return rho_times_volume;
-  }());
-  // TODO: Could compute this while creating rho_times_volume...
-  const auto length_D(ppjsdm::sum<size_t>(rho_times_volume, number_types));
-  const auto D(ppjsdm::rbinomialpp_single<Configuration>(window, rho_times_volume, number_types, length_D));
+  }
+  const auto D(ppjsdm::rbinomialpp_single<Configuration>(window, rho_times_volume, number_types, length_rho_times_volume));
+  const auto length_D(length_rho_times_volume);
 
   // Default-initialise the data
   Rcpp::IntegerMatrix response(Rcpp::no_init(length_configuration + length_D, 1));

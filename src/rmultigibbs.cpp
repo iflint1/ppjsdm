@@ -64,7 +64,7 @@ SEXP rmultigibbs(SEXP window = R_NilValue, SEXP alpha = R_NilValue, SEXP lambda 
   radius = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(point_types, radius, 0.);
   coefs = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(Rcpp::as<Rcpp::List>(covariates).size(), coefs, 0.);
   types = ppjsdm::make_types(types, point_types, lambda, nu);
-  // TODO: Might want to allow `coefs` as `Rcpp::List`
+  // TODO: Think about what format for coefs.
   return ppjsdm::call_on_wrapped_window(window, [alpha, lambda, nu, coefs, covariates, radius, steps, nsim, types, model, drop, point_types](const auto& w) {
     return ppjsdm::call_on_list_or_vector(lambda, [alpha, lambda, nu, coefs, covariates, radius, steps, nsim, types, model, drop, point_types, &w](const auto& l) {
       return ppjsdm::call_on_list_or_vector(nu, [alpha, lambda, nu, coefs, covariates, radius, steps, nsim, types, model, drop, point_types, &w, &l](const auto& n) {

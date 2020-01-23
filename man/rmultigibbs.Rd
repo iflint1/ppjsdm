@@ -32,7 +32,8 @@ Default is a vector of same size as types, filled with ones.}
 
 \item{covariates}{Covariates, with an empty list as a default.}
 
-\item{coefs}{Fitted coefficients related to covariates. Default is vector of zeroes of the same size as the covariates.}
+\item{coefs}{Fitted coefficients related to covariates. Default is square matrix of zeroes of the same
+number of rows/columns as the covariates.}
 
 \item{radius}{Symmetric matrix of interaction radii. Filled by zeroes by default;}
 

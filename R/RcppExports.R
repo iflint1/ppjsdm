@@ -40,7 +40,8 @@ rbinomialpp <- function(window = NULL, n = NULL, nsim = 1L, types = NULL, drop =
 #' @param nu A vector representing the dispersion of the number of points.
 #' Default is a vector of same size as types, filled with ones.
 #' @param covariates Covariates, with an empty list as a default.
-#' @param coefs Fitted coefficients related to covariates. Default is vector of zeroes of the same size as the covariates.
+#' @param coefs Fitted coefficients related to covariates. Default is square matrix of zeroes of the same
+#' number of rows/columns as the covariates.
 #' @param radius Symmetric matrix of interaction radii. Filled by zeroes by default;
 #' @param steps Number of steps in the Metropolis algorithm. Default is 30000.
 #' @param nsim Number of samples to generate. Default is 1.
