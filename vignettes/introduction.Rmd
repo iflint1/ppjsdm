@@ -126,7 +126,11 @@ plot(configurations[[1]])
 The function `gibbsm` then fits a multivariate Gibbs point process to our dataset.
 
 ```{r}
-fit <- ppjsdm::gibbsm(configurations, traits = traits, model = "Geyer", radius = radii, print = FALSE)
+fit <- ppjsdm::gibbsm(configurations, 
+                      traits = traits, 
+                      model = "Geyer", 
+                      radius = radii, 
+                      print = FALSE)
 fit$traits
 ```
 

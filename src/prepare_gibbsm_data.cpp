@@ -42,14 +42,18 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   const Vector rho_times_volume([&points_by_type](){
     Vector rho_times_volume(points_by_type);
     for(auto& n: rho_times_volume) {
-      n *= 4;
+      const auto mult_by_four(n * 4);
+      if(mult_by_four < 500) {
+        n = 500;
+      } else {
+        n = mult_by_four;
+      }
     }
     return rho_times_volume;
   }());
-  // Set to sum(rho_times_volume), which in our case is known explicitly.
-  const auto sum_rho_times_volume(4 * length_configuration);
-  const auto D(ppjsdm::rbinomialpp_single<Configuration>(window, rho_times_volume, number_types, sum_rho_times_volume));
-  const auto length_D(sum_rho_times_volume);
+  // TODO: Could compute this while creating rho_times_volume...
+  const auto length_D(std::accumulate(rho_times_volume.begin(), rho_times_volume.end(), 0));
+  const auto D(ppjsdm::rbinomialpp_single<Configuration>(window, rho_times_volume, number_types, length_D));
 
   // Default-initialise the data
   Rcpp::IntegerMatrix response(Rcpp::no_init(length_configuration + length_D, 1));
