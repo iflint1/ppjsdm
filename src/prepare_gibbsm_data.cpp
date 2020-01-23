@@ -10,6 +10,7 @@
 #include "utility/construct_if_missing.h"
 #include "utility/im_wrapper.h"
 #include "utility/size_t.h"
+#include "utility/sum.h"
 #include "utility/window_utilities.h"
 
 #include <string> // std::string, std::to_string
@@ -52,7 +53,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     return rho_times_volume;
   }());
   // TODO: Could compute this while creating rho_times_volume...
-  const auto length_D(std::accumulate(rho_times_volume.begin(), rho_times_volume.end(), 0));
+  const auto length_D(ppjsdm::sum<size_t>(rho_times_volume, number_types));
   const auto D(ppjsdm::rbinomialpp_single<Configuration>(window, rho_times_volume, number_types, length_D));
 
   // Default-initialise the data
@@ -67,7 +68,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   Rcpp::CharacterVector alpha_names(Rcpp::no_init(alpha_input.ncol()));
   for(size_t j(1); j <= number_types; ++j) {
     for(size_t k(j); k <= number_types; ++k) {
-      alpha_names[index] = std::string("alpha") + std::string("_") + std::to_string(j) + std::string("_") + std::to_string(k);
+      alpha_names[index] = std::string("alpha_") + std::to_string(j) + std::string("_") + std::to_string(k);
       ++index;
     }
   }
@@ -84,7 +85,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   }
   Rcpp::CharacterVector log_lambda_names(Rcpp::no_init(number_types));
   for(size_t i(0); i < number_types; ++i) {
-    log_lambda_names[i] = std::string("log_lambda") + std::string("_") + std::to_string(i + 1);
+    log_lambda_names[i] = std::string("log_lambda_") + std::to_string(i + 1);
   }
   Rcpp::colnames(log_lambda) = log_lambda_names;
   Rcpp::colnames(rho_offset) = Rcpp::wrap("rho");
