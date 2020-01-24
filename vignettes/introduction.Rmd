@@ -92,6 +92,13 @@ print(beta)
 print(alpha)
 ```
 
+Diagnostics may be obtained as follows.
+
+```{r}
+plot(fit$complete)
+plot(fit$cv)
+```
+
 # Using traits
 
 This section assumes you have a series of traits explaining a given dataset. 

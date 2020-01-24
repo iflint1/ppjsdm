@@ -10,7 +10,7 @@
 #' @param radius Interaction radius.
 #' @param print Print the fitted coefficients?
 #' @param use_glmnet Use `glmnet` instead of `glm`?
-#' @importFrom glmnet glmnet
+#' @importFrom glmnet glmnet cv.glmnet
 #' @importFrom stats as.formula binomial coefficients glm lm
 #' @importFrom spatstat as.im as.owin
 #' @export
@@ -36,6 +36,13 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
       glmnet(y = response, x = regressors, offset = offset, alpha = 0.5, intercept = FALSE, family = "binomial")
     })
     fits_coefficients <- lapply(fits, function(fit) coefficients(fit, s = 0))
+    cv_fits <- lapply(gibbsm_data_list, function(gibbsm_data) {
+      data <- as.data.frame(gibbsm_data$data)
+      response <- data$response
+      regressors <- as.matrix(data[, !(names(data) %in% c("response", "rho"))])
+      offset <- -log(data$rho)
+      glmnet::cv.glmnet(y = response, x = regressors, offset = offset)
+    })
   } else {
     fits <- lapply(gibbsm_data_list, function(gibbsm_data) glm(as.formula(gibbsm_data$formula), data = as.data.frame(gibbsm_data$data), family = binomial()))
     fits_coefficients <- lapply(fits, function(fit) coefficients(fit))
@@ -90,10 +97,20 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
 
   if(number_configurations == 1) {
     fits <- fits[[1]]
+    if(use_glmnet) {
+      cv_fits <- cv_fits[[1]]
+    }
   }
+  ret <- list(complete = fits)
   if(number_traits > 0) {
-    list(complete = fits, traits = traits_fit)
+    ret <- append(list, list(traits = traits_fit))
+  }
+  if(use_glmnet) {
+    ret <- append(ret, list(cv = cv_fits))
+  }
+  if(length(ret) == 1) {
+    unlist(ret, use.names = FALSE)
   } else {
-    fits
+    ret
   }
 }
