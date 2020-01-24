@@ -30,12 +30,11 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
     list(response = data$response, offset = data$offset, regressors = rbind(data$regressors))
   })
   if(use_glmnet) {
-    # TODO: Change return type of `gibbsm_data_list` to facilitate access below.
     fits <- lapply(gibbsm_data_list, function(gibbsm_data) {
       glmnet(x = gibbsm_data$regressors,
              y = gibbsm_data$response,
              offset = gibbsm_data$offset,
-             alpha = 0.5,
+             alpha = 0.9,
              intercept = FALSE,
              family = "binomial")
     })

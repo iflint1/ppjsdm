@@ -84,7 +84,7 @@ fit <- ppjsdm::gibbsm(configuration,
                       radius = radii)
 ```
 
-For reference, the actual values used are
+For reference, the actual values used are given below.
 
 ```{r}
 print(log_lambda)
