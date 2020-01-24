@@ -26,8 +26,7 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   stopifnot(inherits(configuration_list[[1]], "Configuration"))
 
   gibbsm_data_list <- lapply(configuration_list, function(configuration) {
-    data <- prepare_gibbsm_data(configuration, window, covariates, model, radius)
-    list(response = data$response, offset = data$offset, regressors = rbind(data$regressors))
+    prepare_gibbsm_data(configuration, window, covariates, model, radius)
   })
   if(use_glmnet) {
     fits <- lapply(gibbsm_data_list, function(gibbsm_data) {
@@ -46,11 +45,15 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
     })
   } else {
     fits <- lapply(gibbsm_data_list, function(gibbsm_data) {
-      glm.fit(x = gibbsm_data$regressors,
+      g <- glm.fit(x = gibbsm_data$regressors,
               y = gibbsm_data$response,
               offset = gibbsm_data$offset,
               intercept = FALSE,
               family = binomial())
+      # Note: glm.fit does not correctly set the class,
+      # so the user cannot use `glm` methods...
+      class(g) <- c(g$class, c("glm", "lm"))
+      g
     })
     fits_coefficients <- lapply(fits, function(fit) coefficients(fit))
   }

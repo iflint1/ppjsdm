@@ -107,7 +107,14 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     for(size_t j(0); j < covariates_length; ++j) {
       for(size_t k(0); k < number_types; ++k) {
         if(k == type_index) {
-          covariates_input(i, j * number_types + k) = covariates[j](location[0], location[1]);
+          const auto covariate(covariates[j](location[0], location[1]));
+          // TODO: Is this really what I want? Might be better to clear up covariates first...
+          // TODO: Might also be nice to write a warning in Im_wrapper when hitting NA values.
+          if(R_IsNA(covariate)) {
+            covariates_input(i, j * number_types + k) = 0;
+          } else {
+            covariates_input(i, j * number_types + k) = covariate;
+          }
         } else {
           covariates_input(i, j * number_types + k) = 0;
         }
