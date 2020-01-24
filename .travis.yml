@@ -5,6 +5,5 @@ before_script:
   - sudo apt-get install -y ghostscript
 
 r:
-  - oldrel
   - release
   - devel
