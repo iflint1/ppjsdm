@@ -109,7 +109,7 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
     ret <- append(ret, list(cv = cv_fits))
   }
   if(length(ret) == 1) {
-    unlist(ret, use.names = FALSE)
+    ret[[1]]
   } else {
     ret
   }
