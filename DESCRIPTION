@@ -8,6 +8,7 @@ Maintainer: Ian Flint <ian.flint@unimelb.edu.au>
 Description: To be written.
 License: MIT + file LICENSE
 Imports: 
+    glmnet,
     graphics,
     methods,
     Rcpp (>= 1.0.2),

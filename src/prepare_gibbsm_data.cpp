@@ -42,11 +42,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   size_t length_rho_times_volume(0);
   for(auto& n: rho_times_volume) {
     const auto mult_by_four(n * 4);
-    if(mult_by_four < 500) {
-      n = 500;
-    } else {
-      n = mult_by_four;
-    }
+    n = mult_by_four < 500 ? 500 : mult_by_four;
     length_rho_times_volume += n;
   }
   const auto D(ppjsdm::rbinomialpp_single<Configuration>(window, rho_times_volume, number_types, length_rho_times_volume));

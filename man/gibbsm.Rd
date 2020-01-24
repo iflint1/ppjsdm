@@ -11,7 +11,8 @@ gibbsm(
   traits = list(),
   model = "identity",
   radius = NULL,
-  print = TRUE
+  print = TRUE,
+  use_glmnet = TRUE
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ gibbsm(
 \item{radius}{Interaction radius.}
 
 \item{print}{Print the fitted coefficients?}
+
+\item{use_glmnet}{Use `glmnet` instead of `glm`?}
 }
 \description{
 Fit a multivariate Gibbs model to a dataset.
