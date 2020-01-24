@@ -103,7 +103,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     Rcpp::NumericVector location{ppjsdm::get_x(point), ppjsdm::get_y(point)};
     const size_t type_index(ppjsdm::get_type(point));
 
-    rho_offset(i, 0) = static_cast<double>(rho_times_volume[type_index]) / volume;
+    rho_offset(i, 0) = -std::log(static_cast<double>(rho_times_volume[type_index]) / volume);
     for(size_t j(0); j < covariates_length; ++j) {
       for(size_t k(0); k < number_types; ++k) {
         if(k == type_index) {
@@ -133,20 +133,35 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     }
   }
 
-  // Construct formula
-  std::string formula("response ~ 0 + offset(-log(rho))");
-  add_to_formula(formula, Rcpp::colnames(log_lambda));
-  if(covariates_length > 0) {
-    add_to_formula(formula, Rcpp::colnames(covariates_input));
+  // TODO: Write rbind that also works with names?
+  Rcpp::NumericMatrix regressors(Rcpp::no_init(log_lambda.nrow(),
+                                               log_lambda.ncol() + alpha_input.ncol() + covariates_input.ncol()));
+  Rcpp::CharacterVector col_names(Rcpp::no_init(regressors.ncol()));
+  for(R_xlen_t j(0); j < regressors.ncol(); ++j) {
+    if(j < log_lambda.ncol()) {
+      col_names[j] = Rcpp::as<Rcpp::CharacterVector>(Rcpp::colnames(log_lambda))[j];
+      for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+        regressors(i, j) = log_lambda(i, j);
+      }
+    } else if(j < log_lambda.ncol() + alpha_input.ncol()) {
+      col_names[j] = Rcpp::as<Rcpp::CharacterVector>(Rcpp::colnames(alpha_input))[j - log_lambda.ncol()];
+      for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+        regressors(i, j) = alpha_input(i, j - log_lambda.ncol());
+      }
+    } else {
+      col_names[j] = Rcpp::as<Rcpp::CharacterVector>(Rcpp::colnames(covariates_input))[j - log_lambda.ncol() - alpha_input.ncol()];
+      for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+        regressors(i, j) = covariates_input(i, j - log_lambda.ncol() - alpha_input.ncol());
+      }
+    }
   }
-  add_to_formula(formula, Rcpp::colnames(alpha_input));
+  Rcpp::colnames(regressors) = col_names;
 
-  return Rcpp::List::create(Rcpp::Named("data") = Rcpp::List::create(covariates_input,
-                                        alpha_input,
-                                        response,
-                                        log_lambda,
-                                        rho_offset),
-                            Rcpp::Named("formula") = formula);
+
+  return Rcpp::List::create(Rcpp::Named("response") = response,
+                            Rcpp::Named("offset") = rho_offset,
+                            Rcpp::Named("regressors") = regressors
+                            );
 }
 
 // [[Rcpp::export]]

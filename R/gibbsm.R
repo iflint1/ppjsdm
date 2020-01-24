@@ -11,7 +11,7 @@
 #' @param print Print the fitted coefficients?
 #' @param use_glmnet Use `glmnet` instead of `glm`?
 #' @importFrom glmnet glmnet cv.glmnet
-#' @importFrom stats as.formula binomial coefficients glm lm
+#' @importFrom stats as.formula binomial coefficients glm.fit lm
 #' @importFrom spatstat as.im as.owin
 #' @export
 gibbsm <- function(configuration_list, window = Rectangle_window(), covariates = list(), traits = list(), model = "identity", radius = NULL, print = TRUE, use_glmnet = TRUE) {
@@ -25,26 +25,34 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   # Make sure we're given a list of configurations.
   stopifnot(inherits(configuration_list[[1]], "Configuration"))
 
-  gibbsm_data_list <- lapply(configuration_list, function(configuration) prepare_gibbsm_data(configuration, window, covariates, model, radius))
+  gibbsm_data_list <- lapply(configuration_list, function(configuration) {
+    data <- prepare_gibbsm_data(configuration, window, covariates, model, radius)
+    list(response = data$response, offset = data$offset, regressors = rbind(data$regressors))
+  })
   if(use_glmnet) {
     # TODO: Change return type of `gibbsm_data_list` to facilitate access below.
     fits <- lapply(gibbsm_data_list, function(gibbsm_data) {
-      data <- as.data.frame(gibbsm_data$data)
-      response <- factor(data$response)
-      regressors <- as.matrix(data[, !(names(data) %in% c("response", "rho"))])
-      offset <- -log(data$rho)
-      glmnet(y = response, x = regressors, offset = offset, alpha = 0.5, intercept = FALSE, family = "binomial")
+      glmnet(x = gibbsm_data$regressors,
+             y = gibbsm_data$response,
+             offset = gibbsm_data$offset,
+             alpha = 0.5,
+             intercept = FALSE,
+             family = "binomial")
     })
     fits_coefficients <- lapply(fits, function(fit) coefficients(fit, s = 0))
     cv_fits <- lapply(gibbsm_data_list, function(gibbsm_data) {
-      data <- as.data.frame(gibbsm_data$data)
-      response <- data$response
-      regressors <- as.matrix(data[, !(names(data) %in% c("response", "rho"))])
-      offset <- -log(data$rho)
-      glmnet::cv.glmnet(y = response, x = regressors, offset = offset)
+      glmnet::cv.glmnet(x = gibbsm_data$regressors,
+                        y = gibbsm_data$response,
+                        offset = gibbsm_data$offset)
     })
   } else {
-    fits <- lapply(gibbsm_data_list, function(gibbsm_data) glm(as.formula(gibbsm_data$formula), data = as.data.frame(gibbsm_data$data), family = binomial()))
+    fits <- lapply(gibbsm_data_list, function(gibbsm_data) {
+      glm.fit(x = gibbsm_data$regressors,
+              y = gibbsm_data$response,
+              offset = gibbsm_data$offset,
+              intercept = FALSE,
+              family = binomial())
+    })
     fits_coefficients <- lapply(fits, function(fit) coefficients(fit))
   }
 
