@@ -79,6 +79,10 @@ public:
     return x_.size();
   }
 
+  bool empty() const {
+    return size() == 0;
+  }
+
 private:
   Rcpp::NumericVector x_;
   Rcpp::NumericVector y_;

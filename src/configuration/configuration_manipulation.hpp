@@ -26,6 +26,10 @@ struct configuration_manipulation_defaults {
     return configuration.size();
   }
 
+  static inline bool empty(const Configuration& configuration) {
+    return configuration.empty();
+  }
+
   static inline auto remove_point_by_index(Configuration& configuration, R_xlen_t index) {
     auto iterator(std::next(configuration.begin(), index));
     const auto point(*iterator);
@@ -65,6 +69,23 @@ inline auto remove_random_point(Configuration& configuration) {
   const difference_type index(Rcpp::sample(size(configuration), 1, false, R_NilValue, false)[0]);
   return remove_point_by_index(configuration, index);
 }
+
+template<typename Configuration>
+inline bool empty(const Configuration& configuration) {
+  return traits::configuration_manipulation<Configuration>::empty(configuration);
+}
+
+// TODO: Does not work well with configuration wrapper class.
+template <typename Configuration, typename Point>
+inline bool remove_point(Configuration& configuration, const Point& point) {
+  auto to_be_erased(std::find_if(configuration.begin(), configuration.end(), point));
+  if(to_be_erased != configuration.end()) {
+    configuration.erase(to_be_erased);
+    return true;
+  }
+  return false;
+}
+
 
 } // namespace ppjsdm
 
