@@ -7,6 +7,7 @@
 #include "../point/point_manipulation.hpp"
 #include "../utility/im_wrapper.hpp"
 
+#include <cmath> // std::sqrt
 #include <string> // std::string
 
 namespace ppjsdm {
@@ -37,6 +38,10 @@ public:
 
   double volume() const {
     return delta_x_ * delta_y_;
+  }
+
+  double diameter() const {
+    return std::sqrt(delta_x_ * delta_x_ + delta_y_ * delta_y_);
   }
 
 private:
@@ -72,6 +77,10 @@ public:
     return M_PI * radius_ * radius_;
   }
 
+  double diameter() const {
+    return 2 * radius_;
+  }
+
 private:
   double x_;
   double y_;
@@ -101,6 +110,10 @@ public:
 
   double volume() const {
     return volume_;
+  }
+
+  double diameter() const {
+    return im_.diameter();
   }
 
 private:

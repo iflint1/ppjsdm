@@ -8,7 +8,9 @@
 
 #include <algorithm> // std::max, std::min
 #include <cmath> // std::round
+#include <limits> // std::numeric_limits
 #include <string> // std::string
+#include <tuple> // std::pair
 #include <vector> // std::vector
 
 namespace ppjsdm {
@@ -76,6 +78,48 @@ public:
       }
     }
     return static_cast<double>(non_na_values) * xstep_ * ystep_;
+  }
+
+  std::pair<double, double> bounds() const {
+    double lower(std::numeric_limits<double>::infinity());
+    double upper(-std::numeric_limits<double>::infinity());
+    for(R_xlen_t i(0); i < number_row_; ++i) {
+      for(R_xlen_t j(0); j < number_col_; ++j) {
+        const auto value(get_matrix(i, j));
+        if(!R_IsNA(value)) {
+          if(value < lower) {
+            lower = value;
+          }
+          if(value > lower) {
+            upper = value;
+          }
+        }
+      }
+    }
+    return std::make_pair(lower, upper);
+  }
+
+  double diameter() const {
+    double square_diameter(0);
+    for(R_xlen_t i(0); i < number_row_; ++i) {
+      for(R_xlen_t j(0); j < number_col_; ++j) {
+        if(!R_IsNA(get_matrix(i, j))) {
+          for(R_xlen_t k(0); k < number_row_; ++k) {
+            for(R_xlen_t l(0); l < number_col_; ++l) {
+              if(!R_IsNA(get_matrix(k, l))) {
+                const auto delta_x((i - k) * xstep_);
+                const auto delta_y((j - l) * ystep_);
+                const auto square_distance(delta_x * delta_x + delta_y * delta_y);
+                if(square_distance > square_diameter) {
+                  square_diameter = square_distance;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return std::sqrt(square_diameter);
   }
 
   double x_min() const {

@@ -15,12 +15,10 @@ public:
   static double apply(double square_distance, R_xlen_t, R_xlen_t) {
     return std::sqrt(square_distance);
   }
-};
 
-class Inverse_square {
-public:
-  static constexpr double apply(double square_distance, R_xlen_t, R_xlen_t) {
-    return 1. / square_distance;
+  template<typename Window>
+  static double get_maximum(const Window& window) {
+    return window.diameter();
   }
 };
 
@@ -49,6 +47,11 @@ public:
       return 0.;
     }
   }
+
+  template<typename Window>
+  static double get_maximum(const Window&) {
+    return 1.;
+  }
 private:
   R_xlen_t dim_;
   std::vector<double> square_radii_;
@@ -66,6 +69,11 @@ public:
     const auto delta_y(get_y(point1) - get_y(point2));
     const auto square_distance(delta_x * delta_x + delta_y * delta_y);
     return Varphi::apply(square_distance, get_type(point1), get_type(point2));
+  }
+
+  template<typename Window>
+  static double get_maximum(const Window& window) {
+    return Varphi::get_maximum(window);
   }
 };
 
