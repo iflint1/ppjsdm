@@ -131,6 +131,11 @@ public:
     return delta_dispersion;
   }
 
+  template<typename Window>
+  double get_maximum(const Window&) const {
+    return saturation_;
+  }
+
 private:
   R_xlen_t dim_;
   std::vector<double> square_radii_;

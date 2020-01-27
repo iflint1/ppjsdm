@@ -4,6 +4,7 @@
 #include <Rcpp.h>
 #include <Rinternals.h>
 
+#include <algorithm> // std::find
 #include <iterator> // std::iterator_traits, std::next
 #include <utility> // std::forward
 
@@ -78,7 +79,7 @@ inline bool empty(const Configuration& configuration) {
 // TODO: Does not work well with configuration wrapper class.
 template <typename Configuration, typename Point>
 inline bool remove_point(Configuration& configuration, const Point& point) {
-  auto to_be_erased(std::find_if(configuration.begin(), configuration.end(), point));
+  auto to_be_erased(std::find(configuration.begin(), configuration.end(), point));
   if(to_be_erased != configuration.end()) {
     configuration.erase(to_be_erased);
     return true;
