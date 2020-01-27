@@ -1,16 +1,16 @@
 #include <Rcpp.h>
 #include <Rinternals.h>
 
-#include "configuration/configuration_manipulation.h"
-#include "configuration/configuration_wrapper.h"
-#include "configuration/get_number_points.h"
-#include "phi_dispersion_model/compute_phi_dispersion.h"
-#include "point/point_manipulation.h"
-#include "simulation/rbinomialpp_single.h"
-#include "utility/construct_if_missing.h"
-#include "utility/im_wrapper.h"
-#include "utility/size_t.h"
-#include "utility/window_utilities.h"
+#include "configuration/configuration_manipulation.hpp"
+#include "configuration/configuration_wrapper.hpp"
+#include "configuration/get_number_points.hpp"
+#include "phi_dispersion_model/compute_phi_dispersion.hpp"
+#include "point/point_manipulation.hpp"
+#include "simulation/rbinomialpp_single.hpp"
+#include "utility/construct_if_missing.hpp"
+#include "utility/im_wrapper.hpp"
+#include "utility/size_t.hpp"
+#include "utility/window_utilities.hpp"
 
 #include <string> // std::string, std::to_string
 #include <vector> // std::vector

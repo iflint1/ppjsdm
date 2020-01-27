@@ -4,7 +4,7 @@
 #include <Rinternals.h>
 #include <Rmath.h>
 
-#include "rbinomialpp_single.h"
+#include "rbinomialpp_single.hpp"
 
 #include <vector> // std::vector
 

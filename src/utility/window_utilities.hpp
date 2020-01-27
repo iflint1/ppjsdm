@@ -4,8 +4,8 @@
 #include <Rcpp.h>
 #include <Rinternals.h>
 
-#include "../point/point_manipulation.h"
-#include "../utility/im_wrapper.h"
+#include "../point/point_manipulation.hpp"
+#include "../utility/im_wrapper.hpp"
 
 #include <string> // std::string
 

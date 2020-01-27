@@ -1,9 +1,9 @@
 #ifndef INCLUDE_PPJSDM_GET_NUMBER_POINTS
 #define INCLUDE_PPJSDM_GET_NUMBER_POINTS
 
-#include "../configuration/configuration_manipulation.h"
-#include "../point/point_manipulation.h"
-#include "../utility/size_t.h"
+#include "../configuration/configuration_manipulation.hpp"
+#include "../point/point_manipulation.hpp"
+#include "../utility/size_t.hpp"
 
 #include <vector> // std::vector
 

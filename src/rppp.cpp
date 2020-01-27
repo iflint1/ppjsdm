@@ -1,18 +1,18 @@
 #include <Rcpp.h>
 #include <Rinternals.h>
 
-#include "configuration/configuration_wrapper.h"
-#include "configuration/make_R_configuration.h"
+#include "configuration/configuration_wrapper.hpp"
+#include "configuration/make_R_configuration.hpp"
 
-#include "simulation/rppp_single.h"
+#include "simulation/rppp_single.hpp"
 
-#include "utility/call_on_list_or_vector.h"
+#include "utility/call_on_list_or_vector.hpp"
 
-#include "utility/construct_if_missing.h"
-#include "utility/get_list_or_first_element.h"
-#include "utility/get_number_types.h"
-#include "utility/make_default_types.h"
-#include "utility/window_utilities.h"
+#include "utility/construct_if_missing.hpp"
+#include "utility/get_list_or_first_element.hpp"
+#include "utility/get_number_types.hpp"
+#include "utility/make_default_types.hpp"
+#include "utility/window_utilities.hpp"
 
 template<typename Window, typename Lambda>
 inline SEXP rppp_helper(const Window& window, const Lambda& lambda, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {

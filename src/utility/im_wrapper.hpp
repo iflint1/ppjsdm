@@ -4,7 +4,7 @@
 #include <Rcpp.h>
 #include <Rinternals.h>
 
-#include "../utility/size_t.h"
+#include "../utility/size_t.hpp"
 
 #include <algorithm> // std::max, std::min
 #include <cmath> // std::round

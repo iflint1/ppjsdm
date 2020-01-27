@@ -1,7 +1,7 @@
 #ifndef INCLUDE_PPJSDM_PHI_DISTANCE
 #define INCLUDE_PPJSDM_PHI_DISTANCE
 
-#include "../point/point_manipulation.h"
+#include "../point/point_manipulation.hpp"
 
 #include <cmath> // std::sqrt
 #include <utility> // std::forward

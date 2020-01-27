@@ -3,12 +3,12 @@
 
 #include <Rcpp.h>
 
-#include "compute_phi_distance.h"
-#include "../configuration/configuration_manipulation.h"
-#include "../configuration/get_number_points.h"
-#include "../point/point_manipulation.h"
-#include "../utility/im_wrapper.h"
-#include "../utility/size_t.h"
+#include "compute_phi_distance.hpp"
+#include "../configuration/configuration_manipulation.hpp"
+#include "../configuration/get_number_points.hpp"
+#include "../point/point_manipulation.hpp"
+#include "../utility/im_wrapper.hpp"
+#include "../utility/size_t.hpp"
 
 #include <cmath> // std::exp, std::log
 #include <limits> // std::numeric_limits

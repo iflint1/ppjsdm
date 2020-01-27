@@ -1,6 +1,6 @@
 #include <Rcpp.h>
 
-#include "phi_dispersion_model/compute_phi_dispersion.h"
+#include "phi_dispersion_model/compute_phi_dispersion.hpp"
 
 //' Show the authorised models.
 //'

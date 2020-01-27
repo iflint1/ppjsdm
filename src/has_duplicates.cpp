@@ -1,8 +1,8 @@
 #include <Rcpp.h>
 
-#include "configuration/configuration_manipulation.h"
-#include "configuration/configuration_wrapper.h"
-#include "point/point_manipulation.h"
+#include "configuration/configuration_manipulation.hpp"
+#include "configuration/configuration_wrapper.hpp"
+#include "point/point_manipulation.hpp"
 
 #include <algorithm> // std::sort, std::unique
 #include <vector> // std::vector
