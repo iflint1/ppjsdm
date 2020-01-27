@@ -94,11 +94,6 @@ struct configuration_manipulation<Configuration_wrapper>: public configuration_m
     configuration.erase(index);
     return point;
   }
-
-  static inline auto remove_random_point(Configuration_wrapper& configuration) {
-    const auto index(Rcpp::sample(size(configuration), 1, false, R_NilValue, false)[0]);
-    return remove_point_by_index(configuration, index);
-  }
 };
 
 } // namespace traits

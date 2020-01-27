@@ -1,7 +1,10 @@
 #ifndef INCLUDE_PPJSDM_CONFIGURATION_MANIPULATION
 #define INCLUDE_PPJSDM_CONFIGURATION_MANIPULATION
 
-#include <iterator> // std::next
+#include <Rcpp.h>
+#include <Rinternals.h>
+
+#include <iterator> // std::iterator_traits, std::next
 #include <utility> // std::forward
 
 namespace ppjsdm {
@@ -29,12 +32,6 @@ struct configuration_manipulation_defaults {
     configuration.erase(iterator);
     return point;
   }
-
-  static inline auto remove_random_point(Configuration& configuration) {
-    using difference_type = typename std::iterator_traits<decltype(configuration.begin())>::difference_type;
-    const difference_type index(Rcpp::sample(size(configuration), 1, false, R_NilValue, false)[0]);
-    return remove_point_by_index(configuration, index);
-  }
 };
 
 template<typename Configuration>
@@ -58,13 +55,15 @@ inline auto remove_point_by_index(Configuration& configuration, R_xlen_t index) 
 }
 
 template<typename Configuration>
-inline auto remove_random_point(Configuration& configuration) {
-  return traits::configuration_manipulation<Configuration>::remove_random_point(configuration);
+inline auto size(const Configuration& configuration) {
+  return traits::configuration_manipulation<Configuration>::size(configuration);
 }
 
 template<typename Configuration>
-inline auto size(const Configuration& configuration) {
-  return traits::configuration_manipulation<Configuration>::size(configuration);
+inline auto remove_random_point(Configuration& configuration) {
+  using difference_type = typename std::iterator_traits<decltype(configuration.begin())>::difference_type;
+  const difference_type index(Rcpp::sample(size(configuration), 1, false, R_NilValue, false)[0]);
+  return remove_point_by_index(configuration, index);
 }
 
 } // namespace ppjsdm
