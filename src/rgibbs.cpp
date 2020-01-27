@@ -7,7 +7,7 @@
 
 #include "point/point_manipulation.hpp"
 
-#include "simulation/simulate_metropolis_hastings.hpp"
+#include "simulation/metropolis_hastings.hpp"
 
 #include "utility/call_on_list_or_vector.hpp"
 #include "utility/construct_if_missing.hpp"
