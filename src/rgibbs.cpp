@@ -7,7 +7,7 @@
 
 #include "point/point_manipulation.hpp"
 
-#include "simulation/metropolis_hastings.hpp"
+#include "simulation/coupling_from_the_past.hpp"
 
 #include "utility/call_on_list_or_vector.hpp"
 #include "utility/construct_if_missing.hpp"
@@ -19,11 +19,11 @@
 #include <vector> // std::vector
 
 template<typename Model, typename Window>
-inline SEXP rgibbs_helper(const Model& model, const Window& window, R_xlen_t steps, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
+inline SEXP rgibbs_helper(const Model& model, const Window& window, R_xlen_t, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
   Rcpp::List samples(nsim);
 
   for(R_xlen_t i(0); i < nsim; ++i) {
-    const auto sample(ppjsdm::simulate_metropolis_hastings<std::vector<ppjsdm::Marked_point>>(model, window, steps, point_types));
+    const auto sample(ppjsdm::simulate_coupling_from_the_past<std::vector<ppjsdm::Marked_point>>(model, window, point_types));
     samples[i] = ppjsdm::make_R_configuration(sample, types);
   }
 

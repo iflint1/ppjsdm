@@ -10,6 +10,7 @@
 #include "../utility/im_wrapper.hpp"
 #include "../utility/size_t.hpp"
 
+#include <algorithm> // std::max
 #include <cmath> // std::exp, std::log, std::fabs
 #include <limits> // std::numeric_limits
 #include <type_traits> // std::remove_const, std::remove_cv
@@ -272,16 +273,16 @@ public:
   auto get_dominating_intensity(const Window& window, R_xlen_t number_types) const {
     std::vector<double> dominating_intensity(number_types);
     for(R_xlen_t i(0); i < number_types; ++i) {\
-      if(nu_[i] != 0) {
+      if(nu_[i] != 1.) {
         Rcpp::stop("Trying to get the dominating intensity of a point process with unbounded intensity.");
       }
       double inner_product(0);
       for(R_xlen_t j(0); j < number_types; ++j) {
-        inner_product += std::fabs(alpha_(i, j)) * Varphi::get_maximum(window);
+        inner_product += std::fabs(alpha_(j, i)) * Varphi::get_maximum(window);
       }
       for(decltype(covariates_.size()) j(0); j < covariates_.size(); ++j) {
         const auto bounds(covariates_[j].bounds());
-        inner_product += std::fabs(coefs_(i, j)) * std::max(bounds.first, bounds.second);
+        inner_product += std::fabs(coefs_(j, i)) * std::max(std::fabs(bounds.first), std::fabs(bounds.second));
       }
       dominating_intensity[i] = lambda_[i] * std::exp(inner_product);
     }

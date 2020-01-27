@@ -28,7 +28,7 @@ public:
       if (unif_rand() * (beta + static_cast<decltype(beta)>(ppjsdm::size(points_not_in_last) + ppjsdm::size(last_configuration_))) <= beta) {
         insert_uniform_point_in_configuration_and_update_chain(window, points_not_in_last, point_types);
       } else {
-        if(unif_rand() * ppjsdm::size(last_configuration_) + ppjsdm::size(points_not_in_last) < ppjsdm::size(last_configuration_)) {  // random point chosen in last_configuration_
+        if(unif_rand() * static_cast<double>(ppjsdm::size(last_configuration_) + ppjsdm::size(points_not_in_last)) < ppjsdm::size(last_configuration_)) {  // random point chosen in last_configuration_
           delete_random_point_in_configuration_and_update_chain(last_configuration_);
           if(empty(last_configuration_)) {
             last_configuration_ = points_not_in_last;
@@ -59,7 +59,7 @@ public:
 
   template <typename Function>
   void iterate_forward_in_time(const Function& f) {
-    for (auto n(static_cast<long>(chain_.size()) - 1); n >= 0; --n) {
+    for(auto n(static_cast<long>(chain_.size()) - 1); n >= 0; --n) {
       const auto current(chain_[static_cast<std::size_t>(n)]);
       f(std::get<1>(current), std::get<0>(current), std::get<2>(current));
     }
