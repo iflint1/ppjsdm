@@ -285,7 +285,7 @@ public:
   template<typename Window>
   auto get_dominating_intensity(const Window& window, R_xlen_t number_types) const {
     std::vector<double> dominating_intensity(number_types);
-    for(R_xlen_t i(0); i < number_types; ++i) {\
+    for(R_xlen_t i(0); i < number_types; ++i) {
       if(nu_[i] != 1.) {
         Rcpp::stop("Trying to get the dominating intensity of a point process with unbounded intensity.");
       }

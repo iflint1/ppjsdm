@@ -11,7 +11,7 @@
 namespace ppjsdm {
 
 template<typename Configuration, typename Model, typename Window>
-inline auto simulate_metropolis_hastings(const Model& model, const Window& window, unsigned long long int steps, R_xlen_t point_types) {
+inline auto simulate_metropolis_hastings(const Model& model, const Window& window, unsigned long long int steps, R_xlen_t number_types) {
   const auto volume(window.volume());
   constexpr double prob(0.5);
   using size_t = size_t<Configuration>;
@@ -25,12 +25,12 @@ inline auto simulate_metropolis_hastings(const Model& model, const Window& windo
     const auto u(unif_rand());
     const auto v(unif_rand());
     if(u <= prob) {
-      const R_xlen_t type(Rcpp::sample(point_types, 1, false, R_NilValue, false)[0]);
-      const auto point(window.sample(type));
+      const R_xlen_t random_type(Rcpp::sample(number_types, 1, false, R_NilValue, false)[0]);
+      const auto point(window.sample(random_type));
 
       // TODO: You can avoid taking the exp by reorganising the ratio, and sampling an exponential r.v. instead.
-      const auto papangelou(model.compute_papangelou(points, point, point_types));
-      const auto birth_ratio(papangelou * (1 - prob) * volume * point_types / (prob * (1 + total_number)));
+      const auto papangelou(model.compute_papangelou(points, point, number_types));
+      const auto birth_ratio(papangelou * (1 - prob) * volume * number_types / (prob * (1 + total_number)));
 
       if(v <= birth_ratio) {
         add_point(points, point);
@@ -40,8 +40,8 @@ inline auto simulate_metropolis_hastings(const Model& model, const Window& windo
       if(total_number != 0) {
         const auto saved_point(remove_random_point(points));
 
-        const auto papangelou(model.compute_papangelou(points, saved_point, point_types));
-        const auto death_ratio(prob * total_number / (point_types * (1 - prob) * volume * papangelou));
+        const auto papangelou(model.compute_papangelou(points, saved_point, number_types));
+        const auto death_ratio(prob * total_number / (number_types * (1 - prob) * volume * papangelou));
         if(v <= death_ratio) {
           --total_number;
         } else {
