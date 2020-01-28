@@ -266,7 +266,20 @@ public:
       inner_product += coefs_(i, point_type) * covariates_[i](get_x(point), get_y(point));
     }
     return lambda_[point_type] * std::exp(inner_product
-            + (1 - nu_[point_type]) * std::log(get_number_points(configuration, point_type) + 1));
+                                            + (1 - nu_[point_type]) * std::log(get_number_points(configuration, point_type) + 1));
+  }
+
+  template<typename Configuration, typename Point, typename Other>
+  double compute_papangelou_conditional_on_value(const Configuration& configuration,
+                            const Point& point,
+                            const Other& other,
+                            double,
+                            R_xlen_t number_types) const {
+    Configuration copy(configuration);
+    for(const auto& p: other) {
+      add_point(copy, p);
+    }
+    return compute_papangelou(copy, point, number_types);
   }
 
   template<typename Window>

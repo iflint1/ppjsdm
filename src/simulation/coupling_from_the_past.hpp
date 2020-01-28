@@ -21,15 +21,21 @@ inline auto get_integral_of_dominating_intensity(const Lambda& dominating_intens
   return integral / static_cast<double>(number_types);
 }
 
-template<typename Configuration, typename Chain, typename Model>
-std::pair<bool, Configuration> update_LU_and_check_coalescence(Chain& chain, const Model& model, R_xlen_t number_types) {
+template<typename Configuration, typename Chain, typename Model, typename Lambda>
+std::pair<bool, Configuration> update_LU_and_check_coalescence(Chain& chain, const Model& model, const Lambda& dominating_intensity, R_xlen_t number_types) {
   Configuration points_not_in_L(chain.get_last_configuration()), L;  // U starts with the end value of Z, L is an empty point process
-  chain.iterate_forward_in_time([&points_not_in_L, &L, &model, number_types](auto&& point, bool is_birth, auto mark) {
+  chain.iterate_forward_in_time([&points_not_in_L, &L, &model, &dominating_intensity, number_types](auto&& point, bool is_birth, auto mark) {
     if(is_birth) {
-      const auto papangelou_L(model.compute_papangelou(L, point, number_types));
-      if(papangelou_L > mark) {
-        const auto papangelou_U(model.compute_papangelou(points_not_in_L, point, number_types) * papangelou_L);
-        if(papangelou_U > mark) {
+      const auto normalized_papangelou_L(model.compute_papangelou(L, point, number_types) / dominating_intensity[get_type(point)]);
+      if(normalized_papangelou_L < 0 || normalized_papangelou_L > 1) {
+        Rcpp::stop("Did not correctly normalize the Papangelou intensity");
+      }
+      if(normalized_papangelou_L > mark) {
+        const auto normalized_papangelou_U(model.compute_papangelou_conditional_on_value(points_not_in_L, point, L, normalized_papangelou_L, number_types) / dominating_intensity[get_type(point)]);
+        if(normalized_papangelou_U < 0 || normalized_papangelou_U > 1) {
+          Rcpp::stop("Did not correctly normalize the Papangelou intensity");
+        }
+        if(normalized_papangelou_U > mark) {
           add_point(L, std::forward<decltype(point)>(point));
         } else {
           add_point(points_not_in_L, std::forward<decltype(point)>(point));
@@ -54,7 +60,7 @@ inline auto simulate_coupling_from_the_past(const Model& model, const Window& wi
   const auto integral_of_dominating_intensity(detail::get_integral_of_dominating_intensity(dominating_intensity, window, number_types));
   const auto T0(Z.extend_until_T0(integral_of_dominating_intensity, window, number_types));
   while(true) {
-    const auto coalescence(detail::update_LU_and_check_coalescence<Configuration>(Z, model, number_types));
+    const auto coalescence(detail::update_LU_and_check_coalescence<Configuration>(Z, model, dominating_intensity, number_types));
     if(coalescence.first) {
       return coalescence.second;
     }

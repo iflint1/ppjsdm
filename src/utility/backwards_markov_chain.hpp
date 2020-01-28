@@ -25,10 +25,10 @@ public:
     Configuration points_not_in_last{};
     std::size_t T0(1);
     while(true) {
-      if (unif_rand() * (beta + static_cast<decltype(beta)>(ppjsdm::size(points_not_in_last) + ppjsdm::size(last_configuration_))) <= beta) {
+      if(unif_rand() * (beta + static_cast<double>(ppjsdm::size(points_not_in_last) + ppjsdm::size(last_configuration_))) <= beta) {
         insert_uniform_point_in_configuration_and_update_chain(window, points_not_in_last, point_types);
       } else {
-        if(unif_rand() * static_cast<double>(ppjsdm::size(last_configuration_) + ppjsdm::size(points_not_in_last)) < ppjsdm::size(last_configuration_)) {  // random point chosen in last_configuration_
+        if(unif_rand() * static_cast<double>(ppjsdm::size(last_configuration_) + ppjsdm::size(points_not_in_last)) < static_cast<double>(ppjsdm::size(last_configuration_))) {  // random point chosen in last_configuration_
           delete_random_point_in_configuration_and_update_chain(last_configuration_);
           if(empty(last_configuration_)) {
             last_configuration_ = points_not_in_last;
@@ -42,10 +42,10 @@ public:
     }
   }
 
-  template <typename Window, typename I, typename U>
-  void extend_backwards(I number_extensions, U beta, Window& window, R_xlen_t point_types) {
+  template<typename Window, typename I>
+  void extend_backwards(I number_extensions, double beta, Window& window, R_xlen_t point_types) {
     while(number_extensions--) {
-      if(unif_rand() * (beta + static_cast<decltype(beta)>(ppjsdm::size(last_configuration_))) <= beta) {
+      if(unif_rand() * (beta + static_cast<double>(ppjsdm::size(last_configuration_))) <= beta) {
         insert_uniform_point_in_configuration_and_update_chain(window, last_configuration_, point_types);
       } else {
         delete_random_point_in_configuration_and_update_chain(last_configuration_);
@@ -57,7 +57,7 @@ public:
     return last_configuration_;
   }
 
-  template <typename Function>
+  template<typename Function>
   void iterate_forward_in_time(const Function& f) {
     for(auto n(static_cast<long>(chain_.size()) - 1); n >= 0; --n) {
       const auto current(chain_[static_cast<std::size_t>(n)]);
