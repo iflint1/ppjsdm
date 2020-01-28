@@ -320,13 +320,13 @@ template<typename F>
 inline auto call_on_papangelou(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, const F& f) {
   const auto model_string(model[0]);
   if(model_string == models[0]) {
-    return f(Varphi_model_papangelou<varphi::Varphi_model<varphi::Identity>>{});
+    return f(Varphi_model_papangelou<varphi::Varphi<varphi::Identity>>{});
   } else if(model_string == models[1]) {
-    return f(Varphi_model_papangelou<varphi::Varphi_model<varphi::Strauss>>(radius));
+    return f(Varphi_model_papangelou<varphi::Varphi<varphi::Strauss>>(radius));
   } else if(model_string == models[2]) {
     return f(Geyer_papangelou(radius, 2.0));
   } else if(model_string == models[3]) {
-    return f(Nearest_neighbour_papangelou<varphi::Varphi_model<varphi::Identity>>{});
+    return f(Nearest_neighbour_papangelou<varphi::Varphi<varphi::Identity>>{});
   } else {
     Rcpp::stop("Incorrect model entered.\n");
   }

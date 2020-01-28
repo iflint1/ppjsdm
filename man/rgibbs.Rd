@@ -12,7 +12,7 @@ rgibbs(
   covariates = NULL,
   coefs = NULL,
   radius = NULL,
-  steps = 30000,
+  steps = 1e+05,
   nsim = 1,
   types = NULL,
   model = "identity",

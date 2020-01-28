@@ -57,23 +57,23 @@ private:
   std::vector<double> square_radii_;
 };
 
-template<typename Varphi>
-class Varphi_model: public Varphi {
+template<typename V>
+class Varphi: public V {
 public:
   template<typename... Args>
-  Varphi_model(Args&&... args): Varphi(std::forward<Args>(args)...) {}
+  Varphi(Args&&... args): V(std::forward<Args>(args)...) {}
 
   template<typename Point>
   double compute_phi_distance(const Point& point1, const Point& point2) const {
     const auto delta_x(get_x(point1) - get_x(point2));
     const auto delta_y(get_y(point1) - get_y(point2));
     const auto square_distance(delta_x * delta_x + delta_y * delta_y);
-    return Varphi::apply(square_distance, get_type(point1), get_type(point2));
+    return V::apply(square_distance, get_type(point1), get_type(point2));
   }
 
   template<typename Window>
   static double get_maximum(const Window& window) {
-    return Varphi::get_maximum(window);
+    return V::get_maximum(window);
   }
 };
 
