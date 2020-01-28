@@ -8,6 +8,7 @@
 #include "point/point_manipulation.hpp"
 
 #include "simulation/coupling_from_the_past.hpp"
+#include "simulation/metropolis_hastings.hpp"
 
 #include "utility/call_on_list_or_vector.hpp"
 #include "utility/construct_if_missing.hpp"
@@ -19,11 +20,23 @@
 #include <vector> // std::vector
 
 template<typename Model, typename Window>
-inline SEXP rgibbs_helper(const Model& model, const Window& window, R_xlen_t, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
+inline SEXP rgibbs_helper(const Model& model, const Window& window, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
   Rcpp::List samples(nsim);
 
   for(R_xlen_t i(0); i < nsim; ++i) {
     const auto sample(ppjsdm::simulate_coupling_from_the_past<std::vector<ppjsdm::Marked_point>>(model, window, point_types));
+    samples[i] = ppjsdm::make_R_configuration(sample, types);
+  }
+
+  return ppjsdm::get_list_or_first_element(samples, nsim, drop);
+}
+
+template<typename Model, typename Window>
+inline SEXP rgibbs_helper(const Model& model, const Window& window, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types, R_xlen_t steps) {
+  Rcpp::List samples(nsim);
+
+  for(R_xlen_t i(0); i < nsim; ++i) {
+    const auto sample(ppjsdm::simulate_metropolis_hastings<std::vector<ppjsdm::Marked_point>>(model, window, steps, point_types));
     samples[i] = ppjsdm::make_R_configuration(sample, types);
   }
 
@@ -48,7 +61,12 @@ SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP nu, SEXP covariates, 
     return ppjsdm::call_on_list_or_vector(lambda, [alpha, lambda, nu, coefs, covariates, radius, steps, nsim, types, model, drop, point_types, &w](const auto& l) {
       return ppjsdm::call_on_list_or_vector(nu, [alpha, lambda, nu, coefs, covariates, radius, steps, nsim, types, model, drop, point_types, &w, &l](const auto& n) {
         return ppjsdm::call_on_model(model, alpha, l, n, coefs, covariates, radius, [&w, steps, nsim, types, drop, point_types](const auto& model){
-          return rgibbs_helper(model, w, steps, nsim, types, drop, point_types);
+          if(steps == 0) {
+            return rgibbs_helper(model, w, nsim, types, drop, point_types);
+          } else {
+            return rgibbs_helper(model, w, nsim, types, drop, point_types, steps);
+          }
+
         });
       });
     });

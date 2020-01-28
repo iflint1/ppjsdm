@@ -297,7 +297,11 @@ public:
         const auto bounds(covariates_[j].bounds());
         inner_product += std::fabs(coefs_(j, i)) * std::max(std::fabs(bounds.first), std::fabs(bounds.second));
       }
-      dominating_intensity[i] = lambda_[i] * std::exp(inner_product);
+      const auto value(lambda_[i] * std::exp(inner_product));
+      if(std::isinf(value)) {
+        Rcpp::stop("Infinite value obtained as the bound to the Papangelou intensity.");
+      }
+      dominating_intensity[i] = value;
     }
     return dominating_intensity;
   }

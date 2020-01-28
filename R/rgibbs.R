@@ -11,7 +11,8 @@
 #' @param coefs Fitted coefficients related to covariates. Default is square matrix of zeroes of the same
 #' number of rows/columns as the covariates.
 #' @param radius Symmetric matrix of interaction radii. Filled by zeroes by default;
-#' @param steps Number of steps in the Metropolis algorithm. Default is 30000.
+#' @param steps Number of steps in the Metropolis algorithm. If `steps = 0`, uses the coupling from the past algorithm instead.
+#' Default is 0.
 #' @param nsim Number of samples to generate. Default is 1.
 #' @param types Types of the points. Default is a vector (type1, type2, ...) of same size as n.
 #' @param model String representing the model to simulate from. You can check the currently authorised models with a call to `show_model()`.
@@ -24,7 +25,7 @@ rgibbs <- function(window = NULL,
                    covariates = NULL,
                    coefs = NULL,
                    radius = NULL,
-                   steps = 100000,
+                   steps = 0,
                    nsim = 1,
                    types = NULL,
                    model = "identity",
