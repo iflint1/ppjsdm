@@ -12,7 +12,7 @@ rgibbs(
   covariates = NULL,
   coefs = NULL,
   radius = NULL,
-  steps = 1e+05,
+  steps = 0,
   nsim = 1,
   types = NULL,
   model = "identity",
@@ -37,7 +37,8 @@ number of rows/columns as the covariates.}
 
 \item{radius}{Symmetric matrix of interaction radii. Filled by zeroes by default;}
 
-\item{steps}{Number of steps in the Metropolis algorithm. Default is 30000.}
+\item{steps}{Number of steps in the Metropolis algorithm. If `steps = 0`, uses the coupling from the past algorithm instead.
+Default is 0.}
 
 \item{nsim}{Number of samples to generate. Default is 1.}
 

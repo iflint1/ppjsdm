@@ -1,5 +1,3 @@
-#TODO: Add benchmark of this vs ppm.
-
 #' Fit a multivariate Gibbs model to a dataset.
 #'
 #' @param configuration_list A single configuration or a list of configurations assumed to be drawn from the multivariate Gibbs.
@@ -30,10 +28,14 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   })
   if(use_glmnet) {
     fits <- lapply(gibbsm_data_list, function(gibbsm_data) {
+      # regressors <- gibbsm_data$regressors
+      # nregressors <- ncol(regressors)
+      # pfactor <- rep(1, nregressors)
+      # pfactor[startsWith(colnames(regressors), "log_lambda")] <- 0
       glmnet(x = gibbsm_data$regressors,
              y = gibbsm_data$response,
              offset = gibbsm_data$offset,
-             alpha = 0.9,
+             alpha = 0.9, # For some reason > 0.9 gives bad results.
              intercept = FALSE,
              family = "binomial")
     })
@@ -46,10 +48,10 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   } else {
     fits <- lapply(gibbsm_data_list, function(gibbsm_data) {
       g <- glm.fit(x = gibbsm_data$regressors,
-              y = gibbsm_data$response,
-              offset = gibbsm_data$offset,
-              intercept = FALSE,
-              family = binomial())
+                   y = gibbsm_data$response,
+                   offset = gibbsm_data$offset,
+                   intercept = FALSE,
+                   family = binomial())
       # Note: glm.fit does not correctly set the class,
       # so the user cannot use `glm` methods...
       class(g) <- c(g$class, c("glm", "lm"))

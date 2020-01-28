@@ -50,8 +50,8 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 
   // Default-initialise the data
   Rcpp::IntegerMatrix response(Rcpp::no_init(length_configuration + length_D, 1));
-  Rcpp::NumericMatrix log_lambda(Rcpp::no_init(length_configuration + length_D, number_types));
   Rcpp::NumericMatrix rho_offset(Rcpp::no_init(length_configuration + length_D, 1));
+  Rcpp::NumericMatrix log_lambda(Rcpp::no_init(length_configuration + length_D, number_types));
   Rcpp::NumericMatrix alpha_input(Rcpp::no_init(length_configuration + length_D, number_types * (number_types + 1) / 2));
   Rcpp::NumericMatrix covariates_input(Rcpp::no_init(length_configuration + length_D, covariates_length * number_types));
 
