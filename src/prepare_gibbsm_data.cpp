@@ -55,6 +55,12 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   Rcpp::NumericMatrix alpha_input(Rcpp::no_init(length_configuration + length_D, number_types * (number_types + 1) / 2));
   Rcpp::NumericMatrix covariates_input(Rcpp::no_init(length_configuration + length_D, covariates_length * number_types));
 
+  // Make shift vector
+  Rcpp::NumericVector shift(Rcpp::no_init(number_types));
+  for(size_t j(0); j < number_types; ++j) {
+    shift[j] = -std::log(static_cast<double>(rho_times_volume[j]) / volume);
+  }
+
   // Set names.
   size_t index(0);
   Rcpp::CharacterVector alpha_names(Rcpp::no_init(alpha_input.ncol()));
@@ -167,7 +173,8 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 
   return Rcpp::List::create(Rcpp::Named("response") = response,
                             Rcpp::Named("offset") = rho_offset,
-                            Rcpp::Named("regressors") = regressors
+                            Rcpp::Named("regressors") = regressors,
+                            Rcpp::Named("shift") = shift
                             );
 }
 

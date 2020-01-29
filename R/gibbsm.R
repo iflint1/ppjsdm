@@ -27,35 +27,10 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   gibbsm_data_list <- lapply(configuration_list, function(configuration) {
     prepare_gibbsm_data(configuration, window, covariates, model, radius)
   })
-  if(use_glmnet) {
-    fits <- lapply(gibbsm_data_list, function(gibbsm_data) {
-      glmnet(x = gibbsm_data$regressors,
-             y = gibbsm_data$response,
-             offset = gibbsm_data$offset,
-             alpha = 0.5, # For some reason alpha > 0.9 gives bad results.
-             intercept = FALSE,
-             family = "binomial")
-    })
-    fits_coefficients <- lapply(fits, function(fit) coefficients(fit, s = 0))
-    cv_fits <- lapply(gibbsm_data_list, function(gibbsm_data) {
-      cv.glmnet(x = gibbsm_data$regressors,
-                y = gibbsm_data$response,
-                offset = gibbsm_data$offset)
-    })
-  } else {
-    fits <- lapply(gibbsm_data_list, function(gibbsm_data) {
-      g <- glm.fit(x = gibbsm_data$regressors,
-                   y = gibbsm_data$response,
-                   offset = gibbsm_data$offset,
-                   intercept = FALSE,
-                   family = binomial())
-      # Note: glm.fit does not correctly set the class,
-      # so the user cannot use `glm` methods...
-      class(g) <- c(g$class, c("glm", "lm"))
-      g
-    })
-    fits_coefficients <- lapply(fits, function(fit) coefficients(fit))
-  }
+  fitted <- fit_gibbs(gibbsm_data_list, use_glmnet)
+  fits <- fitted$fits
+  fits_coefficients <-fitted$coefficients
+  cv_fits <- fitted$cv
 
   number_configurations <- length(configuration_list)
 
