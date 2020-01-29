@@ -20,6 +20,7 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   if(inherits(configuration_list, "Configuration")) {
     configuration_list <- list(configuration_list)
   }
+
   # Make sure we're given a list of configurations.
   stopifnot(inherits(configuration_list[[1]], "Configuration"))
 
@@ -28,22 +29,18 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   })
   if(use_glmnet) {
     fits <- lapply(gibbsm_data_list, function(gibbsm_data) {
-      # regressors <- gibbsm_data$regressors
-      # nregressors <- ncol(regressors)
-      # pfactor <- rep(1, nregressors)
-      # pfactor[startsWith(colnames(regressors), "log_lambda")] <- 0
       glmnet(x = gibbsm_data$regressors,
              y = gibbsm_data$response,
              offset = gibbsm_data$offset,
-             alpha = 0.9, # For some reason > 0.9 gives bad results.
+             alpha = 0.5, # For some reason alpha > 0.9 gives bad results.
              intercept = FALSE,
              family = "binomial")
     })
     fits_coefficients <- lapply(fits, function(fit) coefficients(fit, s = 0))
     cv_fits <- lapply(gibbsm_data_list, function(gibbsm_data) {
-      glmnet::cv.glmnet(x = gibbsm_data$regressors,
-                        y = gibbsm_data$response,
-                        offset = gibbsm_data$offset)
+      cv.glmnet(x = gibbsm_data$regressors,
+                y = gibbsm_data$response,
+                offset = gibbsm_data$offset)
     })
   } else {
     fits <- lapply(gibbsm_data_list, function(gibbsm_data) {
