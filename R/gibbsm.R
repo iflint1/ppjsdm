@@ -28,9 +28,9 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
     prepare_gibbsm_data(configuration, window, covariates, model, radius)
   })
   fitted <- fit_gibbs(gibbsm_data_list, use_glmnet)
-  fits <- fitted$fits
-  fits_coefficients <-fitted$coefficients
-  cv_fits <- fitted$cv
+  fits <-  lapply(fitted, function(fit) fit$fit)
+  fits_coefficients <-lapply(fitted, function(fit) fit$coefficients)
+  cv_fits <- lapply(fitted, function(fit) fit$cv)
 
   number_configurations <- length(configuration_list)
 
@@ -81,20 +81,16 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
 
   if(number_configurations == 1) {
     fits <- fits[[1]]
+    fits_coefficients <- fits_coefficients[[1]]
     if(use_glmnet) {
       cv_fits <- cv_fits[[1]]
     }
   }
-  ret <- list(complete = fits)
+  ret <- list(complete = fits, coefficients = fits_coefficients)
   if(number_traits > 0) {
     ret <- append(list, list(traits = traits_fit))
   }
   if(use_glmnet) {
     ret <- append(ret, list(cv = cv_fits))
-  }
-  if(length(ret) == 1) {
-    ret[[1]]
-  } else {
-    ret
   }
 }

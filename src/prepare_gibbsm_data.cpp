@@ -83,7 +83,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   }
   Rcpp::CharacterVector log_lambda_names(Rcpp::no_init(number_types));
   for(size_t i(0); i < number_types; ++i) {
-    log_lambda_names[i] = std::string("log_lambda_") + std::to_string(i + 1);
+    log_lambda_names[i] = std::string("shifted_log_lambda") + std::to_string(i + 1);
   }
   Rcpp::colnames(log_lambda) = log_lambda_names;
   Rcpp::colnames(rho_offset) = Rcpp::wrap("rho");
