@@ -12,6 +12,7 @@
 #include "utility/size_t.hpp"
 #include "utility/window_utilities.hpp"
 
+#include <algorithm> // std::remove_if
 #include <string> // std::string, std::to_string
 #include <vector> // std::vector
 
@@ -45,8 +46,20 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     n = mult_by_four < 500 ? 500 : mult_by_four;
     length_rho_times_volume += n;
   }
-  const auto D(ppjsdm::rbinomialpp_single<Configuration>(window, rho_times_volume, number_types, length_rho_times_volume));
-  const auto length_D(length_rho_times_volume);
+  auto D(ppjsdm::rbinomialpp_single<std::vector<ppjsdm::Marked_point>>(window, rho_times_volume, number_types, length_rho_times_volume));
+
+
+  // Get rid of locations with an NA value for one of the covariates
+  D.erase(std::remove_if(D.begin(), D.end(), [&covariates, covariates_length](const auto& point) {
+    for(size_t j(0); j < covariates_length; ++j) {
+      const auto covariate(covariates[j](ppjsdm::get_x(point),  ppjsdm::get_y(point)));
+      if(R_IsNA(covariate)) {
+        return true;
+      }
+    }
+    return false;
+  }), D.end());
+  const size_t length_D(D.size());
 
   // Default-initialise the data
   Rcpp::IntegerMatrix response(Rcpp::no_init(length_configuration + length_D, 1));
@@ -106,18 +119,17 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
       point = D[i - length_configuration];
       dispersion = compute_delta_phi_dispersion(configuration, point, number_types, model, radius);
     }
-    Rcpp::NumericVector location{ppjsdm::get_x(point), ppjsdm::get_y(point)};
+
     const size_t type_index(ppjsdm::get_type(point));
 
     rho_offset(i, 0) = -std::log(static_cast<double>(rho_times_volume[type_index]) / volume);
     for(size_t j(0); j < covariates_length; ++j) {
       for(size_t k(0); k < number_types; ++k) {
         if(k == type_index) {
-          const auto covariate(covariates[j](location[0], location[1]));
-          // TODO: Is this really what I want? Might be better to clear up covariates first...
+          const auto covariate(covariates[j](ppjsdm::get_x(point),  ppjsdm::get_y(point)));
           // TODO: Might also be nice to write a warning in Im_wrapper when hitting NA values.
           if(R_IsNA(covariate)) {
-            covariates_input(i, j * number_types + k) = 0;
+            Rcpp::stop("One of the covariates' value is NA on one of the locations in the dataset.");
           } else {
             covariates_input(i, j * number_types + k) = covariate;
           }
