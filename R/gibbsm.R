@@ -93,4 +93,5 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   if(use_glmnet) {
     ret <- append(ret, list(cv = cv_fits))
   }
+  ret
 }
