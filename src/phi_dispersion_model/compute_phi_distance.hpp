@@ -17,7 +17,7 @@ public:
   }
 
   template<typename Window>
-  static double get_maximum(const Window& window) {
+  double get_maximum(const Window& window) const {
     return window.diameter();
   }
 };
@@ -49,7 +49,7 @@ public:
   }
 
   template<typename Window>
-  static double get_maximum(const Window&) {
+  double get_maximum(const Window&) const {
     return 1.;
   }
 private:
@@ -72,7 +72,7 @@ public:
   }
 
   template<typename Window>
-  static double get_maximum(const Window& window) {
+  double get_maximum(const Window& window) const {
     return V::get_maximum(window);
   }
 };

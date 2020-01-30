@@ -143,6 +143,43 @@ private:
   double saturation_;
 };
 
+// Note: Use public inheritance to benefit from EBO.
+template<typename Varphi>
+class Saturated_varphi_model_papangelou: public Varphi {
+public:
+  template<typename... Args>
+  Saturated_varphi_model_papangelou(double saturation, Args&&... args): Varphi(std::forward<Args>(args)...), saturation_(saturation) {}
+
+  template<typename Configuration, typename Point>
+  inline Rcpp::NumericVector compute(const Configuration& configuration,
+                                     const Point& point,
+                                     R_xlen_t number_types,
+                                     size_t<Configuration> number_points) const {
+    using size_t = size_t<Configuration>;
+    Rcpp::NumericVector delta_dispersion(number_types);
+    for(size_t i(0); i < number_points; ++i) {
+      const auto point_i(configuration[i]);
+      const auto type_i(get_type(point_i));
+      if(delta_dispersion[type_i] < saturation_) {
+        const auto new_delta_dispersion(delta_dispersion[type_i] + Varphi::compute_phi_distance(point_i, point));
+        if(new_delta_dispersion > saturation_) {
+          delta_dispersion[type_i] = saturation_;
+        } else {
+          delta_dispersion[type_i] = new_delta_dispersion;
+        }
+      }
+    }
+    return delta_dispersion;
+  }
+
+  template<typename Window>
+  double get_maximum(const Window&) const {
+    return saturation_;
+  }
+private:
+  double saturation_;
+};
+
 template<typename Varphi>
 class Nearest_neighbour_papangelou: public Varphi {
 public:
@@ -317,7 +354,8 @@ const constexpr char* const models[] = {
   "identity",
   "Strauss",
   "Geyer",
-  "neighbour"
+  "neighbour",
+  "saturated_identity"
 };
 
 template<typename F>
@@ -331,6 +369,8 @@ inline auto call_on_papangelou(Rcpp::CharacterVector model, Rcpp::NumericMatrix 
     return f(Geyer_papangelou(radius, 2.0));
   } else if(model_string == models[3]) {
     return f(Nearest_neighbour_papangelou<varphi::Varphi<varphi::Identity>>{});
+  } else if(model_string == models[4]) {
+    return f(Saturated_varphi_model_papangelou<varphi::Varphi<varphi::Identity>>(2.0));
   } else {
     Rcpp::stop("Incorrect model entered.\n");
   }
