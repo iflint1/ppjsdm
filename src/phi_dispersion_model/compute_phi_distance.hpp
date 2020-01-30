@@ -42,9 +42,9 @@ public:
 
   double apply(double square_distance, R_xlen_t i, R_xlen_t j) const {
     if(square_distance <= access_square_radii(i, j)) {
-      return 1.;
-    } else {
       return 0.;
+    } else {
+      return 1.;
     }
   }
 
@@ -69,6 +69,10 @@ public:
     const auto delta_y(get_y(point1) - get_y(point2));
     const auto square_distance(delta_x * delta_x + delta_y * delta_y);
     return V::apply(square_distance, get_type(point1), get_type(point2));
+  }
+
+  double varphi(double square_distance, R_xlen_t i, R_xlen_t j) const {
+    return V::apply(square_distance, i, j);
   }
 
   template<typename Window>

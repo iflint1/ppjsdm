@@ -148,7 +148,7 @@ template<typename Varphi>
 class Saturated_varphi_model_papangelou: public Varphi {
 public:
   template<typename... Args>
-  Saturated_varphi_model_papangelou(double saturation, Args&&... args): Varphi(std::forward<Args>(args)...), saturation_(saturation) {}
+  Saturated_varphi_model_papangelou(unsigned long long int saturation, Args&&... args): Varphi(std::forward<Args>(args)...), saturation_(saturation) {}
 
   template<typename Configuration, typename Point>
   inline Rcpp::NumericVector compute(const Configuration& configuration,
@@ -157,27 +157,35 @@ public:
                                      size_t<Configuration> number_points) const {
     using size_t = size_t<Configuration>;
     Rcpp::NumericVector delta_dispersion(number_types);
+    const auto point_type(get_type(point));
+    // TODO: Preallocate to maximum attainable size?
+    std::vector<std::vector<double>> square_distances(number_types);
     for(size_t i(0); i < number_points; ++i) {
       const auto point_i(configuration[i]);
       const auto type_i(get_type(point_i));
-      if(delta_dispersion[type_i] < saturation_) {
-        const auto new_delta_dispersion(delta_dispersion[type_i] + Varphi::compute_phi_distance(point_i, point));
-        if(new_delta_dispersion > saturation_) {
-          delta_dispersion[type_i] = saturation_;
-        } else {
-          delta_dispersion[type_i] = new_delta_dispersion;
-        }
+      const auto delta_x(get_x(point_i) - get_x(point));
+      const auto delta_y(get_y(point_i) - get_y(point));
+      square_distances[type_i].push_back(delta_x * delta_x + delta_y * delta_y);
+    }
+    for(decltype(number_types) i(0); i < number_types; ++i) {
+      auto current_square_distances(square_distances[i]);
+      std::sort(current_square_distances.begin(), current_square_distances.end());
+      const auto points_to_consider(current_square_distances.size() < saturation_
+                                      ? current_square_distances.size()
+                                      : saturation_);
+      for(decltype(saturation_) j(0); j < points_to_consider; ++j) {
+        delta_dispersion[i] += Varphi::varphi(current_square_distances[j], i, point_type);
       }
     }
     return delta_dispersion;
   }
 
   template<typename Window>
-  double get_maximum(const Window&) const {
-    return saturation_;
+  double get_maximum(const Window& window) const {
+    return static_cast<double>(saturation_) * Varphi::get_maximum(window);
   }
 private:
-  double saturation_;
+  unsigned long long int saturation_;
 };
 
 template<typename Varphi>
@@ -360,9 +368,9 @@ template<typename F>
 inline auto call_on_papangelou(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, const F& f) {
   const auto model_string(model[0]);
   if(model_string == models[0]) {
-    return f(Saturated_varphi_model_papangelou<varphi::Varphi<varphi::Identity>>(2.0));
+    return f(Saturated_varphi_model_papangelou<varphi::Varphi<varphi::Identity>>(5));
   } else if(model_string == models[1]) {
-    return f(Saturated_varphi_model_papangelou<varphi::Varphi<varphi::Strauss>>(2.0, radius));
+    return f(Saturated_varphi_model_papangelou<varphi::Varphi<varphi::Strauss>>(2, radius));
   } else if(model_string == models[2]) {
     return f(Nearest_neighbour_papangelou<varphi::Varphi<varphi::Identity>>{});
   }  else {
