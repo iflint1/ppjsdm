@@ -64,6 +64,7 @@ inline auto simulate_coupling_from_the_past(const Model& model, const Window& wi
     if(coalescence.first) {
       return coalescence.second;
     }
+    R_CheckUserInterrupt();
     Z.extend_backwards(T0, integral_of_dominating_intensity, window, number_types);
   }
 }
