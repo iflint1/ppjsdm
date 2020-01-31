@@ -20,6 +20,7 @@
 #include <string> // std::string, std::to_string
 #include <vector> // std::vector
 
+// TODO: Might be able to compute model once and for all according to string.
 template<typename Configuration>
 inline Rcpp::NumericVector compute_dispersion(const Configuration& configuration, const ppjsdm::Marked_point& point, int number_types, Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, R_xlen_t saturation) {
   return ppjsdm::call_on_papangelou(model, radius, saturation, [&configuration, &point, number_types](const auto& papangelou) {
