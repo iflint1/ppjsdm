@@ -12,7 +12,7 @@ namespace varphi {
 
 class Identity {
 public:
-  static double apply(double square_distance, R_xlen_t, R_xlen_t) {
+  static double apply(double square_distance, int, int) {
     return std::sqrt(square_distance);
   }
 
@@ -40,7 +40,7 @@ public:
     }
   }
 
-  double apply(double square_distance, R_xlen_t i, R_xlen_t j) const {
+  double apply(double square_distance, int i, int j) const {
     if(square_distance <= access_square_radii(i, j)) {
       return 0.;
     } else {
@@ -71,7 +71,7 @@ public:
     return V::apply(square_distance, get_type(point1), get_type(point2));
   }
 
-  double varphi(double square_distance, R_xlen_t i, R_xlen_t j) const {
+  double varphi(double square_distance, int i, int j) const {
     return V::apply(square_distance, i, j);
   }
 

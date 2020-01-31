@@ -8,7 +8,6 @@ rgibbs(
   window = NULL,
   alpha = NULL,
   lambda = NULL,
-  nu = NULL,
   covariates = NULL,
   coefs = NULL,
   radius = NULL,
@@ -25,9 +24,6 @@ rgibbs(
 \item{alpha}{Repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.}
 
 \item{lambda}{A vector representing the intensities of the point processes.
-Default is a vector of same size as types, filled with ones.}
-
-\item{nu}{A vector representing the dispersion of the number of points.
 Default is a vector of same size as types, filled with ones.}
 
 \item{covariates}{Covariates, with an empty list as a default.}

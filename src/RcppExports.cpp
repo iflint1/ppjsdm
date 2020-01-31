@@ -47,15 +47,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // rgibbs_cpp
-SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP nu, SEXP covariates, SEXP coefs, SEXP radius, R_xlen_t steps, R_xlen_t nsim, SEXP types, Rcpp::CharacterVector model, bool drop);
-RcppExport SEXP _ppjsdm_rgibbs_cpp(SEXP windowSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP nuSEXP, SEXP covariatesSEXP, SEXP coefsSEXP, SEXP radiusSEXP, SEXP stepsSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP modelSEXP, SEXP dropSEXP) {
+SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP coefs, SEXP radius, R_xlen_t steps, R_xlen_t nsim, SEXP types, Rcpp::CharacterVector model, bool drop);
+RcppExport SEXP _ppjsdm_rgibbs_cpp(SEXP windowSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP covariatesSEXP, SEXP coefsSEXP, SEXP radiusSEXP, SEXP stepsSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP modelSEXP, SEXP dropSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type window(windowSEXP);
     Rcpp::traits::input_parameter< SEXP >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< SEXP >::type lambda(lambdaSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type nu(nuSEXP);
     Rcpp::traits::input_parameter< SEXP >::type covariates(covariatesSEXP);
     Rcpp::traits::input_parameter< SEXP >::type coefs(coefsSEXP);
     Rcpp::traits::input_parameter< SEXP >::type radius(radiusSEXP);
@@ -64,7 +63,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type types(typesSEXP);
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type model(modelSEXP);
     Rcpp::traits::input_parameter< bool >::type drop(dropSEXP);
-    rcpp_result_gen = Rcpp::wrap(rgibbs_cpp(window, alpha, lambda, nu, covariates, coefs, radius, steps, nsim, types, model, drop));
+    rcpp_result_gen = Rcpp::wrap(rgibbs_cpp(window, alpha, lambda, covariates, coefs, radius, steps, nsim, types, model, drop));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -97,7 +96,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ppjsdm_has_duplicates", (DL_FUNC) &_ppjsdm_has_duplicates, 1},
     {"_ppjsdm_prepare_gibbsm_data", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data, 5},
     {"_ppjsdm_rbinomialpp", (DL_FUNC) &_ppjsdm_rbinomialpp, 5},
-    {"_ppjsdm_rgibbs_cpp", (DL_FUNC) &_ppjsdm_rgibbs_cpp, 12},
+    {"_ppjsdm_rgibbs_cpp", (DL_FUNC) &_ppjsdm_rgibbs_cpp, 11},
     {"_ppjsdm_rppp", (DL_FUNC) &_ppjsdm_rppp, 5},
     {"_ppjsdm_show_models", (DL_FUNC) &_ppjsdm_show_models, 0},
     {NULL, NULL, 0}
