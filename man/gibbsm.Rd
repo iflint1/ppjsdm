@@ -11,6 +11,7 @@ gibbsm(
   traits = list(),
   model = "identity",
   radius = NULL,
+  saturation = 5,
   print = TRUE,
   use_glmnet = TRUE
 )
@@ -27,6 +28,8 @@ gibbsm(
 \item{model}{String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_model()`.}
 
 \item{radius}{Interaction radius.}
+
+\item{saturation}{Saturation parameter of the point process.}
 
 \item{print}{Print the fitted coefficients?}
 

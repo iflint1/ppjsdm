@@ -11,6 +11,7 @@ rgibbs(
   covariates = NULL,
   coefs = NULL,
   radius = NULL,
+  saturation = 5,
   steps = 0,
   nsim = 1,
   types = NULL,
@@ -32,6 +33,8 @@ Default is a vector of same size as types, filled with ones.}
 number of rows/columns as the covariates.}
 
 \item{radius}{Symmetric matrix of interaction radii. Filled by zeroes by default;}
+
+\item{saturation}{Saturation parameter of the point process. Default is 5.}
 
 \item{steps}{Number of steps in the Metropolis algorithm. If `steps = 0`, uses the coupling from the past algorithm instead.
 Default is 0.}

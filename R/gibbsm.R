@@ -6,13 +6,14 @@
 #' @param traits Species' traits.
 #' @param model String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_model()`.
 #' @param radius Interaction radius.
+#' @param saturation Saturation parameter of the point process.
 #' @param print Print the fitted coefficients?
 #' @param use_glmnet Use `glmnet` instead of `glm`?
 #' @importFrom glmnet glmnet cv.glmnet
 #' @importFrom stats as.formula binomial coefficients glm.fit lm
 #' @importFrom spatstat as.im as.owin
 #' @export
-gibbsm <- function(configuration_list, window = Rectangle_window(), covariates = list(), traits = list(), model = "identity", radius = NULL, print = TRUE, use_glmnet = TRUE) {
+gibbsm <- function(configuration_list, window = Rectangle_window(), covariates = list(), traits = list(), model = "identity", radius = NULL, saturation = 2, print = TRUE, use_glmnet = TRUE) {
   # Make covariates im objects with proper names.
   covariates <- coerce_to_named_im_objects(covariates, "unnamed_covariate", window)
 
@@ -25,7 +26,7 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   stopifnot(inherits(configuration_list[[1]], "Configuration"))
 
   gibbsm_data_list <- lapply(configuration_list, function(configuration) {
-    prepare_gibbsm_data(configuration, window, covariates, model, radius)
+    prepare_gibbsm_data(configuration, window, covariates, model, radius, saturation)
   })
   fitted <- fit_gibbs(gibbsm_data_list, use_glmnet)
   fits <-  lapply(fitted, function(fit) fit$fit)

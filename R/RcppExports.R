@@ -11,8 +11,8 @@ has_duplicates <- function(configuration) {
     .Call('_ppjsdm_has_duplicates', PACKAGE = 'ppjsdm', configuration)
 }
 
-prepare_gibbsm_data <- function(configuration, window, covariates, model, radius = NULL) {
-    .Call('_ppjsdm_prepare_gibbsm_data', PACKAGE = 'ppjsdm', configuration, window, covariates, model, radius)
+prepare_gibbsm_data <- function(configuration, window, covariates, model, radius, saturation) {
+    .Call('_ppjsdm_prepare_gibbsm_data', PACKAGE = 'ppjsdm', configuration, window, covariates, model, radius, saturation)
 }
 
 #' Sample a binomial point processes
@@ -31,8 +31,8 @@ rbinomialpp <- function(window = NULL, n = NULL, nsim = 1L, types = NULL, drop =
     .Call('_ppjsdm_rbinomialpp', PACKAGE = 'ppjsdm', window, n, nsim, types, drop)
 }
 
-rgibbs_cpp <- function(window, alpha, lambda, covariates, coefs, radius, steps, nsim, types, model, drop) {
-    .Call('_ppjsdm_rgibbs_cpp', PACKAGE = 'ppjsdm', window, alpha, lambda, covariates, coefs, radius, steps, nsim, types, model, drop)
+rgibbs_cpp <- function(window, alpha, lambda, covariates, coefs, radius, saturation, steps, nsim, types, model, drop) {
+    .Call('_ppjsdm_rgibbs_cpp', PACKAGE = 'ppjsdm', window, alpha, lambda, covariates, coefs, radius, saturation, steps, nsim, types, model, drop)
 }
 
 #' Sample a Poisson point processes

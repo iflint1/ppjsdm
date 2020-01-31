@@ -9,6 +9,7 @@
 #' @param coefs Fitted coefficients related to covariates. Default is square matrix of zeroes of the same
 #' number of rows/columns as the covariates.
 #' @param radius Symmetric matrix of interaction radii. Filled by zeroes by default;
+#' @param saturation Saturation parameter of the point process. Default is 2.
 #' @param steps Number of steps in the Metropolis algorithm. If `steps = 0`, uses the coupling from the past algorithm instead.
 #' Default is 0.
 #' @param nsim Number of samples to generate. Default is 1.
@@ -22,6 +23,7 @@ rgibbs <- function(window = NULL,
                    covariates = NULL,
                    coefs = NULL,
                    radius = NULL,
+                   saturation = 2,
                    steps = 0,
                    nsim = 1,
                    types = NULL,
@@ -33,5 +35,5 @@ rgibbs <- function(window = NULL,
   # Make covariates im objects with proper names.
   covariates <- coerce_to_named_im_objects(covariates, "unnamed_covariate", window)
 
-  rgibbs_cpp(window, alpha, lambda, covariates, coefs, radius, steps, nsim, types, model, drop)
+  rgibbs_cpp(window, alpha, lambda, covariates, coefs, radius, saturation, steps, nsim, types, model, drop)
 }
