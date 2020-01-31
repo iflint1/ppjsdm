@@ -4,9 +4,13 @@
 #include "configuration/configuration_manipulation.hpp"
 #include "configuration/configuration_wrapper.hpp"
 #include "configuration/get_number_points.hpp"
+
 #include "point/point_manipulation.hpp"
+
 #include "saturated_varphi_model/model.hpp"
+
 #include "simulation/rbinomialpp_single.hpp"
+
 #include "utility/construct_if_missing.hpp"
 #include "utility/im_wrapper.hpp"
 #include "utility/size_t.hpp"
@@ -17,7 +21,7 @@
 #include <vector> // std::vector
 
 template<typename Configuration>
-inline Rcpp::NumericVector compute_delta_phi_dispersion(const Configuration& configuration, const ppjsdm::Marked_point& point, int number_types, Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, R_xlen_t saturation) {
+inline Rcpp::NumericVector compute_dispersion(const Configuration& configuration, const ppjsdm::Marked_point& point, int number_types, Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, R_xlen_t saturation) {
   return ppjsdm::call_on_papangelou(model, radius, saturation, [&configuration, &point, number_types](const auto& papangelou) {
     return papangelou.compute(configuration, point, number_types, ppjsdm::size(configuration));
   });
@@ -113,29 +117,23 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
       Configuration configuration_copy(configuration);
       ppjsdm::remove_point_by_index(configuration_copy, i);
 
-      dispersion = compute_delta_phi_dispersion(configuration_copy, point, number_types, model, radius, saturation);
+      dispersion = compute_dispersion(configuration_copy, point, number_types, model, radius, saturation);
     } else {
       response(i, 0) = 0;
       point = D[i - length_configuration];
-      dispersion = compute_delta_phi_dispersion(configuration, point, number_types, model, radius, saturation);
+      dispersion = compute_dispersion(configuration, point, number_types, model, radius, saturation);
     }
 
     const size_t type_index(ppjsdm::get_type(point));
 
     rho_offset(i, 0) = -std::log(static_cast<double>(rho_times_volume[type_index]) / volume);
     for(size_t j(0); j < covariates_length; ++j) {
+      const auto covariate(covariates[j](ppjsdm::get_x(point),  ppjsdm::get_y(point)));
+      if(R_IsNA(covariate)) {
+        Rcpp::stop("One of the covariates' value is NA on one of the locations in the dataset.");
+      }
       for(size_t k(0); k < number_types; ++k) {
-        if(k == type_index) {
-          const auto covariate(covariates[j](ppjsdm::get_x(point),  ppjsdm::get_y(point)));
-          // TODO: Might also be nice to write a warning in Im_wrapper when hitting NA values.
-          if(R_IsNA(covariate)) {
-            Rcpp::stop("One of the covariates' value is NA on one of the locations in the dataset.");
-          } else {
-            covariates_input(i, j * number_types + k) = covariate;
-          }
-        } else {
-          covariates_input(i, j * number_types + k) = 0;
-        }
+        covariates_input(i, j * number_types + k) = (k == type_index) ? covariate : 0;
       }
     }
     R_xlen_t index(0);
@@ -159,25 +157,26 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   }
 
   // TODO: Write rbind that also works with names?
+  // TODO: Might also be simpler to just construct regressors straight away
   Rcpp::NumericMatrix regressors(Rcpp::no_init(log_lambda.nrow(),
                                                log_lambda.ncol() + alpha_input.ncol() + covariates_input.ncol()));
   Rcpp::CharacterVector col_names(Rcpp::no_init(regressors.ncol()));
-  for(R_xlen_t j(0); j < regressors.ncol(); ++j) {
-    if(j < log_lambda.ncol()) {
-      col_names[j] = Rcpp::as<Rcpp::CharacterVector>(Rcpp::colnames(log_lambda))[j];
-      for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-        regressors(i, j) = log_lambda(i, j);
-      }
-    } else if(j < log_lambda.ncol() + alpha_input.ncol()) {
-      col_names[j] = Rcpp::as<Rcpp::CharacterVector>(Rcpp::colnames(alpha_input))[j - log_lambda.ncol()];
-      for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-        regressors(i, j) = alpha_input(i, j - log_lambda.ncol());
-      }
-    } else {
-      col_names[j] = Rcpp::as<Rcpp::CharacterVector>(Rcpp::colnames(covariates_input))[j - log_lambda.ncol() - alpha_input.ncol()];
-      for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-        regressors(i, j) = covariates_input(i, j - log_lambda.ncol() - alpha_input.ncol());
-      }
+  for(R_xlen_t j(0); j < log_lambda.ncol(); ++j) {
+    col_names[j] = Rcpp::as<Rcpp::CharacterVector>(Rcpp::colnames(log_lambda))[j];
+    for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+      regressors(i, j) = log_lambda(i, j);
+    }
+  }
+  for(R_xlen_t j(0); j < alpha_input.ncol(); ++j) {
+    col_names[j + log_lambda.ncol()] = Rcpp::as<Rcpp::CharacterVector>(Rcpp::colnames(alpha_input))[j];
+    for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+      regressors(i, j + log_lambda.ncol()) = alpha_input(i, j);
+    }
+  }
+  for(R_xlen_t j(0); j < covariates_input.ncol(); ++j) {
+    col_names[j + log_lambda.ncol() + alpha_input.ncol()] = Rcpp::as<Rcpp::CharacterVector>(Rcpp::colnames(covariates_input))[j];
+    for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+      regressors(i, j + log_lambda.ncol() + alpha_input.ncol()) = covariates_input(i, j);
     }
   }
   Rcpp::colnames(regressors) = col_names;
