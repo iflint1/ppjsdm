@@ -69,15 +69,15 @@ private:
   unsigned long long int saturation_;
 };
 
-template<typename Varphi, typename Lambda, typename Alpha, typename Coefs>
-class Exponential_family_model: public Varphi {
+template<typename Dispersion, typename Lambda, typename Alpha, typename Coefs>
+class Exponential_family_model: public Dispersion {
 public:
   Exponential_family_model(const Lambda& lambda,
                            const Alpha& alpha,
                            const Coefs& coefs,
                            Rcpp::List covariates,
-                           const Varphi& varphi):
-    Varphi(varphi),
+                           const Dispersion& dispersion):
+  Dispersion(dispersion),
     lambda_(lambda),
     alpha_(alpha),
     coefs_(coefs),
@@ -87,8 +87,8 @@ public:
                            const Alpha& alpha,
                            const Coefs& coefs,
                            Rcpp::List covariates,
-                           Varphi&& varphi):
-    Varphi(std::move(varphi)),
+                           Dispersion&& dispersion):
+  Dispersion(std::move(dispersion)),
     lambda_(lambda),
     alpha_(alpha),
     coefs_(coefs),
@@ -100,13 +100,13 @@ public:
                            const Coefs& coefs,
                            Rcpp::List covariates,
                            Args&&... args):
-    Exponential_family_model(lambda, alpha, coefs, covariates, Varphi(std::forward<Args>(args)...)) {}
+    Exponential_family_model(lambda, alpha, coefs, covariates, Dispersion(std::forward<Args>(args)...)) {}
 
   template<typename Configuration, typename Point>
   double compute_papangelou(const Configuration& configuration,
                             const Point& point,
                             R_xlen_t number_types) const {
-    const auto delta_D(Varphi::compute(configuration, point, number_types, size(configuration)));
+    const auto delta_D(Dispersion::compute(configuration, point, number_types, size(configuration)));
 
     double inner_product(0);
     const auto point_type(get_type(point));
@@ -138,7 +138,7 @@ public:
     for(R_xlen_t i(0); i < number_types; ++i) {
       double inner_product(0);
       for(R_xlen_t j(0); j < number_types; ++j) {
-        inner_product += std::fabs(alpha_(j, i)) * Varphi::get_maximum(window);
+        inner_product += std::fabs(alpha_(j, i)) * Dispersion::get_maximum(window);
       }
       for(decltype(covariates_.size()) j(0); j < covariates_.size(); ++j) {
         const auto bounds(covariates_[j].bounds());
