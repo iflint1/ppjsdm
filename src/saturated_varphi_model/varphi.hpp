@@ -7,39 +7,51 @@
 namespace ppjsdm {
 namespace varphi {
 
-class Identity {
+// class Identity {
+// public:
+//   static double apply(double square_distance, int, int) {
+//     return std::sqrt(square_distance);
+//   }
+//
+//   template<typename Window>
+//   static double get_maximum(const Window& window) {
+//     return std::sqrt(window.square_diameter());
+//   }
+// };
+//
+// class Square {
+// public:
+//   static double apply(double square_distance, int, int) {
+//     return square_distance;
+//   }
+//
+//   template<typename Window>
+//   static double get_maximum(const Window& window) {
+//     return window.square_diameter();
+//   }
+// };
+
+class Square_exponential {
 public:
   static double apply(double square_distance, int, int) {
-    return std::sqrt(square_distance);
+    return std::exp(-square_distance);
   }
 
   template<typename Window>
-  static double get_maximum(const Window& window) {
-    return std::sqrt(window.square_diameter());
-  }
-};
-
-class Square {
-public:
-  static double apply(double square_distance, int, int) {
-    return square_distance;
-  }
-
-  template<typename Window>
-  static double get_maximum(const Window& window) {
-    return window.square_diameter();
+  static double get_maximum(const Window&) {
+    return 1.0;
   }
 };
 
 class Exponential {
 public:
   static double apply(double square_distance, int, int) {
-    return std::exp(std::sqrt(square_distance)) - 1.0;
+    return std::exp(-std::sqrt(square_distance));
   }
 
   template<typename Window>
-  static double get_maximum(const Window& window) {
-    return std::exp(std::sqrt(window.square_diameter())) - 1.0;
+  static double get_maximum(const Window&) {
+    return 1.0;
   }
 };
 
@@ -63,9 +75,9 @@ public:
 
   double apply(double square_distance, int i, int j) const {
     if(square_distance <= access_square_radii(i, j)) {
-      return 0.;
-    } else {
       return 1.;
+    } else {
+      return 0.;
     }
   }
 

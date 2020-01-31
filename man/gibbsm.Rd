@@ -9,7 +9,7 @@ gibbsm(
   window = Rectangle_window(),
   covariates = list(),
   traits = list(),
-  model = "identity",
+  model = "exponential",
   radius = NULL,
   saturation = 2,
   print = TRUE,

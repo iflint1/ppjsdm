@@ -160,9 +160,8 @@ private:
 };
 
 const constexpr char* const models[] = {
-  "identity",
-  "square",
   "exponential",
+  "square_exponential",
   "Geyer"
 };
 
@@ -170,12 +169,10 @@ template<typename F>
 inline auto call_on_papangelou(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, unsigned long long int saturation, const F& f) {
   const auto model_string(model[0]);
   if(model_string == models[0]) {
-    return f(Saturated_varphi_model_papangelou<varphi::Identity>(saturation));
-  } else if(model_string == models[1]) {
-    return f(Saturated_varphi_model_papangelou<varphi::Square>(saturation));
-  } else if(model_string == models[2]) {
     return f(Saturated_varphi_model_papangelou<varphi::Exponential>(saturation));
-  } else if(model_string == models[3]) {
+  } else if(model_string == models[1]) {
+    return f(Saturated_varphi_model_papangelou<varphi::Square_exponential>(saturation));
+  } else if(model_string == models[2]) {
     return f(Saturated_varphi_model_papangelou<varphi::Strauss>(saturation, radius));
   } else {
     Rcpp::stop("Incorrect model entered. A call to show_models() will show you the available choices.\n");

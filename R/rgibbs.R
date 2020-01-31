@@ -27,7 +27,7 @@ rgibbs <- function(window = NULL,
                    steps = 0,
                    nsim = 1,
                    types = NULL,
-                   model = "identity",
+                   model = "exponential",
                    drop = TRUE) {
   if(is.null(window)) {
     window <- Rectangle_window()

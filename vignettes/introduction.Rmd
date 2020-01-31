@@ -52,7 +52,7 @@ plot(configuration)
 ```
 
 The parameter `alpha` controls the repulsion.
-A positive value implies repulsion, while a negative value means attraction.
+A negative value implies repulsion, while a positive value means attraction.
 
 ```{r}
 configuration1 <- ppjsdm::rgibbs(alpha = 2, lambda = 50)
