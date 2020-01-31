@@ -12,41 +12,39 @@ namespace ppjsdm {
 
 template<typename Configuration, typename Model, typename Window>
 inline auto simulate_metropolis_hastings(const Model& model, const Window& window, unsigned long long int steps, R_xlen_t number_types) {
-  const auto volume(window.volume());
   constexpr double prob(0.5);
-  using size_t = size_t<Configuration>;
+  const auto precomputed_constant((1 - prob) * window.volume() * number_types / prob);
 
   // TODO: Preallocate with a rough estimate of final size?
   // TODO: Start from non-empty configuration?
   Configuration points{};
-  size_t total_number(0);
+  using size_t = size_t<Configuration>;
+  size_t points_size(0);
 
   while(steps-- != 0) {
-    const auto u(unif_rand());
-    const auto v(unif_rand());
-    if(u <= prob) {
+    if(unif_rand() <= prob) {
       const R_xlen_t random_type(Rcpp::sample(number_types, 1, false, R_NilValue, false)[0]);
       const auto point(window.sample(random_type));
 
       // TODO: You can avoid taking the exp by reorganising the ratio, and sampling an exponential r.v. instead.
       const auto papangelou(model.compute_papangelou(points, point, number_types));
-      const auto birth_ratio(papangelou * (1 - prob) * volume * number_types / (prob * (1 + total_number)));
+      const auto birth_ratio(papangelou * precomputed_constant / (1 + points_size));
 
-      if(v <= birth_ratio) {
+      // Use C++ short-circuiting
+      if(birth_ratio >= 1 || unif_rand() <= birth_ratio) {
         add_point(points, point);
-        ++total_number;
+        ++points_size;
       }
-    } else {
-      if(total_number != 0) {
-        const auto saved_point(remove_random_point(points));
+    } else if(points_size != 0) {
+      const auto saved_point(remove_random_point(points));
 
-        const auto papangelou(model.compute_papangelou(points, saved_point, number_types));
-        const auto death_ratio(prob * total_number / (number_types * (1 - prob) * volume * papangelou));
-        if(v <= death_ratio) {
-          --total_number;
-        } else {
-          add_point(points, saved_point);
-        }
+      const auto papangelou(model.compute_papangelou(points, saved_point, number_types));
+      const auto death_ratio(points_size / (precomputed_constant * papangelou));
+      // Use C++ short-circuiting
+      if(death_ratio >= 1 || unif_rand() <= death_ratio) {
+        --points_size;
+      } else {
+        add_point(points, saved_point);
       }
     }
   }
