@@ -32,7 +32,7 @@ Default is a vector of same size as types, filled with ones.}
 \item{coefs}{Fitted coefficients related to covariates. Default is square matrix of zeroes of the same
 number of rows/columns as the covariates.}
 
-\item{radius}{Symmetric matrix of interaction radii. Filled by zeroes by default;}
+\item{radius}{Symmetric matrix of interaction radii. Filled with 0.1 times the window radius by default.}
 
 \item{saturation}{Saturation parameter of the point process. Default is 2.}
 

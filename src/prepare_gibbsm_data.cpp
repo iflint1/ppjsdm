@@ -200,9 +200,9 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration, SEXP window, Rcpp::List
   // The trick below allows us to find the number of different types in the configuration.
   // That number is then used to default construct `radius`.
   const auto points_by_type(ppjsdm::get_number_points(wrapped_configuration));
-  const auto number_types(points_by_type.size());
-  radius = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(number_types, radius, 0.);
-  return ppjsdm::call_on_wrapped_window(window, [&wrapped_configuration, &covariates, &model, &radius, saturation, &points_by_type](const auto& w) {
-    return prepare_gibbsm_data_helper(wrapped_configuration, w, ppjsdm::Im_list_wrapper(covariates), model, radius, saturation, points_by_type);
+  return ppjsdm::call_on_wrapped_window(window, [&wrapped_configuration, &covariates, &model, radius, saturation, &points_by_type](const auto& w) {
+    const auto number_types(points_by_type.size());
+    const auto r(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(number_types, radius, 0.1 * w.diameter()));
+    return prepare_gibbsm_data_helper(wrapped_configuration, w, ppjsdm::Im_list_wrapper(covariates), model, r, saturation, points_by_type);
   });
 }

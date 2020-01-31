@@ -27,7 +27,7 @@ gibbsm(
 
 \item{model}{String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_model()`.}
 
-\item{radius}{Interaction radius.}
+\item{radius}{Interaction radius. Filled with 0.1 times the window radius by default.}
 
 \item{saturation}{Saturation parameter of the point process.}
 
