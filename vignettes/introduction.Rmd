@@ -27,6 +27,48 @@ remove(list = ls())
 set.seed(1)
 ```
 
+# Basic options for the simulation and fitting functions
+
+We begin by sampling from the point process model.
+
+```{r}
+configuration <- ppjsdm::rgibbs(lambda = 50)
+```
+
+```{r, fig.height = 4, fig.align = 'center', fig}
+par(mar = c(5, 4, 4, 13) + 0.1)
+plot(configuration)
+```
+
+The parameter `lambda` controls the intensity, and can be a vector to sample from a multivariate point process.
+
+```{r}
+configuration <- ppjsdm::rgibbs(lambda = c(species1 = 50, species2 = 10))
+```
+
+```{r}
+par(mar = c(5, 4, 4, 13) + 0.1)
+plot(configuration)
+```
+
+The parameter `alpha` controls the repulsion.
+A positive value implies repulsion, while a negative value means attraction.
+
+```{r}
+configuration1 <- ppjsdm::rgibbs(alpha = 2, lambda = 50)
+configuration2 <- ppjsdm::rgibbs(alpha = -2, lambda = 50)
+```
+
+```{r}
+par(mar = c(5, 4, 4, 13) + 0.1)
+plot(configuration1)
+```
+
+```{r}
+par(mar = c(5, 4, 4, 13) + 0.1)
+plot(configuration2)
+```
+
 # Using covariates
 
 This section assumes you have a series of covariates explaining a given dataset. 
@@ -70,7 +112,7 @@ configuration <- ppjsdm::rgibbs(lambda = exp(log_lambda),
 
 The dataset is plotted below.
 
-```{r, fig.height = 4, fig.align = 'center', fig}
+```{r}
 par(mar = c(5, 4, 4, 13) + 0.1)
 plot(configuration)
 ```

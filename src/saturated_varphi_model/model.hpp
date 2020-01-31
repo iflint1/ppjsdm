@@ -28,9 +28,9 @@ public:
 
   template<typename Configuration, typename Point>
   Rcpp::NumericVector compute(const Configuration& configuration,
-                                     const Point& point,
-                                     R_xlen_t number_types,
-                                     size_t<Configuration> number_points) const {
+                              const Point& point,
+                              R_xlen_t number_types,
+                              size_t<Configuration> number_points) const {
     std::vector<std::vector<double>> square_distances(number_types);
 
     // Preallocate enough to account for worst case.
