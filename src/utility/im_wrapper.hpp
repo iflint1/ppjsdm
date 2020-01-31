@@ -43,7 +43,7 @@ public:
     }
 
     volume_ = get_volume();
-    diameter_ = get_diameter();
+    square_diameter_ = get_square_diameter();
     bounds_ = get_bounds();
   }
 
@@ -80,8 +80,8 @@ public:
     return bounds_;
   }
 
-  double diameter() const {
-    return diameter_;
+  double square_diameter() const {
+    return square_diameter_;
   }
 
   double x_min() const {
@@ -108,7 +108,7 @@ private:
   double ystep_;
   std::vector<double> mat_;
   double volume_;
-  double diameter_;
+  double square_diameter_;
   std::pair<double, double> bounds_;
 
   double get_volume() const {
@@ -123,7 +123,7 @@ private:
     return static_cast<double>(non_na_values) * xstep_ * ystep_;
   }
 
-  double get_diameter() const {
+  double get_square_diameter() const {
     double square_diameter(0);
     for(R_xlen_t i(0); i < number_row_; ++i) {
       for(R_xlen_t j(0); j < number_col_; ++j) {
@@ -143,7 +143,7 @@ private:
         }
       }
     }
-    return std::sqrt(square_diameter);
+    return square_diameter;
   }
 
   std::pair<double, double> get_bounds() const {

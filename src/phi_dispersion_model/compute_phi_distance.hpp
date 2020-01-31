@@ -3,7 +3,7 @@
 
 #include "../point/point_manipulation.hpp"
 
-#include <cmath> // std::sqrt
+#include <cmath> // std::sqrt, STD::EXP
 #include <utility> // std::forward
 #include <vector> // std::vector
 
@@ -18,7 +18,31 @@ public:
 
   template<typename Window>
   double get_maximum(const Window& window) const {
-    return window.diameter();
+    return std::sqrt(window.square_diameter());
+  }
+};
+
+class Square {
+public:
+  static double apply(double square_distance, int, int) {
+    return square_distance;
+  }
+
+  template<typename Window>
+  double get_maximum(const Window& window) const {
+    return window.square_diameter();
+  }
+};
+
+class Exponential {
+public:
+  static double apply(double square_distance, int, int) {
+    return std::exp(std::sqrt(square_distance)) - 1.0;
+  }
+
+  template<typename Window>
+  double get_maximum(const Window& window) const {
+    return std::exp(std::sqrt(window.square_diameter())) - 1.0;
   }
 };
 

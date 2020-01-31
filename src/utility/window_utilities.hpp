@@ -40,8 +40,12 @@ public:
     return delta_x_ * delta_y_;
   }
 
+  double square_diameter() const {
+    return delta_x_ * delta_x_ + delta_y_ * delta_y_;
+  }
+
   double diameter() const {
-    return std::sqrt(delta_x_ * delta_x_ + delta_y_ * delta_y_);
+    return std::sqrt(square_diameter());
   }
 
 private:
@@ -75,6 +79,10 @@ public:
 
   double volume() const {
     return M_PI * radius_ * radius_;
+  }
+
+  double square_diameter() const {
+    return 4 * radius_ * radius_;
   }
 
   double diameter() const {
@@ -112,8 +120,12 @@ public:
     return volume_;
   }
 
+  double square_diameter() const {
+    return im_.square_diameter();
+  }
+
   double diameter() const {
-    return im_.diameter();
+    return std::sqrt(square_diameter());
   }
 
 private:

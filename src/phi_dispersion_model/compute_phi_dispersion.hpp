@@ -49,16 +49,21 @@ public:
       const auto points_to_consider(current_square_distances.size() < saturation_
                                       ? current_square_distances.size()
                                       : saturation_);
+      double dispersion(0);
       for(decltype(saturation_) j(0); j < points_to_consider; ++j) {
-        delta_dispersion[i] += Varphi::varphi(current_square_distances[j], i, point_type);
+        dispersion += Varphi::varphi(current_square_distances[j], i, point_type);
       }
+      if(points_to_consider > 0) {
+        dispersion /= static_cast<double>(points_to_consider);
+      }
+      delta_dispersion[i] = dispersion;
     }
     return delta_dispersion;
   }
 
   template<typename Window>
   double get_maximum(const Window& window) const {
-    return static_cast<double>(saturation_) * Varphi::get_maximum(window);
+    return Varphi::get_maximum(window);
   }
 private:
   unsigned long long int saturation_;
@@ -156,8 +161,9 @@ private:
 
 const constexpr char* const models[] = {
   "identity",
-  "Geyer",
-  "neighbour"
+  "square",
+  "exponential",
+  "Geyer"
 };
 
 template<typename F>
@@ -166,6 +172,10 @@ inline auto call_on_papangelou(Rcpp::CharacterVector model, Rcpp::NumericMatrix 
   if(model_string == models[0]) {
     return f(Saturated_varphi_model_papangelou<varphi::Varphi<varphi::Identity>>(saturation));
   } else if(model_string == models[1]) {
+    return f(Saturated_varphi_model_papangelou<varphi::Varphi<varphi::Square>>(saturation));
+  } else if(model_string == models[2]) {
+    return f(Saturated_varphi_model_papangelou<varphi::Varphi<varphi::Exponential>>(saturation));
+  } else if(model_string == models[3]) {
     return f(Saturated_varphi_model_papangelou<varphi::Varphi<varphi::Strauss>>(saturation, radius));
   } else {
     Rcpp::stop("Incorrect model entered.\n");
