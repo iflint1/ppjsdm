@@ -41,6 +41,10 @@ public:
         set_matrix(i, j, mat(i, j));
       }
     }
+
+    volume_ = get_volume();
+    diameter_ = get_diameter();
+    bounds_ = get_bounds();
   }
 
   double operator()(double x, double y) const {
@@ -69,57 +73,15 @@ public:
   }
 
   double volume() const {
-    R_xlen_t non_na_values(0);
-    for(R_xlen_t i(0); i < number_row_; ++i) {
-      for(R_xlen_t j(0); j < number_col_; ++j) {
-        if(!R_IsNA(get_matrix(i, j))) {
-          ++non_na_values;
-        }
-      }
-    }
-    return static_cast<double>(non_na_values) * xstep_ * ystep_;
+    return volume_;
   }
 
-  std::pair<double, double> bounds() const {
-    double lower(std::numeric_limits<double>::infinity());
-    double upper(-std::numeric_limits<double>::infinity());
-    for(R_xlen_t i(0); i < number_row_; ++i) {
-      for(R_xlen_t j(0); j < number_col_; ++j) {
-        const auto value(get_matrix(i, j));
-        if(!R_IsNA(value)) {
-          if(value < lower) {
-            lower = value;
-          }
-          if(value > lower) {
-            upper = value;
-          }
-        }
-      }
-    }
-    return std::make_pair(lower, upper);
+  auto bounds() const {
+    return bounds_;
   }
 
   double diameter() const {
-    double square_diameter(0);
-    for(R_xlen_t i(0); i < number_row_; ++i) {
-      for(R_xlen_t j(0); j < number_col_; ++j) {
-        if(!R_IsNA(get_matrix(i, j))) {
-          for(R_xlen_t k(0); k < number_row_; ++k) {
-            for(R_xlen_t l(0); l < number_col_; ++l) {
-              if(!R_IsNA(get_matrix(k, l))) {
-                const auto delta_x((i - k) * xstep_);
-                const auto delta_y((j - l) * ystep_);
-                const auto square_distance(delta_x * delta_x + delta_y * delta_y);
-                if(square_distance > square_diameter) {
-                  square_diameter = square_distance;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    return std::sqrt(square_diameter);
+    return diameter_;
   }
 
   double x_min() const {
@@ -145,6 +107,63 @@ private:
   double xstep_;
   double ystep_;
   std::vector<double> mat_;
+  double volume_;
+  double diameter_;
+  std::pair<double, double> bounds_;
+
+  double get_volume() const {
+    R_xlen_t non_na_values(0);
+    for(R_xlen_t i(0); i < number_row_; ++i) {
+      for(R_xlen_t j(0); j < number_col_; ++j) {
+        if(!R_IsNA(get_matrix(i, j))) {
+          ++non_na_values;
+        }
+      }
+    }
+    return static_cast<double>(non_na_values) * xstep_ * ystep_;
+  }
+
+  double get_diameter() const {
+    double square_diameter(0);
+    for(R_xlen_t i(0); i < number_row_; ++i) {
+      for(R_xlen_t j(0); j < number_col_; ++j) {
+        if(!R_IsNA(get_matrix(i, j))) {
+          for(R_xlen_t k(0); k < number_row_; ++k) {
+            for(R_xlen_t l(0); l < number_col_; ++l) {
+              if(!R_IsNA(get_matrix(k, l))) {
+                const auto delta_x((i - k) * xstep_);
+                const auto delta_y((j - l) * ystep_);
+                const auto square_distance(delta_x * delta_x + delta_y * delta_y);
+                if(square_distance > square_diameter) {
+                  square_diameter = square_distance;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return std::sqrt(square_diameter);
+  }
+
+  std::pair<double, double> get_bounds() const {
+    double lower(std::numeric_limits<double>::infinity());
+    double upper(-std::numeric_limits<double>::infinity());
+    for(R_xlen_t i(0); i < number_row_; ++i) {
+      for(R_xlen_t j(0); j < number_col_; ++j) {
+        const auto value(get_matrix(i, j));
+        if(!R_IsNA(value)) {
+          if(value < lower) {
+            lower = value;
+          }
+          if(value > lower) {
+            upper = value;
+          }
+        }
+      }
+    }
+    return std::make_pair(lower, upper);
+  }
 };
 
 class Im_list_wrapper {
