@@ -1,10 +1,7 @@
 #ifndef INCLUDE_PPJSDM_PHI_DISTANCE
 #define INCLUDE_PPJSDM_PHI_DISTANCE
 
-#include "../point/point_manipulation.hpp"
-
-#include <cmath> // std::sqrt, STD::EXP
-#include <utility> // std::forward
+#include <cmath> // std::sqrt, std::exp
 #include <vector> // std::vector
 
 namespace ppjsdm {
@@ -17,7 +14,7 @@ public:
   }
 
   template<typename Window>
-  double get_maximum(const Window& window) const {
+  static double get_maximum(const Window& window) {
     return std::sqrt(window.square_diameter());
   }
 };
@@ -29,7 +26,7 @@ public:
   }
 
   template<typename Window>
-  double get_maximum(const Window& window) const {
+  static double get_maximum(const Window& window) {
     return window.square_diameter();
   }
 };
@@ -41,7 +38,7 @@ public:
   }
 
   template<typename Window>
-  double get_maximum(const Window& window) const {
+  static double get_maximum(const Window& window) {
     return std::exp(std::sqrt(window.square_diameter())) - 1.0;
   }
 };
@@ -73,36 +70,12 @@ public:
   }
 
   template<typename Window>
-  double get_maximum(const Window&) const {
+  static double get_maximum(const Window&) {
     return 1.;
   }
 private:
   R_xlen_t dim_;
   std::vector<double> square_radii_;
-};
-
-template<typename V>
-class Varphi: public V {
-public:
-  template<typename... Args>
-  Varphi(Args&&... args): V(std::forward<Args>(args)...) {}
-
-  template<typename Point>
-  double compute_phi_distance(const Point& point1, const Point& point2) const {
-    const auto delta_x(get_x(point1) - get_x(point2));
-    const auto delta_y(get_y(point1) - get_y(point2));
-    const auto square_distance(delta_x * delta_x + delta_y * delta_y);
-    return V::apply(square_distance, get_type(point1), get_type(point2));
-  }
-
-  double varphi(double square_distance, int i, int j) const {
-    return V::apply(square_distance, i, j);
-  }
-
-  template<typename Window>
-  double get_maximum(const Window& window) const {
-    return V::get_maximum(window);
-  }
 };
 
 } // namespace varphi

@@ -1,6 +1,6 @@
 #include <Rcpp.h>
 
-#include "phi_dispersion_model/compute_phi_dispersion.hpp"
+#include "saturated_varphi_model/model.hpp"
 
 //' Show the authorised models.
 //'

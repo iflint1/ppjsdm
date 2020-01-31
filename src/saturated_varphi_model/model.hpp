@@ -1,19 +1,18 @@
-#ifndef INCLUDE_PPJSDM_PHI_DISPERSION
-#define INCLUDE_PPJSDM_PHI_DISPERSION
+#ifndef INCLUDE_PPJSDM_SATURATED_VARPHI
+#define INCLUDE_PPJSDM_SATURATED_VARPHI
 
 #include <Rcpp.h>
 
-#include "compute_phi_distance.hpp"
+#include "varphi.hpp"
 #include "../configuration/configuration_manipulation.hpp"
 #include "../configuration/get_number_points.hpp"
 #include "../point/point_manipulation.hpp"
 #include "../utility/im_wrapper.hpp"
 #include "../utility/size_t.hpp"
 
-#include <algorithm> // std::max
+#include <algorithm> // std::max, std::sort
 #include <cmath> // std::exp, std::log, std::fabs
-#include <limits> // std::numeric_limits
-#include <type_traits> // std::remove_const, std::remove_cv
+#include <type_traits> // std::remove_const, std::remove_reference, std::is_same, std::enable_if
 #include <utility> // std::forward
 #include <vector> // std::vector
 
@@ -24,41 +23,52 @@ template<typename Varphi>
 class Saturated_varphi_model_papangelou: public Varphi {
 public:
   template<typename... Args>
-  Saturated_varphi_model_papangelou(unsigned long long int saturation, Args&&... args): Varphi(std::forward<Args>(args)...), saturation_(saturation) {}
+  Saturated_varphi_model_papangelou(unsigned long long int saturation, Args&&... args):
+    Varphi(std::forward<Args>(args)...), saturation_(saturation) {}
 
   template<typename Configuration, typename Point>
-  inline Rcpp::NumericVector compute(const Configuration& configuration,
+  Rcpp::NumericVector compute(const Configuration& configuration,
                                      const Point& point,
                                      R_xlen_t number_types,
                                      size_t<Configuration> number_points) const {
-    using size_t = size_t<Configuration>;
-    Rcpp::NumericVector delta_dispersion(number_types);
-    const auto point_type(get_type(point));
-    // TODO: Preallocate to maximum attainable size?
     std::vector<std::vector<double>> square_distances(number_types);
+
+    // Preallocate enough to account for worst case.
+    for(R_xlen_t i(0); i < number_types; ++i) {
+      square_distances[i].reserve(number_points);
+    }
+
+    // Fill with square distances
+    using size_t = size_t<Configuration>;
+    const auto point_x(get_x(point));
+    const auto point_y(get_y(point));
     for(size_t i(0); i < number_points; ++i) {
       const auto point_i(configuration[i]);
       const auto type_i(get_type(point_i));
-      const auto delta_x(get_x(point_i) - get_x(point));
-      const auto delta_y(get_y(point_i) - get_y(point));
-      square_distances[type_i].push_back(delta_x * delta_x + delta_y * delta_y);
+      const auto delta_x(get_x(point_i) - point_x);
+      const auto delta_y(get_y(point_i) - point_y);
+      square_distances[type_i].emplace_back(delta_x * delta_x + delta_y * delta_y);
     }
-    for(decltype(number_types) i(0); i < number_types; ++i) {
+
+    // Compute dispersion
+    Rcpp::NumericVector dispersion(Rcpp::no_init(number_types));
+    const auto point_type(get_type(point));
+    for(R_xlen_t i(0); i < number_types; ++i) {
       auto current_square_distances(square_distances[i]);
       std::sort(current_square_distances.begin(), current_square_distances.end());
       const auto points_to_consider(current_square_distances.size() < saturation_
                                       ? current_square_distances.size()
                                       : saturation_);
-      double dispersion(0);
+      double disp(0);
       for(decltype(saturation_) j(0); j < points_to_consider; ++j) {
-        dispersion += Varphi::varphi(current_square_distances[j], i, point_type);
+        disp += Varphi::apply(current_square_distances[j], i, point_type);
       }
       if(points_to_consider > 0) {
-        dispersion /= static_cast<double>(points_to_consider);
+        disp /= static_cast<double>(points_to_consider);
       }
-      delta_dispersion[i] = dispersion;
+      dispersion[i] = disp;
     }
-    return delta_dispersion;
+    return dispersion;
   }
 
   template<typename Window>
@@ -72,23 +82,13 @@ private:
 template<typename Dispersion, typename Lambda, typename Alpha, typename Coefs>
 class Exponential_family_model: public Dispersion {
 public:
+  template<typename D, std::enable_if_t<std::is_same<Dispersion, std::remove_reference_t<D>>::value>* = nullptr>
   Exponential_family_model(const Lambda& lambda,
                            const Alpha& alpha,
                            const Coefs& coefs,
                            Rcpp::List covariates,
-                           const Dispersion& dispersion):
-  Dispersion(dispersion),
-    lambda_(lambda),
-    alpha_(alpha),
-    coefs_(coefs),
-    covariates_(covariates) {}
-
-  Exponential_family_model(const Lambda& lambda,
-                           const Alpha& alpha,
-                           const Coefs& coefs,
-                           Rcpp::List covariates,
-                           Dispersion&& dispersion):
-  Dispersion(std::move(dispersion)),
+                           D&& dispersion):
+  Dispersion(std::forward<D>(dispersion)),
     lambda_(lambda),
     alpha_(alpha),
     coefs_(coefs),
@@ -106,12 +106,12 @@ public:
   double compute_papangelou(const Configuration& configuration,
                             const Point& point,
                             R_xlen_t number_types) const {
-    const auto delta_D(Dispersion::compute(configuration, point, number_types, size(configuration)));
+    const auto dispersion(Dispersion::compute(configuration, point, number_types, size(configuration)));
 
     double inner_product(0);
     const auto point_type(get_type(point));
     for(R_xlen_t i(0); i < number_types; ++i) {
-      inner_product += alpha_(i, point_type) * delta_D[i];
+      inner_product += alpha_(i, point_type) * dispersion[i];
     }
     for(decltype(covariates_.size()) i(0); i < covariates_.size(); ++i) {
       inner_product += coefs_(i, point_type) * covariates_[i](get_x(point), get_y(point));
@@ -170,15 +170,15 @@ template<typename F>
 inline auto call_on_papangelou(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, unsigned long long int saturation, const F& f) {
   const auto model_string(model[0]);
   if(model_string == models[0]) {
-    return f(Saturated_varphi_model_papangelou<varphi::Varphi<varphi::Identity>>(saturation));
+    return f(Saturated_varphi_model_papangelou<varphi::Identity>(saturation));
   } else if(model_string == models[1]) {
-    return f(Saturated_varphi_model_papangelou<varphi::Varphi<varphi::Square>>(saturation));
+    return f(Saturated_varphi_model_papangelou<varphi::Square>(saturation));
   } else if(model_string == models[2]) {
-    return f(Saturated_varphi_model_papangelou<varphi::Varphi<varphi::Exponential>>(saturation));
+    return f(Saturated_varphi_model_papangelou<varphi::Exponential>(saturation));
   } else if(model_string == models[3]) {
-    return f(Saturated_varphi_model_papangelou<varphi::Varphi<varphi::Strauss>>(saturation, radius));
+    return f(Saturated_varphi_model_papangelou<varphi::Strauss>(saturation, radius));
   } else {
-    Rcpp::stop("Incorrect model entered.\n");
+    Rcpp::stop("Incorrect model entered. A call to show_models() will show you the available choices.\n");
   }
 }
 
@@ -204,4 +204,4 @@ inline auto call_on_model(Rcpp::CharacterVector model,
 
 } // namespace ppjsdm
 
-#endif // INCLUDE_PPJSDM_PHI_DISPERSION
+#endif // INCLUDE_PPJSDM_SATURATED_VARPHI

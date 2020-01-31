@@ -11,7 +11,7 @@ gibbsm(
   traits = list(),
   model = "identity",
   radius = NULL,
-  saturation = 5,
+  saturation = 2,
   print = TRUE,
   use_glmnet = TRUE
 )

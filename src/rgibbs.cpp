@@ -3,9 +3,9 @@
 
 #include "configuration/make_R_configuration.hpp"
 
-#include "phi_dispersion_model/compute_phi_dispersion.hpp"
-
 #include "point/point_manipulation.hpp"
+
+#include "saturated_varphi_model/model.hpp"
 
 #include "simulation/coupling_from_the_past.hpp"
 #include "simulation/metropolis_hastings.hpp"
