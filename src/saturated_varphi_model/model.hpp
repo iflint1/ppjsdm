@@ -208,6 +208,8 @@ private:
 const constexpr char* const models[] = {
   "exponential",
   "square_exponential",
+  "bump",
+  "square_bump",
   "Geyer"
 };
 
@@ -219,6 +221,10 @@ inline auto call_on_papangelou(Rcpp::CharacterVector model, Rcpp::NumericMatrix 
   } else if(model_string == models[1]) {
     return f(Saturated_varphi_model_papangelou<varphi::Square_exponential>(saturation, radius));
   } else if(model_string == models[2]) {
+    return f(Saturated_varphi_model_papangelou<varphi::Bump>(saturation, radius));
+  } else if(model_string == models[3]) {
+    return f(Saturated_varphi_model_papangelou<varphi::Square_bump>(saturation, radius));
+  } else if(model_string == models[4]) {
     return f(Saturated_varphi_model_papangelou<varphi::Strauss>(saturation, radius));
   } else {
     Rcpp::stop("Incorrect model entered. A call to show_models() will show you the available choices.\n");
