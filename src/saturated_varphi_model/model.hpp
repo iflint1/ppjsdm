@@ -10,8 +10,9 @@
 #include "../utility/im_wrapper.hpp"
 #include "../utility/size_t.hpp"
 
-#include <algorithm> // std::max, std::sort
+#include <algorithm> // std::max, std::upper_bound
 #include <cmath> // std::exp, std::log, std::fabs
+#include <list> // std::list
 #include <type_traits> // std::remove_const, std::remove_reference, std::is_same, std::enable_if
 #include <utility> // std::forward
 #include <vector> // std::vector
@@ -31,14 +32,9 @@ public:
                               const Point& point,
                               R_xlen_t number_types,
                               size_t<Configuration> number_points) const {
-    std::vector<std::vector<double>> square_distances(number_types);
+    std::vector<std::list<double>> square_distances(number_types);
 
-    // Preallocate enough to account for worst case.
-    for(R_xlen_t i(0); i < number_types; ++i) {
-      square_distances[i].reserve(number_points);
-    }
-
-    // Fill with square distances
+    // Fill with `saturation_` smallest square distances
     using size_t = size_t<Configuration>;
     const auto point_x(get_x(point));
     const auto point_y(get_y(point));
@@ -47,24 +43,28 @@ public:
       const auto type_i(get_type(point_i));
       const auto delta_x(get_x(point_i) - point_x);
       const auto delta_y(get_y(point_i) - point_y);
-      square_distances[type_i].emplace_back(delta_x * delta_x + delta_y * delta_y);
+      const auto square_distance(delta_x * delta_x + delta_y * delta_y);
+      auto& current(square_distances[type_i]);
+      auto iterator(std::upper_bound(current.begin(), current.end(), square_distance));
+      if(current.size() < saturation_) {
+        current.insert(iterator, square_distance);
+      } else if(iterator != current.end()) {
+        current.insert(iterator, square_distance);
+        current.pop_back();
+      }
     }
 
     // Compute dispersion
     Rcpp::NumericVector dispersion(Rcpp::no_init(number_types));
     const auto point_type(get_type(point));
     for(R_xlen_t i(0); i < number_types; ++i) {
-      auto& current_square_distances(square_distances[i]);
-      std::sort(current_square_distances.begin(), current_square_distances.end());
-      const auto points_to_consider(current_square_distances.size() < saturation_
-                                      ? current_square_distances.size()
-                                      : saturation_);
       double disp(0);
-      for(decltype(saturation_) j(0); j < points_to_consider; ++j) {
-        disp += Varphi::apply(current_square_distances[j], i, point_type);
+      for(const auto sq: square_distances[i]) {
+        disp += Varphi::apply(sq, i, point_type);
       }
-      if(points_to_consider > 0) {
-        disp /= static_cast<double>(points_to_consider);
+      const auto size(square_distances[i].size());
+      if(size > 0) {
+        disp /= static_cast<double>(size);
       }
       dispersion[i] = disp;
     }
