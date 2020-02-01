@@ -1,47 +1,26 @@
 #ifndef INCLUDE_PPJSDM_PHI_DISTANCE
 #define INCLUDE_PPJSDM_PHI_DISTANCE
 
+#include <Rinternals.h>
+
 #include <cmath> // std::sqrt, std::exp, std::log
 #include <vector> // std::vector
 
 namespace ppjsdm {
 namespace varphi {
 
-// class Identity {
-// public:
-//   static double apply(double square_distance, int, int) {
-//     return std::sqrt(square_distance);
-//   }
-//
-//   template<typename Window>
-//   static double get_maximum(const Window& window) {
-//     return std::sqrt(window.square_diameter());
-//   }
-// };
-//
-// class Square {
-// public:
-//   static double apply(double square_distance, int, int) {
-//     return square_distance;
-//   }
-//
-//   template<typename Window>
-//   static double get_maximum(const Window& window) {
-//     return window.square_diameter();
-//   }
-// };
-
-class Bump {
+template<typename Varphi>
+class Generic_varphi {
 private:
   auto access_lambda(int i, int j) const {
     return lambda_[i * dim_ + j];
   }
 
   void set_lambda(int i, int j, double r) {
-    lambda_[i * dim_ + j] = - r * std::log(2);
+    lambda_[i * dim_ + j] = Varphi::set(r);
   }
 public:
-  explicit Bump(Rcpp::NumericMatrix radius): dim_(radius.ncol()), lambda_(dim_ * dim_) {
+  explicit Generic_varphi(Rcpp::NumericMatrix radius): dim_(radius.ncol()), lambda_(dim_ * dim_) {
     for(R_xlen_t i(0); i < dim_; ++i) {
       for(R_xlen_t j(0); j < dim_; ++j) {
         set_lambda(i, j, radius(i, j));
@@ -50,7 +29,7 @@ public:
   }
 
   double apply(double square_distance, int i, int j) const {
-    return 1.0 - std::exp(access_lambda(i, j) / std::sqrt(square_distance));
+    return Varphi::apply(square_distance, access_lambda(i, j));
   }
 
   template<typename Window>
@@ -62,133 +41,65 @@ private:
   std::vector<double> lambda_;
 };
 
-class Square_bump {
-private:
-  auto access_lambda(int i, int j) const {
-    return lambda_[i * dim_ + j];
+struct Bump_implementation {
+  static double set(double radius) {
+    return -radius * std::log(2);
   }
 
-  void set_lambda(int i, int j, double r) {
-    lambda_[i * dim_ + j] = - r * r * std::log(2);
+  static double apply(double square_distance, double constant) {
+    return 1.0 - std::exp(constant / std::sqrt(square_distance));
   }
-public:
-  explicit Square_bump(Rcpp::NumericMatrix radius): dim_(radius.ncol()), lambda_(dim_ * dim_) {
-    for(R_xlen_t i(0); i < dim_; ++i) {
-      for(R_xlen_t j(0); j < dim_; ++j) {
-        set_lambda(i, j, radius(i, j));
-      }
-    }
-  }
-
-  double apply(double square_distance, int i, int j) const {
-    return 1.0 - std::exp(access_lambda(i, j) / square_distance);
-  }
-
-  template<typename Window>
-  static double get_maximum(const Window&) {
-    return 1.0;
-  }
-private:
-  R_xlen_t dim_;
-  std::vector<double> lambda_;
 };
 
-class Square_exponential {
-private:
-  auto access_lambda(int i, int j) const {
-    return lambda_[i * dim_ + j];
+struct Square_bump_implementation {
+  static double set(double radius) {
+    return -radius * radius * std::log(2);
   }
 
-  void set_lambda(int i, int j, double r) {
-    lambda_[i * dim_ + j] = -std::log(2) / (r * r);
+  static double apply(double square_distance, double constant) {
+    return 1.0 - std::exp(constant / square_distance);
   }
-public:
-  explicit Square_exponential(Rcpp::NumericMatrix radius): dim_(radius.ncol()), lambda_(dim_ * dim_) {
-    for(R_xlen_t i(0); i < dim_; ++i) {
-      for(R_xlen_t j(0); j < dim_; ++j) {
-        set_lambda(i, j, radius(i, j));
-      }
-    }
-  }
-
-  double apply(double square_distance, int i, int j) const {
-    return std::exp(access_lambda(i, j) * square_distance);
-  }
-
-  template<typename Window>
-  static double get_maximum(const Window&) {
-    return 1.0;
-  }
-private:
-  R_xlen_t dim_;
-  std::vector<double> lambda_;
 };
 
-class Exponential {
-private:
-  auto access_lambda(int i, int j) const {
-    return lambda_[i * dim_ + j];
+struct Square_exponential_implementation {
+  static double set(double radius) {
+    return -std::log(2) / (radius * radius);
   }
 
-  void set_lambda(int i, int j, double r) {
-    lambda_[i * dim_ + j] = -std::log(2) / r;
+  static double apply(double square_distance, double constant) {
+    return std::exp(constant * square_distance);
   }
-public:
-  explicit Exponential(Rcpp::NumericMatrix radius): dim_(radius.ncol()), lambda_(dim_ * dim_) {
-    for(R_xlen_t i(0); i < dim_; ++i) {
-      for(R_xlen_t j(0); j < dim_; ++j) {
-        set_lambda(i, j, radius(i, j));
-      }
-    }
-  }
-
-  double apply(double square_distance, int i, int j) const {
-    return std::exp(access_lambda(i, j) * std::sqrt(square_distance));
-  }
-
-  template<typename Window>
-  static double get_maximum(const Window&) {
-    return 1.0;
-  }
-private:
-  R_xlen_t dim_;
-  std::vector<double> lambda_;
 };
 
-class Strauss {
-private:
-  auto access_square_radii(int i, int j) const {
-    return square_radii_[i * dim_ + j];
+struct Exponential_implementation {
+  static double set(double radius) {
+    return -std::log(2) / radius;
   }
 
-  void set_square_radii(int i, int j, double r) {
-    square_radii_[i * dim_ + j] = r * r;
+  static double apply(double square_distance, double constant) {
+    return std::exp(constant * std::sqrt(square_distance));
   }
-public:
-  explicit Strauss(Rcpp::NumericMatrix radius): dim_(radius.ncol()), square_radii_(dim_ * dim_) {
-    for(R_xlen_t i(0); i < dim_; ++i) {
-      for(R_xlen_t j(0); j < dim_; ++j) {
-        set_square_radii(i, j, radius(i, j));
-      }
-    }
+};
+
+struct Strauss_implementation {
+  static double set(double radius) {
+    return radius * radius;
   }
 
-  double apply(double square_distance, int i, int j) const {
-    if(square_distance <= access_square_radii(i, j)) {
+  static double apply(double square_distance, double constant) {
+    if(square_distance <= constant) {
       return 1.;
     } else {
       return 0.;
     }
   }
-
-  template<typename Window>
-  static double get_maximum(const Window&) {
-    return 1.;
-  }
-private:
-  R_xlen_t dim_;
-  std::vector<double> square_radii_;
 };
+
+using Bump = Generic_varphi<Bump_implementation>;
+using Square_bump = Generic_varphi<Square_bump_implementation>;
+using Exponential = Generic_varphi<Exponential_implementation>;
+using Square_exponential = Generic_varphi<Square_exponential_implementation>;
+using Strauss = Generic_varphi<Strauss_implementation>;
 
 } // namespace varphi
 } // namespace ppjsdm
