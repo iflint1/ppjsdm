@@ -112,7 +112,7 @@ public:
     for(R_xlen_t i(0); i < number_types; ++i) {
       const auto count_types_i(count_types[i]);
       if(count_types_i > 0) {
-        dispersion[i] /= count_types_i;
+        dispersion[i] /= static_cast<double>(count_types_i);
       }
     }
 
@@ -218,15 +218,15 @@ template<typename F>
 inline auto call_on_papangelou(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, unsigned long long int saturation, const F& f) {
   const auto model_string(model[0]);
   if(model_string == models[0]) {
-    return f(Mean_varphi_model_papangelou<varphi::Exponential>{});
+    return f(Mean_varphi_model_papangelou<varphi::Exponential>(radius));
   } else if(model_string == models[1]) {
-    return f(Mean_varphi_model_papangelou<varphi::Square_exponential>{});
+    return f(Mean_varphi_model_papangelou<varphi::Square_exponential>(radius));
   } else if(model_string == models[2]) {
     return f(Mean_varphi_model_papangelou<varphi::Strauss>(radius));
   } else if(model_string == models[3]) {
-    return f(Saturated_varphi_model_papangelou<varphi::Exponential>(saturation));
+    return f(Saturated_varphi_model_papangelou<varphi::Exponential>(saturation, radius));
   } else if(model_string == models[4]) {
-    return f(Saturated_varphi_model_papangelou<varphi::Square_exponential>(saturation));
+    return f(Saturated_varphi_model_papangelou<varphi::Square_exponential>(saturation, radius));
   } else if(model_string == models[5]) {
     return f(Saturated_varphi_model_papangelou<varphi::Strauss>(saturation, radius));
   } else {

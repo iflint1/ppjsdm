@@ -1,7 +1,7 @@
 #ifndef INCLUDE_PPJSDM_PHI_DISTANCE
 #define INCLUDE_PPJSDM_PHI_DISTANCE
 
-#include <cmath> // std::sqrt, std::exp
+#include <cmath> // std::sqrt, std::exp, std::log
 #include <vector> // std::vector
 
 namespace ppjsdm {
@@ -32,36 +32,74 @@ namespace varphi {
 // };
 
 class Square_exponential {
+private:
+  auto access_lambda(int i, int j) const {
+    return lambda_[i * dim_ + j];
+  }
+
+  void set_lambda(int i, int j, double r) {
+    lambda_[i * dim_ + j] = -std::log(2) / (r * r);
+  }
 public:
-  static double apply(double square_distance, int, int) {
-    return std::exp(-square_distance);
+  explicit Square_exponential(Rcpp::NumericMatrix radius): dim_(radius.ncol()), lambda_(dim_ * dim_) {
+    for(R_xlen_t i(0); i < dim_; ++i) {
+      for(R_xlen_t j(0); j < dim_; ++j) {
+        set_lambda(i, j, radius(i, j));
+      }
+    }
+  }
+
+  double apply(double square_distance, int i, int j) const {
+    return std::exp(access_lambda(i, j) * square_distance);
   }
 
   template<typename Window>
   static double get_maximum(const Window&) {
     return 1.0;
   }
+private:
+  R_xlen_t dim_;
+  std::vector<double> lambda_;
 };
 
 class Exponential {
+private:
+  auto access_lambda(int i, int j) const {
+    return lambda_[i * dim_ + j];
+  }
+
+  void set_lambda(int i, int j, double r) {
+    lambda_[i * dim_ + j] = -std::log(2) / r;
+  }
 public:
-  static double apply(double square_distance, int, int) {
-    return std::exp(-std::sqrt(square_distance));
+  explicit Exponential(Rcpp::NumericMatrix radius): dim_(radius.ncol()), lambda_(dim_ * dim_) {
+    for(R_xlen_t i(0); i < dim_; ++i) {
+      for(R_xlen_t j(0); j < dim_; ++j) {
+        set_lambda(i, j, radius(i, j));
+      }
+    }
+  }
+
+  double apply(double square_distance, int i, int j) const {
+    return std::exp(access_lambda(i, j) * std::sqrt(square_distance));
   }
 
   template<typename Window>
   static double get_maximum(const Window&) {
     return 1.0;
   }
+private:
+  R_xlen_t dim_;
+  std::vector<double> lambda_;
 };
 
 class Strauss {
 private:
-  auto access_square_radii(R_xlen_t i, R_xlen_t j) const {
+  auto access_square_radii(int i, int j) const {
     return square_radii_[i * dim_ + j];
   }
 
-  void set_square_radii(R_xlen_t i, R_xlen_t j, double r) {
+  void set_square_radii(int i, int j, double r) {
     square_radii_[i * dim_ + j] = r * r;
   }
 public:
