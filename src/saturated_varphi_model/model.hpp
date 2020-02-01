@@ -54,7 +54,7 @@ public:
     Rcpp::NumericVector dispersion(Rcpp::no_init(number_types));
     const auto point_type(get_type(point));
     for(R_xlen_t i(0); i < number_types; ++i) {
-      auto current_square_distances(square_distances[i]);
+      auto& current_square_distances(square_distances[i]);
       std::sort(current_square_distances.begin(), current_square_distances.end());
       const auto points_to_consider(current_square_distances.size() < saturation_
                                       ? current_square_distances.size()
