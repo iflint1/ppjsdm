@@ -20,6 +20,7 @@ private:
     lambda_[i * dim_ + j] = Varphi::set(r);
   }
 public:
+  static constexpr bool equal_to_zero_or_constant = Varphi::equal_to_zero_or_constant;
   explicit Generic_varphi(Rcpp::NumericMatrix radius): dim_(radius.ncol()), lambda_(dim_ * dim_) {
     for(R_xlen_t i(0); i < dim_; ++i) {
       for(R_xlen_t j(0); j < dim_; ++j) {
@@ -42,6 +43,8 @@ private:
 };
 
 struct Bump_implementation {
+  static constexpr bool equal_to_zero_or_constant = false;
+
   static double set(double radius) {
     return -radius * std::log(2);
   }
@@ -52,6 +55,8 @@ struct Bump_implementation {
 };
 
 struct Square_bump_implementation {
+  static constexpr bool equal_to_zero_or_constant = false;
+
   static double set(double radius) {
     return -radius * radius * std::log(2);
   }
@@ -62,6 +67,8 @@ struct Square_bump_implementation {
 };
 
 struct Square_exponential_implementation {
+  static constexpr bool equal_to_zero_or_constant = false;
+
   static double set(double radius) {
     return -std::log(2) / (radius * radius);
   }
@@ -72,6 +79,8 @@ struct Square_exponential_implementation {
 };
 
 struct Exponential_implementation {
+  static constexpr bool equal_to_zero_or_constant = false;
+
   static double set(double radius) {
     return -std::log(2) / radius;
   }
@@ -82,6 +91,8 @@ struct Exponential_implementation {
 };
 
 struct Strauss_implementation {
+  static constexpr bool equal_to_zero_or_constant = true;
+
   static double set(double radius) {
     return radius * radius;
   }
