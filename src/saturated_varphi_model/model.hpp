@@ -78,52 +78,52 @@ public:
 private:
   unsigned long long int saturation_;
 };
-
-// Note: Use public inheritance to benefit from EBO.
-template<typename Varphi>
-class Mean_varphi_model_papangelou: public Varphi {
-public:
-  template<typename... Args>
-  Mean_varphi_model_papangelou(Args&&... args): Varphi(std::forward<Args>(args)...) {}
-
-  template<typename Configuration, typename Point>
-  Rcpp::NumericVector compute(const Configuration& configuration,
-                              const Point& point,
-                              R_xlen_t number_types,
-                              size_t<Configuration> number_points) const {
-    using size_t = size_t<Configuration>;
-
-    // dispersion and count_types are automatically 0-initialized
-    Rcpp::NumericVector dispersion(number_types);
-    std::vector<size_t> count_types(number_types);
-
-    const auto type_point(get_type(point));
-    const auto x_point(get_x(point));
-    const auto y_point(get_y(point));
-    for(size_t i(0); i < number_points; ++i) {
-      const auto point_i(configuration[i]);
-      const auto type_i(get_type(point_i));
-      ++count_types[type_i];
-      const auto delta_x(get_x(point_i) - x_point);
-      const auto delta_y(get_y(point_i) - y_point);
-      dispersion[type_i] += Varphi::apply(delta_x * delta_x + delta_y * delta_y, type_i, type_point);
-    }
-
-    for(R_xlen_t i(0); i < number_types; ++i) {
-      const auto count_types_i(count_types[i]);
-      if(count_types_i > 0) {
-        dispersion[i] /= static_cast<double>(count_types_i);
-      }
-    }
-
-    return dispersion;
-  }
-
-  template<typename Window>
-  double get_maximum(const Window& window) const {
-    return Varphi::get_maximum(window);
-  }
-};
+//
+// // Note: Use public inheritance to benefit from EBO.
+// template<typename Varphi>
+// class Mean_varphi_model_papangelou: public Varphi {
+// public:
+//   template<typename... Args>
+//   Mean_varphi_model_papangelou(Args&&... args): Varphi(std::forward<Args>(args)...) {}
+//
+//   template<typename Configuration, typename Point>
+//   Rcpp::NumericVector compute(const Configuration& configuration,
+//                               const Point& point,
+//                               R_xlen_t number_types,
+//                               size_t<Configuration> number_points) const {
+//     using size_t = size_t<Configuration>;
+//
+//     // dispersion and count_types are automatically 0-initialized
+//     Rcpp::NumericVector dispersion(number_types);
+//     std::vector<size_t> count_types(number_types);
+//
+//     const auto type_point(get_type(point));
+//     const auto x_point(get_x(point));
+//     const auto y_point(get_y(point));
+//     for(size_t i(0); i < number_points; ++i) {
+//       const auto point_i(configuration[i]);
+//       const auto type_i(get_type(point_i));
+//       ++count_types[type_i];
+//       const auto delta_x(get_x(point_i) - x_point);
+//       const auto delta_y(get_y(point_i) - y_point);
+//       dispersion[type_i] += Varphi::apply(delta_x * delta_x + delta_y * delta_y, type_i, type_point);
+//     }
+//
+//     for(R_xlen_t i(0); i < number_types; ++i) {
+//       const auto count_types_i(count_types[i]);
+//       if(count_types_i > 0) {
+//         dispersion[i] /= static_cast<double>(count_types_i);
+//       }
+//     }
+//
+//     return dispersion;
+//   }
+//
+//   template<typename Window>
+//   double get_maximum(const Window& window) const {
+//     return Varphi::get_maximum(window);
+//   }
+// };
 
 template<typename Dispersion, typename Lambda, typename Alpha, typename Coefs>
 class Exponential_family_model: public Dispersion {
@@ -208,9 +208,6 @@ private:
 const constexpr char* const models[] = {
   "exponential",
   "square_exponential",
-  "Strauss",
-  "saturated_exponential",
-  "saturated_square_exponential",
   "Geyer"
 };
 
@@ -218,16 +215,10 @@ template<typename F>
 inline auto call_on_papangelou(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, unsigned long long int saturation, const F& f) {
   const auto model_string(model[0]);
   if(model_string == models[0]) {
-    return f(Mean_varphi_model_papangelou<varphi::Exponential>(radius));
-  } else if(model_string == models[1]) {
-    return f(Mean_varphi_model_papangelou<varphi::Square_exponential>(radius));
-  } else if(model_string == models[2]) {
-    return f(Mean_varphi_model_papangelou<varphi::Strauss>(radius));
-  } else if(model_string == models[3]) {
     return f(Saturated_varphi_model_papangelou<varphi::Exponential>(saturation, radius));
-  } else if(model_string == models[4]) {
+  } else if(model_string == models[1]) {
     return f(Saturated_varphi_model_papangelou<varphi::Square_exponential>(saturation, radius));
-  } else if(model_string == models[5]) {
+  } else if(model_string == models[2]) {
     return f(Saturated_varphi_model_papangelou<varphi::Strauss>(saturation, radius));
   } else {
     Rcpp::stop("Incorrect model entered. A call to show_models() will show you the available choices.\n");

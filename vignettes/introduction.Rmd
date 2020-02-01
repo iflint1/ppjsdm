@@ -24,7 +24,7 @@ library(spatstat)
 
 remove(list = ls())
 
-set.seed(1)
+set.seed(2)
 ```
 
 # Basic options for the simulation and fitting functions
@@ -87,7 +87,7 @@ In order to fit the Geyer model, we also need to specify some interaction radii.
 ```{r}
 radii <- matrix(0.01, 2, 2)
 
-model <- "saturated_square_exponential"
+model <- "Geyer"
 ```
 
 We generate a multivariate Gibbs point process with intensity driven by those covariates
