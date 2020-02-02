@@ -6,7 +6,8 @@
 \usage{
 compute_papangelou(
   configuration,
-  coordinates,
+  x,
+  y,
   type,
   model,
   alpha,
@@ -20,7 +21,9 @@ compute_papangelou(
 \arguments{
 \item{configuration}{Configuration.}
 
-\item{coordinates}{Coordinates of the point at which to evaluate the Papangelou conditional intensity.}
+\item{x}{Coordinates along the x-axis of the points at which to evaluate the Papangelou conditional intensity.}
+
+\item{y}{Coordinates along the x-axis of the points at which to evaluate the Papangelou conditional intensity.}
 
 \item{type}{Type of the point (as an integer >= 1).}
 

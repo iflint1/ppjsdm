@@ -6,13 +6,14 @@
 using namespace Rcpp;
 
 // compute_papangelou
-double compute_papangelou(SEXP configuration, Rcpp::NumericVector coordinates, R_xlen_t type, Rcpp::CharacterVector model, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericMatrix coefs, Rcpp::List covariates, Rcpp::NumericMatrix radius, R_xlen_t saturation);
-RcppExport SEXP _ppjsdm_compute_papangelou(SEXP configurationSEXP, SEXP coordinatesSEXP, SEXP typeSEXP, SEXP modelSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP coefsSEXP, SEXP covariatesSEXP, SEXP radiusSEXP, SEXP saturationSEXP) {
+Rcpp::NumericVector compute_papangelou(SEXP configuration, Rcpp::NumericVector x, Rcpp::NumericVector y, R_xlen_t type, Rcpp::CharacterVector model, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericMatrix coefs, Rcpp::List covariates, Rcpp::NumericMatrix radius, R_xlen_t saturation);
+RcppExport SEXP _ppjsdm_compute_papangelou(SEXP configurationSEXP, SEXP xSEXP, SEXP ySEXP, SEXP typeSEXP, SEXP modelSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP coefsSEXP, SEXP covariatesSEXP, SEXP radiusSEXP, SEXP saturationSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type configuration(configurationSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type coordinates(coordinatesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
     Rcpp::traits::input_parameter< R_xlen_t >::type type(typeSEXP);
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type model(modelSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type alpha(alphaSEXP);
@@ -21,7 +22,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::List >::type covariates(covariatesSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type radius(radiusSEXP);
     Rcpp::traits::input_parameter< R_xlen_t >::type saturation(saturationSEXP);
-    rcpp_result_gen = Rcpp::wrap(compute_papangelou(configuration, coordinates, type, model, alpha, lambda, coefs, covariates, radius, saturation));
+    rcpp_result_gen = Rcpp::wrap(compute_papangelou(configuration, x, y, type, model, alpha, lambda, coefs, covariates, radius, saturation));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -115,7 +116,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_ppjsdm_compute_papangelou", (DL_FUNC) &_ppjsdm_compute_papangelou, 10},
+    {"_ppjsdm_compute_papangelou", (DL_FUNC) &_ppjsdm_compute_papangelou, 11},
     {"_ppjsdm_has_duplicates", (DL_FUNC) &_ppjsdm_has_duplicates, 1},
     {"_ppjsdm_prepare_gibbsm_data", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data, 6},
     {"_ppjsdm_rbinomialpp", (DL_FUNC) &_ppjsdm_rbinomialpp, 5},

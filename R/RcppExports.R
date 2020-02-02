@@ -4,7 +4,8 @@
 #' Compute Papangelou conditional intensity of the model.
 #'
 #' @param configuration Configuration.
-#' @param coordinates Coordinates of the point at which to evaluate the Papangelou conditional intensity.
+#' @param x Coordinates along the x-axis of the points at which to evaluate the Papangelou conditional intensity.
+#' @param y Coordinates along the x-axis of the points at which to evaluate the Papangelou conditional intensity.
 #' @param type Type of the point (as an integer >= 1).
 #' @param model String representing the model to simulate from. You can check the currently authorised models with a call to `show_model()`.
 #' @param alpha Repulsion matrix.
@@ -16,8 +17,8 @@
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-compute_papangelou <- function(configuration, coordinates, type, model, alpha, lambda, coefs, covariates, radius, saturation) {
-    .Call('_ppjsdm_compute_papangelou', PACKAGE = 'ppjsdm', configuration, coordinates, type, model, alpha, lambda, coefs, covariates, radius, saturation)
+compute_papangelou <- function(configuration, x, y, type, model, alpha, lambda, coefs, covariates, radius, saturation) {
+    .Call('_ppjsdm_compute_papangelou', PACKAGE = 'ppjsdm', configuration, x, y, type, model, alpha, lambda, coefs, covariates, radius, saturation)
 }
 
 #' Check if a configuration contains duplicates.
