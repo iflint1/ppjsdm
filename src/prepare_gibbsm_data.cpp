@@ -20,22 +20,14 @@
 #include <string> // std::string, std::to_string
 #include <vector> // std::vector
 
-// TODO: Might be able to compute model once and for all according to string.
-template<typename Configuration>
-inline Rcpp::NumericVector compute_dispersion(const Configuration& configuration, const ppjsdm::Marked_point& point, int number_types, Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, R_xlen_t saturation) {
-  return ppjsdm::call_on_papangelou(model, radius, saturation, [&configuration, &point, number_types](const auto& papangelou) {
-    return papangelou.compute(configuration, point, number_types, ppjsdm::size(configuration));
-  });
-}
-
 inline void add_to_formula(std::string& formula, Rcpp::CharacterVector names) {
   for(const auto& name: names) {
     formula += std::string(" + ") + Rcpp::as<std::string>(name);
   }
 }
 
-template<typename Configuration, typename Window, typename Vector>
-Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const Window& window, const ppjsdm::Im_list_wrapper& covariates, Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, R_xlen_t saturation, const Vector& points_by_type) {
+template<typename Configuration, typename Window, typename Papangelou, typename Vector>
+Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const Window& window, const ppjsdm::Im_list_wrapper& covariates, const Papangelou& papangelou, const Vector& points_by_type) {
   const auto length_configuration(ppjsdm::size(configuration));
   using size_t = ppjsdm::size_t<Configuration>;
   const size_t number_types(points_by_type.size());
@@ -118,11 +110,11 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
       Configuration configuration_copy(configuration);
       ppjsdm::remove_point_by_index(configuration_copy, i);
 
-      dispersion = compute_dispersion(configuration_copy, point, number_types, model, radius, saturation);
+      dispersion = papangelou.compute(configuration_copy, point, number_types, length_configuration - 1);
     } else {
       response(i, 0) = 0;
       point = D[i - length_configuration];
-      dispersion = compute_dispersion(configuration, point, number_types, model, radius, saturation);
+      dispersion = papangelou.compute(configuration, point, number_types, length_configuration);
     }
 
     const size_t type_index(ppjsdm::get_type(point));
@@ -191,7 +183,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 }
 
 // [[Rcpp::export]]
-Rcpp::List prepare_gibbsm_data(Rcpp::List configuration, SEXP window, Rcpp::List covariates, Rcpp::CharacterVector model, SEXP radius, R_xlen_t saturation) {
+Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covariates, Rcpp::CharacterVector model, SEXP radius, R_xlen_t saturation) {
   const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
   const auto length_configuration(ppjsdm::size(wrapped_configuration));
   if(length_configuration == 0) {
@@ -203,6 +195,8 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration, SEXP window, Rcpp::List
     const auto points_by_type(ppjsdm::get_number_points(wrapped_configuration));
     const auto number_types(points_by_type.size());
     const auto r(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(number_types, radius, 0.1 * w.diameter()));
-    return prepare_gibbsm_data_helper(wrapped_configuration, w, ppjsdm::Im_list_wrapper(covariates), model, r, saturation, points_by_type);
+    return ppjsdm::call_on_papangelou(model, r, saturation, [&wrapped_configuration, &w, &covariates, &model, &points_by_type](const auto& papangelou) {
+      return prepare_gibbsm_data_helper(wrapped_configuration, w, ppjsdm::Im_list_wrapper(covariates), papangelou, points_by_type);
+    });
   });
 }

@@ -5,6 +5,26 @@
 
 using namespace Rcpp;
 
+// compute_papangelou
+double compute_papangelou(SEXP configuration, Rcpp::NumericVector coordinates, R_xlen_t type, Rcpp::CharacterVector model, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericMatrix coefs, Rcpp::List covariates, Rcpp::NumericMatrix radius, R_xlen_t saturation);
+RcppExport SEXP _ppjsdm_compute_papangelou(SEXP configurationSEXP, SEXP coordinatesSEXP, SEXP typeSEXP, SEXP modelSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP coefsSEXP, SEXP covariatesSEXP, SEXP radiusSEXP, SEXP saturationSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type configuration(configurationSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type coordinates(coordinatesSEXP);
+    Rcpp::traits::input_parameter< R_xlen_t >::type type(typeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type model(modelSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type coefs(coefsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type covariates(covariatesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type radius(radiusSEXP);
+    Rcpp::traits::input_parameter< R_xlen_t >::type saturation(saturationSEXP);
+    rcpp_result_gen = Rcpp::wrap(compute_papangelou(configuration, coordinates, type, model, alpha, lambda, coefs, covariates, radius, saturation));
+    return rcpp_result_gen;
+END_RCPP
+}
 // has_duplicates
 bool has_duplicates(Rcpp::List configuration);
 RcppExport SEXP _ppjsdm_has_duplicates(SEXP configurationSEXP) {
@@ -17,12 +37,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // prepare_gibbsm_data
-Rcpp::List prepare_gibbsm_data(Rcpp::List configuration, SEXP window, Rcpp::List covariates, Rcpp::CharacterVector model, SEXP radius, R_xlen_t saturation);
+Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covariates, Rcpp::CharacterVector model, SEXP radius, R_xlen_t saturation);
 RcppExport SEXP _ppjsdm_prepare_gibbsm_data(SEXP configurationSEXP, SEXP windowSEXP, SEXP covariatesSEXP, SEXP modelSEXP, SEXP radiusSEXP, SEXP saturationSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::List >::type configuration(configurationSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type configuration(configurationSEXP);
     Rcpp::traits::input_parameter< SEXP >::type window(windowSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type covariates(covariatesSEXP);
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type model(modelSEXP);
@@ -95,6 +115,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_ppjsdm_compute_papangelou", (DL_FUNC) &_ppjsdm_compute_papangelou, 10},
     {"_ppjsdm_has_duplicates", (DL_FUNC) &_ppjsdm_has_duplicates, 1},
     {"_ppjsdm_prepare_gibbsm_data", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data, 6},
     {"_ppjsdm_rbinomialpp", (DL_FUNC) &_ppjsdm_rbinomialpp, 5},

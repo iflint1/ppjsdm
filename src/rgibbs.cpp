@@ -54,11 +54,11 @@ SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP coef
   lambda = ppjsdm::construct_if_missing<Rcpp::NumericVector>(point_types, lambda, 1.);
   coefs = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(Rcpp::as<Rcpp::List>(covariates).size(), coefs, 0.);
   types = ppjsdm::make_types(types, point_types, lambda);
-  // TODO: Think about what format for coefs.
+  // TODO: Think about what format for coefs, see also compute_papangelou.cpp.
   return ppjsdm::call_on_wrapped_window(window, [alpha, lambda, coefs, covariates, radius, saturation, steps, nsim, types, model, drop, point_types](const auto& w) {
     return ppjsdm::call_on_list_or_vector(lambda, [alpha, lambda, coefs, covariates, radius, saturation, steps, nsim, types, model, drop, point_types, &w](const auto& l) {
       const auto r(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(point_types, radius, 0.1 * w.diameter()));
-      return ppjsdm::call_on_model(model, alpha, l, coefs, covariates, r, saturation, [&w, steps, nsim, types, drop, point_types](const auto& model){
+      return ppjsdm::call_on_model(model, alpha, l, coefs, covariates, r, saturation, [&w, steps, nsim, types, drop, point_types](const auto& model) {
         if(steps == 0) {
           return rgibbs_helper(model, w, nsim, types, drop, point_types);
         } else {

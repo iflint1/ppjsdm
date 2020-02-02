@@ -1,0 +1,30 @@
+---
+title: "Model"
+output: pdf_document
+vignette: >
+  %\VignetteIndexEntry{model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+is_check <- ("CheckExEnv" %in% search()) || any(c("_R_CHECK_TIMINGS_",
+             "_R_CHECK_LICENSE_") %in% names(Sys.getenv()))
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = !is_check,
+  purl = !is_check
+)
+```
+
+```{r setup}
+library(ppjsdm)
+library(spatstat)
+
+remove(list = ls())
+
+set.seed(1)
+```
+
+In this vignette, we give some details on the model we're using.
