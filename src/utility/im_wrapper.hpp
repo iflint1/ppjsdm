@@ -16,6 +16,7 @@
 namespace ppjsdm {
 
 class Im_wrapper {
+  friend class Im_list_wrapper;
 private:
   void set_matrix(R_xlen_t i, R_xlen_t j, double value) {
     mat_[i * number_col_ + j] = value;
@@ -159,7 +160,7 @@ private:
           if(value < lower) {
             lower = value;
           }
-          if(value > lower) {
+          if(value > upper) {
             upper = value;
           }
         }
@@ -200,6 +201,33 @@ public:
 
   const auto& names() const {
     return im_names_;
+  }
+
+  // TODO: Make sure this is only called if number of rows and columns is the same.
+  template<typename Vector>
+  double get_maximum_of_dot(const Vector& vector) const {
+    double upper(-std::numeric_limits<double>::infinity());
+    if(im_list_.empty()) {
+      return 0.;
+    }
+    for(R_xlen_t i(0); i < im_list_[0].number_row_; ++i) {
+      for(R_xlen_t j(0); j < im_list_[0].number_col_; ++j) {
+        double inner_product(0);
+        typename decltype(im_list_)::size_type k(0);
+        for(; k < im_list_.size(); ++k) {
+          const auto value(im_list_[k].get_matrix(i, j));
+          if(R_IsNA(value)) {
+            break;
+          } else {
+            inner_product += vector[k] * value;
+          }
+        }
+        if(k == im_list_.size() && inner_product > upper) {
+          upper = inner_product;
+        }
+      }
+    }
+    return upper;
   }
 private:
   std::vector<Im_wrapper> im_list_;

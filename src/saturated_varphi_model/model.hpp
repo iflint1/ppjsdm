@@ -220,10 +220,11 @@ public:
       for(R_xlen_t j(0); j < number_types; ++j) {
         inner_product += std::fabs(alpha_(j, i)) * Dispersion::get_maximum(window);
       }
-      for(decltype(covariates_.size()) j(0); j < covariates_.size(); ++j) {
-        const auto bounds(covariates_[j].bounds());
-        inner_product += std::fabs(coefs_(j, i)) * std::max(std::fabs(bounds.first), std::fabs(bounds.second));
-      }
+      // for(decltype(covariates_.size()) j(0); j < covariates_.size(); ++j) {
+      //   const auto bounds(covariates_[j].bounds());
+      //   inner_product += std::fabs(coefs_(j, i)) * std::max(std::fabs(bounds.first), std::fabs(bounds.second));
+      // }
+      inner_product += covariates_.get_maximum_of_dot(coefs_);
       const auto value(lambda_[i] * std::exp(inner_product));
       if(std::isinf(value)) {
         Rcpp::stop("Infinite value obtained as the bound to the Papangelou intensity.");
