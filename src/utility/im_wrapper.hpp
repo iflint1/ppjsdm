@@ -124,26 +124,29 @@ private:
   }
 
   double get_square_diameter() const {
-    double square_diameter(0);
-    for(R_xlen_t i(0); i < number_row_; ++i) {
-      for(R_xlen_t j(0); j < number_col_; ++j) {
-        if(!R_IsNA(get_matrix(i, j))) {
-          for(R_xlen_t k(0); k < number_row_; ++k) {
-            for(R_xlen_t l(0); l < number_col_; ++l) {
-              if(!R_IsNA(get_matrix(k, l))) {
-                const auto delta_x((i - k) * xstep_);
-                const auto delta_y((j - l) * ystep_);
-                const auto square_distance(delta_x * delta_x + delta_y * delta_y);
-                if(square_distance > square_diameter) {
-                  square_diameter = square_distance;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    return square_diameter;
+    const auto x(delta_x());
+    const auto y(delta_y());
+    return x * x + y * y;
+    // double square_diameter(0);
+    // for(R_xlen_t i(0); i < number_row_; ++i) {
+    //   for(R_xlen_t j(0); j < number_col_; ++j) {
+    //     if(!R_IsNA(get_matrix(i, j))) {
+    //       for(R_xlen_t k(i); k < number_row_; ++k) {
+    //         for(R_xlen_t l(j); l < number_col_; ++l) {
+    //           if(!R_IsNA(get_matrix(k, l))) {
+    //             const auto delta_x(static_cast<double>(j - l) * xstep_);
+    //             const auto delta_y(static_cast<double>(i - k) * ystep_);
+    //             const auto square_distance(delta_x * delta_x + delta_y * delta_y);
+    //             if(square_distance > square_diameter) {
+    //               square_diameter = square_distance;
+    //             }
+    //           }
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
+    // return square_diameter;
   }
 
   std::pair<double, double> get_bounds() const {
