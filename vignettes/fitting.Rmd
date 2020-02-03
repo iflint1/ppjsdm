@@ -1,8 +1,8 @@
 ---
-title: "Introduction"
+title: "Fitting procedure"
 output: pdf_document
 vignette: >
-  %\VignetteIndexEntry{introduction}
+  %\VignetteIndexEntry{fitting}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -24,54 +24,13 @@ library(spatstat)
 
 remove(list = ls())
 
-set.seed(2)
+set.seed(1)
 ```
 
-# Basic options for the simulation and fitting functions
+This vignette explains how to calibrate a model in which the distribution is driven by either covariates or traits.
 
-We begin by sampling from the point process model.
+# Fitting a sample driven by covariates
 
-```{r}
-configuration <- ppjsdm::rgibbs(lambda = 50)
-```
-
-```{r, fig.height = 4, fig.align = 'center', fig}
-par(mar = c(5, 4, 4, 13) + 0.1)
-plot(configuration)
-```
-
-The parameter `lambda` controls the intensity, and can be a vector to sample from a multivariate point process.
-
-```{r}
-configuration <- ppjsdm::rgibbs(lambda = c(species1 = 50, species2 = 10))
-```
-
-```{r}
-par(mar = c(5, 4, 4, 13) + 0.1)
-plot(configuration)
-```
-
-The parameter `alpha` controls the repulsion.
-A negative value implies repulsion, while a positive value means attraction.
-
-```{r}
-configuration1 <- ppjsdm::rgibbs(alpha = 2, lambda = 50)
-configuration2 <- ppjsdm::rgibbs(alpha = -2, lambda = 50)
-```
-
-```{r}
-par(mar = c(5, 4, 4, 13) + 0.1)
-plot(configuration1)
-```
-
-```{r}
-par(mar = c(5, 4, 4, 13) + 0.1)
-plot(configuration2)
-```
-
-# Using covariates
-
-This section assumes you have a series of covariates explaining a given dataset. 
 To illustrate how the package works, we define arbitrarily the following covariates.
 
 ```{r}
@@ -82,11 +41,10 @@ covariates <- list(temperature = temperature,
                    wetness = wetness)
 ```
 
-In order to fit the Geyer model, we also need to specify some interaction radii.
+We will be using the Geyer model.
 
 ```{r}
 radii <- matrix(0.01, 2, 2)
-
 model <- "Geyer"
 ```
 
@@ -143,7 +101,7 @@ plot(fit$complete)
 plot(fit$cv)
 ```
 
-# Using traits
+# Fitting a sample driven by traits
 
 This section assumes you have a series of traits explaining a given dataset. 
 To illustrate how the package works, we define arbitrarily the following traits.
@@ -177,7 +135,7 @@ for(i in seq_len(nspecies)) {
 print(alpha)
 ```
 
-Finally, we sample the biased observations.
+Finally, we sample the observations.
 
 ```{r}
 configurations <- append(ppjsdm::rgibbs(lambda = c(50, 50), 
