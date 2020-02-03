@@ -191,10 +191,10 @@ public:
     double inner_product(0);
     const auto point_type(get_type(point));
     for(R_xlen_t i(0); i < number_types; ++i) {
-      inner_product += alpha_(i, point_type) * dispersion[i];
+      inner_product += alpha_(point_type, i) * dispersion[i];
     }
     for(decltype(covariates_.size()) i(0); i < covariates_.size(); ++i) {
-      inner_product += coefs_(i, point_type) * covariates_[i](get_x(point), get_y(point));
+      inner_product += coefs_(point_type, i) * covariates_[i](get_x(point), get_y(point));
     }
     return lambda_[point_type] * std::exp(inner_product);
   }
@@ -224,7 +224,7 @@ public:
       //   const auto bounds(covariates_[j].bounds());
       //   inner_product += std::fabs(coefs_(j, i)) * std::max(std::fabs(bounds.first), std::fabs(bounds.second));
       // }
-      inner_product += covariates_.get_maximum_of_dot(coefs_);
+      inner_product += covariates_.get_maximum_of_dot(coefs_(i, Rcpp::_));
       const auto value(lambda_[i] * std::exp(inner_product));
       if(std::isinf(value)) {
         Rcpp::stop("Infinite value obtained as the bound to the Papangelou intensity.");

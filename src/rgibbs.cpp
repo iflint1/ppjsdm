@@ -52,7 +52,14 @@ SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP coef
   const auto number_types(ppjsdm::get_number_types_and_check_conformance(alpha, lambda, radius, types));
   alpha = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(alpha, 0., number_types);
   lambda = ppjsdm::construct_if_missing<Rcpp::NumericVector>(lambda, 1., number_types);
-  coefs = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(coefs, 0., Rcpp::as<Rcpp::List>(covariates).size());
+
+  const auto coefs_nrows(number_types);
+  const auto coefs_ncols(Rcpp::as<Rcpp::List>(covariates).size());
+  coefs = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(coefs, 1., coefs_nrows, coefs_ncols);
+  if(Rcpp::as<Rcpp::NumericMatrix>(coefs).nrow() != coefs_nrows || Rcpp::as<Rcpp::NumericMatrix>(coefs).ncol() != coefs_ncols) {
+    Rcpp::stop("The parameter `coefs` does not have the right dimensions.");
+  }
+
   types = ppjsdm::make_types(types, number_types, lambda);
   // TODO: Think about what format for coefs, see also compute_papangelou.cpp.
   return ppjsdm::call_on_wrapped_window(window, [alpha, lambda, coefs, covariates, radius, saturation, steps, nsim, types, model, drop, number_types](const auto& w) {
