@@ -21,11 +21,11 @@ inline auto treat_as_real(SEXP value) {
 template<typename Type>
 struct make_type {
   template<typename U>
-  SEXP operator()(R_xlen_t number_types, U val) {
+  SEXP operator()(U val, R_xlen_t nrows, R_xlen_t) {
     // The constructor that default-constructs to a given value does not work on Windows with RTools,
     // so do the construction by hand.
-    Type new_value(number_types);
-    for(R_xlen_t i(0); i < number_types; ++i) {
+    Type new_value(nrows);
+    for(R_xlen_t i(0); i < nrows; ++i) {
       new_value[i] = treat_as_real(val);
     }
     return Rcpp::wrap(new_value);
@@ -35,10 +35,10 @@ struct make_type {
 template<>
 struct make_type<Rcpp::NumericMatrix> {
   template<typename U>
-  SEXP operator()(R_xlen_t number_types, U val) {
-    Rcpp::NumericMatrix new_value(number_types, number_types);
-    for(R_xlen_t i(0); i < number_types; ++i) {
-      for(R_xlen_t j(0); j < number_types; ++j) {
+  SEXP operator()(U val, R_xlen_t nrows, R_xlen_t ncols) {
+    Rcpp::NumericMatrix new_value(nrows, ncols);
+    for(R_xlen_t i(0); i < nrows; ++i) {
+      for(R_xlen_t j(0); j < ncols; ++j) {
         new_value(i, j) = treat_as_real(val);
       }
     }
@@ -49,18 +49,23 @@ struct make_type<Rcpp::NumericMatrix> {
 } // namespace detail
 
 template<typename Type, typename U>
-inline SEXP construct_if_missing(SEXP x, U def, R_xlen_t number_types) {
+inline SEXP construct_if_missing(SEXP x, U def, R_xlen_t nrows, R_xlen_t ncols) {
   if(Rf_isNull(x)) {
-    return detail::make_type<Type>{}(number_types, def);
+    return detail::make_type<Type>{}(def, nrows, ncols);
   } else {
     // TODO: C++17 if constexpr would be better
     if(std::is_same<Type, Rcpp::NumericMatrix>::value) {
       if(!Rf_isMatrix(x)) {
-        return detail::make_type<Type>{}(number_types, x);
+        return detail::make_type<Type>{}(x, nrows, ncols);
       }
     }
     return x;
   }
+}
+
+template<typename Type, typename U>
+inline SEXP construct_if_missing(SEXP x, U def, R_xlen_t nrows) {
+  return construct_if_missing<Type>(x, def, nrows, nrows);
 }
 
 } // namespace ppjsdm
