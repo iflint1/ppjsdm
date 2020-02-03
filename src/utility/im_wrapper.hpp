@@ -4,6 +4,7 @@
 #include <Rcpp.h>
 #include <Rinternals.h>
 
+#include "../point/point_manipulation.hpp"
 #include "../utility/size_t.hpp"
 
 #include <algorithm> // std::max, std::min
@@ -66,7 +67,9 @@ public:
     return result;
   }
 
-
+  double operator()(const Marked_point& point) const {
+    return operator()(get_x(point), get_y(point));
+  }
 
   bool is_in(double x, double y) const {
     const auto mat_value(operator()(x, y));

@@ -123,7 +123,7 @@ public:
       inner_product += alpha_(point_type, i) * dispersion[i];
     }
     for(decltype(covariates_.size()) i(0); i < covariates_.size(); ++i) {
-      inner_product += beta_(point_type, i) * covariates_[i](get_x(point), get_y(point));
+      inner_product += beta_(point_type, i) * covariates_[i](point);
     }
     return lambda_[point_type] * std::exp(inner_product);
   }

@@ -121,7 +121,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 
     rho_offset(i, 0) = -std::log(static_cast<double>(rho_times_volume[type_index]) / volume);
     for(size_t j(0); j < covariates_length; ++j) {
-      const auto covariate(covariates[j](ppjsdm::get_x(point),  ppjsdm::get_y(point)));
+      const auto covariate(covariates[j](point));
       if(R_IsNA(covariate)) {
         Rcpp::stop("One of the covariates' value is NA on one of the locations in the dataset.");
       }
