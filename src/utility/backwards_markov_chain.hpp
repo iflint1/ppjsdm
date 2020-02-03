@@ -1,30 +1,35 @@
 #ifndef INCLUDE_PPJSDM_BACKWARDS_MARKOV_CHAIN
 #define INCLUDE_PPJSDM_BACKWARDS_MARKOV_CHAIN
 
+#include <Rinternals.h>
+
 #include "../configuration/configuration_manipulation.hpp"
 #include "../point/point_manipulation.hpp"
 
 #include <tuple> // std::tuple
+#include <vector> // std::vector
 
 namespace ppjsdm {
 
 template <typename Configuration>
 class Backwards_Markov_chain {
 public:
-  explicit Backwards_Markov_chain(Configuration pp) : last_configuration_(std::move(pp)) {}
+  explicit Backwards_Markov_chain(Configuration&& pp) : last_configuration_(std::move(pp)) {}
+  explicit Backwards_Markov_chain(const Configuration& pp) : last_configuration_(pp) {}
 
   auto size() const {
     return (chain_.size() + 1);
   }
 
   template<typename Window>
-  std::size_t extend_until_T0(double beta, Window& window, R_xlen_t point_types) {
+  auto extend_until_T0(double beta, const Window& window, R_xlen_t point_types) {
     if(empty(last_configuration_)) {
-      return 0;
+      return 0ULL;
     }
     Configuration points_not_in_last{};
-    std::size_t T0(1);
+    unsigned long long int T0(1);
     while(true) {
+      R_CheckUserInterrupt();
       if(unif_rand() * (beta + static_cast<double>(ppjsdm::size(points_not_in_last) + ppjsdm::size(last_configuration_))) <= beta) {
         insert_uniform_point_in_configuration_and_update_chain(window, points_not_in_last, point_types);
       } else {
@@ -42,9 +47,9 @@ public:
     }
   }
 
-  template<typename Window, typename I>
-  void extend_backwards(I number_extensions, double beta, Window& window, R_xlen_t point_types) {
-    while(number_extensions--) {
+  template<typename Window, typename IntegerType>
+  void extend_backwards(IntegerType number_extensions, double beta, const Window& window, R_xlen_t point_types) {
+    for(IntegerType i(0); i < number_extensions; ++i) {
       if(unif_rand() * (beta + static_cast<double>(ppjsdm::size(last_configuration_))) <= beta) {
         insert_uniform_point_in_configuration_and_update_chain(window, last_configuration_, point_types);
       } else {
@@ -59,9 +64,14 @@ public:
 
   template<typename Function>
   void iterate_forward_in_time(const Function& f) {
-    for(auto n(static_cast<long>(chain_.size()) - 1); n >= 0; --n) {
-      const auto current(chain_[static_cast<std::size_t>(n)]);
-      f(std::get<1>(current), std::get<0>(current), std::get<2>(current));
+    const auto chain_size(chain_.size());
+    if(chain_size == 0) {
+      return;
+    } else {
+      for(auto n(static_cast<long long int>(chain_size) - 1); n >= 0; --n) {
+        const auto current(chain_[static_cast<std::size_t>(n)]);
+        f(std::get<1>(current), std::get<0>(current), std::get<2>(current));
+      }
     }
   }
 
