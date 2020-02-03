@@ -251,7 +251,7 @@ const constexpr char* const models[] = {
 };
 
 template<typename F>
-inline auto call_on_papangelou(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, unsigned long long int saturation, const F& f) {
+inline auto call_on_dispersion_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, unsigned long long int saturation, const F& f) {
   const auto model_string(model[0]);
   if(model_string == models[0]) {
     return f(Saturated_varphi_model_papangelou<varphi::Exponential>(saturation, radius));
@@ -277,7 +277,7 @@ inline auto call_on_model(Rcpp::CharacterVector model,
                           Rcpp::NumericMatrix radius,
                           unsigned long long int saturation,
                           const F& f) {
-  return call_on_papangelou(model, radius, saturation, [&alpha, &lambda, &f, &beta, covariates](auto&& varphi) {
+  return call_on_dispersion_model(model, radius, saturation, [&alpha, &lambda, &f, &beta, covariates](auto&& varphi) {
     using Model_type = Exponential_family_model<std::remove_cv_t<std::remove_reference_t<decltype(varphi)>>,
                                        Lambda,
                                        Rcpp::NumericMatrix,

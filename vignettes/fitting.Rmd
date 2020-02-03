@@ -103,7 +103,7 @@ plot(fit$complete)
 plot(fit$cv)
 ```
 
-# Fitting a sample driven by traits
+# Fitting samples driven by traits
 
 This section assumes you have a series of traits explaining a given dataset. 
 To illustrate how the package works, we define arbitrarily the following traits.

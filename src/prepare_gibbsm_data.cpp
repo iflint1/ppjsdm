@@ -26,8 +26,8 @@ inline void add_to_formula(std::string& formula, Rcpp::CharacterVector names) {
   }
 }
 
-template<typename Configuration, typename Window, typename Papangelou, typename Vector>
-Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const Window& window, const ppjsdm::Im_list_wrapper& covariates, const Papangelou& papangelou, const Vector& points_by_type) {
+template<typename Configuration, typename Window, typename DispersionModel, typename Vector>
+Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const Window& window, const ppjsdm::Im_list_wrapper& covariates, const DispersionModel& dispersion_model, const Vector& points_by_type) {
   const auto length_configuration(ppjsdm::size(configuration));
   using size_t = ppjsdm::size_t<Configuration>;
   const size_t number_types(points_by_type.size());
@@ -110,11 +110,11 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
       Configuration configuration_copy(configuration);
       ppjsdm::remove_point_by_index(configuration_copy, i);
 
-      dispersion = papangelou.compute(configuration_copy, point, number_types, length_configuration - 1);
+      dispersion = dispersion_model.compute(configuration_copy, point, number_types, length_configuration - 1);
     } else {
       response(i, 0) = 0;
       point = D[i - length_configuration];
-      dispersion = papangelou.compute(configuration, point, number_types, length_configuration);
+      dispersion = dispersion_model.compute(configuration, point, number_types, length_configuration);
     }
 
     const size_t type_index(ppjsdm::get_type(point));
@@ -195,7 +195,7 @@ Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covar
     const auto points_by_type(ppjsdm::get_number_points(wrapped_configuration));
     const auto number_types(points_by_type.size());
     const auto r(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(radius, 0.1 * w.diameter(), number_types));
-    return ppjsdm::call_on_papangelou(model, r, saturation, [&wrapped_configuration, &w, &covariates, &model, &points_by_type](const auto& papangelou) {
+    return ppjsdm::call_on_dispersion_model(model, r, saturation, [&wrapped_configuration, &w, &covariates, &model, &points_by_type](const auto& papangelou) {
       return prepare_gibbsm_data_helper(wrapped_configuration, w, ppjsdm::Im_list_wrapper(covariates), papangelou, points_by_type);
     });
   });

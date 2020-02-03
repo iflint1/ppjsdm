@@ -34,17 +34,18 @@ For a point configuration $\omega$, a location in space $x$, and a species index
 Our general model for the Papangelou conditional intensity is
 $$\pi((x,i),\omega)
 =\lambda_i\exp\biggl(\sum_{k=1}^n\beta_{i,k}X_k(x)
-+\sum_{j=1}^p\alpha_{i,j}\sum_{z\in\omega_i^{(N)}}\varphi_{r_{i,j}}(\|z-x\|)\biggr).$$
++\sum_{j=1}^p\alpha_{i,j}\frac{1}{|\omega_i^{(N)}|}\sum_{z\in\omega_i^{(N)}}\varphi_{r_{i,j}}(\|z-x\|)\biggr).$$
 In the equation above,
 
-* $\lambda_i$ is the intensity of species $i$ if the $\beta_k$ and $\alpha_{i,j}$ were to all be zero;
+* $\lambda_i$ is the intensity of species $i$ if the $\beta_{i,k}$ and $\alpha_{i,j}$ were to all be zero;
 * $n$ is the number of environmental covariates;
 * $X_k(x)$ is the environmental covariate number $k$ evaluated at location $x$;
 * $\beta_{i,k}$ represents the effect on the distribution of species $i$ of the environmental covariate $k$;
 * $p$ is the number of different species;
-* $\alpha_{i,j}$ is the repulsion parameter between species $i$ and $j$;
+* $\alpha_{i,j}$ is the repulsion parameter between species $i$ and $j$ (it can be nonnegative or positive);
 * $N$ is what we call the saturation parameter, i.e. the maximum number of different individuals which can interact with a given one;
 * $\omega_i^{(N)}$ is the subset of the $N$ individuals in $\omega$ of type $i$ which are closest to location $x$;
+* $|\omega_i^{(N)}|$ is the number of points in the above configuration;
 * $r_{i,j}$ are interaction radii which denote the typical distance within which species $i$ and $j$ interact;
 * $\varphi_{r_{i,j}}$ are smoothing functions.
 
@@ -116,7 +117,7 @@ alpha <- matrix(-1)
 ```
 
 Let us see how this changes the Papangelou conditional intensity.
-Writing a quick function to plot the configuration and the Papangelou conditional intensity will be useful.
+Writing a function to plot the configuration and the Papangelou conditional intensity will be useful.
 (Note: we use the plotting facilities from `spatstat` here and in the remainder of the vignette.)
 
 ```{r}
@@ -161,7 +162,7 @@ Thus, our model is either attractive or repulsive depending on the sign of `alph
 # Changing features of the interaction
 
 Different features of the interaction can be customised.
-To begin with, you can control the radius of interaction (which correspond to $r_{i,j}$ in the model).
+To begin with, you can control the radii of interaction (which correspond to $r_{i,j}$ in the model).
 
 ```{r}
 alpha <- matrix(-1)
@@ -169,7 +170,7 @@ radius <- matrix(0.05, nspecies, nspecies)
 plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
-It is also possible to change the number of closest individuals that are taken into account, via the `saturation` parameter (which corresponds to $N$ in the model).
+It is also possible to change the number of individuals that are taken into account, via the `saturation` parameter (which corresponds to $N$ in the model).
 For example, let us account for the five closest individuals instead of the two closest.
 
 ```{r}
@@ -178,7 +179,7 @@ saturation <- 5
 plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
-There are also various kinds of smoothing available via the `model` parameter (which correspond to $\varphi_{r_{i,j}}$ in the model).
+There are also various kinds of smoothing functions available via the `model` parameter (which correspond to $\varphi_{r_{i,j}}$ in the model).
 Here is what the exponential smoothing looks like.
 
 ```{r}
@@ -262,9 +263,6 @@ configuration <- rgibbs(window = window,
                         lambda = lambda, 
                         beta = beta, 
                         covariates = covariates)
-```
-
-```{r}
 par(mar = c(5, 4, 4, 13) + 0.1)
 plot(configuration)
 ```
