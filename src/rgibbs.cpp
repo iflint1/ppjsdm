@@ -56,7 +56,8 @@ SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP coef
   const auto coefs_nrows(number_types);
   const auto coefs_ncols(Rcpp::as<Rcpp::List>(covariates).size());
   coefs = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(coefs, 1., coefs_nrows, coefs_ncols);
-  if(Rcpp::as<Rcpp::NumericMatrix>(coefs).nrow() != coefs_nrows || Rcpp::as<Rcpp::NumericMatrix>(coefs).ncol() != coefs_ncols) {
+  if(coefs_ncols != 0 && (Rcpp::as<Rcpp::NumericMatrix>(coefs).nrow() != coefs_nrows
+                            || Rcpp::as<Rcpp::NumericMatrix>(coefs).ncol() != coefs_ncols)) {
     Rcpp::stop("The parameter `coefs` does not have the right dimensions.");
   }
 

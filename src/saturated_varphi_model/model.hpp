@@ -224,7 +224,9 @@ public:
       //   const auto bounds(covariates_[j].bounds());
       //   inner_product += std::fabs(coefs_(j, i)) * std::max(std::fabs(bounds.first), std::fabs(bounds.second));
       // }
-      inner_product += covariates_.get_maximum_of_dot(coefs_(i, Rcpp::_));
+      if(covariates_.size() > 0) {
+        inner_product += covariates_.get_maximum_of_dot(coefs_(i, Rcpp::_));
+      }
       const auto value(lambda_[i] * std::exp(inner_product));
       if(std::isinf(value)) {
         Rcpp::stop("Infinite value obtained as the bound to the Papangelou intensity.");
