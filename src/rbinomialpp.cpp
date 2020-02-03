@@ -40,12 +40,12 @@ inline SEXP rbinomialpp_helper(const Window& window, const N& n, R_xlen_t nsim, 
 //' @import Rcpp
 // [[Rcpp::export]]
 SEXP rbinomialpp(SEXP window = R_NilValue, SEXP n = R_NilValue, R_xlen_t nsim = 1, SEXP types = R_NilValue, bool drop = true) {
-  const auto point_types(ppjsdm::get_number_types_and_check_conformance(n, types));
-  n = ppjsdm::construct_if_missing<Rcpp::IntegerVector>(point_types, n, 1);
-  types = ppjsdm::make_types(types, point_types, n);
-  return ppjsdm::call_on_wrapped_window(window, [&n, nsim, &types, drop, point_types](const auto& w) {
-    return ppjsdm::call_on_list_or_vector(n, [&w, nsim, &types, drop, point_types](const auto& m) {
-      return rbinomialpp_helper(w, m, nsim, types, drop, point_types);
+  const auto number_types(ppjsdm::get_number_types_and_check_conformance(n, types));
+  n = ppjsdm::construct_if_missing<Rcpp::IntegerVector>(n, 1, number_types);
+  types = ppjsdm::make_types(types, number_types, n);
+  return ppjsdm::call_on_wrapped_window(window, [&n, nsim, &types, drop, number_types](const auto& w) {
+    return ppjsdm::call_on_list_or_vector(n, [&w, nsim, &types, drop, number_types](const auto& m) {
+      return rbinomialpp_helper(w, m, nsim, types, drop, number_types);
     });
   });
 }

@@ -49,7 +49,7 @@ struct make_type<Rcpp::NumericMatrix> {
 } // namespace detail
 
 template<typename Type, typename U>
-inline SEXP construct_if_missing(R_xlen_t number_types, SEXP x, U def) {
+inline SEXP construct_if_missing(SEXP x, U def, R_xlen_t number_types) {
   if(Rf_isNull(x)) {
     return detail::make_type<Type>{}(number_types, def);
   } else {

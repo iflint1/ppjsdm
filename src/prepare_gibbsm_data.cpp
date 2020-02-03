@@ -194,7 +194,7 @@ Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covar
     // That number is then used to default construct `radius`.
     const auto points_by_type(ppjsdm::get_number_points(wrapped_configuration));
     const auto number_types(points_by_type.size());
-    const auto r(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(number_types, radius, 0.1 * w.diameter()));
+    const auto r(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(radius, 0.1 * w.diameter(), number_types));
     return ppjsdm::call_on_papangelou(model, r, saturation, [&wrapped_configuration, &w, &covariates, &model, &points_by_type](const auto& papangelou) {
       return prepare_gibbsm_data_helper(wrapped_configuration, w, ppjsdm::Im_list_wrapper(covariates), papangelou, points_by_type);
     });
