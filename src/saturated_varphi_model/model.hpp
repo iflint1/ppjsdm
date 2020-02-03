@@ -7,14 +7,15 @@
 #include "../configuration/configuration_manipulation.hpp"
 #include "../configuration/get_number_points.hpp"
 #include "../point/point_manipulation.hpp"
+#include "../utility/for_each_container.hpp"
 #include "../utility/im_wrapper.hpp"
 #include "../utility/size_t.hpp"
 
 #include <algorithm> // std::max, std::min, std::upper_bound
-#include <cmath> // std::exp, std::log, std::fabs, std::isnan
+#include <cmath> // std::exp, std::log, std::fabs, std::isinf
 #include <list> // std::list
 #include <type_traits> // std::remove_const, std::remove_reference, std::is_same, std::enable_if
-#include <utility> // std::forward
+#include <utility> // std::forward, std::move
 #include <vector> // std::vector
 
 namespace ppjsdm {
@@ -27,44 +28,27 @@ public:
   Saturated_varphi_model_papangelou(unsigned long long int saturation, Args&&... args):
     Varphi(std::forward<Args>(args)...), saturation_(saturation) {}
 
-  template<typename Configuration, typename Point>
+  template<typename... Configurations, typename Point>
   Rcpp::NumericVector compute(const Point& point,
                               R_xlen_t number_types,
-                              const Configuration& configuration1,
-                              const Configuration& configuration2) const {
-    using size_t = size_t<Configuration>;
+                              Configurations&&... configurations) const {
     // TODO: Ideally I'd like to use if constexpr
     if(has_nonzero_value_v<Varphi>) { // Use faster algorithm in this case
       std::vector<unsigned long long int> count_positive_types(number_types);
       const auto point_type(get_type(point));
       const auto point_x(get_x(point));
       const auto point_y(get_y(point));
-      // TODO: Avoid copy and paste below
-      // TODO: Also might avoid copy of point_i
-      for(size_t i(0); i < configuration1.size(); ++i) {
-        const auto point_i(configuration1[i]);
-        const auto type_i(get_type(point_i));
-        if(count_positive_types[type_i] < saturation_) {
-          const auto delta_x(get_x(point_i) - point_x);
-          const auto delta_y(get_y(point_i) - point_y);
+      for_each_container([&count_positive_types, this, point_type, point_x, point_y](const auto& point) {
+        const auto current_type(get_type(point));
+        if(count_positive_types[current_type] < saturation_) {
+          const auto delta_x(get_x(point) - point_x);
+          const auto delta_y(get_y(point) - point_y);
           const auto square_distance(delta_x * delta_x + delta_y * delta_y);
-          if(Varphi::apply(square_distance, type_i, point_type) > 0) {
-            count_positive_types[type_i] += 1;
+          if(Varphi::apply(square_distance, current_type, point_type) > 0) {
+            count_positive_types[current_type] += 1;
           }
         }
-      }
-      for(size_t i(0); i < configuration2.size(); ++i) {
-        const auto point_i(configuration2[i]);
-        const auto type_i(get_type(point_i));
-        if(count_positive_types[type_i] < saturation_) {
-          const auto delta_x(get_x(point_i) - point_x);
-          const auto delta_y(get_y(point_i) - point_y);
-          const auto square_distance(delta_x * delta_x + delta_y * delta_y);
-          if(Varphi::apply(square_distance, type_i, point_type) > 0) {
-            count_positive_types[type_i] += 1;
-          }
-        }
-      }
+      }, std::forward<Configurations>(configurations)...);
       Rcpp::NumericVector dispersion(Rcpp::no_init(number_types));
       for(R_xlen_t i(0); i < number_types; ++i) {
         dispersion[i] = get_nonzero_value<Varphi>() * static_cast<double>(count_positive_types[i]);
@@ -76,38 +60,20 @@ public:
       // Fill with `saturation_` smallest square distances
       const auto point_x(get_x(point));
       const auto point_y(get_y(point));
-      // TODO: Avoid copy and paste below
-      // TODO: Also might avoid copy of point_i
-      for(size_t i(0); i < configuration1.size(); ++i) {
-        const auto point_i(configuration1[i]);
-        const auto type_i(get_type(point_i));
-        const auto delta_x(get_x(point_i) - point_x);
-        const auto delta_y(get_y(point_i) - point_y);
+      for_each_container([&square_distances, point_x, point_y, saturation = saturation_](const auto& point) {
+        const auto current_type(get_type(point));
+        const auto delta_x(get_x(point) - point_x);
+        const auto delta_y(get_y(point) - point_y);
         const auto square_distance(delta_x * delta_x + delta_y * delta_y);
-        auto& current(square_distances[type_i]);
+        auto& current(square_distances[current_type]);
         auto iterator(std::upper_bound(current.begin(), current.end(), square_distance));
-        if(current.size() < saturation_) {
+        if(current.size() < saturation) {
           current.insert(iterator, square_distance);
         } else if(iterator != current.end()) {
           current.insert(iterator, square_distance);
           current.pop_back();
         }
-      }
-      for(size_t i(0); i < configuration2.size(); ++i) {
-        const auto point_i(configuration2[i]);
-        const auto type_i(get_type(point_i));
-        const auto delta_x(get_x(point_i) - point_x);
-        const auto delta_y(get_y(point_i) - point_y);
-        const auto square_distance(delta_x * delta_x + delta_y * delta_y);
-        auto& current(square_distances[type_i]);
-        auto iterator(std::upper_bound(current.begin(), current.end(), square_distance));
-        if(current.size() < saturation_) {
-          current.insert(iterator, square_distance);
-        } else if(iterator != current.end()) {
-          current.insert(iterator, square_distance);
-          current.pop_back();
-        }
-      }
+      }, std::forward<Configurations>(configurations)...);
 
       // Compute dispersion
       Rcpp::NumericVector dispersion(Rcpp::no_init(number_types));
@@ -121,13 +87,6 @@ public:
       }
       return dispersion;
     }
-  }
-
-  template<typename Configuration, typename Point>
-  Rcpp::NumericVector compute(const Point& point,
-                              R_xlen_t number_types,
-                              const Configuration& configuration) const {
-    return compute(point, number_types, configuration, Configuration{});
   }
 
   template<typename Window>
@@ -161,12 +120,11 @@ public:
                            Args&&... args):
     Exponential_family_model(lambda, alpha, beta, covariates, Dispersion(std::forward<Args>(args)...)) {}
 
-  template<typename Configuration, typename Point>
+  template<typename... Configurations, typename Point>
   double compute_papangelou(const Point& point,
                             R_xlen_t number_types,
-                            const Configuration& configuration1,
-                            const Configuration& configuration2) const {
-    const auto dispersion(Dispersion::compute(point, number_types, configuration1, configuration2));
+                            Configurations&&... configurations) const {
+    const auto dispersion(Dispersion::compute(point, number_types, std::forward<Configurations>(configurations)...));
 
     double inner_product(0);
     const auto point_type(get_type(point));
@@ -177,13 +135,6 @@ public:
       inner_product += beta_(point_type, i) * covariates_[i](get_x(point), get_y(point));
     }
     return lambda_[point_type] * std::exp(inner_product);
-  }
-
-  template<typename Configuration, typename Point>
-  double compute_papangelou(const Point& point,
-                            R_xlen_t number_types,
-                            const Configuration& configuration) const {
-    return compute_papangelou(point, number_types, configuration, Configuration{});
   }
 
   template<typename Window>
@@ -256,7 +207,7 @@ inline auto call_on_model(Rcpp::CharacterVector model,
                                        Rcpp::NumericMatrix,
                                        Rcpp::NumericMatrix>;
     const Model_type model(lambda, alpha, beta, covariates, std::forward<decltype(varphi)>(varphi));
-    return f(model);
+    return f(std::move(model));
   });
 }
 
