@@ -182,9 +182,9 @@ public:
     Exponential_family_model(lambda, alpha, beta, covariates, Dispersion(std::forward<Args>(args)...)) {}
 
   template<typename Configuration, typename Point>
-  double compute_papangelou(const Configuration& configuration,
-                            const Point& point,
-                            R_xlen_t number_types) const {
+  double compute_papangelou(const Point& point,
+                            R_xlen_t number_types,
+                            const Configuration& configuration) const {
     const auto dispersion(Dispersion::compute(configuration, point, number_types, size(configuration)));
 
     double inner_product(0);
@@ -196,19 +196,6 @@ public:
       inner_product += beta_(point_type, i) * covariates_[i](get_x(point), get_y(point));
     }
     return lambda_[point_type] * std::exp(inner_product);
-  }
-
-  template<typename Configuration, typename Point, typename Other>
-  double compute_papangelou_conditional_on_value(const Configuration& configuration,
-                            const Point& point,
-                            const Other& other,
-                            double,
-                            R_xlen_t number_types) const {
-    Configuration copy(configuration);
-    for(const auto& p: other) {
-      add_point(copy, p);
-    }
-    return compute_papangelou(copy, point, number_types);
   }
 
   template<typename Window>

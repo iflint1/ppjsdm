@@ -27,7 +27,7 @@ inline auto simulate_metropolis_hastings(const Model& model, const Window& windo
       const auto point(window.sample(random_type));
 
       // TODO: You can avoid taking the exp by reorganising the ratio, and sampling an exponential r.v. instead.
-      const auto papangelou(model.compute_papangelou(points, point, number_types));
+      const auto papangelou(model.compute_papangelou(point, number_types, points));
       const auto birth_ratio(papangelou * precomputed_constant / (1 + points_size));
 
       // Use C++ short-circuiting
@@ -38,7 +38,7 @@ inline auto simulate_metropolis_hastings(const Model& model, const Window& windo
     } else if(points_size != 0) {
       const auto saved_point(remove_random_point(points));
 
-      const auto papangelou(model.compute_papangelou(points, saved_point, number_types));
+      const auto papangelou(model.compute_papangelou(saved_point, number_types, points));
       const auto death_ratio(points_size / (precomputed_constant * papangelou));
       // Use C++ short-circuiting
       if(death_ratio >= 1 || unif_rand() <= death_ratio) {
