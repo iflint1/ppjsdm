@@ -11,7 +11,7 @@
 #include "../utility/size_t.hpp"
 
 #include <algorithm> // std::max, std::min, std::upper_bound
-#include <cmath> // std::exp, std::log, std::fabs
+#include <cmath> // std::exp, std::log, std::fabs, std::isnan
 #include <list> // std::list
 #include <type_traits> // std::remove_const, std::remove_reference, std::is_same, std::enable_if
 #include <utility> // std::forward
@@ -33,7 +33,7 @@ public:
                               R_xlen_t number_types,
                               size_t<Configuration> number_points) const {
     // TODO: Ideally I'd like to use if constexpr
-    if(Varphi::equal_to_zero_or_constant) { // Use faster algorithm in this case
+    if(has_nonzero_value_v<Varphi>) { // Use faster algorithm in this case
       using size_t = size_t<Configuration>;
       std::vector<int> count_types(number_types);
       std::vector<unsigned long long int> count_positive_types(number_types);
@@ -56,9 +56,8 @@ public:
       Rcpp::NumericVector dispersion(Rcpp::no_init(number_types));
       for(R_xlen_t i(0); i < number_types; ++i) {
         const auto count(count_types[i]);
-        // TODO: In fact, we have to multiply everything by Varphi constant.
         if(count > 0) {
-          dispersion[i] = static_cast<double>(count_positive_types[i]) / std::min<double>(count, saturation_);
+          dispersion[i] = get_nonzero_value<Varphi>() * static_cast<double>(count_positive_types[i]) / std::min<double>(count, saturation_);
         } else {
           dispersion[i] = 0.;
         }
