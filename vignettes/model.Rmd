@@ -34,7 +34,7 @@ For a point configuration $\omega$, a location in space $x$, and a species index
 Our general model for the Papangelou conditional intensity is
 $$\pi((x,i),\omega)
 =\lambda_i\exp\biggl(\sum_{k=1}^n\beta_{i,k}X_k(x)
-+\sum_{j=1}^p\alpha_{i,j}\frac{1}{|\omega_i^{(N)}|}\sum_{z\in\omega_i^{(N)}}\varphi_{r_{i,j}}(\|z-x\|)\biggr).$$
++\sum_{j=1}^p\alpha_{i,j}\sum_{z\in\omega_i^{(N)}}\varphi_{r_{i,j}}(\|z-x\|)\biggr).$$
 In the equation above,
 
 * $\lambda_i$ is the intensity of species $i$ if the $\beta_{i,k}$ and $\alpha_{i,j}$ were to all be zero;
@@ -45,8 +45,7 @@ In the equation above,
 * $\alpha_{i,j}$ is the repulsion parameter between species $i$ and $j$ (it can be nonnegative or positive);
 * $N$ is what we call the saturation parameter, i.e. the maximum number of different individuals which can interact with a given one;
 * $\omega_i^{(N)}$ is the subset of the $N$ individuals in $\omega$ of type $i$ which are closest to location $x$;
-* $|\omega_i^{(N)}|$ is the number of points in the above configuration;
-* $r_{i,j}$ are interaction radii which denote the typical distance within which species $i$ and $j$ interact;
+* $r_{i,j}$ are interaction radii which denote the typical distance within which species $i$ and $j$ interact (The functions $\varphi_{r_{i,j}}$ are chosen to be nonincreasing, between $0$ and $1$, and have value $0.5$ at $r_{i,j}$.);
 * $\varphi_{r_{i,j}}$ are smoothing functions.
 
 Since the above definition is quite technical, we will spend the rest of this vignette illustrating this concept with some examples.
@@ -116,13 +115,21 @@ We now add interactions between individuals, as controlled by the parameter `alp
 alpha <- matrix(-1)
 ```
 
-Let us see how this changes the Papangelou conditional intensity.
-Writing a function to plot the configuration and the Papangelou conditional intensity will be useful.
+Let us see how this changes the sample and its Papangelou conditional intensity.
+Writing a function to sample from the distribution and plot the configuration and the Papangelou conditional intensity will be useful.
 (Note: we use the plotting facilities from `spatstat` here and in the remainder of the vignette.)
 
 ```{r}
-plot_pap <- function(configuration, type, model, alpha, 
+plot_pap <- function(type, model, alpha, 
                      lambda, beta, covariates, radius, saturation) {
+  configuration <- rgibbs(window = window, 
+                        alpha = alpha, 
+                        lambda = lambda, 
+                        beta = beta, 
+                        covariates = covariates,
+                        radius = radius,
+                        saturation = saturation,
+                        model = model)
   x_axis <- seq(from = 0, to = 1, by = 0.001)
   y_axis <- x_axis
   z <- outer(x_axis, y_axis, function(x, y) {
@@ -136,9 +143,10 @@ plot_pap <- function(configuration, type, model, alpha,
 ```
 
 We can then plot the Papangelou conditional intensity by a call to that function.
+The circles represent a sample from the target distribution, and we have added the Papangelou conditional intensity as an overlay.
 
 ```{r}
-plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation) 
+plot_pap(1, model, alpha, lambda, beta, covariates, radius, saturation) 
 ```
 
 The plot indicates repulsion within a given interaction radius: at locations far from existing individuals in the configuration, the Papangelou conditional intensity is equal to `lambda`, and it decreases within the interaction radius.
@@ -146,14 +154,14 @@ The parameter `alpha` controls the strength of the repulsion, and when it is inc
 
 ```{r}
 alpha <- matrix(-4)
-plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation)
+plot_pap(1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
 Making `alpha` positive instead of negative changes the behaviour.
 
 ```{r}
 alpha <- matrix(1)
-plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation)
+plot_pap(1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
 The Papangelou conditional intensity is now larger at locations closer to existing individuals, indicating that the point process is attractive.
@@ -167,7 +175,7 @@ To begin with, you can control the radii of interaction (which correspond to $r_
 ```{r}
 alpha <- matrix(-1)
 radius <- matrix(0.05, nspecies, nspecies)
-plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation)
+plot_pap(1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
 It is also possible to change the number of individuals that are taken into account, via the `saturation` parameter (which corresponds to $N$ in the model).
@@ -176,7 +184,7 @@ For example, let us account for the five closest individuals instead of the two 
 ```{r}
 radius <- matrix(0.1, nspecies, nspecies)
 saturation <- 5
-plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation)
+plot_pap(1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
 There are also various kinds of smoothing functions available via the `model` parameter (which correspond to $\varphi_{r_{i,j}}$ in the model).
@@ -185,20 +193,21 @@ Here is what the exponential smoothing looks like.
 ```{r}
 saturation <- 2
 model <- "exponential"
-plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation)
+plot_pap(1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
 And as another example, here is what the `square_bump` smoothing is like.
 
 ```{r}
 model <- "square_bump"
-plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation)
+plot_pap(1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
 # Discussion of the different variations
 
 These different variations of the model generate quite different samples in extreme cases.
 For example, for a very large value of the repulsion parameter, the Geyer model exhibits extreme regularity.
+The Geyer model does not have any smoothing, i.e. it corresponds to the choice $\varphi_{r_{i,j}}(r)=\mathbf1_{\{r\le r_{i,j}\}}$, where $\mathbf1$ is the indicator function.
 
 ```{r}
 extreme_configuration <- rgibbs(window = window, 
@@ -232,9 +241,9 @@ It is best to provide the covariates as `spatstat::im` objects, and it is usuall
 
 ```{r}
 model <- "Geyer"
-covariates <- list(temperature = as.im(function(x, y) x, W = spatstat_window))
-beta <- matrix(1)
-plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation)
+covariates <- list(temperature = as.im(function(x, y) x - 0.5, W = spatstat_window))
+beta <- matrix(2)
+plot_pap(1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
 # Multiple species setting
@@ -255,22 +264,10 @@ window <- Rectangle_window()
 spatstat_window <- owin()
 ```
 
-We begin by plotting a sample from this distribution.
+As in the previous sections, we sample from this distribution and compute the corresponding Papangelou conditional intensity for an individual of the first species.
 
 ```{r}
-configuration <- rgibbs(window = window, 
-                        alpha = alpha, 
-                        lambda = lambda, 
-                        beta = beta, 
-                        covariates = covariates)
-par(mar = c(5, 4, 4, 13) + 0.1)
-plot(configuration)
-```
-
-And proceed to compute the corresponding Papangelou conditional intensity for an individual of the first species.
-
-```{r}
-plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation)
+plot_pap(1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
 It can be seen that the new individual exhibits repulsion from individuals of its own species (the circles) and is instead attracted to individuals of the other species (the triangles).

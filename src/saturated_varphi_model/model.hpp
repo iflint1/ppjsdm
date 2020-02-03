@@ -35,7 +35,6 @@ public:
     using size_t = size_t<Configuration>;
     // TODO: Ideally I'd like to use if constexpr
     if(has_nonzero_value_v<Varphi>) { // Use faster algorithm in this case
-      std::vector<int> count_types(number_types);
       std::vector<unsigned long long int> count_positive_types(number_types);
       const auto point_type(get_type(point));
       const auto point_x(get_x(point));
@@ -46,7 +45,6 @@ public:
         const auto point_i(configuration1[i]);
         const auto type_i(get_type(point_i));
         if(count_positive_types[type_i] < saturation_) {
-          count_types[type_i] += 1;
           const auto delta_x(get_x(point_i) - point_x);
           const auto delta_y(get_y(point_i) - point_y);
           const auto square_distance(delta_x * delta_x + delta_y * delta_y);
@@ -59,7 +57,6 @@ public:
         const auto point_i(configuration2[i]);
         const auto type_i(get_type(point_i));
         if(count_positive_types[type_i] < saturation_) {
-          count_types[type_i] += 1;
           const auto delta_x(get_x(point_i) - point_x);
           const auto delta_y(get_y(point_i) - point_y);
           const auto square_distance(delta_x * delta_x + delta_y * delta_y);
@@ -70,12 +67,7 @@ public:
       }
       Rcpp::NumericVector dispersion(Rcpp::no_init(number_types));
       for(R_xlen_t i(0); i < number_types; ++i) {
-        const auto count(count_types[i]);
-        if(count > 0) {
-          dispersion[i] = get_nonzero_value<Varphi>() * static_cast<double>(count_positive_types[i]) / std::min<double>(count, saturation_);
-        } else {
-          dispersion[i] = 0.;
-        }
+        dispersion[i] = get_nonzero_value<Varphi>() * static_cast<double>(count_positive_types[i]);
       }
       return dispersion;
     } else {
@@ -125,10 +117,6 @@ public:
         for(const auto sq: square_distances[i]) {
           disp += Varphi::apply(sq, i, point_type);
         }
-        const auto size(square_distances[i].size());
-        if(size > 0) {
-          disp /= static_cast<double>(size);
-        }
         dispersion[i] = disp;
       }
       return dispersion;
@@ -144,57 +132,11 @@ public:
 
   template<typename Window>
   double get_maximum(const Window& window) const {
-    return Varphi::get_maximum(window);
+    return static_cast<double>(saturation_) * Varphi::get_maximum(window);
   }
 private:
   unsigned long long int saturation_;
 };
-//
-// // Note: Use public inheritance to benefit from EBO.
-// template<typename Varphi>
-// class Mean_varphi_model_papangelou: public Varphi {
-// public:
-//   template<typename... Args>
-//   Mean_varphi_model_papangelou(Args&&... args): Varphi(std::forward<Args>(args)...) {}
-//
-//   template<typename Configuration, typename Point>
-//   Rcpp::NumericVector compute(const Configuration& configuration,
-//                               const Point& point,
-//                               R_xlen_t number_types,
-//                               size_t<Configuration> number_points) const {
-//     using size_t = size_t<Configuration>;
-//
-//     // dispersion and count_types are automatically 0-initialized
-//     Rcpp::NumericVector dispersion(number_types);
-//     std::vector<size_t> count_types(number_types);
-//
-//     const auto type_point(get_type(point));
-//     const auto x_point(get_x(point));
-//     const auto y_point(get_y(point));
-//     for(size_t i(0); i < number_points; ++i) {
-//       const auto point_i(configuration[i]);
-//       const auto type_i(get_type(point_i));
-//       ++count_types[type_i];
-//       const auto delta_x(get_x(point_i) - x_point);
-//       const auto delta_y(get_y(point_i) - y_point);
-//       dispersion[type_i] += Varphi::apply(delta_x * delta_x + delta_y * delta_y, type_i, type_point);
-//     }
-//
-//     for(R_xlen_t i(0); i < number_types; ++i) {
-//       const auto count_types_i(count_types[i]);
-//       if(count_types_i > 0) {
-//         dispersion[i] /= static_cast<double>(count_types_i);
-//       }
-//     }
-//
-//     return dispersion;
-//   }
-//
-//   template<typename Window>
-//   double get_maximum(const Window& window) const {
-//     return Varphi::get_maximum(window);
-//   }
-// };
 
 template<typename Dispersion, typename Lambda, typename Alpha, typename Beta>
 class Exponential_family_model: public Dispersion {
