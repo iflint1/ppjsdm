@@ -110,11 +110,11 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
       Configuration configuration_copy(configuration);
       ppjsdm::remove_point_by_index(configuration_copy, i);
 
-      dispersion = dispersion_model.compute(configuration_copy, point, number_types, length_configuration - 1);
+      dispersion = dispersion_model.compute(point, number_types, configuration_copy);
     } else {
       response(i, 0) = 0;
       point = D[i - length_configuration];
-      dispersion = dispersion_model.compute(configuration, point, number_types, length_configuration);
+      dispersion = dispersion_model.compute(point, number_types, configuration);
     }
 
     const size_t type_index(ppjsdm::get_type(point));

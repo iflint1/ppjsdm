@@ -24,30 +24,28 @@ inline auto get_integral_of_dominating_intensity(const Lambda& dominating_intens
 template<typename Configuration, typename Chain, typename Model, typename Lambda>
 std::pair<bool, Configuration> update_LU_and_check_coalescence(Chain& chain, const Model& model, const Lambda& dominating_intensity, R_xlen_t number_types) {
   Configuration points_not_in_L(chain.get_last_configuration()), L;  // U starts with the end value of Z, L is an empty point process
-  Configuration U(points_not_in_L);
-  chain.iterate_forward_in_time([&points_not_in_L, &L, &U, &model, &dominating_intensity, number_types](auto&& point, bool is_birth, auto mark) {
+  chain.iterate_forward_in_time([&points_not_in_L, &L, &model, &dominating_intensity, number_types](auto&& point, bool is_birth, auto mark) {
     if(is_birth) {
+      // TODO: Might be able to reorganise, take log() and get speed-up.
       const auto normalized_papangelou_L(model.compute_papangelou(point, number_types, L) / dominating_intensity[get_type(point)]);
       if(normalized_papangelou_L < 0 || normalized_papangelou_L > 1) {
         Rcpp::stop("Did not correctly normalize the Papangelou intensity");
       }
       if(normalized_papangelou_L > mark) {
-        const auto normalized_papangelou_U(model.compute_papangelou(point, number_types, U) / dominating_intensity[get_type(point)]);
+        const auto normalized_papangelou_U(model.compute_papangelou(point, number_types, L, points_not_in_L) / dominating_intensity[get_type(point)]);
         if(normalized_papangelou_U < 0 || normalized_papangelou_U > 1) {
           Rcpp::stop("Did not correctly normalize the Papangelou intensity");
         }
         if(normalized_papangelou_U > mark) {
           add_point(L, std::forward<decltype(point)>(point));
         } else {
-          add_point(points_not_in_L, point);
-          add_point(U, std::forward<decltype(point)>(point));
+          add_point(points_not_in_L, std::forward<decltype(point)>(point));
         }
       }
     } else {
       if(!remove_point(points_not_in_L, point)) {
         remove_point(L, point);
       }
-      remove_point(U, point);
     }
   });
   return std::pair<bool, Configuration>(empty(points_not_in_L), L);

@@ -38,6 +38,7 @@ public:
     x_(Rcpp::no_init(size)),
     y_(Rcpp::no_init(size)),
     types_(Rcpp::no_init(size)) {}
+  Configuration_wrapper(): Configuration_wrapper(static_cast<R_xlen_t>(0)) {}
 
   auto operator[](R_xlen_t index) const {
     return Marked_point(x_[index], y_[index], types_[index] - 1);
