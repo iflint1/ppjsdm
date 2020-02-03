@@ -192,12 +192,11 @@ public:
     for(R_xlen_t i(0); i < number_types; ++i) {
       double inner_product(0);
       for(R_xlen_t j(0); j < number_types; ++j) {
-        inner_product += std::fabs(alpha_(j, i)) * Dispersion::get_maximum(window);
+        const auto alpha_ij(alpha_(j, i));
+        if(alpha_ij > 0) {
+          inner_product += alpha_ij * Dispersion::get_maximum(window);
+        }
       }
-      // for(decltype(covariates_.size()) j(0); j < covariates_.size(); ++j) {
-      //   const auto bounds(covariates_[j].bounds());
-      //   inner_product += std::fabs(beta_(j, i)) * std::max(std::fabs(bounds.first), std::fabs(bounds.second));
-      // }
       if(covariates_.size() > 0) {
         inner_product += covariates_.get_maximum_of_dot(beta_(i, Rcpp::_));
       }

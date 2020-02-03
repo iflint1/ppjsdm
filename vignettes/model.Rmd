@@ -160,7 +160,7 @@ plot_pap(1, model, alpha, lambda, beta, covariates, radius, saturation)
 Making `alpha` positive instead of negative changes the behaviour.
 
 ```{r}
-alpha <- matrix(1)
+alpha <- matrix(0.5)
 plot_pap(1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
@@ -173,7 +173,7 @@ Different features of the interaction can be customised.
 To begin with, you can control the radii of interaction (which correspond to $r_{i,j}$ in the model).
 
 ```{r}
-alpha <- matrix(-1)
+alpha <- matrix(-0.1)
 radius <- matrix(0.05, nspecies, nspecies)
 plot_pap(1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
@@ -211,13 +211,13 @@ The Geyer model does not have any smoothing, i.e. it corresponds to the choice $
 
 ```{r}
 extreme_configuration <- rgibbs(window = window, 
-                                alpha = matrix(-10), 
+                                alpha = matrix(-6), 
                                 lambda = 5000, 
                                 model = "Geyer",
-                                steps = 1000000,
+                                steps = 10000000,
                                 radius = radius)
 par(mar = c(5, 4, 4, 13) + 0.1)
-plot(extreme_configuration)
+plot(extreme_configuration, window = window)
 ```
 
 Other variants of the model show other interesting features.
@@ -225,13 +225,12 @@ As an illustration, here is a plot of an extremely attractive square exponential
 
 ```{r}
 extreme_configuration <- rgibbs(window = window, 
-                                alpha = matrix(9), 
-                                lambda = 0.1, 
+                                alpha = matrix(3.5), 
+                                lambda = 1, 
                                 model = "square_exponential",
-                                steps = 1000000,
                                 radius = radius)
 par(mar = c(5, 4, 4, 13) + 0.1)
-plot(extreme_configuration)
+plot(extreme_configuration, window = window)
 ```
 
 # Adding covariates
