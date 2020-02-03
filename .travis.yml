@@ -4,6 +4,10 @@ warnings_are_errors: true
 before_script:
   - sudo apt-get install -y ghostscript
 
+r_build_args: '--compact-vignettes="both"'
+
+r_check_args: '--as-cran'
+
 r:
   - release
   - devel
