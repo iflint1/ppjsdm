@@ -30,7 +30,7 @@ set.seed(1)
 In this vignette, we give some details on the model we are using.
 
 We begin by introducing the Papangelou conditional intensity.
-For a point configuration $\omega$, a location in space $x$, and a species index $i$, the Papangelou conditional intensity $\pi$ is such that $\pi((x,i),\omega)\dot\Delta x$ is the probability of finding a point in the infinitesimal volume $\Delta x$ around $x$, conditional on $\omega$ outside of $\Delta x$.
+For a point configuration $\omega$, a location in space $x$, and a species index $i$, the Papangelou conditional intensity $\pi$ is such that $\pi((x,i),\omega)\cdot\Delta x$ is the probability of finding an individual of species $i$ in the infinitesimal volume $\Delta x$ around $x$, conditional on $\omega$ outside of $\Delta x$.
 The package includes a function to compute the Papangelou conditional intensity of the model we are simulating from.
 
 In the rest of this vignette, we illustrate this concept with a some examples.
@@ -52,7 +52,7 @@ window <- Rectangle_window()
 spatstat_window <- owin()
 ```
 
-Take a single sample from the corresponding point process.
+Take a single sample from the corresponding point process,
 
 ```{r}
 configuration <- rgibbs(window = window, 
@@ -63,7 +63,7 @@ configuration <- rgibbs(window = window,
                         model = model)
 ```
 
-We plot it below.
+and plot it below.
 
 ```{r, fig.height = 4, fig.align = 'center', fig}
 par(mar = c(5, 4, 4, 13) + 0.1)
@@ -81,14 +81,14 @@ z <- outer(x_axis, y_axis, function(x, y) {
 })
 ```
 
-The Papangelou conditional intensity is equal to the intensity over the whole region:
+In this case, the Papangelou conditional intensity is equal to the intensity over the whole region:
 
 ```{r}
 all(z == lambda)
 ```
 
 This means that the probability of finding a point anywhere on the region conditional on the given locations is independent of the locations, and proportional to the intensity everywhere.
-In other words, the associated point process is a Poisson point process.
+In other words, the associated point process is a Poisson point process of intensity `lambda`.
 
 # Adding interactions
 
@@ -194,7 +194,7 @@ plot(extreme_configuration)
 ```
 
 Other variants of the model show other interesting features.
-As an illustration, here is a plot of an extremely attractive version of the square exponential version of the model.
+As an illustration, here is a plot of an extremely attractive square exponential version of the model.
 
 ```{r}
 extreme_configuration <- rgibbs(window = window, 
@@ -209,8 +209,8 @@ plot(extreme_configuration)
 
 # Adding covariates
 
-Adding covariates is easy.
-It is best to provide the covariates as `spatstat::im` objects, and it is usually easy to convert to that format.
+Adding covariates is also possible.
+It is best to provide the covariates as `spatstat::im` objects, and it is usually easy to convert to that format thanks to the conversion functions provided by `spatstat`.
 
 ```{r}
 model <- "Geyer"
