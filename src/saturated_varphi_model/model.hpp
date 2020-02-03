@@ -136,9 +136,10 @@ public:
       for(R_xlen_t j(0); j < number_types; ++j) {
         const auto alpha_ij(alpha_(j, i));
         if(alpha_ij > 0) {
-          inner_product += alpha_ij * Dispersion::get_maximum(window);
+          inner_product += alpha_ij;
         }
       }
+      inner_product *= Dispersion::get_maximum(window);
       if(covariates_.size() > 0) {
         inner_product += covariates_.get_maximum_of_dot(beta_(i, Rcpp::_));
       }
