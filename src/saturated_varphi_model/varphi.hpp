@@ -4,6 +4,9 @@
 #include <Rcpp.h>
 #include <Rinternals.h>
 
+#include "../point/point_manipulation.hpp"
+#include "../point/square_distance.hpp"
+
 #include <cmath> // std::sqrt, std::exp, std::log
 #include <type_traits> // std::enable_if, std::false_type, std::true_type
 #include <vector> // std::vector
@@ -38,6 +41,11 @@ public:
 
   double apply(double square_distance, size_t i, size_t j) const {
     return Varphi::apply(square_distance, access_matrix(i, j));
+  }
+
+  template<typename Point, typename Other>
+  double apply(const Point& point, const Other& other) const {
+    return apply(square_distance(point, other), get_type(point), get_type(other));
   }
 
   template<typename Window>

@@ -7,6 +7,7 @@
 #include "../configuration/configuration_manipulation.hpp"
 #include "../configuration/get_number_points.hpp"
 #include "../point/point_manipulation.hpp"
+#include "../point/square_distance.hpp"
 #include "../utility/for_each_container.hpp"
 #include "../utility/im_wrapper.hpp"
 #include "../utility/size_t.hpp"
@@ -33,22 +34,17 @@ public:
                               R_xlen_t number_types,
                               Configurations&&... configurations) const {
     // TODO: Ideally I'd like to use if constexpr
+    // TODO: If I can use if constexpr, I can remove get_nonzero_value below.
     if(has_nonzero_value_v<Varphi>) { // Use faster algorithm in this case
       std::vector<unsigned long long int> count_positive_types(number_types);
-      const auto point_type(get_type(point));
-      const auto point_x(get_x(point));
-      const auto point_y(get_y(point));
-      for_each_container([&count_positive_types, this, point_type, point_x, point_y](const auto& point) {
-        const auto current_type(get_type(point));
-        if(count_positive_types[current_type] < saturation_) {
-          const auto delta_x(get_x(point) - point_x);
-          const auto delta_y(get_y(point) - point_y);
-          const auto square_distance(delta_x * delta_x + delta_y * delta_y);
-          if(Varphi::apply(square_distance, current_type, point_type) > 0) {
-            count_positive_types[current_type] += 1;
+      for_each_container([&count_positive_types, this, &point](const auto& current_point) {
+        if(count_positive_types[get_type(current_point)] < saturation_) {
+          if(Varphi::apply(current_point, point) > 0) {
+            count_positive_types[get_type(current_point)] += 1;
           }
         }
       }, std::forward<Configurations>(configurations)...);
+
       Rcpp::NumericVector dispersion(Rcpp::no_init(number_types));
       for(R_xlen_t i(0); i < number_types; ++i) {
         dispersion[i] = get_nonzero_value<Varphi>() * static_cast<double>(count_positive_types[i]);
@@ -58,19 +54,14 @@ public:
       std::vector<std::list<double>> square_distances(number_types);
 
       // Fill with `saturation_` smallest square distances
-      const auto point_x(get_x(point));
-      const auto point_y(get_y(point));
-      for_each_container([&square_distances, point_x, point_y, saturation = saturation_](const auto& point) {
-        const auto current_type(get_type(point));
-        const auto delta_x(get_x(point) - point_x);
-        const auto delta_y(get_y(point) - point_y);
-        const auto square_distance(delta_x * delta_x + delta_y * delta_y);
-        auto& current(square_distances[current_type]);
-        auto iterator(std::upper_bound(current.begin(), current.end(), square_distance));
+      for_each_container([&square_distances, &point, saturation = saturation_](const auto& current_point) {
+        const auto sq(square_distance(current_point, point));
+        auto& current(square_distances[get_type(current_point)]);
+        auto iterator(std::upper_bound(current.begin(), current.end(), sq));
         if(current.size() < saturation) {
-          current.insert(iterator, square_distance);
+          current.insert(iterator, sq);
         } else if(iterator != current.end()) {
-          current.insert(iterator, square_distance);
+          current.insert(iterator, sq);
           current.pop_back();
         }
       }, std::forward<Configurations>(configurations)...);
@@ -79,11 +70,11 @@ public:
       Rcpp::NumericVector dispersion(Rcpp::no_init(number_types));
       const auto point_type(get_type(point));
       for(R_xlen_t i(0); i < number_types; ++i) {
-        double disp(0);
+        double d(0);
         for(const auto sq: square_distances[i]) {
-          disp += Varphi::apply(sq, i, point_type);
+          d += Varphi::apply(sq, i, point_type);
         }
-        dispersion[i] = disp;
+        dispersion[i] = d;
       }
       return dispersion;
     }
