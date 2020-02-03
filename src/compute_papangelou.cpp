@@ -17,7 +17,7 @@
 //' @param model String representing the model to simulate from. You can check the currently authorised models with a call to `show_model()`.
 //' @param alpha Repulsion matrix.
 //' @param lambda A vector representing the intensities of the point processes.
-//' @param coefs Coefficients related to covariates.
+//' @param beta Coefficients related to covariates.
 //' @param covariates Covariates.
 //' @param radius Interaction radii.
 //' @param saturation Saturation parameter.
@@ -25,9 +25,9 @@
 //' @useDynLib ppjsdm
 //' @import Rcpp
 // [[Rcpp::export]]
-Rcpp::NumericVector compute_papangelou(SEXP configuration, Rcpp::NumericVector x, Rcpp::NumericVector y, R_xlen_t type, Rcpp::CharacterVector model, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericMatrix coefs, Rcpp::List covariates, Rcpp::NumericMatrix radius, R_xlen_t saturation) {
+Rcpp::NumericVector compute_papangelou(SEXP configuration, Rcpp::NumericVector x, Rcpp::NumericVector y, R_xlen_t type, Rcpp::CharacterVector model, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericMatrix beta, Rcpp::List covariates, Rcpp::NumericMatrix radius, R_xlen_t saturation) {
   const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
-  return ppjsdm::call_on_model(model, alpha, lambda, coefs, covariates, radius, saturation, [&wrapped_configuration, &x, &y, type](const auto& model) {
+  return ppjsdm::call_on_model(model, alpha, lambda, beta, covariates, radius, saturation, [&wrapped_configuration, &x, &y, type](const auto& model) {
     const auto points_by_type(ppjsdm::get_number_points(wrapped_configuration));
     const auto number_types(points_by_type.size());
     const auto length_x(x.size());

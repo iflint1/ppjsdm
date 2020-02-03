@@ -159,28 +159,28 @@ private:
 //   }
 // };
 
-template<typename Dispersion, typename Lambda, typename Alpha, typename Coefs>
+template<typename Dispersion, typename Lambda, typename Alpha, typename Beta>
 class Exponential_family_model: public Dispersion {
 public:
   template<typename D, std::enable_if_t<std::is_same<Dispersion, std::remove_reference_t<D>>::value>* = nullptr>
   Exponential_family_model(const Lambda& lambda,
                            const Alpha& alpha,
-                           const Coefs& coefs,
+                           const Beta& beta,
                            Rcpp::List covariates,
                            D&& dispersion):
   Dispersion(std::forward<D>(dispersion)),
     lambda_(lambda),
     alpha_(alpha),
-    coefs_(coefs),
+    beta_(beta),
     covariates_(covariates) {}
 
   template<typename... Args>
   Exponential_family_model(const Lambda& lambda,
                            const Alpha& alpha,
-                           const Coefs& coefs,
+                           const Beta& beta,
                            Rcpp::List covariates,
                            Args&&... args):
-    Exponential_family_model(lambda, alpha, coefs, covariates, Dispersion(std::forward<Args>(args)...)) {}
+    Exponential_family_model(lambda, alpha, beta, covariates, Dispersion(std::forward<Args>(args)...)) {}
 
   template<typename Configuration, typename Point>
   double compute_papangelou(const Configuration& configuration,
@@ -194,7 +194,7 @@ public:
       inner_product += alpha_(point_type, i) * dispersion[i];
     }
     for(decltype(covariates_.size()) i(0); i < covariates_.size(); ++i) {
-      inner_product += coefs_(point_type, i) * covariates_[i](get_x(point), get_y(point));
+      inner_product += beta_(point_type, i) * covariates_[i](get_x(point), get_y(point));
     }
     return lambda_[point_type] * std::exp(inner_product);
   }
@@ -222,10 +222,10 @@ public:
       }
       // for(decltype(covariates_.size()) j(0); j < covariates_.size(); ++j) {
       //   const auto bounds(covariates_[j].bounds());
-      //   inner_product += std::fabs(coefs_(j, i)) * std::max(std::fabs(bounds.first), std::fabs(bounds.second));
+      //   inner_product += std::fabs(beta_(j, i)) * std::max(std::fabs(bounds.first), std::fabs(bounds.second));
       // }
       if(covariates_.size() > 0) {
-        inner_product += covariates_.get_maximum_of_dot(coefs_(i, Rcpp::_));
+        inner_product += covariates_.get_maximum_of_dot(beta_(i, Rcpp::_));
       }
       const auto value(lambda_[i] * std::exp(inner_product));
       if(std::isinf(value)) {
@@ -238,7 +238,7 @@ public:
 private:
   Lambda lambda_;
   Alpha alpha_;
-  Coefs coefs_;
+  Beta beta_;
   Im_list_wrapper covariates_;
 };
 
@@ -272,17 +272,17 @@ template<typename F, typename Lambda>
 inline auto call_on_model(Rcpp::CharacterVector model,
                           Rcpp::NumericMatrix alpha,
                           const Lambda& lambda,
-                          Rcpp::NumericMatrix coefs,
+                          Rcpp::NumericMatrix beta,
                           Rcpp::List covariates,
                           Rcpp::NumericMatrix radius,
                           unsigned long long int saturation,
                           const F& f) {
-  return call_on_papangelou(model, radius, saturation, [&alpha, &lambda, &f, &coefs, covariates](auto&& varphi) {
+  return call_on_papangelou(model, radius, saturation, [&alpha, &lambda, &f, &beta, covariates](auto&& varphi) {
     using Model_type = Exponential_family_model<std::remove_cv_t<std::remove_reference_t<decltype(varphi)>>,
                                        Lambda,
                                        Rcpp::NumericMatrix,
                                        Rcpp::NumericMatrix>;
-    const Model_type model(lambda, alpha, coefs, covariates, std::forward<decltype(varphi)>(varphi));
+    const Model_type model(lambda, alpha, beta, covariates, std::forward<decltype(varphi)>(varphi));
     return f(model);
   });
 }

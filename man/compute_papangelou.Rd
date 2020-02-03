@@ -12,7 +12,7 @@ compute_papangelou(
   model,
   alpha,
   lambda,
-  coefs,
+  beta,
   covariates,
   radius,
   saturation
@@ -33,7 +33,7 @@ compute_papangelou(
 
 \item{lambda}{A vector representing the intensities of the point processes.}
 
-\item{coefs}{Coefficients related to covariates.}
+\item{beta}{Coefficients related to covariates.}
 
 \item{covariates}{Covariates.}
 

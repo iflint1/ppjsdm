@@ -67,7 +67,7 @@ Finally, we need a dataset to work on.
 configuration <- ppjsdm::rgibbs(lambda = exp(log_lambda), 
                                 alpha = alpha, 
                                 covariates = covariates, 
-                                coefs = beta,
+                                beta = beta,
                                 model = model,
                                 radius = radii)
 ```

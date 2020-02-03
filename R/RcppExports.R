@@ -10,15 +10,15 @@
 #' @param model String representing the model to simulate from. You can check the currently authorised models with a call to `show_model()`.
 #' @param alpha Repulsion matrix.
 #' @param lambda A vector representing the intensities of the point processes.
-#' @param coefs Coefficients related to covariates.
+#' @param beta Coefficients related to covariates.
 #' @param covariates Covariates.
 #' @param radius Interaction radii.
 #' @param saturation Saturation parameter.
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-compute_papangelou <- function(configuration, x, y, type, model, alpha, lambda, coefs, covariates, radius, saturation) {
-    .Call('_ppjsdm_compute_papangelou', PACKAGE = 'ppjsdm', configuration, x, y, type, model, alpha, lambda, coefs, covariates, radius, saturation)
+compute_papangelou <- function(configuration, x, y, type, model, alpha, lambda, beta, covariates, radius, saturation) {
+    .Call('_ppjsdm_compute_papangelou', PACKAGE = 'ppjsdm', configuration, x, y, type, model, alpha, lambda, beta, covariates, radius, saturation)
 }
 
 #' Check if a configuration contains duplicates.
@@ -51,8 +51,8 @@ rbinomialpp <- function(window = NULL, n = NULL, nsim = 1L, types = NULL, drop =
     .Call('_ppjsdm_rbinomialpp', PACKAGE = 'ppjsdm', window, n, nsim, types, drop)
 }
 
-rgibbs_cpp <- function(window, alpha, lambda, covariates, coefs, radius, saturation, steps, nsim, types, model, drop) {
-    .Call('_ppjsdm_rgibbs_cpp', PACKAGE = 'ppjsdm', window, alpha, lambda, covariates, coefs, radius, saturation, steps, nsim, types, model, drop)
+rgibbs_cpp <- function(window, alpha, lambda, covariates, beta, radius, saturation, steps, nsim, types, model, drop) {
+    .Call('_ppjsdm_rgibbs_cpp', PACKAGE = 'ppjsdm', window, alpha, lambda, covariates, beta, radius, saturation, steps, nsim, types, model, drop)
 }
 
 #' Sample a Poisson point processes

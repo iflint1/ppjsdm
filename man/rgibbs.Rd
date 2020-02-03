@@ -9,7 +9,7 @@ rgibbs(
   alpha = NULL,
   lambda = NULL,
   covariates = NULL,
-  coefs = NULL,
+  beta = NULL,
   radius = NULL,
   saturation = 2,
   steps = 0,
@@ -29,7 +29,7 @@ Default is a vector of same size as types, filled with ones.}
 
 \item{covariates}{Covariates, with an empty list as a default.}
 
-\item{coefs}{Fitted coefficients related to covariates. Default is square matrix of zeroes of the same
+\item{beta}{Fitted coefficients related to covariates. Default is square matrix of zeroes of the same
 number of rows/columns as the covariates.}
 
 \item{radius}{Symmetric matrix of interaction radii. Filled with 0.1 times the window radius by default.}

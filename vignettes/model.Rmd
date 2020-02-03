@@ -43,7 +43,7 @@ We begin by considering a single species, with no repulsion, no covariates, and 
 nspecies <- 1
 lambda <- 50
 alpha <- matrix(0)
-coefs <- matrix(0)
+beta <- matrix(0)
 covariates <- list()
 model <- "Geyer"
 radius <- matrix(0.1, nspecies, nspecies)
@@ -58,7 +58,7 @@ Take a single sample from the corresponding point process,
 configuration <- rgibbs(window = window, 
                         alpha = alpha, 
                         lambda = lambda, 
-                        coefs = coefs, 
+                        beta = beta, 
                         covariates = covariates,
                         model = model)
 ```
@@ -77,7 +77,7 @@ x_axis <- seq(from = 0, to = 1, by = 0.001)
 y_axis <- x_axis
 z <- outer(x_axis, y_axis, function(x, y) {
   compute_papangelou(configuration, x, y, 1, model, alpha, 
-                     lambda, coefs, covariates, radius, saturation)
+                     lambda, beta, covariates, radius, saturation)
 })
 ```
 
@@ -104,12 +104,12 @@ Writing a quick function to plot the configuration and the Papangelou conditiona
 
 ```{r}
 plot_pap <- function(configuration, type, model, alpha, 
-                     lambda, coefs, covariates, radius, saturation) {
+                     lambda, beta, covariates, radius, saturation) {
   x_axis <- seq(from = 0, to = 1, by = 0.001)
   y_axis <- x_axis
   z <- outer(x_axis, y_axis, function(x, y) {
     compute_papangelou(configuration, x, y, type, model, alpha, 
-                      lambda, coefs, covariates, radius, saturation)
+                      lambda, beta, covariates, radius, saturation)
   })
   par(mar = c(5, 4, 4, 13) + 0.1)
   plot(as.im(t(z), W = spatstat_window))
@@ -120,7 +120,7 @@ plot_pap <- function(configuration, type, model, alpha,
 We can then plot the Papangelou conditional intensity by a call to that function.
 
 ```{r}
-plot_pap(configuration, 1, model, alpha, lambda, coefs, covariates, radius, saturation) 
+plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation) 
 ```
 
 The plot indicates repulsion within a given interaction radius: at locations far from existing individuals in the configuration, the Papangelou conditional intensity is equal to `lambda`, and it decreases within the interaction radius.
@@ -128,14 +128,14 @@ The parameter `alpha` controls the strength of the repulsion, and when it is inc
 
 ```{r}
 alpha <- matrix(-4)
-plot_pap(configuration, 1, model, alpha, lambda, coefs, covariates, radius, saturation)
+plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
 Making `alpha` positive instead of negative changes the behaviour.
 
 ```{r}
 alpha <- matrix(1)
-plot_pap(configuration, 1, model, alpha, lambda, coefs, covariates, radius, saturation)
+plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
 The Papangelou conditional intensity is now larger at locations closer to existing individuals, indicating that the point process is attractive.
@@ -149,7 +149,7 @@ To begin with, you can control the radius of interaction.
 ```{r}
 alpha <- matrix(-1)
 radius <- matrix(0.05, nspecies, nspecies)
-plot_pap(configuration, 1, model, alpha, lambda, coefs, covariates, radius, saturation)
+plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
 It is also possible to change the number of closest individuals that are taken into account, via the `saturation` parameter.
@@ -158,7 +158,7 @@ For example, let us account for the five closest individuals instead of the two 
 ```{r}
 radius <- matrix(0.1, nspecies, nspecies)
 saturation <- 5
-plot_pap(configuration, 1, model, alpha, lambda, coefs, covariates, radius, saturation)
+plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
 There are also various kinds of smoothing available via the `model` parameter.
@@ -167,14 +167,14 @@ Here is what the exponential smoothing looks like.
 ```{r}
 saturation <- 2
 model <- "exponential"
-plot_pap(configuration, 1, model, alpha, lambda, coefs, covariates, radius, saturation)
+plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
 And as another example, here is what the `square_bump` smoothing is like.
 
 ```{r}
 model <- "square_bump"
-plot_pap(configuration, 1, model, alpha, lambda, coefs, covariates, radius, saturation)
+plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
 # Discussion of the different variations
@@ -215,8 +215,8 @@ It is best to provide the covariates as `spatstat::im` objects, and it is usuall
 ```{r}
 model <- "Geyer"
 covariates <- list(temperature = as.im(function(x, y) x, W = spatstat_window))
-coefs <- matrix(1)
-plot_pap(configuration, 1, model, alpha, lambda, coefs, covariates, radius, saturation)
+beta <- matrix(1)
+plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
 # Multiple species setting
@@ -227,7 +227,7 @@ The package also works with multiple species.
 nspecies <- 2
 lambda <- c(30, 30)
 alpha <- cbind(c(-1, 0.5), c(0.5, -0.5))
-coefs <- matrix(0)
+beta <- matrix(0)
 covariates <- list()
 model <- "Geyer"
 radius <- matrix(0.1, nspecies, nspecies)
@@ -242,7 +242,7 @@ We begin by plotting a sample from this distribution.
 configuration <- rgibbs(window = window, 
                         alpha = alpha, 
                         lambda = lambda, 
-                        coefs = coefs, 
+                        beta = beta, 
                         covariates = covariates)
 ```
 
@@ -254,7 +254,7 @@ plot(configuration)
 And proceed to compute the corresponding Papangelou conditional intensity for an individual of the first species.
 
 ```{r}
-plot_pap(configuration, 1, model, alpha, lambda, coefs, covariates, radius, saturation)
+plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
 It can be seen that the new individual exhibits repulsion from individuals of its own species (the circles) and is instead attracted to individuals of the other species (the triangles).
