@@ -1,11 +1,11 @@
 #ifndef INCLUDE_PPJSDM_PHI_DISTANCE
 #define INCLUDE_PPJSDM_PHI_DISTANCE
 
+#include <Rcpp.h>
 #include <Rinternals.h>
 
 #include <cmath> // std::sqrt, std::exp, std::log
-#include <limits> // std::numeric_limits
-#include <type_traits> // std::enable_if
+#include <type_traits> // std::enable_if, std::false_type, std::true_type
 #include <vector> // std::vector
 
 namespace ppjsdm {
@@ -15,24 +15,29 @@ namespace varphi {
 template<typename Varphi>
 class Generic_varphi: public Varphi {
 private:
-  auto access_lambda(int i, int j) const {
-    return lambda_[i * dim_ + j];
+  using MatrixType = std::vector<double>;
+  using size_t = typename MatrixType::size_type;
+  auto access_matrix(size_t i, size_t j) const {
+    return matrix_[i * static_cast<size_t>(dim_) + j];
   }
 
-  void set_lambda(int i, int j, double r) {
-    lambda_[i * dim_ + j] = Varphi::set(r);
+  void set_matrix(size_t i, size_t j, double r) {
+    matrix_[i * static_cast<size_t>(dim_) + j] = Varphi::set(r);
   }
 public:
-  explicit Generic_varphi(Rcpp::NumericMatrix radius): dim_(radius.ncol()), lambda_(dim_ * dim_) {
+  explicit Generic_varphi(Rcpp::NumericMatrix radius): dim_(radius.ncol()), matrix_(dim_ * dim_) {
+    if(radius.nrow() != dim_) {
+      Rcpp::stop("The radius matrix is not a square matrix, as was expected.");
+    }
     for(R_xlen_t i(0); i < dim_; ++i) {
       for(R_xlen_t j(0); j < dim_; ++j) {
-        set_lambda(i, j, radius(i, j));
+        set_matrix(i, j, radius(i, j));
       }
     }
   }
 
-  double apply(double square_distance, int i, int j) const {
-    return Varphi::apply(square_distance, access_lambda(i, j));
+  double apply(double square_distance, size_t i, size_t j) const {
+    return Varphi::apply(square_distance, access_matrix(i, j));
   }
 
   template<typename Window>
@@ -41,7 +46,7 @@ public:
   }
 private:
   R_xlen_t dim_;
-  std::vector<double> lambda_;
+  std::vector<double> matrix_;
 };
 
 struct Bump_implementation {
@@ -118,12 +123,12 @@ template<typename T>
 constexpr bool has_nonzero_value_v = has_nonzero_value<T>::value;
 
 template<typename Varphi>
-inline std::enable_if_t<!has_nonzero_value_v<Varphi>, double> get_nonzero_value() {
+inline constexpr std::enable_if_t<!has_nonzero_value_v<Varphi>, double> get_nonzero_value() {
   return 0.;
 }
 
 template<typename Varphi>
-inline std::enable_if_t<has_nonzero_value_v<Varphi>, double> get_nonzero_value() {
+inline constexpr std::enable_if_t<has_nonzero_value_v<Varphi>, double> get_nonzero_value() {
   return Varphi::nonzero_value;
 }
 
