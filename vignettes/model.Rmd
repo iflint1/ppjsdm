@@ -31,9 +31,25 @@ In this vignette, we give some details on the model we are using.
 
 We begin by introducing the Papangelou conditional intensity.
 For a point configuration $\omega$, a location in space $x$, and a species index $i$, the Papangelou conditional intensity $\pi$ is such that $\pi((x,i),\omega)\cdot\Delta x$ is the probability of finding an individual of species $i$ in the infinitesimal volume $\Delta x$ around $x$, conditional on $\omega$ outside of $\Delta x$.
-The package includes a function to compute the Papangelou conditional intensity of the model we are simulating from.
+Our general model for the Papangelou conditional intensity is
+$$\pi((x,i),\omega)
+=\lambda_i\exp\biggl(\sum_{k=1}^n\beta_{i,k}X_k(x)
++\sum_{j=1}^p\alpha_{i,j}\sum_{z\in\omega_i^{(N)}}\varphi_{r_{i,j}}(\|z-x\|)\biggr).$$
+In the equation above,
 
-In the rest of this vignette, we illustrate this concept with a some examples.
+* $\lambda_i$ is the intensity of species $i$ if the $\beta_k$ and $\alpha_{i,j}$ were to all be zero;
+* $n$ is the number of environmental covariates;
+* $X_k(x)$ is the environmental covariate number $k$ evaluated at location $x$;
+* $\beta_{i,k}$ represents the effect on the distribution of species $i$ of the environmental covariate $k$;
+* $p$ is the number of different species;
+* $\alpha_{i,j}$ is the repulsion parameter between species $i$ and $j$;
+* $N$ is what we call the saturation parameter, i.e. the maximum number of different individuals which can interact with a given one;
+* $\omega_i^{(N)}$ is the subset of the $N$ individuals in $\omega$ of type $i$ which are closest to location $x$;
+* $r_{i,j}$ are interaction radii which denote the typical distance within which species $i$ and $j$ interact;
+* $\varphi_{r_{i,j}}$ are smoothing functions.
+
+Since the above definition is quite technical, we will spend the rest of this vignette illustrating this concept with some examples.
+The package includes a function to compute the Papangelou conditional intensity above, which will make things easier!
 
 # No interaction: Poisson point process
 
@@ -41,10 +57,11 @@ We begin by considering a single species, with no repulsion, no covariates, and 
 
 ```{r}
 nspecies <- 1
+ncovariates <- 0
 lambda <- 50
-alpha <- matrix(0)
-beta <- matrix(0)
-covariates <- list()
+alpha <- matrix(0, nspecies, nspecies)
+beta <- matrix(0, nspecies, ncovariates)
+covariates <- vector(mode = "list", length = ncovariates)
 model <- "Geyer"
 radius <- matrix(0.1, nspecies, nspecies)
 saturation <- 2
@@ -143,8 +160,8 @@ Thus, our model is either attractive or repulsive depending on the sign of `alph
 
 # Changing features of the interaction
 
-It is also possible to change different features of the interaction.
-To begin with, you can control the radius of interaction.
+Different features of the interaction can be customised.
+To begin with, you can control the radius of interaction (which correspond to $r_{i,j}$ in the model).
 
 ```{r}
 alpha <- matrix(-1)
@@ -152,7 +169,7 @@ radius <- matrix(0.05, nspecies, nspecies)
 plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
-It is also possible to change the number of closest individuals that are taken into account, via the `saturation` parameter.
+It is also possible to change the number of closest individuals that are taken into account, via the `saturation` parameter (which corresponds to $N$ in the model).
 For example, let us account for the five closest individuals instead of the two closest.
 
 ```{r}
@@ -161,7 +178,7 @@ saturation <- 5
 plot_pap(configuration, 1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
-There are also various kinds of smoothing available via the `model` parameter.
+There are also various kinds of smoothing available via the `model` parameter (which correspond to $\varphi_{r_{i,j}}$ in the model).
 Here is what the exponential smoothing looks like.
 
 ```{r}
@@ -225,12 +242,13 @@ The package also works with multiple species.
 
 ```{r}
 nspecies <- 2
+ncovariates <- 0
 lambda <- c(30, 30)
 alpha <- cbind(c(-1, 0.5), c(0.5, -0.5))
-beta <- matrix(0)
+beta <- matrix(0, nspecies, ncovariates)
 covariates <- list()
 model <- "Geyer"
-radius <- matrix(0.1, nspecies, nspecies)
+radius <- cbind(c(0.1, 0.05), c(0.05, 0.2))
 saturation <- 2
 window <- Rectangle_window()
 spatstat_window <- owin()
