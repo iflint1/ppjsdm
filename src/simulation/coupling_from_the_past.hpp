@@ -3,6 +3,7 @@
 
 #include <Rinternals.h>
 
+#include "../configuration/configuration_manipulation.hpp"
 #include "../simulation/inhomogeneous_ppp.hpp"
 #include "../utility/backwards_markov_chain.hpp"
 
@@ -12,7 +13,7 @@ namespace ppjsdm {
 namespace detail {
 
 template<typename Configuration, typename Chain, typename Model, typename Window>
-std::pair<bool, Configuration> update_LU_and_check_coalescence(const Window& window, Chain& chain, const Model& model, R_xlen_t number_types) {
+std::pair<bool, Configuration> update_LU_and_check_coalescence(Chain& chain, const Model& model, const Window& window, R_xlen_t number_types) {
   Configuration points_not_in_L(chain.get_last_configuration()), L;  // U starts with the end value of Z, L is an empty point process
   chain.iterate_forward_in_time([&points_not_in_L, &L, &model, number_types, &window](auto&& point, bool is_birth, auto mark) {
     if(is_birth) {
@@ -54,7 +55,7 @@ inline auto simulate_coupling_from_the_past(const Model& model, const Window& wi
   const auto T0(Z.extend_until_T0(integral_of_dominating_intensity, window, number_types));
   while(true) {
     R_CheckUserInterrupt();
-    const auto coalescence(detail::update_LU_and_check_coalescence<Configuration>(window, Z, model, number_types));
+    const auto coalescence(detail::update_LU_and_check_coalescence<Configuration>(Z, model, window, number_types));
     if(coalescence.first) {
       return coalescence.second;
     }
