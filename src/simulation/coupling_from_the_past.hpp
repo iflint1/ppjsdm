@@ -47,7 +47,7 @@ std::pair<bool, Configuration> update_LU_and_check_coalescence(Chain& chain, con
 template<typename Configuration, typename Model, typename Window>
 inline auto simulate_coupling_from_the_past(const Model& model, const Window& window, R_xlen_t number_types) {
   const auto normalised_dominating_intensity(model.get_normalised_dominating_intensity(window));
-  const auto intensity_upper_bound(model.get_intensity_upper_bound(window));
+  const auto intensity_upper_bound(normalised_dominating_intensity.get_upper_bound());
   // TODO: Catch std::bad_alloc exceptions that happen when the upper bound to the Papangelou intensity is too large.
   Backwards_Markov_chain<Configuration> Z(simulate_inhomogeneous_ppp<Configuration>(window, normalised_dominating_intensity, intensity_upper_bound, number_types));
 

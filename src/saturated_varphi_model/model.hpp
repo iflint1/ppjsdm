@@ -112,7 +112,7 @@ public:
                            Args&&... args):
     Exponential_family_model(lambda, alpha, beta, covariates, Dispersion(std::forward<Args>(args)...)) {}
 
-  // TODO: Surely you can factorise parts of the four functions below.
+  // TODO: Surely you can factorise parts of the four functions below (already did a lot, maybe more to be done)
   template<typename... Configurations, typename Point>
   double compute_papangelou(const Point& point,
                             Configurations&&... configurations) const {
@@ -133,36 +133,45 @@ public:
   double compute_normalised_papangelou(const Window& window,
                                        const Point& point,
                                        Configurations&&... configurations) const {
-    double inner_product(0);
-    const auto point_type(get_type(point));
-    for(R_xlen_t i(0); i < number_types_; ++i) {
-      const auto alpha(alpha_(point_type, i));
-      if(alpha > 0) {
-        inner_product -= alpha;
-      }
-    }
-    inner_product *= Dispersion::get_maximum(window);
+    double inner_product(-get_alpha_dispersion_maximum(window, get_type(point)));
     const auto dispersion(Dispersion::compute(point, number_types_, std::forward<Configurations>(configurations)...));
     for(R_xlen_t i(0); i < number_types_; ++i) {
-      inner_product += alpha_(point_type, i) * dispersion[i];
+      inner_product += alpha_(get_type(point), i) * dispersion[i];
     }
     return std::exp(inner_product);
   }
 
+
   class Normalised_dominating_intensity {
   public:
-    // TODO: Think about perfect forwarding.
-    Normalised_dominating_intensity(R_xlen_t number_types, std::vector<double> normalisation, const Beta& beta, Im_list_wrapper covariates):
-    number_types_(number_types), normalisation_(normalisation), beta_(beta), covariates_(std::move(covariates)) {}
+    Normalised_dominating_intensity(const Lambda& lambda,
+                                    const Alpha& alpha,
+                                    const Beta& beta,
+                                    const Im_list_wrapper& covariates,
+                                    std::vector<double> alpha_dispersion_maximum):
+    number_types_(lambda.size()),
+    log_bound_(number_types_),
+    lambda_(lambda),
+    alpha_(alpha),
+    beta_(beta),
+    covariates_(std::move(covariates)),
+    alpha_dispersion_maximum_(std::move(alpha_dispersion_maximum)) {
+      for(R_xlen_t i(0); i < number_types_; ++i) {
+        double sum(0);
+        if(covariates_.size() > 0) {
+          sum += covariates_.get_maximum_of_dot(beta_(i, Rcpp::_));
+        }
+        log_bound_[i] = sum;
+      }
+    }
 
     template<typename Point>
     auto operator()(const Point& point) const {
-      double inner_product(0);
-      const auto point_type(get_type(point));
+      double sum(-log_bound_[get_type(point)]);
       for(decltype(covariates_.size()) i(0); i < covariates_.size(); ++i) {
-        inner_product += beta_(point_type, i) * covariates_[i](point);
+        sum += beta_(get_type(point), i) * covariates_[i](point);
       }
-      return std::exp(inner_product - normalisation_[get_type(point)]);
+      return std::exp(sum);
     }
 
     auto get_integral() const {
@@ -172,48 +181,33 @@ public:
       }
       return integral / static_cast<double>(number_types_);
     }
+
+    auto get_upper_bound() const {
+      std::vector<double> upper_bound(number_types_);
+      for(R_xlen_t i(0); i < number_types_; ++i) {
+        double inner_product(alpha_dispersion_maximum_[i]);
+        inner_product += log_bound_[i];
+        const auto value(lambda_[i] * std::exp(inner_product));
+        if(std::isinf(value)) {
+          Rcpp::stop("Infinite value obtained as the bound to the Papangelou intensity.");
+        }
+        upper_bound[i] = value;
+      }
+      return upper_bound;
+    }
   private:
     R_xlen_t number_types_;
-    std::vector<double> normalisation_;
+    std::vector<double> log_bound_;
+    Lambda lambda_;
+    Alpha alpha_;
     Beta beta_;
     Im_list_wrapper covariates_;
+    std::vector<double> alpha_dispersion_maximum_;
   };
 
   template<typename Window>
-  auto get_normalised_dominating_intensity(const Window&) const {
-    std::vector<double> log_bound(number_types_);
-    for(R_xlen_t i(0); i < number_types_; ++i) {
-      double sum(0);
-      if(covariates_.size() > 0) {
-        sum += covariates_.get_maximum_of_dot(beta_(i, Rcpp::_));
-      }
-      log_bound[i] = sum;
-    }
-    return Normalised_dominating_intensity(number_types_, log_bound, beta_, covariates_);
-  }
-
-  template<typename Window>
-  auto get_intensity_upper_bound(const Window& window) const {
-    std::vector<double> upper_bound(number_types_);
-    for(R_xlen_t i(0); i < number_types_; ++i) {
-      double inner_product(0);
-      for(R_xlen_t j(0); j < number_types_; ++j) {
-        const auto alpha(alpha_(j, i));
-        if(alpha > 0) {
-          inner_product += alpha;
-        }
-      }
-      inner_product *= Dispersion::get_maximum(window);
-      if(covariates_.size() > 0) {
-        inner_product += covariates_.get_maximum_of_dot(beta_(i, Rcpp::_));
-      }
-      const auto value(lambda_[i] * std::exp(inner_product));
-      if(std::isinf(value)) {
-        Rcpp::stop("Infinite value obtained as the bound to the Papangelou intensity.");
-      }
-      upper_bound[i] = value;
-    }
-    return upper_bound;
+  auto get_normalised_dominating_intensity(const Window& window) const {
+    return Normalised_dominating_intensity(lambda_, alpha_, beta_, covariates_, get_alpha_dispersion_maximum(window));
   }
 private:
   R_xlen_t number_types_;
@@ -221,6 +215,27 @@ private:
   Alpha alpha_;
   Beta beta_;
   Im_list_wrapper covariates_;
+
+  template<typename Window>
+  auto get_alpha_dispersion_maximum(const Window& window, int type) const {
+    double sum(0);
+    for(R_xlen_t j(0); j < number_types_; ++j) {
+      const auto alpha(alpha_(type, j));
+      if(alpha > 0) {
+        sum += alpha;
+      }
+    }
+    return sum * Dispersion::get_maximum(window);
+  }
+
+  template<typename Window>
+  auto get_alpha_dispersion_maximum(const Window& window) const {
+    std::vector<double> result(number_types_);
+    for(R_xlen_t i(0); i < number_types_; ++i) {
+      result[i] = get_alpha_dispersion_maximum(window, i);
+    }
+    return result;
+  }
 };
 
 const constexpr char* const models[] = {
@@ -263,8 +278,8 @@ inline auto call_on_model(Rcpp::CharacterVector model,
                                        Lambda,
                                        Rcpp::NumericMatrix,
                                        Rcpp::NumericMatrix>;
-    const Model_type model(lambda, alpha, beta, covariates, std::forward<decltype(varphi)>(varphi));
-    return f(std::move(model));
+    const Model_type m(lambda, alpha, beta, covariates, std::forward<decltype(varphi)>(varphi));
+    return f(std::move(m));
   });
 }
 
