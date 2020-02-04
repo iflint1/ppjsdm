@@ -23,10 +23,10 @@ namespace ppjsdm {
 
 // Note: Use public inheritance to benefit from EBO.
 template<typename Varphi>
-class Saturated_varphi_model_papangelou: public Varphi {
+class Saturated_varphi_model: public Varphi {
 public:
   template<typename... Args>
-  Saturated_varphi_model_papangelou(unsigned long long int saturation, Args&&... args):
+  Saturated_varphi_model(unsigned long long int saturation, Args&&... args):
     Varphi(std::forward<Args>(args)...), saturation_(saturation) {}
 
   template<typename... Configurations, typename Point>
@@ -250,15 +250,15 @@ template<typename F>
 inline auto call_on_dispersion_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, unsigned long long int saturation, const F& f) {
   const auto model_string(model[0]);
   if(model_string == models[0]) {
-    return f(Saturated_varphi_model_papangelou<varphi::Exponential>(saturation, radius));
+    return f(Saturated_varphi_model<varphi::Exponential>(saturation, radius));
   } else if(model_string == models[1]) {
-    return f(Saturated_varphi_model_papangelou<varphi::Square_exponential>(saturation, radius));
+    return f(Saturated_varphi_model<varphi::Square_exponential>(saturation, radius));
   } else if(model_string == models[2]) {
-    return f(Saturated_varphi_model_papangelou<varphi::Bump>(saturation, radius));
+    return f(Saturated_varphi_model<varphi::Bump>(saturation, radius));
   } else if(model_string == models[3]) {
-    return f(Saturated_varphi_model_papangelou<varphi::Square_bump>(saturation, radius));
+    return f(Saturated_varphi_model<varphi::Square_bump>(saturation, radius));
   } else if(model_string == models[4]) {
-    return f(Saturated_varphi_model_papangelou<varphi::Strauss>(saturation, radius));
+    return f(Saturated_varphi_model<varphi::Strauss>(saturation, radius));
   } else {
     Rcpp::stop("Incorrect model entered. A call to show_models() will show you the available choices.\n");
   }
