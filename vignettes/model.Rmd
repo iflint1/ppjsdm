@@ -225,8 +225,8 @@ As an illustration, here is a plot of an extremely attractive square exponential
 
 ```{r}
 extreme_configuration <- rgibbs(window = window, 
-                                alpha = matrix(3.5), 
-                                lambda = 1, 
+                                alpha = matrix(3), 
+                                lambda = 10, 
                                 model = "square_exponential",
                                 radius = radius)
 par(mar = c(5, 4, 4, 13) + 0.1)

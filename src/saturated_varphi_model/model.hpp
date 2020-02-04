@@ -98,6 +98,7 @@ public:
                            Rcpp::List covariates,
                            D&& dispersion):
   Dispersion(std::forward<D>(dispersion)),
+  number_types_(lambda.size()),
     lambda_(lambda),
     alpha_(alpha),
     beta_(beta),
@@ -114,13 +115,12 @@ public:
   // TODO: Surely you can factorise parts of the four functions below.
   template<typename... Configurations, typename Point>
   double compute_papangelou(const Point& point,
-                            R_xlen_t number_types,
                             Configurations&&... configurations) const {
-    const auto dispersion(Dispersion::compute(point, number_types, std::forward<Configurations>(configurations)...));
+    const auto dispersion(Dispersion::compute(point, number_types_, std::forward<Configurations>(configurations)...));
 
     double inner_product(0);
     const auto point_type(get_type(point));
-    for(R_xlen_t i(0); i < number_types; ++i) {
+    for(R_xlen_t i(0); i < number_types_; ++i) {
       inner_product += alpha_(point_type, i) * dispersion[i];
     }
     for(decltype(covariates_.size()) i(0); i < covariates_.size(); ++i) {
@@ -132,20 +132,18 @@ public:
   template<typename... Configurations, typename Point, typename Window>
   double compute_normalised_papangelou(const Window& window,
                                        const Point& point,
-                                       R_xlen_t number_types,
                                        Configurations&&... configurations) const {
-    const auto dispersion(Dispersion::compute(point, number_types, std::forward<Configurations>(configurations)...));
-
     double inner_product(0);
     const auto point_type(get_type(point));
-    for(R_xlen_t i(0); i < number_types; ++i) {
+    for(R_xlen_t i(0); i < number_types_; ++i) {
       const auto alpha(alpha_(point_type, i));
       if(alpha > 0) {
         inner_product -= alpha;
       }
     }
     inner_product *= Dispersion::get_maximum(window);
-    for(R_xlen_t i(0); i < number_types; ++i) {
+    const auto dispersion(Dispersion::compute(point, number_types_, std::forward<Configurations>(configurations)...));
+    for(R_xlen_t i(0); i < number_types_; ++i) {
       inner_product += alpha_(point_type, i) * dispersion[i];
     }
     return std::exp(inner_product);
@@ -154,8 +152,8 @@ public:
   class Normalised_dominating_intensity {
   public:
     // TODO: Think about perfect forwarding.
-    Normalised_dominating_intensity(std::vector<double> normalisation, const Beta& beta, Im_list_wrapper covariates):
-    normalisation_(normalisation), beta_(beta), covariates_(std::move(covariates)) {}
+    Normalised_dominating_intensity(R_xlen_t number_types, std::vector<double> normalisation, const Beta& beta, Im_list_wrapper covariates):
+    number_types_(number_types), normalisation_(normalisation), beta_(beta), covariates_(std::move(covariates)) {}
 
     template<typename Point>
     auto operator()(const Point& point) const {
@@ -167,41 +165,42 @@ public:
       return std::exp(inner_product - normalisation_[get_type(point)]);
     }
 
-    auto get_integral(R_xlen_t number_types) const {
+    auto get_integral() const {
       double integral(0);
-      for(R_xlen_t i(0); i < number_types; ++i) {
+      for(R_xlen_t i(0); i < number_types_; ++i) {
         integral += covariates_.get_integral_of_dot([](double x) { return std::exp(x); }, beta_(i, Rcpp::_));
       }
-      return integral / static_cast<double>(number_types);
+      return integral / static_cast<double>(number_types_);
     }
   private:
+    R_xlen_t number_types_;
     std::vector<double> normalisation_;
     Beta beta_;
     Im_list_wrapper covariates_;
   };
 
   template<typename Window>
-  auto get_normalised_dominating_intensity(const Window&, R_xlen_t number_types) const {
-    std::vector<double> log_bound(number_types);
-    for(R_xlen_t i(0); i < number_types; ++i) {
+  auto get_normalised_dominating_intensity(const Window&) const {
+    std::vector<double> log_bound(number_types_);
+    for(R_xlen_t i(0); i < number_types_; ++i) {
       double sum(0);
       if(covariates_.size() > 0) {
         sum += covariates_.get_maximum_of_dot(beta_(i, Rcpp::_));
       }
       log_bound[i] = sum;
     }
-    return Normalised_dominating_intensity(log_bound, beta_, covariates_);
+    return Normalised_dominating_intensity(number_types_, log_bound, beta_, covariates_);
   }
 
   template<typename Window>
-  auto get_intensity_upper_bound(const Window& window, R_xlen_t number_types) const {
-    std::vector<double> upper_bound(number_types);
-    for(R_xlen_t i(0); i < number_types; ++i) {
+  auto get_intensity_upper_bound(const Window& window) const {
+    std::vector<double> upper_bound(number_types_);
+    for(R_xlen_t i(0); i < number_types_; ++i) {
       double inner_product(0);
-      for(R_xlen_t j(0); j < number_types; ++j) {
-        const auto alpha_ij(alpha_(j, i));
-        if(alpha_ij > 0) {
-          inner_product += alpha_ij;
+      for(R_xlen_t j(0); j < number_types_; ++j) {
+        const auto alpha(alpha_(j, i));
+        if(alpha > 0) {
+          inner_product += alpha;
         }
       }
       inner_product *= Dispersion::get_maximum(window);
@@ -217,6 +216,7 @@ public:
     return upper_bound;
   }
 private:
+  R_xlen_t number_types_;
   Lambda lambda_;
   Alpha alpha_;
   Beta beta_;
