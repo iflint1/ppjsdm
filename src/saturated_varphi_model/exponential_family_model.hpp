@@ -43,10 +43,47 @@ inline auto compute_beta_dot_covariates_maximum(const Beta& beta, const Covariat
   return result;
 }
 
+template<typename Point, typename Alpha, typename Dispersion, typename... Configurations>
+inline auto compute_alpha_dot_dispersion(const Point& point,
+                                         const Alpha& alpha,
+                                         const Dispersion& dispersion,
+                                         Configurations&&... configurations) {
+  const auto d(dispersion.compute(point, alpha.nrow(), std::forward<Configurations>(configurations)...));
+  double sum(0);
+  for(R_xlen_t i(0); i < alpha.ncol(); ++i) {
+    sum += alpha(get_type(point), i) * d[i];
+  }
+  return sum;
+}
+
+template<typename Alpha>
+inline auto compute_alpha_dot_dispersion_maximum(const Alpha& alpha,
+                                                 double dispersion_maximum,
+                                                 int type) {
+  double sum(0);
+  for(R_xlen_t j(0); j < alpha.ncol(); ++j) {
+    const auto a(alpha(type, j));
+    if(a > 0) {
+      sum += a;
+    }
+  }
+  return sum * dispersion_maximum;
+}
+
+template<typename Alpha>
+inline auto compute_alpha_dot_dispersion_maximum(const Alpha& alpha, double dispersion_maximum) {
+  const auto number_types(alpha.nrow());
+  std::vector<double> result(number_types);
+  for(R_xlen_t i(0); i < number_types; ++i) {
+    result[i] = compute_alpha_dot_dispersion_maximum(alpha, dispersion_maximum, i);
+  }
+  return result;
+}
+
 } // namespace detail
 
 template<typename Dispersion, typename Lambda, typename Alpha, typename Beta>
-class Exponential_family_model: public Dispersion {
+class Exponential_family_model {
 public:
   template<typename D, std::enable_if_t<std::is_same<Dispersion, std::remove_reference_t<D>>::value>* = nullptr>
   Exponential_family_model(const Lambda& lambda,
@@ -54,8 +91,7 @@ public:
                            const Beta& beta,
                            Rcpp::List covariates,
                            D&& dispersion):
-    Dispersion(std::forward<D>(dispersion)),
-    number_types_(lambda.size()),
+    dispersion_(std::forward<D>(dispersion)),
     lambda_(lambda),
     alpha_(alpha),
     beta_(beta),
@@ -68,7 +104,6 @@ public:
                                     const Beta& beta,
                                     const Im_list_wrapper& covariates,
                                     V&& alpha_dot_dispersion_maximum):
-    number_types_(lambda.size()),
     lambda_(lambda),
     beta_(beta),
     covariates_(covariates),
@@ -84,15 +119,18 @@ public:
 
     auto get_integral() const {
       double integral(0);
-      for(R_xlen_t i(0); i < number_types_; ++i) {
+      const auto number_types(beta_.nrow());
+      for(R_xlen_t i(0); i < number_types; ++i) {
         integral += covariates_.get_integral_of_dot([](double x) { return std::exp(x); }, beta_(i, Rcpp::_));
       }
-      return integral / static_cast<double>(number_types_);
+      return integral / static_cast<double>(number_types);
     }
 
     auto get_upper_bound() const {
-      std::vector<double> upper_bound(number_types_);
-      for(R_xlen_t i(0); i < number_types_; ++i) {
+      const auto number_types(lambda_.size());
+      std::vector<double> upper_bound(number_types);
+      using size_t = decltype(lambda_.size());
+      for(size_t i(0); i < number_types; ++i) {
         const auto value(lambda_[i] * std::exp(alpha_dot_dispersion_maximum_[i] + beta_dot_covariates_maximum_[i]));
         if(std::isinf(value)) {
           Rcpp::stop("Infinite value obtained as the bound to the Papangelou intensity.");
@@ -102,7 +140,6 @@ public:
       return upper_bound;
     }
   private:
-    R_xlen_t number_types_;
     Lambda lambda_;
     Beta beta_;
     Im_list_wrapper covariates_;
@@ -112,61 +149,29 @@ public:
 
   template<typename Window>
   auto get_normalised_dominating_intensity(const Window& window) const {
-    return Normalised_dominating_intensity(lambda_, beta_, covariates_, get_alpha_dot_dispersion_maximum(window));
+    return Normalised_dominating_intensity(lambda_, beta_, covariates_, detail::compute_alpha_dot_dispersion_maximum(alpha_, dispersion_.get_maximum(window)));
   }
 
   template<typename Point, typename... Configurations>
   double compute_papangelou(const Point& point, Configurations&&... configurations) const {
-    double alpha_dispersion(get_alpha_dot_dispersion(point, std::forward<Configurations>(configurations)...));
+    double alpha_dispersion(detail::compute_alpha_dot_dispersion(point, alpha_, dispersion_, std::forward<Configurations>(configurations)...));
     double beta_covariates(detail::compute_beta_dot_covariates(point, beta_, covariates_));
     return lambda_[get_type(point)] * std::exp(alpha_dispersion + beta_covariates);
   }
 
   template<typename Window, typename Point, typename... Configurations>
   double compute_normalised_papangelou(const Window& window, const Point& point, Configurations&&... configurations) const {
-    double alpha_dispersion_maximum(get_alpha_dot_dispersion_maximum(window, get_type(point)));
-    double alpha_dispersion(get_alpha_dot_dispersion(point, std::forward<Configurations>(configurations)...));
+    double alpha_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(alpha_, dispersion_.get_maximum(window), get_type(point)));
+    double alpha_dispersion(detail::compute_alpha_dot_dispersion(point, alpha_, dispersion_, std::forward<Configurations>(configurations)...));
     return std::exp(alpha_dispersion - alpha_dispersion_maximum);
   }
 
 private:
-  R_xlen_t number_types_;
+  Dispersion dispersion_;
   Lambda lambda_;
   Alpha alpha_;
   Beta beta_;
   Im_list_wrapper covariates_;
-
-  template<typename... Configurations, typename Point>
-  auto get_alpha_dot_dispersion(const Point& point,
-                                Configurations&&... configurations) const {
-    const auto dispersion(Dispersion::compute(point, number_types_, std::forward<Configurations>(configurations)...));
-    double sum(0);
-    for(R_xlen_t i(0); i < number_types_; ++i) {
-      sum += alpha_(get_type(point), i) * dispersion[i];
-    }
-    return sum;
-  }
-
-  template<typename Window>
-  auto get_alpha_dot_dispersion_maximum(const Window& window, int type) const {
-    double sum(0);
-    for(R_xlen_t j(0); j < number_types_; ++j) {
-      const auto alpha(alpha_(type, j));
-      if(alpha > 0) {
-        sum += alpha;
-      }
-    }
-    return sum * Dispersion::get_maximum(window);
-  }
-
-  template<typename Window>
-  auto get_alpha_dot_dispersion_maximum(const Window& window) const {
-    std::vector<double> result(number_types_);
-    for(R_xlen_t i(0); i < number_types_; ++i) {
-      result[i] = get_alpha_dot_dispersion_maximum(window, i);
-    }
-    return result;
-  }
 };
 
 template<typename F, typename Lambda>
