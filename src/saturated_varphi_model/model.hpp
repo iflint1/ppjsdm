@@ -111,6 +111,7 @@ public:
                            Args&&... args):
     Exponential_family_model(lambda, alpha, beta, covariates, Dispersion(std::forward<Args>(args)...)) {}
 
+  // TODO: Surely you can factorise parts of the four functions below.
   template<typename... Configurations, typename Point>
   double compute_papangelou(const Point& point,
                             R_xlen_t number_types,
@@ -128,9 +129,73 @@ public:
     return lambda_[point_type] * std::exp(inner_product);
   }
 
+  template<typename... Configurations, typename Point, typename Window>
+  double compute_normalised_papangelou(const Window& window,
+                                       const Point& point,
+                                       R_xlen_t number_types,
+                                       Configurations&&... configurations) const {
+    const auto dispersion(Dispersion::compute(point, number_types, std::forward<Configurations>(configurations)...));
+
+    double inner_product(0);
+    const auto point_type(get_type(point));
+    for(R_xlen_t i(0); i < number_types; ++i) {
+      const auto alpha(alpha_(point_type, i));
+      if(alpha > 0) {
+        inner_product -= alpha;
+      }
+    }
+    inner_product *= Dispersion::get_maximum(window);
+    for(R_xlen_t i(0); i < number_types; ++i) {
+      inner_product += alpha_(point_type, i) * dispersion[i];
+    }
+    return std::exp(inner_product);
+  }
+
+  class Normalised_dominating_intensity {
+  public:
+    // TODO: Think about perfect forwarding.
+    Normalised_dominating_intensity(std::vector<double> normalisation, const Beta& beta, Im_list_wrapper covariates):
+    normalisation_(normalisation), beta_(beta), covariates_(std::move(covariates)) {}
+
+    template<typename Point>
+    auto operator()(const Point& point) const {
+      double inner_product(0);
+      const auto point_type(get_type(point));
+      for(decltype(covariates_.size()) i(0); i < covariates_.size(); ++i) {
+        inner_product += beta_(point_type, i) * covariates_[i](point);
+      }
+      return std::exp(inner_product - normalisation_[get_type(point)]);
+    }
+
+    auto get_integral(R_xlen_t number_types) const {
+      double integral(0);
+      for(R_xlen_t i(0); i < number_types; ++i) {
+        integral += covariates_.get_integral_of_dot([](double x) { return std::exp(x); }, beta_(i, Rcpp::_));
+      }
+      return integral / static_cast<double>(number_types);
+    }
+  private:
+    std::vector<double> normalisation_;
+    Beta beta_;
+    Im_list_wrapper covariates_;
+  };
+
   template<typename Window>
-  auto get_dominating_intensity(const Window& window, R_xlen_t number_types) const {
-    std::vector<double> dominating_intensity(number_types);
+  auto get_normalised_dominating_intensity(const Window&, R_xlen_t number_types) const {
+    std::vector<double> log_bound(number_types);
+    for(R_xlen_t i(0); i < number_types; ++i) {
+      double sum(0);
+      if(covariates_.size() > 0) {
+        sum += covariates_.get_maximum_of_dot(beta_(i, Rcpp::_));
+      }
+      log_bound[i] = sum;
+    }
+    return Normalised_dominating_intensity(log_bound, beta_, covariates_);
+  }
+
+  template<typename Window>
+  auto get_intensity_upper_bound(const Window& window, R_xlen_t number_types) const {
+    std::vector<double> upper_bound(number_types);
     for(R_xlen_t i(0); i < number_types; ++i) {
       double inner_product(0);
       for(R_xlen_t j(0); j < number_types; ++j) {
@@ -147,9 +212,9 @@ public:
       if(std::isinf(value)) {
         Rcpp::stop("Infinite value obtained as the bound to the Papangelou intensity.");
       }
-      dominating_intensity[i] = value;
+      upper_bound[i] = value;
     }
-    return dominating_intensity;
+    return upper_bound;
   }
 private:
   Lambda lambda_;

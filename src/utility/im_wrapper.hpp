@@ -209,10 +209,10 @@ public:
   // TODO: Make sure this is only called if number of rows and columns is the same.
   template<typename Vector>
   double get_maximum_of_dot(const Vector& vector) const {
-    double upper(-std::numeric_limits<double>::infinity());
     if(im_list_.empty()) {
       return 0.;
     }
+    double upper(-std::numeric_limits<double>::infinity());
     for(R_xlen_t i(0); i < im_list_[0].number_row_; ++i) {
       for(R_xlen_t j(0); j < im_list_[0].number_col_; ++j) {
         double inner_product(0);
@@ -232,6 +232,35 @@ public:
     }
     return upper;
   }
+
+  // TODO: Make sure this is only called if number of rows and columns is the same, and x_
+  // Computes \int_W f(\beta \cdot X(x)) dx.
+  template<typename F, typename Vector>
+  double get_integral_of_dot(const F& f, const Vector& vector) const {
+    if(im_list_.empty()) {
+      return f(0.);
+    }
+    double sum(0);
+    for(R_xlen_t i(0); i < im_list_[0].number_row_; ++i) {
+      for(R_xlen_t j(0); j < im_list_[0].number_col_; ++j) {
+        double inner_product(0);
+        typename decltype(im_list_)::size_type k(0);
+        for(; k < im_list_.size(); ++k) {
+          const auto value(im_list_[k].get_matrix(i, j));
+          if(R_IsNA(value)) {
+            break;
+          } else {
+            inner_product += vector[k] * value;
+          }
+        }
+        if(k == im_list_.size()) {
+          sum += f(inner_product);
+        }
+      }
+    }
+    return sum * im_list_[0].xstep_ * im_list_[0].ystep_;
+  }
+
 private:
   std::vector<Im_wrapper> im_list_;
   std::vector<std::string> im_names_;
