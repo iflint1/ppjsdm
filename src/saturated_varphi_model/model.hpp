@@ -39,7 +39,7 @@ public:
       std::vector<unsigned long long int> count_positive_types(number_types);
       for_each_container([&count_positive_types, this, &point](const auto& current_point) {
         if(count_positive_types[get_type(current_point)] < saturation_) {
-          if(Varphi::apply(current_point, point) > 0) {
+          if(this->Varphi::apply(current_point, point) > 0) {
             count_positive_types[get_type(current_point)] += 1;
           }
         }
