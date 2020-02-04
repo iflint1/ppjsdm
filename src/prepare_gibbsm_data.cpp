@@ -7,7 +7,7 @@
 
 #include "point/point_manipulation.hpp"
 
-#include "saturated_varphi_model/model.hpp"
+#include "saturated_varphi_model/saturated_varphi_model.hpp"
 
 #include "simulation/rbinomialpp_single.hpp"
 

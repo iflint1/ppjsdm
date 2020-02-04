@@ -1,6 +1,6 @@
 #include <Rcpp.h>
 
-#include "saturated_varphi_model/model.hpp"
+#include "saturated_varphi_model/saturated_varphi_model.hpp"
 
 //' Show the authorised models.
 //'

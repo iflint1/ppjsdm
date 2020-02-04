@@ -5,7 +5,7 @@
 
 #include "point/point_manipulation.hpp"
 
-#include "saturated_varphi_model/model.hpp"
+#include "saturated_varphi_model/exponential_family_model.hpp"
 
 #include "simulation/coupling_from_the_past.hpp"
 #include "simulation/metropolis_hastings.hpp"

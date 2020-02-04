@@ -6,7 +6,7 @@
 
 #include "point/point_manipulation.hpp"
 
-#include "saturated_varphi_model/model.hpp"
+#include "saturated_varphi_model/exponential_family_model.hpp"
 
 //' Compute Papangelou conditional intensity of the model.
 //'
