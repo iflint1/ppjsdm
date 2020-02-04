@@ -3,7 +3,7 @@
 
 #include <Rinternals.h>
 
-#include "../simulation/rippp.hpp"
+#include "../simulation/inhomogeneous_ppp.hpp"
 #include "../utility/backwards_markov_chain.hpp"
 
 #include <tuple> // std::pair
@@ -48,7 +48,7 @@ inline auto simulate_coupling_from_the_past(const Model& model, const Window& wi
   const auto normalised_dominating_intensity(model.get_normalised_dominating_intensity(window, number_types));
   const auto intensity_upper_bound(model.get_intensity_upper_bound(window, number_types));
   // TODO: Catch std::bad_alloc exceptions that happen when the upper bound to the Papangelou intensity is too large.
-  Backwards_Markov_chain<Configuration> Z(rippp<Configuration>(window, normalised_dominating_intensity, intensity_upper_bound, number_types));
+  Backwards_Markov_chain<Configuration> Z(simulate_inhomogeneous_ppp<Configuration>(window, normalised_dominating_intensity, intensity_upper_bound, number_types));
 
   const auto integral_of_dominating_intensity(normalised_dominating_intensity.get_integral(number_types));
   const auto T0(Z.extend_until_T0(integral_of_dominating_intensity, window, number_types));
