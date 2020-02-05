@@ -28,36 +28,41 @@ public:
 
   template<typename Window>
   auto extend_until_T0(double beta, const Window& window, R_xlen_t number_types) {
-    if(empty(last_configuration_)) {
-      return 0ULL;
+    using size_t = decltype(ppjsdm::size(last_configuration_));
+    const auto initial_last_size(ppjsdm::size(last_configuration_));
+    if(initial_last_size == 0) {
+      return static_cast<typename decltype(chain_)::size_type>(0);
     }
     Configuration points_not_in_last{};
-    unsigned long long int T0(1);
     while(true) {
-      const auto beta_plus_sizes(beta + static_cast<double>(ppjsdm::size(points_not_in_last) + ppjsdm::size(last_configuration_)));
-      const auto v(unif_rand() * beta_plus_sizes - beta); // Uniformly distributed on [-beta, s_1 + s_2].
-      if(v < 0.0) { // Happens with probability beta / (beta + s_1 + s_2).
-        insert_uniform_point_in_configuration_and_update_chain(window, points_not_in_last, number_types);
-      } else {
-        const auto w(v / static_cast<double>(ppjsdm::size(last_configuration_))); // Uniformly distributed on [0, 1 + s_1 / s_2].
-        if(w < 1.0) { // Happens with probability s_2 / (s_1 + s_2)
-          delete_random_point_in_configuration_and_update_chain(last_configuration_, w);
-          if(empty(last_configuration_)) {
-            last_configuration_ = points_not_in_last;
-            return T0;
-          }
+      // Do the computations by blocks of size `initial_last_size`, reserving space each time
+      chain_.reserve(initial_last_size);
+      for(size_t i(0); i < initial_last_size; ++i) {
+        const auto beta_plus_sizes(beta + static_cast<double>(ppjsdm::size(points_not_in_last) + ppjsdm::size(last_configuration_)));
+        const auto v(unif_rand() * beta_plus_sizes - beta); // Uniformly distributed on [-beta, s_1 + s_2].
+        if(v < 0.0) { // Happens with probability beta / (beta + s_1 + s_2).
+          insert_uniform_point_in_configuration_and_update_chain(window, points_not_in_last, number_types);
         } else {
-          const auto x((w - 1.0) * static_cast<double>(ppjsdm::size(last_configuration_)) / static_cast<double>(ppjsdm::size(points_not_in_last)));
-          delete_random_point_in_configuration_and_update_chain(points_not_in_last, x);
+          const auto w(v / static_cast<double>(ppjsdm::size(last_configuration_))); // Uniformly distributed on [0, 1 + s_1 / s_2].
+          if(w < 1.0) { // Happens with probability s_2 / (s_1 + s_2)
+            delete_random_point_in_configuration_and_update_chain(last_configuration_, w);
+            if(empty(last_configuration_)) {
+              last_configuration_ = points_not_in_last;
+              return chain_.size();
+            }
+          } else {
+            const auto x((w - 1.0) * static_cast<double>(ppjsdm::size(last_configuration_)) / static_cast<double>(ppjsdm::size(points_not_in_last)));
+            delete_random_point_in_configuration_and_update_chain(points_not_in_last, x);
+          }
         }
       }
       R_CheckUserInterrupt();
-      ++T0;
     }
   }
 
   template<typename Window, typename IntegerType>
   void extend_backwards(IntegerType number_extensions, double beta, const Window& window, R_xlen_t number_types) {
+    chain_.reserve(number_extensions);
     for(IntegerType i(0); i < number_extensions; ++i) {
       const auto beta_plus_size(beta + static_cast<double>(ppjsdm::size(last_configuration_)));
       const auto v(unif_rand() * beta_plus_size - beta); // Uniformly distributed on [-beta, s].

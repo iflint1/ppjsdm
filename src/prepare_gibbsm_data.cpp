@@ -107,6 +107,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
       response(i, 0) = 1;
       point = configuration[i];
 
+      // TODO: Avoid copy and removal
       Configuration configuration_copy(configuration);
       ppjsdm::remove_point_by_index(configuration_copy, i);
 
