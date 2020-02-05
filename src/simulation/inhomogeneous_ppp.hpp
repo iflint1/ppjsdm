@@ -6,6 +6,8 @@
 
 #include "../configuration/configuration_manipulation.hpp"
 
+#include <utility> // std::move
+
 namespace ppjsdm {
 
 template<typename Configuration, typename Window, typename Lambda, typename UpperBound>

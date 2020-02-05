@@ -10,6 +10,11 @@
 #include <vector> // std::vector
 
 namespace ppjsdm {
+namespace detail {
+
+constexpr double do_not_need_mark = 2.0;
+
+} // namespace detail
 
 template <typename Configuration>
 class Backwards_Markov_chain {
@@ -22,38 +27,45 @@ public:
   }
 
   template<typename Window>
-  auto extend_until_T0(double beta, const Window& window, R_xlen_t point_types) {
+  auto extend_until_T0(double beta, const Window& window, R_xlen_t number_types) {
     if(empty(last_configuration_)) {
       return 0ULL;
     }
     Configuration points_not_in_last{};
     unsigned long long int T0(1);
     while(true) {
-      R_CheckUserInterrupt();
-      if(unif_rand() * (beta + static_cast<double>(ppjsdm::size(points_not_in_last) + ppjsdm::size(last_configuration_))) <= beta) {
-        insert_uniform_point_in_configuration_and_update_chain(window, points_not_in_last, point_types);
+      const auto beta_plus_sizes(beta + static_cast<double>(ppjsdm::size(points_not_in_last) + ppjsdm::size(last_configuration_)));
+      const auto v(unif_rand() * beta_plus_sizes - beta); // Uniformly distributed on [-beta, s_1 + s_2].
+      if(v < 0.0) { // Happens with probability beta / (beta + s_1 + s_2).
+        insert_uniform_point_in_configuration_and_update_chain(window, points_not_in_last, number_types);
       } else {
-        if(unif_rand() * static_cast<double>(ppjsdm::size(last_configuration_) + ppjsdm::size(points_not_in_last)) < static_cast<double>(ppjsdm::size(last_configuration_))) {  // random point chosen in last_configuration_
-          delete_random_point_in_configuration_and_update_chain(last_configuration_);
+        const auto w(v / static_cast<double>(ppjsdm::size(last_configuration_))); // Uniformly distributed on [0, 1 + s_1 / s_2].
+        if(w < 1.0) { // Happens with probability s_2 / (s_1 + s_2)
+          delete_random_point_in_configuration_and_update_chain(last_configuration_, w);
           if(empty(last_configuration_)) {
             last_configuration_ = points_not_in_last;
             return T0;
           }
         } else {
-          delete_random_point_in_configuration_and_update_chain(points_not_in_last);
+          const auto x((w - 1.0) * static_cast<double>(ppjsdm::size(last_configuration_)) / static_cast<double>(ppjsdm::size(points_not_in_last)));
+          delete_random_point_in_configuration_and_update_chain(points_not_in_last, x);
         }
       }
+      R_CheckUserInterrupt();
       ++T0;
     }
   }
 
   template<typename Window, typename IntegerType>
-  void extend_backwards(IntegerType number_extensions, double beta, const Window& window, R_xlen_t point_types) {
+  void extend_backwards(IntegerType number_extensions, double beta, const Window& window, R_xlen_t number_types) {
     for(IntegerType i(0); i < number_extensions; ++i) {
-      if(unif_rand() * (beta + static_cast<double>(ppjsdm::size(last_configuration_))) <= beta) {
-        insert_uniform_point_in_configuration_and_update_chain(window, last_configuration_, point_types);
+      const auto beta_plus_size(beta + static_cast<double>(ppjsdm::size(last_configuration_)));
+      const auto v(unif_rand() * beta_plus_size - beta); // Uniformly distributed on [-beta, s].
+      if(v < 0.0) { // Happens with probability beta / (beta + s).
+        insert_uniform_point_in_configuration_and_update_chain(window, last_configuration_, number_types);
       } else {
-        delete_random_point_in_configuration_and_update_chain(last_configuration_);
+        const auto w(v / static_cast<double>(ppjsdm::size(last_configuration_))); // Uniformly distributed on [0, 1].
+        delete_random_point_in_configuration_and_update_chain(last_configuration_, w);
       }
     }
   }
@@ -62,34 +74,38 @@ public:
     return last_configuration_;
   }
 
-  template<typename Function>
-  void iterate_forward_in_time(const Function& f) {
+  template<typename F, typename G>
+  void iterate_forward_in_time(const F& birth, const G& death) {
     const auto chain_size(chain_.size());
     if(chain_size == 0) {
       return;
     } else {
       for(auto n(static_cast<long long int>(chain_size) - 1); n >= 0; --n) {
-        const auto current(chain_[static_cast<std::size_t>(n)]);
-        f(std::get<1>(current), std::get<0>(current), std::get<2>(current));
+        const auto& current(chain_[static_cast<std::size_t>(n)]);
+        if(std::get<0>(current) <= 1.0) {
+          birth(std::get<1>(current), std::get<0>(current));
+        } else {
+          death(std::get<1>(current));
+        }
       }
     }
   }
 
 private:
   Configuration last_configuration_;
-  std::vector<std::tuple<bool, Marked_point, double>> chain_;
+  std::vector<std::tuple<double, Marked_point>> chain_;
 
   template<typename Window>
-  void insert_uniform_point_in_configuration_and_update_chain(const Window& window, Configuration& configuration, R_xlen_t point_types) {
-    const auto random_type(Rcpp::sample(point_types, 1, false, R_NilValue, false)[0]);
+  void insert_uniform_point_in_configuration_and_update_chain(const Window& window, Configuration& configuration, R_xlen_t number_types) {
+    const auto random_type(Rcpp::sample(number_types, 1, false, R_NilValue, false)[0]);
     const auto point(window.sample(random_type));
-    chain_.emplace_back(false, point, 0.);
+    chain_.emplace_back(detail::do_not_need_mark, point);
     add_point(configuration, std::move(point));
   }
 
-  void delete_random_point_in_configuration_and_update_chain(Configuration& configuration) {
+  void delete_random_point_in_configuration_and_update_chain(Configuration& configuration, double uniform_mark) {
     const auto point(remove_random_point(configuration));
-    chain_.emplace_back(true, std::move(point), unif_rand());
+    chain_.emplace_back(uniform_mark, std::move(point));
   }
 };
 
