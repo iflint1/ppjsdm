@@ -82,7 +82,7 @@ configuration <- rgibbs(window = window,
 
 and plot it below.
 
-```{r, fig.height = 4, fig.align = 'center', fig}
+```{r, fig.align = 'center', fig}
 par(mar = c(5, 4, 4, 13) + 0.1)
 plot(configuration)
 ```
@@ -178,7 +178,7 @@ radius <- matrix(0.05, nspecies, nspecies)
 plot_pap(1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
-It is also possible to change the number of individuals that are taken into account, via the `saturation` parameter (which corresponds to $N$ in the model).
+It is possible to change the number of individuals that are taken into account, via the `saturation` parameter (which corresponds to $N$ in the model).
 For example, let us account for the five closest individuals instead of the two closest.
 
 ```{r}
@@ -196,13 +196,6 @@ model <- "exponential"
 plot_pap(1, model, alpha, lambda, beta, covariates, radius, saturation)
 ```
 
-And as another example, here is what the `square_bump` smoothing is like.
-
-```{r}
-model <- "square_bump"
-plot_pap(1, model, alpha, lambda, beta, covariates, radius, saturation)
-```
-
 # Discussion of the different variations
 
 These different variations of the model generate quite different samples in extreme cases.
@@ -214,13 +207,12 @@ extreme_configuration <- rgibbs(window = window,
                                 alpha = matrix(-6), 
                                 lambda = 5000, 
                                 model = "Geyer",
-                                steps = 10000000,
                                 radius = radius)
 par(mar = c(5, 4, 4, 13) + 0.1)
 plot(extreme_configuration, window = window)
 ```
 
-Other variants of the model show other interesting features.
+Other variants of the model show some interesting features.
 As an illustration, here is a plot of an extremely attractive square exponential version of the model.
 
 ```{r}
