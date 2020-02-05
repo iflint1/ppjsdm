@@ -58,7 +58,7 @@ nspecies <- 2
 
 beta <- cbind(c(1, -2), c(-1, 0.5), c(2, -0.5))
 alpha <- matrix(cbind(c(-0.5, 0.1), c(0.1, -0.3)), nspecies, nspecies)
-log_lambda <- rep(7, nspecies)
+log_lambda <- rep(8, nspecies)
 ```
 
 Finally, we need a dataset to work on.
