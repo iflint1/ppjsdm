@@ -72,12 +72,10 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   }
 
   // Set names.
-  size_t index(0);
   Rcpp::CharacterVector alpha_names(Rcpp::no_init(alpha_input.ncol()));
-  for(size_t j(1); j <= number_types; ++j) {
-    for(size_t k(j); k <= number_types; ++k) {
-      alpha_names[index] = std::string("alpha_") + std::to_string(j) + std::string("_") + std::to_string(k);
-      ++index;
+  for(size_t j(0); j < number_types; ++j) {
+    for(size_t k(j); k < number_types; ++k) {
+      alpha_names[j * number_types + k - j] = std::string("alpha_") + std::to_string(j + 1) + std::string("_") + std::to_string(k + 1);
     }
   }
   Rcpp::colnames(alpha_input) = alpha_names;
@@ -101,7 +99,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 
   // Fill the data.
   for(size_t i(0); i < length_configuration + length_D; ++i) {
-    Rcpp::NumericVector dispersion;
+    std::vector<double> dispersion;
     ppjsdm::Marked_point point;
     if(i < length_configuration) {
       response(i, 0) = 1;
@@ -121,31 +119,42 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     const size_t type_index(ppjsdm::get_type(point));
 
     rho_offset(i, 0) = -std::log(static_cast<double>(rho_times_volume[type_index]) / volume);
-    for(size_t j(0); j < covariates_length; ++j) {
-      const auto covariate(covariates[j](point));
-      if(R_IsNA(covariate)) {
-        Rcpp::stop("One of the covariates' value is NA on one of the locations in the dataset.");
-      }
-      for(size_t k(0); k < number_types; ++k) {
-        covariates_input(i, j * number_types + k) = (k == type_index) ? covariate : 0;
-      }
-    }
-    R_xlen_t index(0);
     for(size_t j(0); j < number_types; ++j) {
+      // fill log_lambda
       if(type_index == j) {
         log_lambda(i, j) = 1;
       } else {
         log_lambda(i, j) = 0;
       }
-      for(size_t k(j); k < number_types; ++k) {
-        if(j == type_index) {
-          alpha_input(i, index) = dispersion[k];
-        } else if(k == type_index) {
-          alpha_input(i, index) = dispersion[j];
-        } else {
-          alpha_input(i, index) = 0;
+
+      // fill covariates
+      if(j == type_index) {
+        for(size_t k(0); k < covariates_length; ++k) {
+          const auto covariate(covariates[k](point));
+          if(R_IsNA(covariate)) {
+            Rcpp::stop("One of the covariates' value is NA on one of the locations in the dataset.");
+          }
+          covariates_input(i, k * number_types + j) = covariate;
         }
-        ++index;
+      } else {
+        for(size_t k(0); k < covariates_length; ++k) {
+          covariates_input(i, k * number_types + j) = 0;
+        }
+      }
+
+      // fill alpha
+      if(j == type_index) {
+        for(size_t k(j); k < number_types; ++k) {
+          alpha_input(i, j * number_types + k - j) = dispersion[k];
+        }
+      } else {
+        for(size_t k(j); k < number_types; ++k) {
+          if(k == type_index) {
+            alpha_input(i, j * number_types + k - j) = dispersion[j];
+          } else {
+            alpha_input(i, j * number_types + k - j) = 0;
+          }
+        }
       }
     }
   }

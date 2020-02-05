@@ -233,7 +233,7 @@ public:
     return upper;
   }
 
-  // TODO: Make sure this is only called if number of rows and columns is the same, and x_
+  // TODO: Make sure this is only called if number of rows and columns is the same, and xstep_ = ystep_
   // Computes \int_W f(\beta \cdot X(x)) dx.
   template<typename F, typename Vector>
   double get_integral_of_dot(const F& f, const Vector& vector) const {

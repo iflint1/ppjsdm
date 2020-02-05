@@ -23,25 +23,25 @@ public:
   Saturated_varphi_model(unsigned long long int saturation, Args&&... args):
     Varphi(std::forward<Args>(args)...), saturation_(saturation) {}
 
-  template<typename... Configurations, typename Point>
-  Rcpp::NumericVector compute(const Point& point,
-                              R_xlen_t number_types,
-                              Configurations&&... configurations) const {
+  template<typename Point, typename... Configurations>
+  auto compute(const Point& point,
+               R_xlen_t number_types,
+               Configurations&&... configurations) const {
     // TODO: Ideally I'd like to use if constexpr
     // TODO: If I can use if constexpr, I can remove get_nonzero_value below.
     if(has_nonzero_value_v<Varphi>) { // Use faster algorithm in this case
       std::vector<unsigned long long int> count_positive_types(number_types);
       for_each_container([&count_positive_types, this, &point](const auto& current_point) {
-        if(count_positive_types[get_type(current_point)] < saturation_) {
-          if(this->Varphi::apply(current_point, point) > 0) {
-            count_positive_types[get_type(current_point)] += 1;
-          }
+        if(count_positive_types[get_type(current_point)] < saturation_ && this->Varphi::apply(current_point, point) > 0) {
+          count_positive_types[get_type(current_point)] += 1;
         }
       }, std::forward<Configurations>(configurations)...);
 
-      Rcpp::NumericVector dispersion(Rcpp::no_init(number_types));
-      for(R_xlen_t i(0); i < number_types; ++i) {
-        dispersion[i] = get_nonzero_value<Varphi>() * static_cast<double>(count_positive_types[i]);
+      std::vector<double> dispersion(number_types);
+      using size_t = typename decltype(dispersion)::size_type;
+      constexpr double nonzero_value(get_nonzero_value<Varphi>());
+      for(size_t i(0); i < static_cast<size_t>(number_types); ++i) {
+        dispersion[i] = nonzero_value * static_cast<double>(count_positive_types[i]);
       }
       return dispersion;
     } else {
@@ -61,9 +61,10 @@ public:
       }, std::forward<Configurations>(configurations)...);
 
       // Compute dispersion
-      Rcpp::NumericVector dispersion(Rcpp::no_init(number_types));
+      std::vector<double> dispersion(number_types);
+      using size_t = typename decltype(dispersion)::size_type;
       const auto point_type(get_type(point));
-      for(R_xlen_t i(0); i < number_types; ++i) {
+      for(size_t i(0); i < static_cast<size_t>(number_types); ++i) {
         double d(0);
         for(const auto sq: square_distances[i]) {
           d += Varphi::apply(sq, i, point_type);
