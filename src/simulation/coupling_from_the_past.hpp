@@ -13,24 +13,27 @@
 namespace ppjsdm {
 namespace detail {
 
-// TODO: Severe problem here: this is the repulsive version of the CFTP algorithm!
+// This is an efficient implementation of the generic CFTP algorithm from Moller and Waagepetersen's book, cf. p. 230 therein.
+// The point process is neither assumed to be attractive nor repulsive, see also ``Perfect simulation of spatial
+// point processes using dominated coupling from the past with application to a multiscale area-interaction point process''
+// by Ambler and Silverman for a similar (but less general) technique.
 template<typename Chain, typename Model, typename Window>
 inline auto update_LU_and_check_coalescence(Chain& chain, const Model& model, const Window& window) {
   auto points_not_in_L(chain.get_last_configuration()); // U starts with the end value of Z
   using Configuration = decltype(points_not_in_L);
   Configuration L{}; // L is an empty point process
-  chain.iterate_forward_in_time([&points_not_in_L, &L, &model, &window](auto&& point, auto mark) {
+  chain.iterate_forward_in_time([&points_not_in_L, &L, &model, &window](auto&& point, auto uniform_mark) {
     // TODO: Might be able to reorganise, take log() and get speed-up.
-    const auto normalized_papangelou_L(model.compute_normalised_papangelou(window, point, L));
-    if(normalized_papangelou_L < 0 || normalized_papangelou_L > 1) {
+    const auto alpha_max(model.compute_log_alpha_max(window, point, L, points_not_in_L));
+    if(alpha_max > 1) {
       Rcpp::stop("Did not correctly normalize the Papangelou intensity");
     }
-    if(normalized_papangelou_L > mark) {
-      const auto normalized_papangelou_U(model.compute_normalised_papangelou(window, point, L, points_not_in_L));
-      if(normalized_papangelou_U < 0 || normalized_papangelou_U > 1) {
+    if(alpha_max > uniform_mark) {
+      const auto alpha_min(model.compute_alpha_min(window, point, L, points_not_in_L));
+      if(alpha_min > 1) {
         Rcpp::stop("Did not correctly normalize the Papangelou intensity");
       }
-      add_point(normalized_papangelou_U > mark ? L : points_not_in_L, std::forward<decltype(point)>(point));
+      add_point(alpha_min > uniform_mark ? L : points_not_in_L, std::forward<decltype(point)>(point));
     }
   }, [&points_not_in_L, &L](auto&& point) {
     if(!remove_point(points_not_in_L, point)) {
@@ -46,7 +49,6 @@ template<typename Configuration, typename Model, typename Window>
 inline auto simulate_coupling_from_the_past(const Model& model, const Window& window, R_xlen_t number_types) {
   const auto normalised_dominating_intensity(model.get_normalised_dominating_intensity(window));
   const auto intensity_upper_bound(normalised_dominating_intensity.get_upper_bound());
-  // TODO: Catch std::bad_alloc exceptions that happen when the upper bound to the Papangelou intensity is too large.
   Backwards_Markov_chain<Configuration> Z(simulate_inhomogeneous_ppp<Configuration>(window, normalised_dominating_intensity, intensity_upper_bound, number_types));
 
   const auto integral_of_dominating_intensity(normalised_dominating_intensity.get_integral());
