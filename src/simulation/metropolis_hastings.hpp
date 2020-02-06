@@ -6,7 +6,6 @@
 #include <Rmath.h>
 
 #include "../configuration/configuration_manipulation.hpp"
-#include "../utility/size_t.hpp"
 
 namespace ppjsdm {
 

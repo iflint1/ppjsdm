@@ -13,7 +13,6 @@
 
 #include "utility/construct_if_missing.hpp"
 #include "utility/im_wrapper.hpp"
-#include "utility/size_t.hpp"
 #include "utility/window_utilities.hpp"
 
 #include <algorithm> // std::remove_if
@@ -73,9 +72,10 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 
   // Set names.
   Rcpp::CharacterVector alpha_names(Rcpp::no_init(alpha_input.ncol()));
+  size_t index(0);
   for(size_t j(0); j < number_types; ++j) {
     for(size_t k(j); k < number_types; ++k) {
-      alpha_names[j * number_types + k - j] = std::string("alpha_") + std::to_string(j + 1) + std::string("_") + std::to_string(k + 1);
+      alpha_names[index++] = std::string("alpha_") + std::to_string(j + 1) + std::string("_") + std::to_string(k + 1);
     }
   }
   Rcpp::colnames(alpha_input) = alpha_names;
@@ -119,6 +119,8 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     const size_t type_index(ppjsdm::get_type(point));
 
     rho_offset(i, 0) = -std::log(static_cast<double>(rho_times_volume[type_index]) / volume);
+    // TODO: index or formula here and in other vectors?
+    size_t index(0);
     for(size_t j(0); j < number_types; ++j) {
       // fill log_lambda
       if(type_index == j) {
@@ -145,14 +147,14 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
       // fill alpha
       if(j == type_index) {
         for(size_t k(j); k < number_types; ++k) {
-          alpha_input(i, j * number_types + k - j) = dispersion[k];
+          alpha_input(i, index++) = dispersion[k];
         }
       } else {
         for(size_t k(j); k < number_types; ++k) {
           if(k == type_index) {
-            alpha_input(i, j * number_types + k - j) = dispersion[j];
+            alpha_input(i, index++) = dispersion[j];
           } else {
-            alpha_input(i, j * number_types + k - j) = 0;
+            alpha_input(i, index++) = 0;
           }
         }
       }

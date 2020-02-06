@@ -3,7 +3,7 @@
 
 #include <Rinternals.h>
 
-#include "../utility/size_t.hpp"
+#include "../configuration/configuration_manipulation.hpp"
 
 namespace ppjsdm {
 

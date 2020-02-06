@@ -4,8 +4,8 @@
 #include <Rcpp.h>
 #include <Rinternals.h>
 
+#include "../configuration/configuration_manipulation.hpp"
 #include "../point/point_manipulation.hpp"
-#include "../utility/size_t.hpp"
 
 #include <algorithm> // std::max, std::min
 #include <cmath> // std::round

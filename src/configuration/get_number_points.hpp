@@ -3,7 +3,6 @@
 
 #include "../configuration/configuration_manipulation.hpp"
 #include "../point/point_manipulation.hpp"
-#include "../utility/size_t.hpp"
 
 #include <vector> // std::vector
 

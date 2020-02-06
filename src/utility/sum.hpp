@@ -1,7 +1,7 @@
 #ifndef INCLUDE_PPJSDM_SUM
 #define INCLUDE_PPJSDM_SUM
 
-#include "../utility/size_t.hpp"
+#include "../configuration/configuration_manipulation.hpp"
 
 namespace ppjsdm {
 

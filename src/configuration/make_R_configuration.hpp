@@ -3,8 +3,8 @@
 
 #include <Rcpp.h>
 
+#include "../configuration/configuration_manipulation.hpp"
 #include "../configuration/configuration_wrapper.hpp"
-#include "../utility/size_t.hpp"
 
 namespace ppjsdm {
 

@@ -6,7 +6,7 @@
 
 #include <algorithm> // std::find
 #include <iterator> // std::iterator_traits, std::next
-#include <utility> // std::forward
+#include <utility> // std::forward, std::declval
 
 namespace ppjsdm {
 namespace traits {
@@ -55,13 +55,16 @@ inline void emplace_point(Configuration& configuration, Args... args) {
 }
 
 template<typename Configuration>
-inline auto remove_point_by_index(Configuration& configuration, R_xlen_t index) {
-  return traits::configuration_manipulation<Configuration>::remove_point_by_index(configuration, index);
-}
-
-template<typename Configuration>
 inline auto size(const Configuration& configuration) {
   return traits::configuration_manipulation<Configuration>::size(configuration);
+}
+
+template<typename T>
+using size_t = decltype(size(std::declval<T>()));
+
+template<typename Configuration>
+inline auto remove_point_by_index(Configuration& configuration, size_t<Configuration> index) {
+  return traits::configuration_manipulation<Configuration>::remove_point_by_index(configuration, index);
 }
 
 template<typename Configuration>
@@ -76,17 +79,16 @@ inline bool empty(const Configuration& configuration) {
   return traits::configuration_manipulation<Configuration>::empty(configuration);
 }
 
-// TODO: Does not work well with configuration wrapper class.
 template <typename Configuration, typename Point>
 inline bool remove_point(Configuration& configuration, const Point& point) {
-  auto to_be_erased(std::find(configuration.begin(), configuration.end(), point));
-  if(to_be_erased != configuration.end()) {
-    configuration.erase(to_be_erased);
-    return true;
+  for(size_t<Configuration> i(0); i < size(configuration); ++i) {
+    if(configuration[i] == point) {
+      remove_point_by_index(configuration, i);
+      return true;
+    }
   }
   return false;
 }
-
 
 } // namespace ppjsdm
 
