@@ -14,7 +14,8 @@ namespace ppjsdm {
 namespace detail {
 
 // This is an efficient implementation of the generic CFTP algorithm from Moller and Waagepetersen's book, cf. p. 230 therein.
-// The point process is neither assumed to be attractive nor repulsive, see also ``Perfect simulation of spatial
+// The point process is neither assumed to be attractive nor repulsive, see also p. 361 of ``A primer on perfect simulation
+// for spatial point processes'' by Berthelsen and Moller, and ``Perfect simulation of spatial
 // point processes using dominated coupling from the past with application to a multiscale area-interaction point process''
 // by Ambler and Silverman for a similar (but less general) technique.
 template<typename Chain, typename Model, typename Window>
@@ -24,7 +25,7 @@ inline auto update_LU_and_check_coalescence(Chain& chain, const Model& model, co
   Configuration L{}; // L is an empty point process
   chain.iterate_forward_in_time([&points_not_in_L, &L, &model, &window](auto&& point, auto uniform_mark) {
     // TODO: Might be able to reorganise, take log() and get speed-up.
-    const auto alpha_max(model.compute_log_alpha_max(window, point, L, points_not_in_L));
+    const auto alpha_max(model.compute_alpha_max(window, point, L, points_not_in_L));
     if(alpha_max > 1) {
       Rcpp::stop("Did not correctly normalize the Papangelou intensity");
     }
@@ -48,8 +49,7 @@ inline auto update_LU_and_check_coalescence(Chain& chain, const Model& model, co
 template<typename Configuration, typename Model, typename Window>
 inline auto simulate_coupling_from_the_past(const Model& model, const Window& window, R_xlen_t number_types) {
   const auto normalised_dominating_intensity(model.get_normalised_dominating_intensity(window));
-  const auto intensity_upper_bound(normalised_dominating_intensity.get_upper_bound());
-  Backwards_Markov_chain<Configuration> Z(simulate_inhomogeneous_ppp<Configuration>(window, normalised_dominating_intensity, intensity_upper_bound, number_types));
+  auto Z(make_backwards_markov_chain<Configuration>(normalised_dominating_intensity, number_types));
 
   const auto integral_of_dominating_intensity(normalised_dominating_intensity.get_integral());
   const auto T0(Z.extend_until_T0(integral_of_dominating_intensity, window, number_types));

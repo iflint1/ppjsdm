@@ -8,7 +8,7 @@
 #include "../utility/im_wrapper.hpp"
 
 #include <cmath> // std::exp, std::log, std::fabs, std::isinf
-#include <type_traits> // std::remove_const, std::remove_reference, std::is_same, std::enable_if
+#include <type_traits> // std::remove_cv, std::remove_reference, std::is_same, std::enable_if
 #include <utility> // std::forward, std::move
 #include <vector> // std::vector
 
@@ -74,9 +74,9 @@ inline auto compute_positive_alpha_dot_dispersion(const Point& point,
 
 template<typename Point, typename Alpha, typename Dispersion, typename... Configurations>
 inline auto compute_negative_alpha_dot_dispersion(const Point& point,
-                                                      const Alpha& alpha,
-                                                      const Dispersion& dispersion,
-                                                      Configurations&&... configurations) {
+                                                  const Alpha& alpha,
+                                                  const Dispersion& dispersion,
+                                                  Configurations&&... configurations) {
   const auto d(dispersion.compute(point, alpha.nrow(), std::forward<Configurations>(configurations)...));
   double sum(0);
   for(R_xlen_t i(0); i < alpha.ncol(); ++i) {
@@ -136,6 +136,66 @@ inline auto compute_alpha_dot_dispersion_maximum(const Alpha& alpha, double disp
 
 } // namespace detail
 
+template<typename Lambda, typename Beta, typename Window>
+class Normalised_dominating_intensity {
+public:
+  template<typename Alpha, typename Dispersion>
+  Normalised_dominating_intensity(const Lambda& lambda,
+                                  const Alpha& alpha,
+                                  const Beta& beta,
+                                  const Im_list_wrapper& covariates,
+                                  const Dispersion& dispersion,
+                                  const Window& window):
+    lambda_(lambda),
+    beta_(beta),
+    covariates_(covariates),
+    window_(window),
+    beta_dot_covariates_maximum_(detail::compute_beta_dot_covariates_maximum(beta, covariates)),
+    alpha_dot_dispersion_maximum_(detail::compute_alpha_dot_dispersion_maximum(alpha, dispersion.get_maximum(window))) {}
+
+  template<typename Point>
+  auto operator()(const Point& point) const {
+    double beta_covariates_maximum(beta_dot_covariates_maximum_[get_type(point)]);
+    double beta_covariates(detail::compute_beta_dot_covariates(point, beta_, covariates_));
+    return std::exp(beta_covariates - beta_covariates_maximum);
+  }
+
+  // TODO: This should somehow be restricted to window.
+  auto get_integral() const {
+    double integral(0);
+    const auto number_types(beta_.nrow());
+    for(R_xlen_t i(0); i < number_types; ++i) {
+      integral += covariates_.get_integral_of_dot([](double x) { return std::exp(x); }, beta_(i, Rcpp::_));
+    }
+    return integral / static_cast<double>(number_types);
+  }
+
+  auto get_upper_bound() const {
+    const auto number_types(lambda_.size());
+    std::vector<double> upper_bound(number_types);
+    using size_t = decltype(lambda_.size());
+    for(size_t i(0); i < number_types; ++i) {
+      const auto value(lambda_[i] * std::exp(alpha_dot_dispersion_maximum_[i] + beta_dot_covariates_maximum_[i]));
+      if(std::isinf(value)) {
+        Rcpp::stop("Infinite value obtained as the bound to the Papangelou intensity.");
+      }
+      upper_bound[i] = value;
+    }
+    return upper_bound;
+  }
+
+  const auto& get_window() const {
+    return window_;
+  }
+private:
+  Lambda lambda_;
+  Beta beta_;
+  Im_list_wrapper covariates_;
+  Window window_;
+  std::vector<double> beta_dot_covariates_maximum_;
+  std::vector<double> alpha_dot_dispersion_maximum_;
+};
+
 template<typename Dispersion, typename Lambda, typename Alpha, typename Beta>
 class Exponential_family_model {
 public:
@@ -151,59 +211,9 @@ public:
     beta_(beta),
     covariates_(covariates) {}
 
-  class Normalised_dominating_intensity {
-  public:
-    template<typename V>
-    Normalised_dominating_intensity(const Lambda& lambda,
-                                    const Beta& beta,
-                                    const Im_list_wrapper& covariates,
-                                    V&& alpha_dot_dispersion_maximum):
-    lambda_(lambda),
-    beta_(beta),
-    covariates_(covariates),
-    beta_dot_covariates_maximum_(detail::compute_beta_dot_covariates_maximum(beta, covariates)),
-    alpha_dot_dispersion_maximum_(std::forward<V>(alpha_dot_dispersion_maximum)) {}
-
-    template<typename Point>
-    auto operator()(const Point& point) const {
-      double beta_covariates_maximum(beta_dot_covariates_maximum_[get_type(point)]);
-      double beta_covariates(detail::compute_beta_dot_covariates(point, beta_, covariates_));
-      return std::exp(beta_covariates - beta_covariates_maximum);
-    }
-
-    auto get_integral() const {
-      double integral(0);
-      const auto number_types(beta_.nrow());
-      for(R_xlen_t i(0); i < number_types; ++i) {
-        integral += covariates_.get_integral_of_dot([](double x) { return std::exp(x); }, beta_(i, Rcpp::_));
-      }
-      return integral / static_cast<double>(number_types);
-    }
-
-    auto get_upper_bound() const {
-      const auto number_types(lambda_.size());
-      std::vector<double> upper_bound(number_types);
-      using size_t = decltype(lambda_.size());
-      for(size_t i(0); i < number_types; ++i) {
-        const auto value(lambda_[i] * std::exp(alpha_dot_dispersion_maximum_[i] + beta_dot_covariates_maximum_[i]));
-        if(std::isinf(value)) {
-          Rcpp::stop("Infinite value obtained as the bound to the Papangelou intensity.");
-        }
-        upper_bound[i] = value;
-      }
-      return upper_bound;
-    }
-  private:
-    Lambda lambda_;
-    Beta beta_;
-    Im_list_wrapper covariates_;
-    std::vector<double> beta_dot_covariates_maximum_;
-    std::vector<double> alpha_dot_dispersion_maximum_;
-  };
-
   template<typename Window>
   auto get_normalised_dominating_intensity(const Window& window) const {
-    return Normalised_dominating_intensity(lambda_, beta_, covariates_, detail::compute_alpha_dot_dispersion_maximum(alpha_, dispersion_.get_maximum(window)));
+    return Normalised_dominating_intensity<Lambda, Alpha, Window>(lambda_, alpha_, beta_, covariates_, dispersion_, window);
   }
 
   template<typename Point, typename... Configurations>

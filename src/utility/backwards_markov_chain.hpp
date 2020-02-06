@@ -5,6 +5,7 @@
 
 #include "../configuration/configuration_manipulation.hpp"
 #include "../point/point_manipulation.hpp"
+#include "../simulation/inhomogeneous_ppp.hpp"
 
 #include <tuple> // std::tuple
 #include <vector> // std::vector
@@ -16,15 +17,12 @@ constexpr double do_not_need_mark = 2.0;
 
 } // namespace detail
 
-template <typename Configuration>
+template <typename Configuration, typename Intensity>
 class Backwards_Markov_chain {
 public:
-  explicit Backwards_Markov_chain(Configuration&& pp) : last_configuration_(std::move(pp)) {}
-  explicit Backwards_Markov_chain(const Configuration& pp) : last_configuration_(pp) {}
-
-  auto size() const {
-    return (chain_.size() + 1);
-  }
+  explicit Backwards_Markov_chain(const Intensity& intensity, R_xlen_t number_types) :
+    intensity_(intensity),
+    last_configuration_(simulate_inhomogeneous_ppp<Configuration>(intensity, number_types)) {}
 
   template<typename Window>
   auto extend_until_T0(double beta, const Window& window, R_xlen_t number_types) {
@@ -97,6 +95,7 @@ public:
   }
 
 private:
+  Intensity intensity_;
   Configuration last_configuration_;
   std::vector<std::tuple<double, Marked_point>> chain_;
 
@@ -113,6 +112,11 @@ private:
     chain_.emplace_back(uniform_mark, std::move(point));
   }
 };
+
+template<typename Configuration, typename Intensity, typename... Args>
+inline auto make_backwards_markov_chain(Intensity&& intensity, Args&&... args) {
+  return Backwards_Markov_chain<Configuration, std::remove_cv_t<std::remove_reference_t<decltype(intensity)>>>(std::forward<Intensity>(intensity), std::forward<Args>(args)...);
+}
 
 }  // namespace ppjsdm
 

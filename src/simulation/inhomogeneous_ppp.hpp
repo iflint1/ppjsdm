@@ -10,8 +10,10 @@
 
 namespace ppjsdm {
 
-template<typename Configuration, typename Window, typename Lambda, typename UpperBound>
-inline auto simulate_inhomogeneous_ppp(const Window& window, const Lambda& normalized_lambda, const UpperBound& upper_bound, R_xlen_t number_types) {
+template<typename Configuration, typename Intensity>
+inline auto simulate_inhomogeneous_ppp(const Intensity& intensity, R_xlen_t number_types) {
+  const auto& window(intensity.get_window());
+  const auto upper_bound(intensity.get_upper_bound());
   const auto volume(window.volume());
 
   Configuration configuration{};
@@ -20,7 +22,7 @@ inline auto simulate_inhomogeneous_ppp(const Window& window, const Lambda& norma
     const auto max_points_to_add(R::rpois(volume * static_cast<double>(upper_bound[i])));
     for(R_xlen_t j(0); j < max_points_to_add; ++j) {
       const auto sample(window.sample(i));
-      const auto normalized_lambda_sample(normalized_lambda(sample));
+      const auto normalized_lambda_sample(intensity(sample));
       if(normalized_lambda_sample < 0 || normalized_lambda_sample > 1) {
         Rcpp::stop("Did not correctly normalise lambda");
       }
