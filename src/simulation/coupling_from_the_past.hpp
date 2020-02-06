@@ -1,6 +1,7 @@
 #ifndef INCLUDE_PPJSDM_COUPLING_FROM_THE_PAST
 #define INCLUDE_PPJSDM_COUPLING_FROM_THE_PAST
 
+#include <Rcpp.h>
 #include <Rinternals.h>
 
 #include "../configuration/configuration_manipulation.hpp"
@@ -12,9 +13,12 @@
 namespace ppjsdm {
 namespace detail {
 
-template<typename Configuration, typename Chain, typename Model, typename Window>
-std::pair<bool, Configuration> update_LU_and_check_coalescence(Chain& chain, const Model& model, const Window& window) {
-  Configuration points_not_in_L(chain.get_last_configuration()), L;  // U starts with the end value of Z, L is an empty point process
+// TODO: Severe problem here: this is the repulsive version of the CFTP algorithm!
+template<typename Chain, typename Model, typename Window>
+inline auto update_LU_and_check_coalescence(Chain& chain, const Model& model, const Window& window) {
+  auto points_not_in_L(chain.get_last_configuration()); // U starts with the end value of Z
+  using Configuration = decltype(points_not_in_L);
+  Configuration L{}; // L is an empty point process
   chain.iterate_forward_in_time([&points_not_in_L, &L, &model, &window](auto&& point, auto mark) {
     // TODO: Might be able to reorganise, take log() and get speed-up.
     const auto normalized_papangelou_L(model.compute_normalised_papangelou(window, point, L));
@@ -26,11 +30,7 @@ std::pair<bool, Configuration> update_LU_and_check_coalescence(Chain& chain, con
       if(normalized_papangelou_U < 0 || normalized_papangelou_U > 1) {
         Rcpp::stop("Did not correctly normalize the Papangelou intensity");
       }
-      if(normalized_papangelou_U > mark) {
-        add_point(L, std::forward<decltype(point)>(point));
-      } else {
-        add_point(points_not_in_L, std::forward<decltype(point)>(point));
-      }
+      add_point(normalized_papangelou_U > mark ? L : points_not_in_L, std::forward<decltype(point)>(point));
     }
   }, [&points_not_in_L, &L](auto&& point) {
     if(!remove_point(points_not_in_L, point)) {
@@ -52,7 +52,7 @@ inline auto simulate_coupling_from_the_past(const Model& model, const Window& wi
   const auto integral_of_dominating_intensity(normalised_dominating_intensity.get_integral());
   const auto T0(Z.extend_until_T0(integral_of_dominating_intensity, window, number_types));
   while(true) {
-    const auto coalescence(detail::update_LU_and_check_coalescence<Configuration>(Z, model, window));
+    const auto coalescence(detail::update_LU_and_check_coalescence(Z, model, window));
     if(coalescence.first) {
       return coalescence.second;
     }

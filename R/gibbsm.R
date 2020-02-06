@@ -13,7 +13,7 @@
 #' @importFrom stats as.formula binomial coefficients glm.fit lm
 #' @importFrom spatstat as.im as.owin
 #' @export
-gibbsm <- function(configuration_list, window = Rectangle_window(), covariates = list(), traits = list(), model = "exponential", radius = NULL, saturation = 2, print = TRUE, use_glmnet = TRUE) {
+gibbsm <- function(configuration_list, window = Rectangle_window(), covariates = list(), traits = list(), model = "square_bump", radius = NULL, saturation = 2, print = TRUE, use_glmnet = TRUE) {
   # Make covariates im objects with proper names.
   covariates <- coerce_to_named_im_objects(covariates, "unnamed_covariate", window)
 
