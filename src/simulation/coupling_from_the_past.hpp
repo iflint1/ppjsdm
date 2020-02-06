@@ -48,18 +48,16 @@ inline auto update_LU_and_check_coalescence(Chain& chain, const Model& model, co
 
 template<typename Configuration, typename Model, typename Window>
 inline auto simulate_coupling_from_the_past(const Model& model, const Window& window, R_xlen_t number_types) {
-  const auto normalised_dominating_intensity(model.get_normalised_dominating_intensity(window));
-  auto Z(make_backwards_markov_chain<Configuration>(normalised_dominating_intensity, number_types));
+  auto Z(make_backwards_markov_chain<Configuration>(model.get_normalised_dominating_intensity(window), number_types));
 
-  const auto integral_of_dominating_intensity(normalised_dominating_intensity.get_integral());
-  const auto T0(Z.extend_until_T0(integral_of_dominating_intensity, window, number_types));
+  const auto T0(Z.extend_until_T0());
   while(true) {
     const auto coalescence(detail::update_LU_and_check_coalescence(Z, model, window));
     if(coalescence.first) {
       return coalescence.second;
     }
     R_CheckUserInterrupt();
-    Z.extend_backwards(T0, integral_of_dominating_intensity, window, number_types);
+    Z.extend_backwards(T0);
   }
 }
 

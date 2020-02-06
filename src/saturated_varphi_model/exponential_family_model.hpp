@@ -170,6 +170,17 @@ public:
     return integral / static_cast<double>(number_types);
   }
 
+  auto sample_point(R_xlen_t type) const {
+    while(true) {
+      const auto sample(window_.sample(type));
+      double beta_covariates_maximum(beta_dot_covariates_maximum_[get_type(sample)]);
+      double beta_covariates(detail::compute_beta_dot_covariates(sample, beta_, covariates_));
+      if(exp_rand() >= beta_covariates_maximum - beta_covariates) {
+        return sample;
+      }
+    }
+  }
+
   auto get_upper_bound() const {
     const auto number_types(lambda_.size());
     std::vector<double> upper_bound(number_types);
