@@ -22,12 +22,11 @@ inline auto simulate_inhomogeneous_ppp(const Intensity& intensity, R_xlen_t numb
     const auto max_points_to_add(R::rpois(volume * static_cast<double>(upper_bound[i])));
     for(R_xlen_t j(0); j < max_points_to_add; ++j) {
       const auto sample(window.sample(i));
-      const auto normalized_lambda_sample(intensity(sample));
-      if(normalized_lambda_sample < 0 || normalized_lambda_sample > 1) {
+      const auto log_normalized_lambda_sample(intensity.get_log_normalized_intensity(sample));
+      if(log_normalized_lambda_sample > 0) {
         Rcpp::stop("Did not correctly normalise lambda");
       }
-      // TODO: As usual, might be able to take log on both sides...
-      if(unif_rand() < normalized_lambda_sample) {
+      if(exp_rand() + log_normalized_lambda_sample > 0) {
         add_point(configuration, std::move(sample));
       }
     }

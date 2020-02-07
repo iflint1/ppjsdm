@@ -17,7 +17,7 @@ namespace detail {
 // The point process is neither assumed to be attractive nor repulsive, see also p. 361 of ``A primer on perfect simulation
 // for spatial point processes'' by Berthelsen and Moller, and ``Perfect simulation of spatial
 // point processes using dominated coupling from the past with application to a multiscale area-interaction point process''
-// by Ambler and Silverman for a similar (but less general) technique.
+// by Ambler and Silverman for a similar (but less general) idea.
 template<typename Chain, typename Model, typename Window>
 inline auto update_LU_and_check_coalescence(Chain& chain, const Model& model, const Window& window) {
   auto points_not_in_L(chain.get_last_configuration()); // U starts with the end value of Z

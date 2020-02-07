@@ -154,10 +154,16 @@ public:
     alpha_dot_dispersion_maximum_(detail::compute_alpha_dot_dispersion_maximum(alpha, dispersion.get_maximum(window))) {}
 
   template<typename Point>
-  auto operator()(const Point& point) const {
+  auto get_log_normalized_intensity(const Point& point) const {
     double beta_covariates_maximum(beta_dot_covariates_maximum_[get_type(point)]);
     double beta_covariates(detail::compute_beta_dot_covariates(point, beta_, covariates_));
-    return std::exp(beta_covariates - beta_covariates_maximum);
+    return beta_covariates - beta_covariates_maximum;
+  }
+
+  // TODO: Make this a free function? Same for another one below.
+  template<typename Point>
+  auto get_normalized_intensity(const Point& point) const {
+    return std::exp(get_log_normalized_intensity(point));
   }
 
   // TODO: This should somehow be restricted to window.
@@ -173,9 +179,7 @@ public:
   auto sample_point(R_xlen_t type) const {
     while(true) {
       const auto sample(window_.sample(type));
-      double beta_covariates_maximum(beta_dot_covariates_maximum_[get_type(sample)]);
-      double beta_covariates(detail::compute_beta_dot_covariates(sample, beta_, covariates_));
-      if(exp_rand() >= beta_covariates_maximum - beta_covariates) {
+      if(exp_rand() + get_log_normalized_intensity(sample) >= 0) {
         return sample;
       }
     }
