@@ -27,6 +27,10 @@ public:
     intensity_integral_(intensity.get_integral()),
     chain_{} {}
 
+  auto size() const {
+    return chain_.size();
+  }
+
   auto extend_until_T0() {
     using size_t = decltype(ppjsdm::size(last_configuration_));
     const auto initial_last_size(ppjsdm::size(last_configuration_));
@@ -38,8 +42,8 @@ public:
       // Do the computations by blocks of size `initial_last_size`, reserving space each time
       chain_.reserve(initial_last_size);
       for(size_t i(0); i < initial_last_size; ++i) {
-        const auto beta_plus_sizes(intensity_integral_ + static_cast<double>(ppjsdm::size(points_not_in_last) + ppjsdm::size(last_configuration_)));
-        const auto v(unif_rand() * beta_plus_sizes - intensity_integral_); // Uniformly distributed on [-beta, s_1 + s_2].
+        const double sum_sizes(ppjsdm::size(points_not_in_last) + ppjsdm::size(last_configuration_));
+        const auto v(unif_rand() * (intensity_integral_ + sum_sizes) - intensity_integral_); // Uniformly distributed on [-beta, s_1 + s_2].
         if(v < 0.0) { // Happens with probability beta / (beta + s_1 + s_2).
           insert_uniform_point_in_configuration_and_update_chain(points_not_in_last);
         } else if(v < static_cast<double>(ppjsdm::size(last_configuration_))) { // Happens with probability s_2 / (s_1 + s_2)
@@ -60,8 +64,7 @@ public:
   void extend_backwards(IntegerType number_extensions) {
     chain_.reserve(number_extensions);
     for(IntegerType i(0); i < number_extensions; ++i) {
-      const auto beta_plus_size(intensity_integral_ + static_cast<double>(ppjsdm::size(last_configuration_)));
-      if(unif_rand() * beta_plus_size < intensity_integral_) {
+      if(unif_rand() * intensity_integral_ + static_cast<double>(ppjsdm::size(last_configuration_)) < intensity_integral_) {
         insert_uniform_point_in_configuration_and_update_chain(last_configuration_);
       } else {
         delete_random_point_in_configuration_and_update_chain(last_configuration_);

@@ -24,7 +24,6 @@ inline auto update_LU_and_check_coalescence(Chain& chain, const Model& model, co
   using Configuration = decltype(points_not_in_L);
   Configuration L{}; // L is an empty point process
   chain.iterate_forward_in_time([&points_not_in_L, &L, &model, &window](auto&& point, auto exp_mark) {
-    // TODO: Might be able to reorganise, take log() and get speed-up.
     const auto log_alpha_max(model.compute_log_alpha_max(window, point, L, points_not_in_L));
     if(log_alpha_max > 0) {
       Rcpp::stop("Did not correctly normalize the Papangelou intensity");
@@ -50,14 +49,14 @@ template<typename Configuration, typename Model, typename Window>
 inline auto simulate_coupling_from_the_past(const Model& model, const Window& window, R_xlen_t number_types) {
   auto Z(make_backwards_markov_chain<Configuration>(model.get_normalised_dominating_intensity(window), number_types));
 
-  const auto T0(Z.extend_until_T0());
+  Z.extend_until_T0();
   while(true) {
     const auto coalescence(detail::update_LU_and_check_coalescence(Z, model, window));
     if(coalescence.first) {
       return coalescence.second;
     }
     R_CheckUserInterrupt();
-    Z.extend_backwards(T0);
+    Z.extend_backwards(Z.size());
   }
 }
 
