@@ -245,7 +245,7 @@ The package also works with multiple species.
 nspecies <- 2
 ncovariates <- 0
 lambda <- c(30, 30)
-alpha <- cbind(c(-1, 0.5), c(0.5, -0.5))
+alpha <- cbind(c(-1, .7), c(.7, -0.5))
 beta <- matrix(0, nspecies, ncovariates)
 covariates <- list()
 model <- "Geyer"

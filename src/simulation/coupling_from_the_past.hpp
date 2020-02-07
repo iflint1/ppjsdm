@@ -23,18 +23,18 @@ inline auto update_LU_and_check_coalescence(Chain& chain, const Model& model, co
   auto points_not_in_L(chain.get_last_configuration()); // U starts with the end value of Z
   using Configuration = decltype(points_not_in_L);
   Configuration L{}; // L is an empty point process
-  chain.iterate_forward_in_time([&points_not_in_L, &L, &model, &window](auto&& point, auto uniform_mark) {
+  chain.iterate_forward_in_time([&points_not_in_L, &L, &model, &window](auto&& point, auto exp_mark) {
     // TODO: Might be able to reorganise, take log() and get speed-up.
-    const auto alpha_max(model.compute_alpha_max(window, point, L, points_not_in_L));
-    if(alpha_max > 1) {
+    const auto log_alpha_max(model.compute_log_alpha_max(window, point, L, points_not_in_L));
+    if(log_alpha_max > 0) {
       Rcpp::stop("Did not correctly normalize the Papangelou intensity");
     }
-    if(alpha_max > uniform_mark) {
-      const auto alpha_min(model.compute_alpha_min(window, point, L, points_not_in_L));
-      if(alpha_min > 1) {
+    if(log_alpha_max + exp_mark > 0) {
+      const auto log_alpha_min(model.compute_log_alpha_min(window, point, L, points_not_in_L));
+      if(log_alpha_min > 0) {
         Rcpp::stop("Did not correctly normalize the Papangelou intensity");
       }
-      add_point(alpha_min > uniform_mark ? L : points_not_in_L, std::forward<decltype(point)>(point));
+      add_point(log_alpha_min + exp_mark > 0 ? L : points_not_in_L, std::forward<decltype(point)>(point));
     }
   }, [&points_not_in_L, &L](auto&& point) {
     if(!remove_point(points_not_in_L, point)) {

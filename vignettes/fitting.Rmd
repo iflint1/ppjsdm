@@ -27,7 +27,54 @@ remove(list = ls())
 set.seed(1)
 ```
 
-This vignette explains how to calibrate a model in which the distribution is driven by either covariates or traits.
+This vignette explains how to calibrate a model in different situations.
+
+# Fitting a sample without traits or covariates
+
+We use the Geyer model.
+
+```{r}
+model <- "Geyer"
+```
+
+We begin by defining the parameters of the point process.
+
+```{r}
+nspecies <- 3
+
+alpha <- matrix(cbind(c(-0.6, 0.2, -0.3), c(0.2, 0.1, -0.4), c(-0.3, -0.4, -0.1)), 
+                nspecies, 
+                nspecies)
+radii <- matrix(0.01, nspecies, nspecies)
+log_lambda <- rep(8, nspecies)
+
+configuration <- ppjsdm::rgibbs(lambda = exp(log_lambda), 
+                                alpha = alpha,
+                                model = model,
+                                radius = radii)
+```
+
+The dataset is plotted below.
+
+```{r}
+par(mar = c(5, 4, 4, 13) + 0.1)
+plot(configuration)
+```
+
+The function `gibbsm` fits a multivariate Gibbs point process to our dataset.
+
+```{r}
+fit <- ppjsdm::gibbsm(configuration,
+                      model = model,
+                      radius = radii)
+```
+
+For reference, the actual values used are given below.
+
+```{r}
+print(log_lambda)
+print(alpha)
+```
 
 # Fitting a sample driven by covariates
 
@@ -50,7 +97,7 @@ radii <- matrix(0.01, 2, 2)
 model <- "Geyer"
 ```
 
-We generate a multivariate Gibbs point process with intensity driven by those covariates
+We generate a multivariate Gibbs point process with intensity driven by those covariates.
 We begin by defining the parameters of the point process.
 
 ```{r}
