@@ -7,9 +7,8 @@
 
 namespace ppjsdm {
 
-// TODO: Remove window parameter.
-template<typename Configuration, typename Model, typename Window>
-inline auto simulate_coupling_from_the_past(const Model& model, const Window&, R_xlen_t number_types) {
+template<typename Configuration, typename Model>
+inline auto simulate_coupling_from_the_past(const Model& model, R_xlen_t number_types) {
   auto Z(make_backwards_markov_chain<Configuration>(model, number_types));
   Z.extend_until_T0();
   while(true) {

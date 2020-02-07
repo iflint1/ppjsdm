@@ -22,12 +22,13 @@ class Backwards_Markov_chain {
 public:
   explicit Backwards_Markov_chain(const Model& model, R_xlen_t number_types) :
     model_(model),
-    last_configuration_(simulate_inhomogeneous_ppp<Configuration>(model, number_types)),
+    last_configuration_(simulate_inhomogeneous_ppp<Configuration>(model.get_window(),
+                                                                  [&model](const auto& point) { return model.get_log_normalized_bounding_intensity(point); },
+                                                                  model.get_upper_bound(),
+                                                                  number_types)),
     number_types_(number_types),
     intensity_integral_(model.get_integral()),
-    chain_{} {
-
-    }
+    chain_{} {}
 
   auto size() const {
     return chain_.size();
@@ -123,7 +124,7 @@ private:
 
   void insert_uniform_point_in_configuration_and_update_chain(Configuration& configuration) {
     const auto random_type(Rcpp::sample(number_types_, 1, false, R_NilValue, false)[0]);
-    const auto point(model_.sample_point(random_type));
+    const auto point(model_.sample_point_from_bounding_intensity(random_type));
     chain_.emplace_back(detail::do_not_need_mark, point);
     add_point(configuration, std::move(point));
   }

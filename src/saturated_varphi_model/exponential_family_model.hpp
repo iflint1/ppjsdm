@@ -136,15 +136,15 @@ inline auto compute_alpha_dot_dispersion_maximum(const Alpha& alpha, double disp
 
 } // namespace detail
 
-template<typename Dispersion, typename Lambda, typename Alpha, typename Beta>
+template<typename Dispersion, typename Lambda>
 class Exponential_family_model {
 public:
   template<typename D, std::enable_if_t<std::is_same<Dispersion, std::remove_reference_t<D>>::value>* = nullptr>
   Exponential_family_model(const Lambda& lambda,
-                           const Alpha& alpha,
-                           const Beta& beta,
-                           Rcpp::List covariates,
-                           D&& dispersion):
+                           D&& dispersion,
+                           Rcpp::NumericMatrix alpha,
+                           Rcpp::NumericMatrix beta,
+                           Rcpp::List covariates):
     dispersion_(std::forward<D>(dispersion)),
     lambda_(lambda),
     alpha_(alpha),
@@ -161,39 +161,33 @@ public:
 protected:
   Dispersion dispersion_;
   Lambda lambda_;
-  Alpha alpha_;
-  Beta beta_;
+  Rcpp::NumericMatrix alpha_;
+  Rcpp::NumericMatrix beta_;
   Im_list_wrapper covariates_;
 };
 
-template<typename Window, typename Dispersion, typename Lambda, typename Alpha, typename Beta>
-class Exponential_family_model_over_window: public Exponential_family_model<Dispersion, Lambda, Alpha, Beta> {
+template<typename Window, typename Dispersion, typename Lambda>
+class Exponential_family_model_over_window: public Exponential_family_model<Dispersion, Lambda> {
 private:
-  using Model = Exponential_family_model<Dispersion, Lambda, Alpha, Beta>;
+  using Model = Exponential_family_model<Dispersion, Lambda>;
 public:
   template<typename D>
   Exponential_family_model_over_window(const Window& window,
                                        const Lambda& lambda,
-                                       const Alpha& alpha,
-                                       const Beta& beta,
-                                       Rcpp::List covariates,
-                                       D&& dispersion):
-    Model(lambda, alpha, beta, covariates, std::forward<D>(dispersion)),
+                                       D&& dispersion,
+                                       Rcpp::NumericMatrix alpha,
+                                       Rcpp::NumericMatrix beta,
+                                       Rcpp::List covariates):
+    Model(lambda, std::forward<D>(dispersion), alpha, beta, covariates),
     window_(window),
     beta_dot_covariates_maximum_(detail::compute_beta_dot_covariates_maximum(beta, Model::covariates_)),
     alpha_dot_dispersion_maximum_(detail::compute_alpha_dot_dispersion_maximum(alpha, dispersion.get_maximum(window))) {}
 
   template<typename Point>
-  auto get_log_normalized_intensity(const Point& point) const {
+  auto get_log_normalized_bounding_intensity(const Point& point) const {
     double beta_covariates_maximum(beta_dot_covariates_maximum_[get_type(point)]);
     double beta_covariates(detail::compute_beta_dot_covariates(point, Model::beta_, Model::covariates_));
     return beta_covariates - beta_covariates_maximum;
-  }
-
-  // TODO: Make this a free function? Same for another one below.
-  template<typename Point>
-  auto get_normalized_intensity(const Point& point) const {
-    return std::exp(get_log_normalized_intensity(point));
   }
 
   // TODO: This should somehow be restricted to window.
@@ -206,10 +200,10 @@ public:
     return integral / static_cast<double>(number_types);
   }
 
-  auto sample_point(R_xlen_t type) const {
+  auto sample_point_from_bounding_intensity(R_xlen_t type) const {
     while(true) {
       const auto sample(window_.sample(type));
-      if(exp_rand() + get_log_normalized_intensity(sample) >= 0) {
+      if(exp_rand() + get_log_normalized_bounding_intensity(sample) >= 0) {
         return sample;
       }
     }
@@ -273,47 +267,38 @@ public:
     return window_;
   }
 
-protected:
+private:
   Window window_;
   std::vector<double> beta_dot_covariates_maximum_;
   std::vector<double> alpha_dot_dispersion_maximum_;
 };
 
-template<typename F, typename Lambda>
+template<typename F, typename Lambda, typename... Args>
 inline auto call_on_model(Rcpp::CharacterVector model,
-                          Rcpp::NumericMatrix alpha,
                           const Lambda& lambda,
-                          Rcpp::NumericMatrix beta,
-                          Rcpp::List covariates,
                           Rcpp::NumericMatrix radius,
                           unsigned long long int saturation,
-                          const F& f) {
-  return call_on_dispersion_model(model, radius, saturation, [&alpha, &lambda, &f, &beta, covariates](auto&& varphi) {
-    using Model_type = Exponential_family_model<std::remove_cv_t<std::remove_reference_t<decltype(varphi)>>,
-                                                Lambda,
-                                                Rcpp::NumericMatrix,
-                                                Rcpp::NumericMatrix>;
-    return f(Model_type(lambda, alpha, beta, covariates, std::forward<decltype(varphi)>(varphi)));
+                          const F& f,
+                          Args... args) {
+  return call_on_dispersion_model(model, radius, saturation, [&lambda, &f, args...](auto&& varphi) {
+    using Model_type = Exponential_family_model<std::remove_cv_t<std::remove_reference_t<decltype(varphi)>>, Lambda>;
+    return f(Model_type(lambda, std::forward<decltype(varphi)>(varphi), args...));
   });
 }
 
-template<typename Window, typename F, typename Lambda>
+template<typename Window, typename F, typename Lambda, typename... Args>
 inline auto call_on_model(const Window& window,
                           Rcpp::CharacterVector model,
-                          Rcpp::NumericMatrix alpha,
                           const Lambda& lambda,
-                          Rcpp::NumericMatrix beta,
-                          Rcpp::List covariates,
                           Rcpp::NumericMatrix radius,
                           unsigned long long int saturation,
-                          const F& f) {
-  return call_on_dispersion_model(model, radius, saturation, [&window, &alpha, &lambda, &f, &beta, covariates](auto&& varphi) {
+                          const F& f,
+                          Args... args) {
+  return call_on_dispersion_model(model, radius, saturation, [&window, &lambda, &f, args...](auto&& varphi) {
     using Model_type = Exponential_family_model_over_window<Window,
                                                             std::remove_cv_t<std::remove_reference_t<decltype(varphi)>>,
-                                                            Lambda,
-                                                            Rcpp::NumericMatrix,
-                                                            Rcpp::NumericMatrix>;
-    return f(Model_type(window, lambda, alpha, beta, covariates, std::forward<decltype(varphi)>(varphi)));
+                                                            Lambda>;
+    return f(Model_type(window, lambda, std::forward<decltype(varphi)>(varphi), args...));
   });
 }
 

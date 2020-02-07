@@ -19,12 +19,12 @@
 
 #include <vector> // std::vector
 
-template<typename Model, typename Window>
-inline SEXP rgibbs_helper(const Model& model, const Window& window, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
+template<typename Model>
+inline SEXP rgibbs_helper(const Model& model, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t number_types) {
   Rcpp::List samples(nsim);
 
   for(R_xlen_t i(0); i < nsim; ++i) {
-    const auto sample(ppjsdm::simulate_coupling_from_the_past<std::vector<ppjsdm::Marked_point>>(model, window, point_types));
+    const auto sample(ppjsdm::simulate_coupling_from_the_past<std::vector<ppjsdm::Marked_point>>(model, number_types));
     samples[i] = ppjsdm::make_R_configuration(sample, types);
   }
 
@@ -32,11 +32,11 @@ inline SEXP rgibbs_helper(const Model& model, const Window& window, R_xlen_t nsi
 }
 
 template<typename Model, typename Window>
-inline SEXP rgibbs_helper(const Model& model, const Window& window, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types, R_xlen_t steps) {
+inline SEXP rgibbs_helper(const Model& model, const Window& window, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t number_types, R_xlen_t steps) {
   Rcpp::List samples(nsim);
 
   for(R_xlen_t i(0); i < nsim; ++i) {
-    const auto sample(ppjsdm::simulate_metropolis_hastings<std::vector<ppjsdm::Marked_point>>(model, window, steps, point_types));
+    const auto sample(ppjsdm::simulate_metropolis_hastings<std::vector<ppjsdm::Marked_point>>(model, window, steps, number_types));
     samples[i] = ppjsdm::make_R_configuration(sample, types);
   }
 
@@ -65,13 +65,15 @@ SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP beta
   return ppjsdm::call_on_wrapped_window(window, [alpha, lambda, beta, covariates, radius, saturation, steps, nsim, types, model, drop, number_types](const auto& w) {
     return ppjsdm::call_on_list_or_vector(lambda, [alpha, lambda, beta, covariates, radius, saturation, steps, nsim, types, model, drop, number_types, &w](const auto& l) {
       const auto r(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(radius, 0.1 * w.diameter(), number_types));
-      return ppjsdm::call_on_model(w, model, alpha, l, beta, covariates, r, saturation, [&w, steps, nsim, types, drop, number_types](const auto& model) {
-        if(steps == 0) {
-          return rgibbs_helper(model, w, nsim, types, drop, number_types);
-        } else {
+      if(steps == 0) {
+      return ppjsdm::call_on_model(w, model, l, r, saturation, [nsim, types, drop, number_types](const auto& model) {
+        return rgibbs_helper(model, nsim, types, drop, number_types);
+      }, alpha, beta, covariates);
+      } else {
+        return ppjsdm::call_on_model(model, l, r, saturation, [&w, steps, nsim, types, drop, number_types](const auto& model) {
           return rgibbs_helper(model, w, nsim, types, drop, number_types, steps);
-        }
-      });
+        }, alpha, beta, covariates);
+      }
     });
   });
 }
