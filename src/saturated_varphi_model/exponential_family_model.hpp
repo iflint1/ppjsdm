@@ -263,6 +263,19 @@ public:
     return alpha_dispersion - alpha_dispersion_maximum;
   }
 
+  double compute_log_alpha_min_lower_bound(R_xlen_t type) const {
+    double sum(0);
+    for(R_xlen_t j(0); j < Model::alpha_.ncol(); ++j) {
+      const auto a(Model::alpha_(type, j));
+      if(a > 0) {
+        sum -= a;
+      } else {
+        sum += a;
+      }
+    }
+    return sum * Model::dispersion_.get_maximum(window_);
+  }
+
   const auto& get_window() const {
     return window_;
   }

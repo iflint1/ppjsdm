@@ -52,7 +52,7 @@ public:
         } else if(v < static_cast<double>(ppjsdm::size(last_configuration_))) { // Happens with probability s_2 / (s_1 + s_2)
           delete_random_point_in_configuration_and_update_chain(last_configuration_);
           if(empty(last_configuration_)) {
-            last_configuration_ = points_not_in_last;
+            last_configuration_ = std::move(points_not_in_last);
             return chain_.size();
           }
         } else {
@@ -67,16 +67,12 @@ public:
   void extend_backwards(IntegerType number_extensions) {
     chain_.reserve(number_extensions);
     for(IntegerType i(0); i < number_extensions; ++i) {
-      if(unif_rand() * intensity_integral_ + static_cast<double>(ppjsdm::size(last_configuration_)) < intensity_integral_) {
+      if(unif_rand() * (intensity_integral_ + static_cast<double>(ppjsdm::size(last_configuration_))) < intensity_integral_) {
         insert_uniform_point_in_configuration_and_update_chain(last_configuration_);
       } else {
         delete_random_point_in_configuration_and_update_chain(last_configuration_);
       }
     }
-  }
-
-  auto get_last_configuration() const {
-    return last_configuration_;
   }
 
   // This is an efficient implementation of the generic CFTP algorithm from Moller and Waagepetersen's book, cf. p. 230 therein.
@@ -86,28 +82,27 @@ public:
   // by Ambler and Silverman for a similar (but less general) idea.
   inline auto compute_LU_and_check_coalescence() const {
     auto points_not_in_L(last_configuration_); // U starts with the end value of the chain.
-    Configuration L{}; // L is an empty point process.
+    Configuration L{}; // L is an empty configuration.
     const auto chain_size(chain_.size());
     if(chain_size != 0) {
       for(auto n(static_cast<long long int>(chain_size) - 1); n >= 0; --n) {
         const auto& current(chain_[static_cast<std::size_t>(n)]);
-        const auto& exp_mark(std::get<0>(current));
+        const auto exp_mark(std::get<0>(current));
         const auto& point(std::get<1>(current));
+        // TODO: Write extensive tests for the functions compute_log_alpha_min_lower_bound, compute_log_alpha_max, etc since I'm not making any checks here.
         if(exp_mark >= 0.0) { // birth
-          const auto log_alpha_max(model_.compute_log_alpha_max(point, L, points_not_in_L));
-          if(log_alpha_max > 0) {
-            Rcpp::stop("Did not correctly normalize the Papangelou intensity");
-          }
-          if(log_alpha_max + exp_mark > 0) {
-            const auto log_alpha_min(model_.compute_log_alpha_min(point, L, points_not_in_L));
-            if(log_alpha_min > 0) {
-              Rcpp::stop("Did not correctly normalize the Papangelou intensity");
+          if(model_.compute_log_alpha_min_lower_bound(get_type(point)) + exp_mark > 0) { // Avoid computations below in this case.
+            add_point(L, point);
+          } else {
+            const auto log_alpha_max(model_.compute_log_alpha_max(point, L, points_not_in_L));
+            if(log_alpha_max + exp_mark > 0) {
+              const auto log_alpha_min(model_.compute_log_alpha_min(point, L, points_not_in_L));
+              add_point(log_alpha_min + exp_mark > 0 ? L : points_not_in_L, point);
             }
-            add_point(log_alpha_min + exp_mark > 0 ? L : points_not_in_L, std::forward<decltype(point)>(point));
           }
         } else { // death
           if(!remove_point(points_not_in_L, point)) {
-            remove_point(L, std::forward<decltype(point)>(point));
+            remove_point(L, point);
           }
         }
       }
