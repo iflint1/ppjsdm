@@ -17,15 +17,17 @@ constexpr double do_not_need_mark = -1.0;
 
 } // namespace detail
 
-template <typename Configuration, typename Intensity>
+template <typename Configuration, typename Model>
 class Backwards_Markov_chain {
 public:
-  explicit Backwards_Markov_chain(const Intensity& intensity, R_xlen_t number_types) :
-    intensity_(intensity),
-    last_configuration_(simulate_inhomogeneous_ppp<Configuration>(intensity, number_types)),
+  explicit Backwards_Markov_chain(const Model& model, R_xlen_t number_types) :
+    model_(model),
+    last_configuration_(simulate_inhomogeneous_ppp<Configuration>(model, number_types)),
     number_types_(number_types),
-    intensity_integral_(intensity.get_integral()),
-    chain_{} {}
+    intensity_integral_(model.get_integral()),
+    chain_{} {
+
+    }
 
   auto size() const {
     return chain_.size();
@@ -76,25 +78,44 @@ public:
     return last_configuration_;
   }
 
-  template<typename F, typename G>
-  void iterate_forward_in_time(const F& birth, const G& death) {
+  // This is an efficient implementation of the generic CFTP algorithm from Moller and Waagepetersen's book, cf. p. 230 therein.
+  // The point process is neither assumed to be attractive nor repulsive, see also p. 361 of ``A primer on perfect simulation
+  // for spatial point processes'' by Berthelsen and Moller, and ``Perfect simulation of spatial
+  // point processes using dominated coupling from the past with application to a multiscale area-interaction point process''
+  // by Ambler and Silverman for a similar (but less general) idea.
+  inline auto compute_LU_and_check_coalescence() const {
+    auto points_not_in_L(last_configuration_); // U starts with the end value of the chain.
+    Configuration L{}; // L is an empty point process.
     const auto chain_size(chain_.size());
-    if(chain_size == 0) {
-      return;
-    } else {
+    if(chain_size != 0) {
       for(auto n(static_cast<long long int>(chain_size) - 1); n >= 0; --n) {
         const auto& current(chain_[static_cast<std::size_t>(n)]);
-        if(std::get<0>(current) >= 0.0) {
-          birth(std::get<1>(current), std::get<0>(current));
-        } else {
-          death(std::get<1>(current));
+        const auto& exp_mark(std::get<0>(current));
+        const auto& point(std::get<1>(current));
+        if(exp_mark >= 0.0) { // birth
+          const auto log_alpha_max(model_.compute_log_alpha_max(point, L, points_not_in_L));
+          if(log_alpha_max > 0) {
+            Rcpp::stop("Did not correctly normalize the Papangelou intensity");
+          }
+          if(log_alpha_max + exp_mark > 0) {
+            const auto log_alpha_min(model_.compute_log_alpha_min(point, L, points_not_in_L));
+            if(log_alpha_min > 0) {
+              Rcpp::stop("Did not correctly normalize the Papangelou intensity");
+            }
+            add_point(log_alpha_min + exp_mark > 0 ? L : points_not_in_L, std::forward<decltype(point)>(point));
+          }
+        } else { // death
+          if(!remove_point(points_not_in_L, point)) {
+            remove_point(L, std::forward<decltype(point)>(point));
+          }
         }
       }
     }
+    return std::pair<bool, Configuration>(empty(points_not_in_L), L);
   }
 
 private:
-  Intensity intensity_;
+  Model model_;
   Configuration last_configuration_;
   R_xlen_t number_types_;
   double intensity_integral_;
@@ -102,7 +123,7 @@ private:
 
   void insert_uniform_point_in_configuration_and_update_chain(Configuration& configuration) {
     const auto random_type(Rcpp::sample(number_types_, 1, false, R_NilValue, false)[0]);
-    const auto point(intensity_.sample_point(random_type));
+    const auto point(model_.sample_point(random_type));
     chain_.emplace_back(detail::do_not_need_mark, point);
     add_point(configuration, std::move(point));
   }
@@ -113,9 +134,9 @@ private:
   }
 };
 
-template<typename Configuration, typename Intensity, typename... Args>
-inline auto make_backwards_markov_chain(Intensity&& intensity, Args&&... args) {
-  return Backwards_Markov_chain<Configuration, std::remove_cv_t<std::remove_reference_t<decltype(intensity)>>>(std::forward<Intensity>(intensity), std::forward<Args>(args)...);
+template<typename Configuration, typename Model, typename... Args>
+inline auto make_backwards_markov_chain(Model&& model, Args&&... args) {
+  return Backwards_Markov_chain<Configuration, std::remove_cv_t<std::remove_reference_t<decltype(model)>>>(std::forward<Model>(model), std::forward<Args>(args)...);
 }
 
 }  // namespace ppjsdm

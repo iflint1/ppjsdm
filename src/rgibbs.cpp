@@ -65,7 +65,7 @@ SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP beta
   return ppjsdm::call_on_wrapped_window(window, [alpha, lambda, beta, covariates, radius, saturation, steps, nsim, types, model, drop, number_types](const auto& w) {
     return ppjsdm::call_on_list_or_vector(lambda, [alpha, lambda, beta, covariates, radius, saturation, steps, nsim, types, model, drop, number_types, &w](const auto& l) {
       const auto r(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(radius, 0.1 * w.diameter(), number_types));
-      return ppjsdm::call_on_model(model, alpha, l, beta, covariates, r, saturation, [&w, steps, nsim, types, drop, number_types](const auto& model) {
+      return ppjsdm::call_on_model(w, model, alpha, l, beta, covariates, r, saturation, [&w, steps, nsim, types, drop, number_types](const auto& model) {
         if(steps == 0) {
           return rgibbs_helper(model, w, nsim, types, drop, number_types);
         } else {

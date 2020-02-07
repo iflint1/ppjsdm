@@ -136,81 +136,6 @@ inline auto compute_alpha_dot_dispersion_maximum(const Alpha& alpha, double disp
 
 } // namespace detail
 
-template<typename Lambda, typename Beta, typename Window>
-class Normalised_dominating_intensity {
-public:
-  template<typename Alpha, typename Dispersion>
-  Normalised_dominating_intensity(const Lambda& lambda,
-                                  const Alpha& alpha,
-                                  const Beta& beta,
-                                  const Im_list_wrapper& covariates,
-                                  const Dispersion& dispersion,
-                                  const Window& window):
-    lambda_(lambda),
-    beta_(beta),
-    covariates_(covariates),
-    window_(window),
-    beta_dot_covariates_maximum_(detail::compute_beta_dot_covariates_maximum(beta, covariates)),
-    alpha_dot_dispersion_maximum_(detail::compute_alpha_dot_dispersion_maximum(alpha, dispersion.get_maximum(window))) {}
-
-  template<typename Point>
-  auto get_log_normalized_intensity(const Point& point) const {
-    double beta_covariates_maximum(beta_dot_covariates_maximum_[get_type(point)]);
-    double beta_covariates(detail::compute_beta_dot_covariates(point, beta_, covariates_));
-    return beta_covariates - beta_covariates_maximum;
-  }
-
-  // TODO: Make this a free function? Same for another one below.
-  template<typename Point>
-  auto get_normalized_intensity(const Point& point) const {
-    return std::exp(get_log_normalized_intensity(point));
-  }
-
-  // TODO: This should somehow be restricted to window.
-  auto get_integral() const {
-    double integral(0);
-    const auto number_types(beta_.nrow());
-    for(R_xlen_t i(0); i < number_types; ++i) {
-      integral += covariates_.get_integral_of_dot([](double x) { return std::exp(x); }, beta_(i, Rcpp::_));
-    }
-    return integral / static_cast<double>(number_types);
-  }
-
-  auto sample_point(R_xlen_t type) const {
-    while(true) {
-      const auto sample(window_.sample(type));
-      if(exp_rand() + get_log_normalized_intensity(sample) >= 0) {
-        return sample;
-      }
-    }
-  }
-
-  auto get_upper_bound() const {
-    const auto number_types(lambda_.size());
-    std::vector<double> upper_bound(number_types);
-    using size_t = decltype(lambda_.size());
-    for(size_t i(0); i < number_types; ++i) {
-      const auto value(lambda_[i] * std::exp(alpha_dot_dispersion_maximum_[i] + beta_dot_covariates_maximum_[i]));
-      if(std::isinf(value)) {
-        Rcpp::stop("Infinite value obtained as the bound to the Papangelou intensity.");
-      }
-      upper_bound[i] = value;
-    }
-    return upper_bound;
-  }
-
-  const auto& get_window() const {
-    return window_;
-  }
-private:
-  Lambda lambda_;
-  Beta beta_;
-  Im_list_wrapper covariates_;
-  Window window_;
-  std::vector<double> beta_dot_covariates_maximum_;
-  std::vector<double> alpha_dot_dispersion_maximum_;
-};
-
 template<typename Dispersion, typename Lambda, typename Alpha, typename Beta>
 class Exponential_family_model {
 public:
@@ -226,11 +151,6 @@ public:
     beta_(beta),
     covariates_(covariates) {}
 
-  template<typename Window>
-  auto get_normalised_dominating_intensity(const Window& window) const {
-    return Normalised_dominating_intensity<Lambda, Alpha, Window>(lambda_, alpha_, beta_, covariates_, dispersion_, window);
-  }
-
   template<typename Point, typename... Configurations>
   double compute_papangelou(const Point& point, Configurations&&... configurations) const {
     double alpha_dispersion(detail::compute_alpha_dot_dispersion(point, alpha_, dispersion_, std::forward<Configurations>(configurations)...));
@@ -238,52 +158,125 @@ public:
     return lambda_[get_type(point)] * std::exp(alpha_dispersion + beta_covariates);
   }
 
-  template<typename Window, typename Point, typename... Configurations>
-  double compute_normalised_papangelou(const Window& window, const Point& point, Configurations&&... configurations) const {
-    double alpha_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(alpha_, dispersion_.get_maximum(window), get_type(point)));
-    double alpha_dispersion(detail::compute_alpha_dot_dispersion(point, alpha_, dispersion_, std::forward<Configurations>(configurations)...));
+protected:
+  Dispersion dispersion_;
+  Lambda lambda_;
+  Alpha alpha_;
+  Beta beta_;
+  Im_list_wrapper covariates_;
+};
+
+template<typename Window, typename Dispersion, typename Lambda, typename Alpha, typename Beta>
+class Exponential_family_model_over_window: public Exponential_family_model<Dispersion, Lambda, Alpha, Beta> {
+private:
+  using Model = Exponential_family_model<Dispersion, Lambda, Alpha, Beta>;
+public:
+  template<typename D>
+  Exponential_family_model_over_window(const Window& window,
+                                       const Lambda& lambda,
+                                       const Alpha& alpha,
+                                       const Beta& beta,
+                                       Rcpp::List covariates,
+                                       D&& dispersion):
+    Model(lambda, alpha, beta, covariates, std::forward<D>(dispersion)),
+    window_(window),
+    beta_dot_covariates_maximum_(detail::compute_beta_dot_covariates_maximum(beta, Model::covariates_)),
+    alpha_dot_dispersion_maximum_(detail::compute_alpha_dot_dispersion_maximum(alpha, dispersion.get_maximum(window))) {}
+
+  template<typename Point>
+  auto get_log_normalized_intensity(const Point& point) const {
+    double beta_covariates_maximum(beta_dot_covariates_maximum_[get_type(point)]);
+    double beta_covariates(detail::compute_beta_dot_covariates(point, Model::beta_, Model::covariates_));
+    return beta_covariates - beta_covariates_maximum;
+  }
+
+  // TODO: Make this a free function? Same for another one below.
+  template<typename Point>
+  auto get_normalized_intensity(const Point& point) const {
+    return std::exp(get_log_normalized_intensity(point));
+  }
+
+  // TODO: This should somehow be restricted to window.
+  auto get_integral() const {
+    double integral(0);
+    const auto number_types(Model::beta_.nrow());
+    for(R_xlen_t i(0); i < number_types; ++i) {
+      integral += Model::covariates_.get_integral_of_dot([](double x) { return std::exp(x); }, Model::beta_(i, Rcpp::_));
+    }
+    return integral / static_cast<double>(number_types);
+  }
+
+  auto sample_point(R_xlen_t type) const {
+    while(true) {
+      const auto sample(window_.sample(type));
+      if(exp_rand() + get_log_normalized_intensity(sample) >= 0) {
+        return sample;
+      }
+    }
+  }
+
+  auto get_upper_bound() const {
+    const auto number_types(Model::lambda_.size());
+    std::vector<double> upper_bound(number_types);
+    using size_t = decltype(Model::lambda_.size());
+    for(size_t i(0); i < number_types; ++i) {
+      const auto value(Model::lambda_[i] * std::exp(alpha_dot_dispersion_maximum_[i] + beta_dot_covariates_maximum_[i]));
+      if(std::isinf(value)) {
+        Rcpp::stop("Infinite value obtained as the bound to the Papangelou intensity.");
+      }
+      upper_bound[i] = value;
+    }
+    return upper_bound;
+  }
+
+  template<typename Point, typename... Configurations>
+  double compute_normalised_papangelou(const Point& point, Configurations&&... configurations) const {
+    double alpha_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(Model::alpha_, Model::dispersion_.get_maximum(window_), get_type(point)));
+    double alpha_dispersion(detail::compute_alpha_dot_dispersion(point,Model:: alpha_, Model::dispersion_, std::forward<Configurations>(configurations)...));
     return std::exp(alpha_dispersion - alpha_dispersion_maximum);
   }
 
-  template<typename Window, typename Point, typename L, typename LComplement>
-  double compute_log_alpha_max(const Window& window, const Point& point, const L& l, const LComplement& l_complement) const {
-    double alpha_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(alpha_, dispersion_.get_maximum(window), get_type(point)));
+  template<typename Point, typename L, typename LComplement>
+  double compute_log_alpha_max(const Point& point, const L& l, const LComplement& l_complement) const {
+    double alpha_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(Model::alpha_, Model::dispersion_.get_maximum(window_), get_type(point)));
     double alpha_dispersion;
-    if(detail::is_alpha_non_negative(point, alpha_)) {
-      alpha_dispersion = detail::compute_alpha_dot_dispersion(point, alpha_, dispersion_, l, l_complement);
-    } else if(detail::is_alpha_non_positive(point, alpha_)) {
-      alpha_dispersion = detail::compute_alpha_dot_dispersion(point, alpha_, dispersion_, l);
+    if(detail::is_alpha_non_negative(point, Model::alpha_)) {
+      alpha_dispersion = detail::compute_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l, l_complement);
+    } else if(detail::is_alpha_non_positive(point, Model::alpha_)) {
+      alpha_dispersion = detail::compute_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l);
     } else {
-      const auto positive_alpha(detail::compute_positive_alpha_dot_dispersion(point, alpha_, dispersion_, l, l_complement));
-      const auto negative_alpha(detail::compute_negative_alpha_dot_dispersion(point, alpha_, dispersion_, l));
+      const auto positive_alpha(detail::compute_positive_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l, l_complement));
+      const auto negative_alpha(detail::compute_negative_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l));
       alpha_dispersion = positive_alpha + negative_alpha;
     }
     return alpha_dispersion - alpha_dispersion_maximum;
   }
 
   // TODO: Factorise this and above.
-  template<typename Window, typename Point, typename L, typename LComplement>
-  double compute_log_alpha_min(const Window& window, const Point& point, const L& l, const LComplement& l_complement) const {
-    double alpha_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(alpha_, dispersion_.get_maximum(window), get_type(point)));
+  template<typename Point, typename L, typename LComplement>
+  double compute_log_alpha_min(const Point& point, const L& l, const LComplement& l_complement) const {
+    double alpha_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(Model::alpha_, Model::dispersion_.get_maximum(window_), get_type(point)));
     double alpha_dispersion;
-    if(detail::is_alpha_non_negative(point, alpha_)) {
-      alpha_dispersion = detail::compute_alpha_dot_dispersion(point, alpha_, dispersion_, l);
-    } else if(detail::is_alpha_non_positive(point, alpha_)) {
-      alpha_dispersion = detail::compute_alpha_dot_dispersion(point, alpha_, dispersion_, l, l_complement);
+    if(detail::is_alpha_non_negative(point, Model::alpha_)) {
+      alpha_dispersion = detail::compute_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l);
+    } else if(detail::is_alpha_non_positive(point, Model::alpha_)) {
+      alpha_dispersion = detail::compute_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l, l_complement);
     } else {
-      const auto positive_alpha(detail::compute_positive_alpha_dot_dispersion(point, alpha_, dispersion_, l));
-      const auto negative_alpha(detail::compute_negative_alpha_dot_dispersion(point, alpha_, dispersion_, l, l_complement));
+      const auto positive_alpha(detail::compute_positive_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l));
+      const auto negative_alpha(detail::compute_negative_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l, l_complement));
       alpha_dispersion = positive_alpha + negative_alpha;
     }
     return alpha_dispersion - alpha_dispersion_maximum;
   }
 
-private:
-  Dispersion dispersion_;
-  Lambda lambda_;
-  Alpha alpha_;
-  Beta beta_;
-  Im_list_wrapper covariates_;
+  const auto& get_window() const {
+    return window_;
+  }
+
+protected:
+  Window window_;
+  std::vector<double> beta_dot_covariates_maximum_;
+  std::vector<double> alpha_dot_dispersion_maximum_;
 };
 
 template<typename F, typename Lambda>
@@ -304,6 +297,25 @@ inline auto call_on_model(Rcpp::CharacterVector model,
   });
 }
 
+template<typename Window, typename F, typename Lambda>
+inline auto call_on_model(const Window& window,
+                          Rcpp::CharacterVector model,
+                          Rcpp::NumericMatrix alpha,
+                          const Lambda& lambda,
+                          Rcpp::NumericMatrix beta,
+                          Rcpp::List covariates,
+                          Rcpp::NumericMatrix radius,
+                          unsigned long long int saturation,
+                          const F& f) {
+  return call_on_dispersion_model(model, radius, saturation, [&window, &alpha, &lambda, &f, &beta, covariates](auto&& varphi) {
+    using Model_type = Exponential_family_model_over_window<Window,
+                                                            std::remove_cv_t<std::remove_reference_t<decltype(varphi)>>,
+                                                            Lambda,
+                                                            Rcpp::NumericMatrix,
+                                                            Rcpp::NumericMatrix>;
+    return f(Model_type(window, lambda, alpha, beta, covariates, std::forward<decltype(varphi)>(varphi)));
+  });
+}
 
 } // namespace ppjsdm
 
