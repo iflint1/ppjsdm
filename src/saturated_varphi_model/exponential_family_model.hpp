@@ -4,6 +4,7 @@
 #include <Rcpp.h>
 
 #include "saturated_varphi_model.hpp"
+#include "../configuration/configuration_manipulation.hpp"
 #include "../point/point_manipulation.hpp"
 #include "../utility/im_wrapper.hpp"
 
@@ -43,30 +44,58 @@ inline auto compute_beta_dot_covariates_maximum(const Beta& beta, const Covariat
   return result;
 }
 
+template<typename Point, typename Alpha, typename Dispersion>
+inline auto compute_alpha_dot_dispersion(const Point& point,
+                                         const Alpha& alpha,
+                                         const Dispersion& dispersion) {
+  double sum(0);
+  for(R_xlen_t i(0); i < alpha.ncol(); ++i) {
+    sum += alpha(get_type(point), i) * dispersion[i];
+  }
+  return sum;
+}
+
 template<typename Point, typename Alpha, typename Dispersion, typename... Configurations>
 inline auto compute_alpha_dot_dispersion(const Point& point,
                                          const Alpha& alpha,
                                          const Dispersion& dispersion,
                                          Configurations&&... configurations) {
   const auto d(dispersion.compute(point, alpha.nrow(), std::forward<Configurations>(configurations)...));
+  return compute_alpha_dot_dispersion(point, alpha, d);
+}
+
+template<typename Point, typename Alpha, typename Dispersion>
+inline auto compute_positive_alpha_dot_dispersion(const Point& point,
+                                                  const Alpha& alpha,
+                                                  const Dispersion& dispersion) {
   double sum(0);
   for(R_xlen_t i(0); i < alpha.ncol(); ++i) {
-    sum += alpha(get_type(point), i) * d[i];
+    const auto a(alpha(get_type(point), i));
+    if(a > 0) {
+      sum += a * dispersion[i];
+    }
   }
   return sum;
 }
 
 template<typename Point, typename Alpha, typename Dispersion, typename... Configurations>
 inline auto compute_positive_alpha_dot_dispersion(const Point& point,
-                                                      const Alpha& alpha,
-                                                      const Dispersion& dispersion,
-                                                      Configurations&&... configurations) {
+                                                  const Alpha& alpha,
+                                                  const Dispersion& dispersion,
+                                                  Configurations&&... configurations) {
   const auto d(dispersion.compute(point, alpha.nrow(), std::forward<Configurations>(configurations)...));
+  return compute_positive_alpha_dot_dispersion(point, alpha, d);
+}
+
+template<typename Point, typename Alpha, typename Dispersion>
+inline auto compute_negative_alpha_dot_dispersion(const Point& point,
+                                                  const Alpha& alpha,
+                                                  const Dispersion& dispersion) {
   double sum(0);
   for(R_xlen_t i(0); i < alpha.ncol(); ++i) {
     const auto a(alpha(get_type(point), i));
-    if(a > 0) {
-      sum += a * d[i];
+    if(a < 0) {
+      sum += a * dispersion[i];
     }
   }
   return sum;
@@ -78,15 +107,9 @@ inline auto compute_negative_alpha_dot_dispersion(const Point& point,
                                                   const Dispersion& dispersion,
                                                   Configurations&&... configurations) {
   const auto d(dispersion.compute(point, alpha.nrow(), std::forward<Configurations>(configurations)...));
-  double sum(0);
-  for(R_xlen_t i(0); i < alpha.ncol(); ++i) {
-    const auto a(alpha(get_type(point), i));
-    if(a < 0) {
-      sum += a * d[i];
-    }
-  }
-  return sum;
+  return compute_negative_alpha_dot_dispersion(point, alpha, d);
 }
+
 
 template<typename Point, typename Alpha>
 inline bool is_alpha_non_negative(const Point& point,
@@ -230,37 +253,38 @@ public:
     return std::exp(alpha_dispersion - alpha_dispersion_maximum);
   }
 
+  // TODO: Factorise and make readable this function.
   template<typename Point, typename L, typename LComplement>
-  double compute_log_alpha_max(const Point& point, const L& l, const LComplement& l_complement) const {
+  void optimised_add_to_L_or_U(double exp_mark, const Point& point, L& l, LComplement& l_complement) const {
     double alpha_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(Model::alpha_, Model::dispersion_.get_maximum(window_), get_type(point)));
-    double alpha_dispersion;
     if(detail::is_alpha_non_negative(point, Model::alpha_)) {
-      alpha_dispersion = detail::compute_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l, l_complement);
+      const auto dispersion_u(Model::dispersion_.compute(point, Model::alpha_.nrow(), l, l_complement));
+      const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, dispersion_u));
+      if(alpha_dispersion - alpha_dispersion_maximum + exp_mark > 0) {
+        const auto dispersion_l(Model::dispersion_.compute(point, Model::alpha_.nrow(), l));
+        const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, dispersion_l));
+        add_point(alpha_dispersion - alpha_dispersion_maximum + exp_mark > 0 ? l : l_complement, point);
+      }
     } else if(detail::is_alpha_non_positive(point, Model::alpha_)) {
-      alpha_dispersion = detail::compute_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l);
+      const auto dispersion_l(Model::dispersion_.compute(point, Model::alpha_.nrow(), l));
+      const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, dispersion_l));
+      if(alpha_dispersion - alpha_dispersion_maximum + exp_mark > 0) {
+        const auto dispersion_u(Model::dispersion_.compute(point, Model::alpha_.nrow(), l, l_complement));
+        const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, dispersion_u));
+        add_point(alpha_dispersion - alpha_dispersion_maximum + exp_mark > 0 ? l : l_complement, point);
+      }
     } else {
-      const auto positive_alpha(detail::compute_positive_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l, l_complement));
-      const auto negative_alpha(detail::compute_negative_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l));
-      alpha_dispersion = positive_alpha + negative_alpha;
+      // TODO: Reuse computation of `dispersion_l` in the computation of `dispersion_u`.
+      const auto dispersion_l(Model::dispersion_.compute(point, Model::alpha_.nrow(), l));
+      const auto dispersion_u(Model::dispersion_.compute(point, Model::alpha_.nrow(), l, l_complement));
+      const auto positive_alpha(detail::compute_positive_alpha_dot_dispersion(point, Model::alpha_, dispersion_u));
+      const auto negative_alpha(detail::compute_negative_alpha_dot_dispersion(point, Model::alpha_, dispersion_l));
+      if(positive_alpha + negative_alpha - alpha_dispersion_maximum + exp_mark > 0) {
+        const auto positive_alpha(detail::compute_positive_alpha_dot_dispersion(point, Model::alpha_, dispersion_l));
+        const auto negative_alpha(detail::compute_negative_alpha_dot_dispersion(point, Model::alpha_, dispersion_u));
+        add_point(positive_alpha + negative_alpha - alpha_dispersion_maximum + exp_mark > 0 ? l : l_complement, point);
+      }
     }
-    return alpha_dispersion - alpha_dispersion_maximum;
-  }
-
-  // TODO: Factorise this and above.
-  template<typename Point, typename L, typename LComplement>
-  double compute_log_alpha_min(const Point& point, const L& l, const LComplement& l_complement) const {
-    double alpha_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(Model::alpha_, Model::dispersion_.get_maximum(window_), get_type(point)));
-    double alpha_dispersion;
-    if(detail::is_alpha_non_negative(point, Model::alpha_)) {
-      alpha_dispersion = detail::compute_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l);
-    } else if(detail::is_alpha_non_positive(point, Model::alpha_)) {
-      alpha_dispersion = detail::compute_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l, l_complement);
-    } else {
-      const auto positive_alpha(detail::compute_positive_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l));
-      const auto negative_alpha(detail::compute_negative_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l, l_complement));
-      alpha_dispersion = positive_alpha + negative_alpha;
-    }
-    return alpha_dispersion - alpha_dispersion_maximum;
   }
 
   double compute_log_alpha_min_lower_bound(R_xlen_t type) const {

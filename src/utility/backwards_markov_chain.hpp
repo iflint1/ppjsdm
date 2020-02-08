@@ -47,7 +47,7 @@ public:
           const auto v(unif_rand() * (intensity_integral_ + sum_sizes) - intensity_integral_); // Uniformly distributed on [-beta, s_1 + s_2].
           if(v < 0.0) { // Happens with probability beta / (beta + s_1 + s_2).
             insert_uniform_point_in_configuration_and_update_chain(points_not_in_last);
-          } else if(v < static_cast<double>(ppjsdm::size(last_configuration_))) { // Happens with probability s_2 / (s_1 + s_2)
+          } else if(v < static_cast<double>(ppjsdm::size(last_configuration_))) { // Happens with probability s_2 / (s_1 + s_2).
             delete_random_point_in_configuration_and_update_chain(last_configuration_);
             if(empty(last_configuration_)) {
               last_configuration_ = std::move(points_not_in_last);
@@ -80,7 +80,8 @@ public:
   // point processes using dominated coupling from the past with application to a multiscale area-interaction point process''
   // by Ambler and Silverman for a similar (but less general) idea.
   auto compute_LU_and_check_coalescence() const {
-    auto points_not_in_L(last_configuration_); // U starts with the end value of the chain.
+    auto L_complement(last_configuration_); // U starts with the end value of the chain.
+    // TODO: Try to reserve enough space in L (and L complement?).
     Configuration L{}; // L is an empty configuration.
     const auto chain_size(chain_.size());
     if(chain_size != 0) {
@@ -93,20 +94,16 @@ public:
           if(model_.compute_log_alpha_min_lower_bound(get_type(point)) + exp_mark > 0) { // Avoid computations below in this case.
             add_point(L, point);
           } else {
-            const auto log_alpha_max(model_.compute_log_alpha_max(point, L, points_not_in_L));
-            if(log_alpha_max + exp_mark > 0) {
-              const auto log_alpha_min(model_.compute_log_alpha_min(point, L, points_not_in_L));
-              add_point(log_alpha_min + exp_mark > 0 ? L : points_not_in_L, point);
-            }
+            model_.optimised_add_to_L_or_U(exp_mark, point, L, L_complement);
           }
         } else { // death
-          if(!remove_point(points_not_in_L, point)) {
+          if(!remove_point(L_complement, point)) {
             remove_point(L, point);
           }
         }
       }
     }
-    return std::pair<bool, Configuration>(empty(points_not_in_L), L);
+    return std::pair<bool, Configuration>(empty(L_complement), L);
   }
 
 private:
