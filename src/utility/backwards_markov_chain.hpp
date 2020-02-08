@@ -14,6 +14,7 @@ namespace ppjsdm {
 namespace detail {
 
 constexpr double do_not_need_mark = -1.0;
+constexpr double always_in_L = -2.0;
 
 } // namespace detail
 
@@ -91,15 +92,13 @@ public:
         const auto& point(std::get<1>(current));
         // TODO: Write extensive tests for the functions compute_log_alpha_min_lower_bound, compute_log_alpha_max, etc since I'm not making any checks here.
         if(exp_mark >= 0.0) { // birth
-          if(model_.compute_log_alpha_min_lower_bound(get_type(point)) + exp_mark > 0) { // Avoid computations below in this case.
-            add_point(L, point);
-          } else {
-            model_.optimised_add_to_L_or_U(exp_mark, point, L, L_complement);
-          }
-        } else { // death
+          model_.add_to_L_or_U(exp_mark, point, L, L_complement);
+        } else if(exp_mark == detail::do_not_need_mark) { // death
           if(!remove_point(L_complement, point)) {
             remove_point(L, point);
           }
+        } else {  // Avoid computations above in this case.
+          add_point(L, point);
         }
       }
     }
@@ -122,7 +121,13 @@ private:
 
   void delete_random_point_in_configuration_and_update_chain(Configuration& configuration) {
     const auto point(remove_random_point(configuration));
-    chain_.emplace_back(exp_rand(), std::move(point));
+    const auto e(exp_rand());
+    if(model_.compute_log_alpha_min_lower_bound(get_type(point)) + e > 0) {
+      chain_.emplace_back(detail::always_in_L, std::move(point));
+    } else {
+      chain_.emplace_back(e, std::move(point));
+    }
+
   }
 };
 

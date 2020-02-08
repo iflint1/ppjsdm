@@ -253,9 +253,9 @@ public:
     return std::exp(alpha_dispersion - alpha_dispersion_maximum);
   }
 
-  // TODO: Factorise and make readable this function.
+  // TODO: Factorise and make this function more readable.
   template<typename Point, typename L, typename LComplement>
-  void optimised_add_to_L_or_U(double exp_mark, const Point& point, L& l, LComplement& l_complement) const {
+  void add_to_L_or_U(double exp_mark, const Point& point, L& l, LComplement& l_complement) const {
     double alpha_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(Model::alpha_, Model::dispersion_.get_maximum(window_), get_type(point)));
     if(detail::is_alpha_non_negative(point, Model::alpha_)) {
       const auto dispersion_u(Model::dispersion_.compute(point, Model::alpha_.nrow(), l, l_complement));
