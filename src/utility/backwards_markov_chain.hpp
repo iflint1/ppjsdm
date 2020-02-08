@@ -34,32 +34,31 @@ public:
     return chain_.size();
   }
 
-  auto extend_until_T0() {
-    using size_t = decltype(ppjsdm::size(last_configuration_));
+  void extend_until_T0() {
     const auto initial_last_size(ppjsdm::size(last_configuration_));
-    if(initial_last_size == 0) {
-      return static_cast<typename decltype(chain_)::size_type>(0);
-    }
-    Configuration points_not_in_last{};
-    while(true) {
-      // Do the computations by blocks of size `initial_last_size`, reserving space each time
-      chain_.reserve(initial_last_size);
-      for(size_t i(0); i < initial_last_size; ++i) {
-        const double sum_sizes(ppjsdm::size(points_not_in_last) + ppjsdm::size(last_configuration_));
-        const auto v(unif_rand() * (intensity_integral_ + sum_sizes) - intensity_integral_); // Uniformly distributed on [-beta, s_1 + s_2].
-        if(v < 0.0) { // Happens with probability beta / (beta + s_1 + s_2).
-          insert_uniform_point_in_configuration_and_update_chain(points_not_in_last);
-        } else if(v < static_cast<double>(ppjsdm::size(last_configuration_))) { // Happens with probability s_2 / (s_1 + s_2)
-          delete_random_point_in_configuration_and_update_chain(last_configuration_);
-          if(empty(last_configuration_)) {
-            last_configuration_ = std::move(points_not_in_last);
-            return chain_.size();
+    if(initial_last_size != 0) {
+      Configuration points_not_in_last{};
+      while(true) {
+        // Do the computations by blocks of size `initial_last_size`, reserving space each time
+        chain_.reserve(initial_last_size);
+        using size_t = decltype(ppjsdm::size(last_configuration_));
+        for(size_t i(0); i < initial_last_size; ++i) {
+          const double sum_sizes(ppjsdm::size(points_not_in_last) + ppjsdm::size(last_configuration_));
+          const auto v(unif_rand() * (intensity_integral_ + sum_sizes) - intensity_integral_); // Uniformly distributed on [-beta, s_1 + s_2].
+          if(v < 0.0) { // Happens with probability beta / (beta + s_1 + s_2).
+            insert_uniform_point_in_configuration_and_update_chain(points_not_in_last);
+          } else if(v < static_cast<double>(ppjsdm::size(last_configuration_))) { // Happens with probability s_2 / (s_1 + s_2)
+            delete_random_point_in_configuration_and_update_chain(last_configuration_);
+            if(empty(last_configuration_)) {
+              last_configuration_ = std::move(points_not_in_last);
+              return;
+            }
+          } else {
+            delete_random_point_in_configuration_and_update_chain(points_not_in_last);
           }
-        } else {
-          delete_random_point_in_configuration_and_update_chain(points_not_in_last);
         }
+        R_CheckUserInterrupt();
       }
-      R_CheckUserInterrupt();
     }
   }
 
@@ -80,7 +79,7 @@ public:
   // for spatial point processes'' by Berthelsen and Moller, and ``Perfect simulation of spatial
   // point processes using dominated coupling from the past with application to a multiscale area-interaction point process''
   // by Ambler and Silverman for a similar (but less general) idea.
-  inline auto compute_LU_and_check_coalescence() const {
+  auto compute_LU_and_check_coalescence() const {
     auto points_not_in_L(last_configuration_); // U starts with the end value of the chain.
     Configuration L{}; // L is an empty configuration.
     const auto chain_size(chain_.size());

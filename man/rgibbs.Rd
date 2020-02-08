@@ -15,7 +15,7 @@ rgibbs(
   steps = 0,
   nsim = 1,
   types = NULL,
-  model = "exponential",
+  model = "square_bump",
   drop = TRUE
 )
 }
