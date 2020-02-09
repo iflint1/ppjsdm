@@ -16,26 +16,20 @@
 
 namespace ppjsdm {
 
-template<typename Varphi, typename Point, typename Selection = void>
+template<typename Point, typename Dispersion, typename Select = void>
 class Compute_dispersion;
 
-template<typename Varphi, typename Point>
-class Compute_dispersion<Varphi, Point, std::enable_if_t<has_nonzero_value_v<Varphi>>> : private Varphi {
+template<typename Point, typename Dispersion>
+class Compute_dispersion<Point, Dispersion, std::enable_if_t<has_nonzero_value_v<Dispersion>>> {
+private:
+  using CountType = std::vector<unsigned long long int>;
 public:
-  template<typename P, typename Configuration, typename... Args>
-  explicit Compute_dispersion(P&& point,
-                              R_xlen_t number_types,
-                              unsigned long long int saturation,
-                              Args&&... args):
-    Varphi(std::forward<Args>(args)...),
-    point_(std::forward<P>(point)),
-    saturation_(saturation),
-    count_positive_types_(number_types),
-    count_positive_types_saved_{} {}
-
-  void save() {
-    count_positive_types_saved_ = count_positive_types_;
-  }
+  Compute_dispersion(const Point& point,
+                     R_xlen_t number_types,
+                     const Dispersion& dispersion):
+  point_(point),
+  dispersion_(dispersion),
+  count_positive_types_(number_types) {}
 
   template<typename Configuration>
   void add_configuration(const Configuration& configuration) {
@@ -46,32 +40,34 @@ public:
     return compute_dispersion(count_positive_types_);
   }
 
-  auto compute_saved() const {
-    return compute_dispersion(count_positive_types_saved_);
+  auto compute_from_state(const CountType& count) const {
+    return compute_dispersion(count);
+  }
+
+  auto get_state() const {
+    return count_positive_types_;
   }
 private:
-  Point point_;
-  unsigned long long int saturation_;
-  std::vector<unsigned long long int> count_positive_types_;
-  std::vector<unsigned long long int> count_positive_types_saved_;
+  const Point& point_;
+  const Dispersion& dispersion_;
+  CountType count_positive_types_;
 
   template<typename Configuration>
   void update_count(const Configuration& configuration) {
     using size_t = size_t<Configuration>;
     for(size_t i(0); i < size(configuration); ++i) {
       const auto& current_point(configuration[i]);
-      if(count_positive_types_[get_type(current_point)] < saturation_ && Varphi::apply(current_point, point_) > 0) {
+      if(count_positive_types_[get_type(current_point)] < dispersion_.saturation_ && dispersion_.apply(current_point, point_) > 0) {
         ++count_positive_types_[get_type(current_point)];
       }
     }
   }
 
-  template<typename CountVector>
-  auto compute_dispersion(const CountVector& count) const {
+  auto compute_dispersion(const CountType& count) const {
     const auto number_types(count.size());
     std::vector<double> dispersion(number_types);
     using size_t = typename decltype(dispersion)::size_type;
-    constexpr double nonzero_value(Varphi::nonzero_value);
+    constexpr double nonzero_value(Dispersion::nonzero_value);
     for(size_t i(0); i < static_cast<size_t>(number_types); ++i) {
       dispersion[i] = nonzero_value * static_cast<double>(count[i]);
     }
@@ -79,23 +75,17 @@ private:
   }
 };
 
-template<typename Varphi, typename Point>
-class Compute_dispersion<Varphi, Point, std::enable_if_t<!has_nonzero_value_v<Varphi>>> : private Varphi {
+template<typename Point, typename Dispersion>
+class Compute_dispersion<Point, Dispersion, std::enable_if_t<!has_nonzero_value_v<Dispersion>>> {
+private:
+  using CountType = std::vector<std::list<double>>;
 public:
-  template<typename P, typename Configuration, typename... Args>
-  explicit Compute_dispersion(P&& point,
-                              R_xlen_t number_types,
-                              unsigned long long int saturation,
-                              Args&&... args):
-    Varphi(std::forward<Args>(args)...),
-    point_(std::forward<P>(point)),
-    saturation_(saturation),
-    square_distances_(number_types),
-    square_distances_saved_{} {}
-
-  void save() {
-    square_distances_saved_ = square_distances_;
-  }
+  Compute_dispersion(const Point& point,
+                     R_xlen_t number_types,
+                     const Dispersion& dispersion):
+  point_(point),
+  dispersion_(dispersion),
+  square_distances_(number_types) {}
 
   template<typename Configuration>
   void add_configuration(const Configuration& configuration) {
@@ -106,14 +96,17 @@ public:
     return compute_dispersion(square_distances_);
   }
 
-  auto compute_saved() const {
-    return compute_dispersion(square_distances_saved_);
+  auto compute_from_state(const CountType& count) const {
+    return compute_dispersion(count);
+  }
+
+  auto get_state() const {
+    return square_distances_;
   }
 private:
-  Point point_;
-  unsigned long long int saturation_;
-  std::vector<std::list<double>> square_distances_;
-  std::vector<std::list<double>> square_distances_saved_;
+  const Point& point_;
+  const Dispersion& dispersion_;
+  CountType square_distances_;
 
   template<typename Configuration>
   void update_count(const Configuration& configuration) {
@@ -123,7 +116,7 @@ private:
       const auto sq(square_distance(current_point, point_));
       auto& current(square_distances_[get_type(current_point)]);
       auto iterator(std::upper_bound(current.begin(), current.end(), sq));
-      if(current.size() < saturation_) {
+      if(current.size() < dispersion_.saturation_) {
         current.insert(iterator, sq);
       } else if(iterator != current.end()) {
         current.insert(iterator, sq);
@@ -132,8 +125,7 @@ private:
     }
   }
 
-  template<typename CountVector>
-  auto compute_dispersion(const CountVector& count) const {
+  auto compute_dispersion(const CountType& count) const {
     const auto number_types(count.size());
     std::vector<double> dispersion(number_types);
     using size_t = typename decltype(dispersion)::size_type;
@@ -141,7 +133,7 @@ private:
     for(size_t i(0); i < static_cast<size_t>(number_types); ++i) {
       double d(0);
       for(const auto sq: square_distances_[i]) {
-        d += Varphi::apply(sq, i, point_type);
+        d += dispersion_.apply(sq, i, point_type);
       }
       dispersion[i] = d;
     }
@@ -150,63 +142,30 @@ private:
 };
 
 // Note: Use inheritance to benefit from EBO.
+// TODO: Try to get rid of public inheritance if possible.
 template<typename Varphi>
-class Saturated_varphi_model: private Varphi {
+class Saturated_varphi_model: public Varphi {
+private:
+  template<typename, typename, typename>
+  friend class Compute_dispersion;
 public:
   template<typename... Args>
   Saturated_varphi_model(unsigned long long int saturation, Args&&... args):
     Varphi(std::forward<Args>(args)...), saturation_(saturation) {}
 
-  template<typename Point, typename... Configurations>
+  template<typename Point>
+  auto get_compute_dispersion_object(const Point& point,
+                                     R_xlen_t number_types) const {
+    return Compute_dispersion<Point, Saturated_varphi_model<Varphi>>(point, number_types, *this);
+  }
+
+  template<typename Point, typename Configuration>
   auto compute(const Point& point,
                R_xlen_t number_types,
-               Configurations&&... configurations) const {
-    // TODO: Ideally I'd like to use if constexpr
-    // TODO: If I can use if constexpr, I can remove get_nonzero_value below.
-    if(has_nonzero_value_v<Varphi>) { // Use faster algorithm in this case
-      std::vector<unsigned long long int> count_positive_types(number_types);
-      for_each_container([&count_positive_types, this, &point](const auto& current_point) {
-        if(count_positive_types[get_type(current_point)] < saturation_ && this->Varphi::apply(current_point, point) > 0) {
-          count_positive_types[get_type(current_point)] += 1;
-        }
-      }, std::forward<Configurations>(configurations)...);
-
-      std::vector<double> dispersion(number_types);
-      using size_t = typename decltype(dispersion)::size_type;
-      constexpr double nonzero_value(get_nonzero_value<Varphi>());
-      for(size_t i(0); i < static_cast<size_t>(number_types); ++i) {
-        dispersion[i] = nonzero_value * static_cast<double>(count_positive_types[i]);
-      }
-      return dispersion;
-    } else {
-      std::vector<std::list<double>> square_distances(number_types);
-
-      // Fill with `saturation_` smallest square distances
-      for_each_container([&square_distances, &point, saturation = saturation_](const auto& current_point) {
-        const auto sq(square_distance(current_point, point));
-        auto& current(square_distances[get_type(current_point)]);
-        auto iterator(std::upper_bound(current.begin(), current.end(), sq));
-        if(current.size() < saturation) {
-          current.insert(iterator, sq);
-        } else if(iterator != current.end()) {
-          current.insert(iterator, sq);
-          current.pop_back();
-        }
-      }, std::forward<Configurations>(configurations)...);
-
-      // Compute dispersion
-      std::vector<double> dispersion(number_types);
-      using size_t = typename decltype(dispersion)::size_type;
-      const auto point_type(get_type(point));
-      for(size_t i(0); i < static_cast<size_t>(number_types); ++i) {
-        double d(0);
-        for(const auto sq: square_distances[i]) {
-          d += Varphi::apply(sq, i, point_type);
-        }
-        dispersion[i] = d;
-      }
-      return dispersion;
-    }
+               const Configuration& configuration) const {
+    auto dispersion(get_compute_dispersion_object(point, number_types));
+    dispersion.add_configuration(configuration);
+    return dispersion.compute();
   }
 
   template<typename Window>
