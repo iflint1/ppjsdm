@@ -38,6 +38,7 @@ public:
   void extend_until_T0() {
     const auto initial_last_size(ppjsdm::size(last_configuration_));
     if(initial_last_size != 0) {
+      // TODO: Try to reserve for points_not_in_last.
       Configuration points_not_in_last{};
       while(true) {
         // Do the computations by blocks of size `initial_last_size`, reserving space each time

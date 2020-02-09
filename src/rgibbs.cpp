@@ -43,6 +43,8 @@ inline SEXP rgibbs_helper(const Model& model, const Window& window, R_xlen_t nsi
   return ppjsdm::get_list_or_first_element(samples, nsim, drop);
 }
 
+// TODO: Make rgibbs work with R::Inf
+
 // [[Rcpp::export]]
 SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP beta, SEXP radius, R_xlen_t saturation, R_xlen_t steps, R_xlen_t nsim, SEXP types, Rcpp::CharacterVector model, bool drop) {
   if(Rf_isNull(covariates)) {

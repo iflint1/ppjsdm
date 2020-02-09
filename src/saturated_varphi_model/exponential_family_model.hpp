@@ -69,15 +69,6 @@ inline auto compute_positive_alpha_dot_dispersion(const Point& point,
   return sum;
 }
 
-template<typename Point, typename Alpha, typename Dispersion, typename... Configurations>
-inline auto compute_positive_alpha_dot_dispersion(const Point& point,
-                                                  const Alpha& alpha,
-                                                  const Dispersion& dispersion,
-                                                  Configurations&&... configurations) {
-  const auto d(dispersion.compute(point, alpha.nrow(), std::forward<Configurations>(configurations)...));
-  return compute_positive_alpha_dot_dispersion(point, alpha, d);
-}
-
 template<typename Point, typename Alpha, typename Dispersion>
 inline auto compute_negative_alpha_dot_dispersion(const Point& point,
                                                   const Alpha& alpha,
@@ -229,20 +220,13 @@ public:
     return upper_bound;
   }
 
-  template<typename Point, typename... Configurations>
-  double compute_normalised_papangelou(const Point& point, Configurations&&... configurations) const {
-    double alpha_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(Model::alpha_, Model::dispersion_.get_maximum(window_), get_type(point)));
-    double alpha_dispersion(detail::compute_alpha_dot_dispersion(point,Model:: alpha_, Model::dispersion_, std::forward<Configurations>(configurations)...));
-    return std::exp(alpha_dispersion - alpha_dispersion_maximum);
-  }
-
   // TODO: Factorise and make this function more readable.
-  template<typename Point, typename L, typename LComplement>
-  void add_to_L_or_U(double exp_mark, const Point& point, L& l, LComplement& l_complement) const {
+  template<typename Point, typename Configuration>
+  void add_to_L_or_U(double exp_mark, const Point& point, Configuration& l, Configuration& l_complement) const {
     double alpha_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(Model::alpha_, Model::dispersion_.get_maximum(window_), get_type(point)));
     auto compute_dispersion(Model::dispersion_.get_compute_dispersion_object(point, Model::alpha_.nrow()));
+    compute_dispersion.add_configuration(l);
     if(detail::is_alpha_non_negative(point, Model::alpha_)) {
-      compute_dispersion.add_configuration(l);
       const auto save(compute_dispersion.get_state());
       compute_dispersion.add_configuration(l_complement);
       const auto dispersion_u(compute_dispersion.compute());
@@ -253,7 +237,6 @@ public:
         add_point(alpha_dispersion - alpha_dispersion_maximum + exp_mark > 0 ? l : l_complement, point);
       }
     } else if(detail::is_alpha_non_positive(point, Model::alpha_)) {
-      compute_dispersion.add_configuration(l);
       const auto dispersion_l(compute_dispersion.compute());
       const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, dispersion_l));
       if(alpha_dispersion - alpha_dispersion_maximum + exp_mark > 0) {
@@ -263,7 +246,6 @@ public:
         add_point(alpha_dispersion - alpha_dispersion_maximum + exp_mark > 0 ? l : l_complement, point);
       }
     } else {
-      compute_dispersion.add_configuration(l);
       const auto dispersion_l(compute_dispersion.compute());
       compute_dispersion.add_configuration(l_complement);
       const auto dispersion_u(compute_dispersion.compute());

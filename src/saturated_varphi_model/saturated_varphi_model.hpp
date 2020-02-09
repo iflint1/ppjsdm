@@ -142,7 +142,6 @@ private:
 };
 
 // Note: Use inheritance to benefit from EBO.
-// TODO: Try to get rid of public inheritance if possible.
 template<typename Varphi>
 class Saturated_varphi_model: public Varphi {
 private:

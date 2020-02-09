@@ -27,7 +27,7 @@ private:
   void set_matrix(size_t i, size_t j, double r) {
     matrix_[i * static_cast<size_t>(dim_) + j] = Varphi::set(r);
   }
-public:
+protected:
   explicit Generic_varphi(Rcpp::NumericMatrix radius): dim_(radius.ncol()), matrix_(dim_ * dim_) {
     if(radius.nrow() != dim_) {
       Rcpp::stop("The radius matrix is not a square matrix, as was expected.");
@@ -49,7 +49,7 @@ public:
   }
 
   template<typename Window>
-  static double get_maximum(const Window&) {
+  constexpr static double get_maximum(const Window&) {
     return 1.0;
   }
 private:
