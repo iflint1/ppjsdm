@@ -15,50 +15,33 @@
 #include <vector> // std::vector
 
 namespace ppjsdm {
+namespace detail {
 
 template<typename Point, typename Dispersion, typename Select = void>
-class Compute_dispersion;
+class Compute_dispersion_implementation;
 
 template<typename Point, typename Dispersion>
-class Compute_dispersion<Point, Dispersion, std::enable_if_t<has_nonzero_value_v<Dispersion>>> {
-private:
-  using CountType = std::vector<unsigned long long int>;
-public:
-  Compute_dispersion(const Point& point,
-                     R_xlen_t number_types,
-                     const Dispersion& dispersion):
+class Compute_dispersion_implementation<Point, Dispersion, std::enable_if_t<has_nonzero_value_v<Dispersion>>> {
+protected:
+  Compute_dispersion_implementation(const Point& point,
+                                    R_xlen_t number_types,
+                                    const Dispersion& dispersion):
   point_(point),
   dispersion_(dispersion),
-  count_positive_types_(number_types) {}
+  count_vector_(number_types) {}
 
-  template<typename Configuration>
-  void add_configuration(const Configuration& configuration) {
-    update_count(configuration);
-  }
-
-  auto compute() const {
-    return compute_dispersion(count_positive_types_);
-  }
-
-  auto compute_from_state(const CountType& count) const {
-    return compute_dispersion(count);
-  }
-
-  auto get_state() const {
-    return count_positive_types_;
-  }
-private:
+  using CountType = std::vector<unsigned long long int>;
   const Point& point_;
   const Dispersion& dispersion_;
-  CountType count_positive_types_;
+  CountType count_vector_;
 
   template<typename Configuration>
   void update_count(const Configuration& configuration) {
     using size_t = size_t<Configuration>;
     for(size_t i(0); i < size(configuration); ++i) {
       const auto& current_point(configuration[i]);
-      if(count_positive_types_[get_type(current_point)] < dispersion_.saturation_ && dispersion_.apply(current_point, point_) > 0) {
-        ++count_positive_types_[get_type(current_point)];
+      if(count_vector_[get_type(current_point)] < dispersion_.saturation_ && dispersion_.apply(current_point, point_) > 0) {
+        ++count_vector_[get_type(current_point)];
       }
     }
   }
@@ -76,37 +59,19 @@ private:
 };
 
 template<typename Point, typename Dispersion>
-class Compute_dispersion<Point, Dispersion, std::enable_if_t<!has_nonzero_value_v<Dispersion>>> {
-private:
-  using CountType = std::vector<std::list<double>>;
-public:
-  Compute_dispersion(const Point& point,
-                     R_xlen_t number_types,
-                     const Dispersion& dispersion):
+class Compute_dispersion_implementation<Point, Dispersion, std::enable_if_t<!has_nonzero_value_v<Dispersion>>> {
+protected:
+  Compute_dispersion_implementation(const Point& point,
+                                    R_xlen_t number_types,
+                                    const Dispersion& dispersion):
   point_(point),
   dispersion_(dispersion),
-  square_distances_(number_types) {}
+  count_vector_(number_types) {}
 
-  template<typename Configuration>
-  void add_configuration(const Configuration& configuration) {
-    update_count(configuration);
-  }
-
-  auto compute() const {
-    return compute_dispersion(square_distances_);
-  }
-
-  auto compute_from_state(const CountType& count) const {
-    return compute_dispersion(count);
-  }
-
-  auto get_state() const {
-    return square_distances_;
-  }
-private:
+  using CountType = std::vector<std::list<double>>;
   const Point& point_;
   const Dispersion& dispersion_;
-  CountType square_distances_;
+  CountType count_vector_;
 
   template<typename Configuration>
   void update_count(const Configuration& configuration) {
@@ -114,7 +79,7 @@ private:
     for(size_t i(0); i < size(configuration); ++i) {
       const auto& current_point(configuration[i]);
       const auto sq(square_distance(current_point, point_));
-      auto& current(square_distances_[get_type(current_point)]);
+      auto& current(count_vector_[get_type(current_point)]);
       auto iterator(std::upper_bound(current.begin(), current.end(), sq));
       if(current.size() < dispersion_.saturation_) {
         current.insert(iterator, sq);
@@ -132,7 +97,7 @@ private:
     const auto point_type(get_type(point_));
     for(size_t i(0); i < static_cast<size_t>(number_types); ++i) {
       double d(0);
-      for(const auto sq: square_distances_[i]) {
+      for(const auto sq: count_vector_[i]) {
         d += dispersion_.apply(sq, i, point_type);
       }
       dispersion[i] = d;
@@ -141,12 +106,41 @@ private:
   }
 };
 
+} // namespace detail
+
+template<typename Point, typename Dispersion>
+class Compute_dispersion : public detail::Compute_dispersion_implementation<Point, Dispersion> {
+private:
+  using ImplementationBase = detail::Compute_dispersion_implementation<Point, Dispersion>;
+public:
+  template<typename... Args>
+  Compute_dispersion(Args&&... args):
+  ImplementationBase(std::forward<Args>(args)...) {}
+
+  template<typename Configuration>
+  void add_configuration(const Configuration& configuration) {
+    ImplementationBase::update_count(configuration);
+  }
+
+  auto compute() const {
+    return ImplementationBase::compute_dispersion(ImplementationBase::count_vector_);
+  }
+
+  auto compute_from_state(const typename ImplementationBase::CountType& count) const {
+    return ImplementationBase::compute_dispersion(count);
+  }
+
+  auto get_state() const {
+    return ImplementationBase::count_vector_;
+  }
+};
+
 // Note: Use inheritance to benefit from EBO.
 template<typename Varphi>
 class Saturated_varphi_model: public Varphi {
 private:
   template<typename, typename, typename>
-  friend class Compute_dispersion;
+  friend class detail::Compute_dispersion_implementation;
 public:
   template<typename... Args>
   Saturated_varphi_model(unsigned long long int saturation, Args&&... args):
