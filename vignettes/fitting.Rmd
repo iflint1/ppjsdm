@@ -34,7 +34,7 @@ This vignette explains how to calibrate a model in different situations.
 We use the Geyer model.
 
 ```{r}
-model <- "Geyer"
+model <- "square_bump"
 ```
 
 We begin by defining the parameters of the point process.

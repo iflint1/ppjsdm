@@ -9,8 +9,7 @@
 #include "../point/square_distance.hpp"
 #include "../utility/for_each_container.hpp"
 
-#include <algorithm> // std::upper_bound
-#include <list> // std::list
+#include <algorithm> // std::pop_heap, std::push_heap
 #include <utility> // std::forward, std::move
 #include <vector> // std::vector
 
@@ -68,7 +67,7 @@ protected:
   dispersion_(dispersion),
   count_vector_(number_types) {}
 
-  using CountType = std::vector<std::list<double>>;
+  using CountType = std::vector<std::vector<double>>;
   const Point& point_;
   const Dispersion& dispersion_;
   CountType count_vector_;
@@ -80,11 +79,12 @@ protected:
       const auto& current_point(configuration[i]);
       const auto sq(square_distance(current_point, point_));
       auto& current(count_vector_[get_type(current_point)]);
-      auto iterator(std::upper_bound(current.begin(), current.end(), sq));
       if(current.size() < dispersion_.saturation_) {
-        current.insert(iterator, sq);
-      } else if(iterator != current.end()) {
-        current.insert(iterator, sq);
+        current.emplace_back(sq);
+        std::push_heap(current.begin(), current.end());
+      } else if(sq < current[0]) {
+        current.emplace_back(sq);
+        std::pop_heap(current.begin(), current.end());
         current.pop_back();
       }
     }
@@ -97,8 +97,8 @@ protected:
     const auto point_type(get_type(point_));
     for(size_t i(0); i < static_cast<size_t>(number_types); ++i) {
       double d(0);
-      for(const auto sq: count_vector_[i]) {
-        d += dispersion_.apply(sq, i, point_type);
+      for(const auto& c: count[i]) {
+        d += dispersion_.apply(c, i, point_type);
       }
       dispersion[i] = d;
     }
