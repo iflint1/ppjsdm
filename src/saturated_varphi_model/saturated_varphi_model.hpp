@@ -9,7 +9,8 @@
 #include "../point/square_distance.hpp"
 #include "../utility/for_each_container.hpp"
 
-#include <algorithm> // std::pop_heap, std::push_heap
+#include <algorithm> // std::accumulate, std::pop_heap, std::push_heap
+#include <functional> // std::greater
 #include <utility> // std::forward, std::move
 #include <vector> // std::vector
 
@@ -58,7 +59,7 @@ protected:
 };
 
 template<typename Point, typename Dispersion>
-class Compute_dispersion_implementation<Point, Dispersion, std::enable_if_t<!has_nonzero_value_v<Dispersion>>> {
+class Compute_dispersion_implementation<Point, Dispersion, std::enable_if_t<!has_nonzero_value_v<Dispersion> && Dispersion::is_nonincreasing>> {
 protected:
   Compute_dispersion_implementation(const Point& point,
                                     R_xlen_t number_types,
@@ -101,6 +102,50 @@ protected:
         d += dispersion_.apply(c, i, point_type);
       }
       dispersion[i] = d;
+    }
+    return dispersion;
+  }
+};
+
+template<typename Point, typename Dispersion>
+class Compute_dispersion_implementation<Point, Dispersion, std::enable_if_t<!has_nonzero_value_v<Dispersion> && !Dispersion::is_nonincreasing>> {
+protected:
+  Compute_dispersion_implementation(const Point& point,
+                                    R_xlen_t number_types,
+                                    const Dispersion& dispersion):
+  point_(point),
+  dispersion_(dispersion),
+  count_vector_(number_types) {}
+
+  using CountType = std::vector<std::vector<double>>;
+  const Point& point_;
+  const Dispersion& dispersion_;
+  CountType count_vector_;
+
+  template<typename Configuration>
+  void update_count(const Configuration& configuration) {
+    using size_t = size_t<Configuration>;
+    for(size_t i(0); i < size(configuration); ++i) {
+      const auto& current_point(configuration[i]);
+      const auto disp(dispersion_.apply(current_point, point_));
+      auto& current(count_vector_[get_type(current_point)]);
+      if(current.size() < dispersion_.saturation_) {
+        current.emplace_back(disp);
+        std::push_heap(current.begin(), current.end(), std::greater<double>{});
+      } else if(disp > current[0]) {
+        current.emplace_back(disp);
+        std::pop_heap(current.begin(), current.end(), std::greater<double>{});
+        current.pop_back();
+      }
+    }
+  }
+
+  auto compute_dispersion(const CountType& count) const {
+    const auto number_types(count.size());
+    std::vector<double> dispersion(number_types);
+    using size_t = typename decltype(dispersion)::size_type;
+    for(size_t i(0); i < static_cast<size_t>(number_types); ++i) {
+      dispersion[i] = std::accumulate(count[i].begin(), count[i].end(), 0.);
     }
     return dispersion;
   }

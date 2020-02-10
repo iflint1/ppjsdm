@@ -14,7 +14,7 @@
 namespace ppjsdm {
 namespace varphi {
 
-// Note: Public inheritance in order to inherit parameter `nonzero_value` if it exists in Varphi.
+// Note: Public inheritance in order to inherit member variables if they exist in Varphi.
 template<typename Varphi>
 class Generic_varphi: public Varphi {
 private:
@@ -54,10 +54,12 @@ protected:
   }
 private:
   R_xlen_t dim_;
-  std::vector<double> matrix_;
+  MatrixType matrix_;
 };
 
 struct Bump_implementation {
+  static constexpr bool is_nonincreasing = true;
+
   static double set(double radius) {
     return -radius * std::log(2);
   }
@@ -68,6 +70,8 @@ struct Bump_implementation {
 };
 
 struct Square_bump_implementation {
+  static constexpr bool is_nonincreasing = true;
+
   static double set(double radius) {
     return -radius * radius * std::log(2);
   }
@@ -78,6 +82,8 @@ struct Square_bump_implementation {
 };
 
 struct Square_exponential_implementation {
+  static constexpr bool is_nonincreasing = true;
+
   static double set(double radius) {
     return -std::log(2) / (radius * radius);
   }
@@ -88,6 +94,8 @@ struct Square_exponential_implementation {
 };
 
 struct Exponential_implementation {
+  static constexpr bool is_nonincreasing = true;
+
   static double set(double radius) {
     return -std::log(2) / radius;
   }
@@ -99,6 +107,7 @@ struct Exponential_implementation {
 
 struct Strauss_implementation {
   static constexpr double nonzero_value = 1.0;
+  static constexpr bool is_nonincreasing = true;
 
   static double set(double radius) {
     return radius * radius;
@@ -129,16 +138,6 @@ struct has_nonzero_value<T, decltype(static_cast<void>(T::nonzero_value), void()
 
 template<typename T>
 constexpr bool has_nonzero_value_v = has_nonzero_value<T>::value;
-
-template<typename Varphi>
-inline constexpr std::enable_if_t<!has_nonzero_value_v<Varphi>, double> get_nonzero_value() {
-  return 0.;
-}
-
-template<typename Varphi>
-inline constexpr std::enable_if_t<has_nonzero_value_v<Varphi>, double> get_nonzero_value() {
-  return Varphi::nonzero_value;
-}
 
 } // namespace ppjsdm
 
