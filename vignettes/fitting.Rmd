@@ -34,7 +34,7 @@ This vignette explains how to calibrate a model in different situations.
 We use the Geyer model.
 
 ```{r}
-model <- "square_bump"
+model <- "Geyer"
 ```
 
 We begin by defining the parameters of the point process.
@@ -156,7 +156,8 @@ This section assumes you have a series of traits explaining a given dataset.
 To illustrate how the package works, we define arbitrarily the following traits.
 
 ```{r}
-radii <- matrix(0.1, 2, 2)
+nspecies <- 3
+radii <- matrix(0.1, nspecies, nspecies)
 
 average_height <- c(type1 = 1, type2 = 7, type3 = 10)
 average_seed_size <- c(type1 = 3, type2 = 5, type3 = 1)
@@ -170,17 +171,19 @@ We begin by defining the parameters of the point process.
 ```{r}
 traits_matrix <- rbind(average_height, average_seed_size)
 traits_maximum_difference <- apply(traits_matrix, 1, function(c) max(abs(outer(c, c, '-'))))
+print(traits_maximum_difference)
+traits_maximum <- apply(traits_matrix, 1, function(c) max(abs(c)))
+print(traits_maximum)
   
 gamma <- c(0, 0)
-beta <- c(-0.1, 0.1)
-delta <- c(-1, 1)
+beta <- c(-2, 2)
+delta <- c(1.5, -1.5)
 
-nspecies <- 3
 alpha <- matrix(NA, nspecies, nspecies)
 for(i in seq_len(nspecies)) {
   for(j in seq_len(nspecies)) {
     if(i == j) {
-      alpha[i, j] <- gamma[1] + beta %*% traits_matrix[, i]
+      alpha[i, j] <- gamma[1] + beta %*% (traits_matrix[, i] / traits_maximum)
     } else {
       alpha[i, j] <- gamma[2] + delta %*% (abs(traits_matrix[, i] - traits_matrix[, j]) / traits_maximum_difference)
     }
@@ -192,19 +195,18 @@ print(alpha)
 Finally, we sample the observations.
 
 ```{r}
-configurations <- append(ppjsdm::rgibbs(lambda = c(300, 300), 
+configurations <- append(ppjsdm::rgibbs(lambda = c(50, 50), 
                                         alpha = alpha[c(1, 2), c(1, 2)],
-                                        nsim = 100, 
+                                        nsim = 300, 
                                         types = c("type1", "type2"), 
                                         model = model, 
-                                        radius = radii,
+                                        radius = radii[c(1, 2), c(1, 2)],
                                         drop = FALSE),
                                       
-                                      
-                         ppjsdm::rgibbs(lambda = c(300, 300), 
-                                        alpha = alpha[c(2, 3), c(2, 3)],
-                                        nsim = 100,
-                                        types = c("type2", "type3"), 
+                         ppjsdm::rgibbs(lambda = c(50, 50, 50), 
+                                        alpha = alpha,
+                                        nsim = 300,
+                                        types = c("type1", "type2", "type3"), 
                                         model = model, 
                                         radius = radii,
                                         drop = FALSE))
@@ -232,5 +234,5 @@ fit$joint_traits
 The actual values used are
 
 ```{r}
-c(gamma[1], delta, gamma[2], beta)
+c(gamma[1], beta, gamma[2], delta)
 ```

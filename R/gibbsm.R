@@ -17,6 +17,9 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   # Make covariates im objects with proper names.
   covariates <- coerce_to_named_im_objects(covariates, "unnamed_covariate", window)
 
+  # TODO: This is giving really unexpected results when sizeof(radius) > sizeof(one of the configurations).
+  # See the traits part of the fitting vignette. Perhaps add size check for radius?
+
   # If we're given a single configuration, convert it to a list.
   if(inherits(configuration_list, "Configuration")) {
     configuration_list <- list(configuration_list)
@@ -55,6 +58,7 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
     regressors <- matrix(data = NA, nrow = diagonal_regression_length, ncol = number_traits)
     joint_regressors <- matrix(data = NA, nrow = nondiagonal_regression_length, ncol = number_traits)
 
+    normalisation <- sapply(traits, function(trait) max(abs(trait)))
     joint_normalisation <- sapply(traits, function(trait) max(abs(outer(trait, trait, '-'))))
 
     joint_index <- 1
@@ -71,7 +75,7 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
         }
         diagonal_response[index] <- fits_coefficients[[i]][indices]
         for(l in seq_len(number_traits)) {
-          regressors[index, l] <- traits[[l]][current_name_j]
+          regressors[index, l] <- traits[[l]][current_name_j] / normalisation[l]
         }
         index <- index + 1
 
@@ -96,7 +100,7 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
     }
 
     colnames(joint_regressors) <- paste0("joint_", names(traits))
-    formula_joint <- paste0("nondiagonal_response ~ 0 + ", paste(colnames(joint_regressors), collapse = " + "))
+    formula_joint <- paste0("nondiagonal_response ~ 1 + ", paste(colnames(joint_regressors), collapse = " + "))
     joint_traits_fit <- lm(as.formula(formula_joint), data = data.frame(nondiagonal_response, joint_regressors))
 
     colnames(regressors) <- names(traits)
