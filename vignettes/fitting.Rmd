@@ -169,16 +169,21 @@ We begin by defining the parameters of the point process.
 
 ```{r}
 traits_matrix <- rbind(average_height, average_seed_size)
-traits_means <- apply(traits_matrix, 1, mean)
+traits_maximum_difference <- apply(traits_matrix, 1, function(c) max(abs(outer(c, c, '-'))))
   
-gamma <- 0
-beta <- c(1, -1)
+gamma <- c(0, 0)
+beta <- c(-0.1, 0.1)
+delta <- c(-1, 1)
 
 nspecies <- 3
 alpha <- matrix(NA, nspecies, nspecies)
 for(i in seq_len(nspecies)) {
   for(j in seq_len(nspecies)) {
-    alpha[i, j] <- gamma + beta %*% ((traits_matrix[, i] - traits_means) * (traits_matrix[, j] - traits_means) / (traits_means * traits_means))
+    if(i == j) {
+      alpha[i, j] <- gamma[1] + beta %*% traits_matrix[, i]
+    } else {
+      alpha[i, j] <- gamma[2] + delta %*% (abs(traits_matrix[, i] - traits_matrix[, j]) / traits_maximum_difference)
+    }
   }
 }
 print(alpha)
@@ -187,22 +192,22 @@ print(alpha)
 Finally, we sample the observations.
 
 ```{r}
-configurations <- append(ppjsdm::rgibbs(lambda = c(50, 50), 
-                                             alpha = alpha[c(1, 2), c(1, 2)],
-                                             nsim = 100, 
-                                             types = c("type1", "type2"), 
-                                             model = model, 
-                                             radius = radii,
-                                             drop = FALSE),
+configurations <- append(ppjsdm::rgibbs(lambda = c(300, 300), 
+                                        alpha = alpha[c(1, 2), c(1, 2)],
+                                        nsim = 100, 
+                                        types = c("type1", "type2"), 
+                                        model = model, 
+                                        radius = radii,
+                                        drop = FALSE),
                                       
                                       
-                         ppjsdm::rgibbs(lambda = c(50, 50), 
-                                             alpha = alpha[c(2, 3), c(2, 3)],
-                                             nsim = 100,
-                                             types = c("type2", "type3"), 
-                                             model = model, 
-                                             radius = radii,
-                                             drop = FALSE))
+                         ppjsdm::rgibbs(lambda = c(300, 300), 
+                                        alpha = alpha[c(2, 3), c(2, 3)],
+                                        nsim = 100,
+                                        types = c("type2", "type3"), 
+                                        model = model, 
+                                        radius = radii,
+                                        drop = FALSE))
 ```
 
 One of the samples is plotted below.
@@ -221,10 +226,11 @@ fit <- ppjsdm::gibbsm(configurations,
                       radius = radii, 
                       print = FALSE)
 fit$traits
+fit$joint_traits
 ```
 
 The actual values used are
 
 ```{r}
-c(gamma, beta)
+c(gamma[1], delta, gamma[2], beta)
 ```

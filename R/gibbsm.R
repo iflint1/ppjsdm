@@ -42,41 +42,73 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
     number_of_individuals_by_configuration <- lapply(configuration_list, function(configuration) get_number_points(configuration, total = FALSE))
     species_names_by_configuration <- lapply(number_of_individuals_by_configuration, function(n) names(n))
     number_of_species_by_configuration <- lapply(number_of_individuals_by_configuration, function(n) length(n))
-    number_of_alpha_coefficients_by_configuration <- lapply(number_of_species_by_configuration, function(n) n * (n + 1) / 2)
-    regression_length <- Reduce("+", number_of_alpha_coefficients_by_configuration)
-    response <- vector(mode = "numeric", length = regression_length)
-    joint_regressors <- matrix(data = NA, nrow = regression_length, ncol = number_traits)
 
+    number_of_nondiagonal_alpha_coefficients_by_configuration <- lapply(number_of_species_by_configuration, function(n) n * (n - 1) / 2)
+    number_of_diagonal_alpha_coefficients_by_configuration <- lapply(number_of_species_by_configuration, function(n) n)
+
+    diagonal_regression_length <- Reduce("+", number_of_diagonal_alpha_coefficients_by_configuration)
+    nondiagonal_regression_length <- Reduce("+", number_of_nondiagonal_alpha_coefficients_by_configuration)
+
+    diagonal_response <- vector(mode = "numeric", length = diagonal_regression_length)
+    nondiagonal_response <- vector(mode = "numeric", length = nondiagonal_regression_length)
+
+    regressors <- matrix(data = NA, nrow = diagonal_regression_length, ncol = number_traits)
+    joint_regressors <- matrix(data = NA, nrow = nondiagonal_regression_length, ncol = number_traits)
+
+    joint_normalisation <- sapply(traits, function(trait) max(abs(outer(trait, trait, '-'))))
+
+    joint_index <- 1
     index <- 1
     for(i in seq_len(number_configurations)) {
       for(j in seq_len(number_of_species_by_configuration[[i]])) {
         current_name_j <- species_names_by_configuration[[i]][j]
-        for(k in j:number_of_species_by_configuration[[i]]) {
-          alpha_string <- paste0("alpha", "_", j, "_", k)
-          if(use_glmnet) {
-            indices <- which(rownames(fits_coefficients[[i]]) %in% alpha_string)
-          } else {
-            indices <- which(names(fits_coefficients[[i]]) %in% alpha_string)
+
+        alpha_string <- paste0("alpha", "_", j, "_", j)
+        if(use_glmnet) {
+          indices <- which(rownames(fits_coefficients[[i]]) %in% alpha_string)
+        } else {
+          indices <- which(names(fits_coefficients[[i]]) %in% alpha_string)
+        }
+        diagonal_response[index] <- fits_coefficients[[i]][indices]
+        for(l in seq_len(number_traits)) {
+          regressors[index, l] <- traits[[l]][current_name_j]
+        }
+        index <- index + 1
+
+        if(j < number_of_species_by_configuration[[i]]) {
+          for(k in (j + 1):number_of_species_by_configuration[[i]]) {
+            alpha_string <- paste0("alpha", "_", j, "_", k)
+            if(use_glmnet) {
+              indices <- which(rownames(fits_coefficients[[i]]) %in% alpha_string)
+            } else {
+              indices <- which(names(fits_coefficients[[i]]) %in% alpha_string)
+            }
+            nondiagonal_response[joint_index] <- fits_coefficients[[i]][indices]
+            current_name_k <- species_names_by_configuration[[i]][k]
+            # TODO: Very inefficient, hopefully move to C++...
+            for(l in seq_len(number_traits)) {
+              joint_regressors[joint_index, l] <- abs(traits[[l]][current_name_j] - traits[[l]][current_name_k]) / joint_normalisation[l]
+            }
+            joint_index <- joint_index + 1
           }
-          response[index] <- fits_coefficients[[i]][indices]
-          current_name_k <- species_names_by_configuration[[i]][k]
-          joint_regressors[index, ] <- sapply(traits, function(trait) {
-            (trait[current_name_j] - mean(trait)) * (trait[current_name_k] - mean(trait)) / (mean(trait) * mean(trait))
-          })
-          index <- index + 1
         }
       }
     }
 
     colnames(joint_regressors) <- paste0("joint_", names(traits))
-    formula <- paste0("response ~ 1 + ", paste(colnames(joint_regressors), collapse = " + "))
-    traits_fit <- lm(as.formula(formula), data = data.frame(response, joint_regressors))
+    formula_joint <- paste0("nondiagonal_response ~ 0 + ", paste(colnames(joint_regressors), collapse = " + "))
+    joint_traits_fit <- lm(as.formula(formula_joint), data = data.frame(nondiagonal_response, joint_regressors))
+
+    colnames(regressors) <- names(traits)
+    formula <- paste0("diagonal_response ~ 1 + ", paste(colnames(regressors), collapse = " + "))
+    traits_fit <- lm(as.formula(formula), data = data.frame(diagonal_response, regressors))
   }
 
   if(print) {
     lapply(fits_coefficients, function(fit) print(fit))
     if(number_traits > 0) {
       print(coefficients(traits_fit))
+      print(coefficients(joint_traits_fit))
     }
   }
 
@@ -89,7 +121,7 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   }
   ret <- list(complete = fits, coefficients = fits_coefficients)
   if(number_traits > 0) {
-    ret <- append(list, list(traits = traits_fit))
+    ret <- append(list, list(traits = traits_fit, joint_traits = joint_traits_fit))
   }
   if(use_glmnet) {
     ret <- append(ret, list(cv = cv_fits))
