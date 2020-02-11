@@ -8,6 +8,8 @@
 #include "../simulation/inhomogeneous_ppp.hpp"
 
 #include <tuple> // std::tuple
+#include <type_traits> // std::remove_cv_t, std::remove_reference_t
+#include <utility> // std::forward
 #include <vector> // std::vector
 
 namespace ppjsdm {

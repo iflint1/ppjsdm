@@ -16,7 +16,7 @@ namespace varphi {
 
 // Note: Public inheritance in order to inherit member variables if they exist in Varphi.
 template<typename Varphi>
-class Generic_varphi: public Varphi {
+class Generic_potential: public Varphi {
 private:
   using MatrixType = std::vector<double>;
   using size_t = typename MatrixType::size_type;
@@ -28,7 +28,7 @@ private:
     matrix_[i * static_cast<size_t>(dim_) + j] = Varphi::set(r);
   }
 protected:
-  explicit Generic_varphi(Rcpp::NumericMatrix radius): dim_(radius.ncol()), matrix_(dim_ * dim_) {
+  explicit Generic_potential(Rcpp::NumericMatrix radius): dim_(radius.ncol()), matrix_(dim_ * dim_) {
     if(radius.nrow() != dim_) {
       Rcpp::stop("The radius matrix is not a square matrix, as was expected.");
     }
@@ -122,11 +122,11 @@ struct Strauss_implementation {
   }
 };
 
-using Bump = Generic_varphi<Bump_implementation>;
-using Square_bump = Generic_varphi<Square_bump_implementation>;
-using Exponential = Generic_varphi<Exponential_implementation>;
-using Square_exponential = Generic_varphi<Square_exponential_implementation>;
-using Strauss = Generic_varphi<Strauss_implementation>;
+using Bump = Generic_potential<Bump_implementation>;
+using Square_bump = Generic_potential<Square_bump_implementation>;
+using Exponential = Generic_potential<Exponential_implementation>;
+using Square_exponential = Generic_potential<Square_exponential_implementation>;
+using Strauss = Generic_potential<Strauss_implementation>;
 
 } // namespace varphi
 

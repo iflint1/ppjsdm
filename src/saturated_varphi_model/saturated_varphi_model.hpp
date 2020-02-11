@@ -3,7 +3,7 @@
 
 #include <Rcpp.h>
 
-#include "varphi.hpp"
+#include "potential.hpp"
 #include "../configuration/configuration_manipulation.hpp"
 #include "../point/point_manipulation.hpp"
 #include "../point/square_distance.hpp"
