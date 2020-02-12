@@ -76,15 +76,24 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     shift[j] = -std::log(static_cast<double>(rho_times_volume[j]) / volume);
   }
 
-  // TODO: Make more explicit struct.
-  using ResultType = std::tuple<bool, int, std::vector<double>, std::vector<double>>;
-  std::vector<ResultType> precomputed_results;
+  // Precompute dispersion and other computation-intensive things.
+  struct Result_type {
+    Result_type(): is_in_configuration(), type(), dispersion(), covariates() {}
+
+    Result_type(bool i, int t, std::vector<double> v, std::vector<double> w):
+      is_in_configuration(i), type(t), dispersion(std::move(v)), covariates(std::move(w)) {}
+
+    bool is_in_configuration;
+    int type;
+    std::vector<double> dispersion;
+    std::vector<double> covariates;
+  };
+  std::vector<Result_type> precomputed_results;
   precomputed_results.reserve(length_configuration + length_D);
 
-  // Precompute dispersion and other computation-intensive things.
 #pragma omp parallel
 {
-  std::vector<ResultType> results_private;
+  std::vector<Result_type> results_private;
   results_private.reserve(length_configuration + length_D);
 #pragma omp for nowait
   for(size_t i = 0; i < length_configuration; ++i) {
@@ -121,8 +130,8 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 
   // Fill the regressors, response, offset and shift with what we precomputed.
   for(size_t i(0); i < precomputed_results.size(); ++i) {
-    response[i] = std::get<0>(precomputed_results[i]) ? 1 : 0;
-    const size_t type_index(std::get<1>(precomputed_results[i]));
+    response[i] = precomputed_results[i].is_in_configuration ? 1 : 0;
+    const size_t type_index(precomputed_results[i].type);
 
     rho_offset[i] = -std::log(static_cast<double>(rho_times_volume[type_index]) / volume);
     // TODO: index or formula here and in other vectors?
@@ -138,7 +147,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
       // fill covariates
       if(j == type_index) {
         for(size_t k(0); k < covariates_length; ++k) {
-          covariates_input(i, k * number_types + j) = std::get<3>(precomputed_results[i])[k];
+          covariates_input(i, k * number_types + j) = precomputed_results[i].covariates[k];
         }
       } else {
         for(size_t k(0); k < covariates_length; ++k) {
@@ -149,12 +158,12 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
       // fill alpha
       if(j == type_index) {
         for(size_t k(j); k < number_types; ++k) {
-          alpha_input(i, index++) = std::get<2>(precomputed_results[i])[k];
+          alpha_input(i, index++) = precomputed_results[i].dispersion[k];
         }
       } else {
         for(size_t k(j); k < number_types; ++k) {
           if(k == type_index) {
-            alpha_input(i, index++) = std::get<2>(precomputed_results[i])[j];
+            alpha_input(i, index++) = precomputed_results[i].dispersion[j];
           } else {
             alpha_input(i, index++) = 0;
           }
