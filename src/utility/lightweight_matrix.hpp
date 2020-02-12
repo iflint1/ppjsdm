@@ -11,25 +11,26 @@ template<typename T>
 class Lightweight_matrix {
 private:
   using MatrixType = std::vector<T>;
-  using size_t = typename MatrixType::size_type;
 public:
-  explicit Lightweight_matrix(size_t rows, size_t columns):
+  using size_type = typename MatrixType::size_type;
+
+  explicit Lightweight_matrix(size_type rows, size_type columns):
   rows_(rows), columns_(columns), matrix_(rows * columns) {}
 
   explicit Lightweight_matrix(Rcpp::NumericMatrix matrix):
-  rows_(matrix.nrow()), columns_(matrix.ncol()), matrix_(rows_ * columns_) {
-    for(size_t i(0); i < rows_; ++i) {
-      for(size_t j(0); j < columns_; ++j) {
+    Lightweight_matrix(matrix.nrow()) {
+    for(size_type i(0); i < rows_; ++i) {
+      for(size_type j(0); j < columns_; ++j) {
         operator()(i, j) = static_cast<T>(matrix(i, j));
       }
     }
   }
 
-  decltype(auto) operator()(size_t i, size_t j) const {
+  decltype(auto) operator()(size_type i, size_type j) const {
     return matrix_[i * columns_ + j];
   }
 
-  decltype(auto) operator()(size_t i, size_t j) {
+  decltype(auto) operator()(size_type i, size_type j) {
     return matrix_[i * columns_ + j];
   }
 
@@ -41,8 +42,8 @@ public:
     return rows_;
   }
 private:
-  size_t rows_;
-  size_t columns_;
+  size_type rows_;
+  size_type columns_;
   MatrixType matrix_;
 };
 
@@ -51,28 +52,29 @@ template<typename T>
 class Lightweight_square_matrix {
 private:
   using MatrixType = std::vector<T>;
-  using size_t = typename MatrixType::size_type;
 public:
-  explicit Lightweight_square_matrix(size_t dim):
+  using size_type = typename MatrixType::size_type;
+
+  explicit Lightweight_square_matrix(size_type dim):
   dim_(dim), matrix_(dim * dim) {}
 
   explicit Lightweight_square_matrix(Rcpp::NumericMatrix matrix):
-  dim_(matrix.nrow()), matrix_(dim_ * dim_) {
-    if(matrix.ncol() != dim_) {
+    Lightweight_square_matrix(matrix.nrow()) {
+    if(static_cast<size_type>(matrix.ncol()) != dim_) {
       Rcpp::stop("The matrix is not a square matrix, as was expected.");
     }
-    for(size_t i(0); i < dim_; ++i) {
-      for(size_t j(0); j < dim_; ++j) {
+    for(size_type i(0); i < dim_; ++i) {
+      for(size_type j(0); j < dim_; ++j) {
         operator()(i, j) = static_cast<T>(matrix(i, j));
       }
     }
   }
 
-  decltype(auto) operator()(size_t i, size_t j) const {
+  decltype(auto) operator()(size_type i, size_type j) const {
     return matrix_[i * dim_ + j];
   }
 
-  decltype(auto) operator()(size_t i, size_t j) {
+  decltype(auto) operator()(size_type i, size_type j) {
     return matrix_[i * dim_ + j];
   }
 
@@ -84,7 +86,7 @@ public:
     return dim_;
   }
 private:
-  size_t dim_;
+  size_type dim_;
   MatrixType matrix_;
 };
 

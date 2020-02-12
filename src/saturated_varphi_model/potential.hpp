@@ -6,6 +6,7 @@
 
 #include "../point/point_manipulation.hpp"
 #include "../point/square_distance.hpp"
+#include "../utility/lightweight_matrix.hpp"
 
 #include <cmath> // std::sqrt, std::exp, std::log
 #include <type_traits> // std::enable_if, std::false_type, std::true_type
@@ -18,29 +19,13 @@ namespace varphi {
 template<typename Varphi>
 class Generic_potential: public Varphi {
 private:
-  using MatrixType = std::vector<double>;
-  using size_t = typename MatrixType::size_type;
-  auto access_matrix(size_t i, size_t j) const {
-    return matrix_[i * static_cast<size_t>(dim_) + j];
-  }
-
-  void set_matrix(size_t i, size_t j, double r) {
-    matrix_[i * static_cast<size_t>(dim_) + j] = Varphi::set(r);
-  }
+  Lightweight_square_matrix<double> matrix_;
+  using size_t = typename decltype(matrix_)::size_type;
 protected:
-  explicit Generic_potential(Rcpp::NumericMatrix radius): dim_(radius.ncol()), matrix_(dim_ * dim_) {
-    if(radius.nrow() != dim_) {
-      Rcpp::stop("The radius matrix is not a square matrix, as was expected.");
-    }
-    for(R_xlen_t i(0); i < dim_; ++i) {
-      for(R_xlen_t j(0); j < dim_; ++j) {
-        set_matrix(i, j, radius(i, j));
-      }
-    }
-  }
+  explicit Generic_potential(Rcpp::NumericMatrix radius): matrix_(radius) {}
 
   double apply(double square_distance, size_t i, size_t j) const {
-    return Varphi::apply(square_distance, access_matrix(i, j));
+    return Varphi::apply(square_distance, Varphi::set(matrix_(i, j)));
   }
 
   template<typename Point, typename Other>
@@ -52,9 +37,6 @@ protected:
   constexpr static double get_maximum(const Window&) {
     return 1.0;
   }
-private:
-  R_xlen_t dim_;
-  MatrixType matrix_;
 };
 
 struct Bump_implementation {
