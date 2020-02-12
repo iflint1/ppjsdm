@@ -20,6 +20,10 @@
 #include <string> // std::string, std::to_string
 #include <vector> // std::vector
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 inline void add_to_formula(std::string& formula, Rcpp::CharacterVector names) {
   for(const auto& name: names) {
     formula += std::string(" + ") + Rcpp::as<std::string>(name);
@@ -72,7 +76,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   }
 
   // Fill the data.
-  for(size_t i(0); i < length_configuration + length_D; ++i) {
+  for(size_t i = 0; i < length_configuration + length_D; ++i) {
     std::vector<double> dispersion;
     ppjsdm::Marked_point point;
     if(i < length_configuration) {
@@ -134,6 +138,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
       }
     }
   }
+
   // Convert response and rho_offset to Rcpp objects.
   Rcpp::IntegerMatrix response_rcpp(Rcpp::no_init(response.size(), 1));
   for(R_xlen_t i(0); i < static_cast<R_xlen_t>(response.size()); ++i) {
