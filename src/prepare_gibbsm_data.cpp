@@ -35,7 +35,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   const auto length_configuration(ppjsdm::size(configuration));
   using size_t = ppjsdm::size_t<Configuration>;
   const size_t number_types(points_by_type.size());
-  const auto covariates_length(covariates.size());
+  const size_t covariates_length(covariates.size());
   const auto volume(window.volume());
 
   // Sample the dummy points D.
@@ -51,6 +51,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 
 
   // Get rid of locations with an NA value for one of the covariates
+  // TODO: I'm recomputing all the covariates below; might be able to remove the points at that point!
   D.erase(std::remove_if(D.begin(), D.end(), [&covariates, covariates_length](const auto& point) {
     for(size_t j(0); j < covariates_length; ++j) {
       const auto covariate(covariates[j](ppjsdm::get_x(point),  ppjsdm::get_y(point)));
@@ -75,26 +76,53 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     shift[j] = -std::log(static_cast<double>(rho_times_volume[j]) / volume);
   }
 
-  // Fill the data.
-  for(size_t i = 0; i < length_configuration + length_D; ++i) {
-    std::vector<double> dispersion;
-    ppjsdm::Marked_point point;
-    if(i < length_configuration) {
-      response[i] = 1;
-      point = configuration[i];
+  // TODO: Make more explicit struct.
+  using ResultType = std::tuple<bool, int, std::vector<double>, std::vector<double>>;
+  std::vector<ResultType> precomputed_results;
+  precomputed_results.reserve(length_configuration + length_D);
 
-      // TODO: Avoid copy and removal
-      Configuration configuration_copy(configuration);
-      ppjsdm::remove_point_by_index(configuration_copy, i);
-
-      dispersion = dispersion_model.compute(point, number_types, configuration_copy);
-    } else {
-      response[i] = 0;
-      point = D[i - length_configuration];
-      dispersion = dispersion_model.compute(point, number_types, configuration);
+  // Precompute dispersion and other computation-intensive things.
+#pragma omp parallel
+{
+  std::vector<ResultType> results_private;
+  results_private.reserve(length_configuration + length_D);
+#pragma omp for nowait
+  for(size_t i = 0; i < length_configuration; ++i) {
+    // TODO: Avoidable?
+    Configuration configuration_copy(configuration);
+    ppjsdm::remove_point_by_index(configuration_copy, i);
+    const auto d(dispersion_model.compute(configuration[i], number_types, configuration_copy));
+    std::vector<double> cov(covariates_length);
+    for(size_t k(0); k < covariates_length; ++k) {
+      const auto covariate(covariates[k](configuration[i]));
+      if(R_IsNA(covariate)) {
+        Rcpp::stop("One of the covariates' value is NA on one of the locations in the dataset.");
+      }
+      cov[k] = covariate;
     }
+    results_private.emplace_back(true, ppjsdm::get_type(configuration[i]), std::move(d), std::move(cov));
+  }
+#pragma omp for nowait
+  for(size_t i = 0; i < length_D; ++i) {
+    const auto d(dispersion_model.compute(D[i], number_types, configuration));
+    std::vector<double> cov(covariates_length);
+    for(size_t k(0); k < covariates_length; ++k) {
+      const auto covariate(covariates[k](D[i]));
+      if(R_IsNA(covariate)) {
+        Rcpp::stop("One of the covariates' value is NA on one of the locations in the dataset.");
+      }
+      cov[k] = covariate;
+    }
+    results_private.emplace_back(false, ppjsdm::get_type(D[i]), std::move(d), std::move(cov));
+  }
+#pragma omp critical
+  precomputed_results.insert(precomputed_results.end(), results_private.begin(), results_private.end());
+}
 
-    const size_t type_index(ppjsdm::get_type(point));
+  // Fill the regressors, response, offset and shift with what we precomputed.
+  for(size_t i(0); i < precomputed_results.size(); ++i) {
+    response[i] = std::get<0>(precomputed_results[i]) ? 1 : 0;
+    const size_t type_index(std::get<1>(precomputed_results[i]));
 
     rho_offset[i] = -std::log(static_cast<double>(rho_times_volume[type_index]) / volume);
     // TODO: index or formula here and in other vectors?
@@ -110,11 +138,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
       // fill covariates
       if(j == type_index) {
         for(size_t k(0); k < covariates_length; ++k) {
-          const auto covariate(covariates[k](point));
-          if(R_IsNA(covariate)) {
-            Rcpp::stop("One of the covariates' value is NA on one of the locations in the dataset.");
-          }
-          covariates_input(i, k * number_types + j) = covariate;
+          covariates_input(i, k * number_types + j) = std::get<3>(precomputed_results[i])[k];
         }
       } else {
         for(size_t k(0); k < covariates_length; ++k) {
@@ -125,12 +149,12 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
       // fill alpha
       if(j == type_index) {
         for(size_t k(j); k < number_types; ++k) {
-          alpha_input(i, index++) = dispersion[k];
+          alpha_input(i, index++) = std::get<2>(precomputed_results[i])[k];
         }
       } else {
         for(size_t k(j); k < number_types; ++k) {
           if(k == type_index) {
-            alpha_input(i, index++) = dispersion[j];
+            alpha_input(i, index++) = std::get<2>(precomputed_results[i])[j];
           } else {
             alpha_input(i, index++) = 0;
           }
@@ -175,6 +199,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 
   // TODO: Write rbind that also works with names?
   // TODO: Might also be simpler to just construct regressors straight away
+  // Put all the regressors into a unique matrix that'll be sent to glm / glmnet.
   Rcpp::NumericMatrix regressors(Rcpp::no_init(log_lambda.nrow(),
                                                log_lambda.ncol() + alpha_input.ncol() + covariates_input.ncol()));
   Rcpp::CharacterVector col_names(Rcpp::no_init(regressors.ncol()));
@@ -213,14 +238,19 @@ Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covar
   if(length_configuration == 0) {
     Rcpp::stop("Empty configuration.");
   }
-  return ppjsdm::call_on_wrapped_window(window, [&wrapped_configuration, &covariates, &model, radius, saturation](const auto& w) {
+  // Convert to std::vector in order for parallelised version to work.
+  std::vector<ppjsdm::Marked_point> vector_configuration(length_configuration);
+  for(decltype(ppjsdm::size(wrapped_configuration)) i(0); i < length_configuration; ++i) {
+    vector_configuration[i] = wrapped_configuration[i];
+  }
+  return ppjsdm::call_on_wrapped_window(window, [&vector_configuration, &covariates, &model, radius, saturation](const auto& w) {
     // The trick below allows us to find the number of different types in the configuration.
     // That number is then used to default construct `radius`.
-    const auto points_by_type(ppjsdm::get_number_points(wrapped_configuration));
+    const auto points_by_type(ppjsdm::get_number_points(vector_configuration));
     const auto number_types(points_by_type.size());
     const auto r(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(radius, 0.1 * w.diameter(), number_types));
-    return ppjsdm::call_on_dispersion_model(model, r, saturation, [&wrapped_configuration, &w, &covariates, &model, &points_by_type](const auto& papangelou) {
-      return prepare_gibbsm_data_helper(wrapped_configuration, w, ppjsdm::Im_list_wrapper(covariates), papangelou, points_by_type);
+    return ppjsdm::call_on_dispersion_model(model, r, saturation, [&vector_configuration, &w, &covariates, &model, &points_by_type](const auto& papangelou) {
+      return prepare_gibbsm_data_helper(vector_configuration, w, ppjsdm::Im_list_wrapper(covariates), papangelou, points_by_type);
     });
   });
 }
