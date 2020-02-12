@@ -17,6 +17,7 @@
 #include "utility/window_utilities.hpp"
 
 #include <algorithm> // std::remove_if
+#include <cmath> // std::log
 #include <string> // std::string, std::to_string
 #include <vector> // std::vector
 
@@ -137,30 +138,29 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     // TODO: index or formula here and in other vectors?
     size_t index(0);
     for(size_t j(0); j < number_types; ++j) {
-      // fill log_lambda
-      if(type_index == j) {
-        log_lambda(i, j) = 1;
-      } else {
-        log_lambda(i, j) = 0;
-      }
-
-      // fill covariates
       if(j == type_index) {
+        // fill log_lambda
+        log_lambda(i, j) = 1;
+
+        // fill covariates
         for(size_t k(0); k < covariates_length; ++k) {
           covariates_input(i, k * number_types + j) = precomputed_results[i].covariates[k];
         }
-      } else {
-        for(size_t k(0); k < covariates_length; ++k) {
-          covariates_input(i, k * number_types + j) = 0;
-        }
-      }
 
-      // fill alpha
-      if(j == type_index) {
+        // fill alpha
         for(size_t k(j); k < number_types; ++k) {
           alpha_input(i, index++) = precomputed_results[i].dispersion[k];
         }
       } else {
+        // fill log_lambda
+        log_lambda(i, j) = 0;
+
+        // fill covariates
+        for(size_t k(0); k < covariates_length; ++k) {
+          covariates_input(i, k * number_types + j) = 0;
+        }
+
+        // fill alpha
         for(size_t k(j); k < number_types; ++k) {
           if(k == type_index) {
             alpha_input(i, index++) = precomputed_results[i].dispersion[j];
