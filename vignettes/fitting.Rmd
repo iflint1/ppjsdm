@@ -35,6 +35,7 @@ We use the Geyer model.
 
 ```{r}
 model <- "Geyer"
+medium_range_model <- "square_exponential"
 ```
 
 We begin by defining the parameters of the point process.
@@ -42,16 +43,26 @@ We begin by defining the parameters of the point process.
 ```{r}
 nspecies <- 3
 
-alpha <- matrix(cbind(c(-0.6, 0.2, -0.3), c(0.2, 0.1, -0.4), c(-0.3, -0.4, -0.1)), 
+alpha <- matrix(cbind(c(-0.6, 0.2, -0.3), c(0.2, -0.2, -0.4), c(-0.3, -0.4, -0.5)), 
                 nspecies, 
                 nspecies)
-radii <- matrix(0.01, nspecies, nspecies)
-log_lambda <- rep(8, nspecies)
+gamma <- matrix(cbind(c(0.6, 0.2, -0.3), c(0.2, 0.1, -0.4), c(-0.3, -0.4, 0.3)), 
+                nspecies, 
+                nspecies)
+short_range <- matrix(0.01, nspecies, nspecies)
+medium_range <- matrix(0.02, nspecies, nspecies)
+long_range <- matrix(0.03, nspecies, nspecies)
+log_lambda <- rep(7, nspecies)
 
 configuration <- ppjsdm::rgibbs(lambda = exp(log_lambda), 
                                 alpha = alpha,
+                                gamma = gamma,
                                 model = model,
-                                short_range = radii)
+                                medium_range_model = medium_range_model,
+                                short_range = short_range,
+                                medium_range = medium_range,
+                                long_range = long_range)
+print(configuration)
 ```
 
 The dataset is plotted below.
@@ -66,7 +77,10 @@ The function `gibbsm` fits a multivariate Gibbs point process to our dataset.
 ```{r}
 fit <- ppjsdm::gibbsm(configuration,
                       model = model,
-                      short_range = radii)
+                      medium_range_model = medium_range_model,
+                      short_range = short_range,
+                      medium_range = medium_range,
+                      long_range = long_range)
 ```
 
 For reference, the actual values used are given below.
@@ -74,6 +88,7 @@ For reference, the actual values used are given below.
 ```{r}
 print(log_lambda)
 print(alpha)
+print(gamma)
 ```
 
 # Fitting a sample driven by covariates
@@ -93,7 +108,7 @@ covariates <- list(temperature = temperature,
 We will be using the Geyer model.
 
 ```{r}
-radii <- matrix(0.01, 2, 2)
+short_range <- matrix(0.01, 2, 2)
 model <- "Geyer"
 ```
 
@@ -116,7 +131,7 @@ configuration <- ppjsdm::rgibbs(lambda = exp(log_lambda),
                                 covariates = covariates, 
                                 beta = beta,
                                 model = model,
-                                short_range = radii)
+                                short_range = short_range)
 ```
 
 The dataset is plotted below.
@@ -132,7 +147,7 @@ The function `gibbsm` fits a multivariate Gibbs point process to our dataset.
 fit <- ppjsdm::gibbsm(configuration, 
                       covariates = covariates,
                       model = model,
-                      short_range = radii)
+                      short_range = short_range)
 ```
 
 For reference, the actual values used are given below.
@@ -157,7 +172,7 @@ To illustrate how the package works, we define arbitrarily the following traits.
 
 ```{r}
 nspecies <- 3
-radii <- matrix(0.1, nspecies, nspecies)
+short_range <- matrix(0.1, nspecies, nspecies)
 
 average_height <- c(type1 = 1, type2 = 7, type3 = 10)
 average_seed_size <- c(type1 = 3, type2 = 5, type3 = 1)
@@ -200,7 +215,7 @@ configurations <- append(ppjsdm::rgibbs(lambda = c(50, 50),
                                         nsim = 100, 
                                         types = c("type1", "type2"), 
                                         model = model, 
-                                        short_range = radii[c(1, 2), c(1, 2)],
+                                        short_range = short_range[c(1, 2), c(1, 2)],
                                         drop = FALSE),
                                       
                          ppjsdm::rgibbs(lambda = c(50, 50, 50), 
@@ -208,7 +223,7 @@ configurations <- append(ppjsdm::rgibbs(lambda = c(50, 50),
                                         nsim = 100,
                                         types = c("type1", "type2", "type3"), 
                                         model = model, 
-                                        short_range = radii,
+                                        short_range = short_range,
                                         drop = FALSE))
 ```
 
@@ -225,7 +240,7 @@ The function `gibbsm` then fits a multivariate Gibbs point process to our datase
 fit <- ppjsdm::gibbsm(configurations, 
                       traits = traits, 
                       model = model, 
-                      short_range = radii, 
+                      short_range = short_range, 
                       print = FALSE)
 fit$traits
 fit$joint_traits

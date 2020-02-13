@@ -58,7 +58,7 @@ private:
 protected:
   Medium_range_potential(Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range):
   medium_(medium_range.nrow()),
-  long_(long_range.nrow()){
+  long_(medium_range.nrow()){
     const size_t medium_dim(medium_range.nrow());
     if(static_cast<size_t>(medium_range.ncol()) != medium_dim
          || static_cast<size_t>(long_range.ncol()) != medium_dim
@@ -113,7 +113,7 @@ struct Square_bump_implementation {
 };
 
 struct Square_exponential_implementation {
-  static constexpr bool is_nonincreasing = true;
+  static constexpr bool is_nonincreasing = false;
 
   static double set(double radius) {
     return -std::log(2) / (radius * radius);
@@ -124,8 +124,7 @@ struct Square_exponential_implementation {
   }
 
   static double set_upper(double lower, double upper) {
-    const auto delta(upper - lower);
-    return -std::log(2) / (delta * delta);
+    return set(upper - lower);
   }
 
   static double apply(double square_distance, double constant) {
@@ -156,14 +155,29 @@ struct Exponential_implementation {
 
 struct Strauss_implementation {
   static constexpr double nonzero_value = 1.0;
-  static constexpr bool is_nonincreasing = true;
 
   static double set(double radius) {
     return radius * radius;
   }
 
+  static double set_lower(double lower, double) {
+    return lower * lower;
+  }
+
+  static double set_upper(double, double upper) {
+    return upper * upper;
+  }
+
   static double apply(double square_distance, double constant) {
     if(square_distance <= constant) {
+      return 1.;
+    } else {
+      return 0.;
+    }
+  }
+
+  static double apply(double square_distance, double lower, double upper) {
+    if(square_distance >= lower && square_distance <= upper) {
       return 1.;
     } else {
       return 0.;
@@ -178,6 +192,7 @@ using Square_exponential = Short_range_potential<Square_exponential_implementati
 using Strauss = Short_range_potential<Strauss_implementation>;
 
 using Medium_range_square_exponential = Medium_range_potential<Square_exponential_implementation>;
+using Medium_range_Geyer = Medium_range_potential<Strauss_implementation>;
 
 } // namespace varphi
 

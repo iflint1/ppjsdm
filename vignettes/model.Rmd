@@ -266,7 +266,7 @@ nspecies <- 2
 ncovariates <- 0
 lambda <- c(10, 10)
 alpha <- cbind(c(-1, .7), c(.7, -0.5))
-gamma <- cbind(c(.5, -1), c(-1, 0.5))
+gamma <- cbind(c(0.5, -1), c(-1, 0.5))
 beta <- matrix(0, nspecies, ncovariates)
 covariates <- list()
 model <- "Geyer"
