@@ -31,8 +31,8 @@ inline void add_to_formula(std::string& formula, Rcpp::CharacterVector names) {
   }
 }
 
-template<typename Configuration, typename Window, typename DispersionModel, typename Vector>
-Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const Window& window, const ppjsdm::Im_list_wrapper& covariates, const DispersionModel& dispersion_model, const Vector& points_by_type) {
+template<typename Configuration, typename Window, typename DispersionModel, typename MediumDispersionModel, typename Vector>
+Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const Window& window, const ppjsdm::Im_list_wrapper& covariates, const DispersionModel& dispersion_model, const MediumDispersionModel& medium_dispersion_model, const Vector& points_by_type) {
   const auto length_configuration(ppjsdm::size(configuration));
   using size_t = ppjsdm::size_t<Configuration>;
   const size_t number_types(points_by_type.size());
@@ -64,13 +64,6 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   }), D.end());
   const size_t length_D(D.size());
 
-  // Default-initialise the data
-  std::vector<int> response(length_configuration + length_D);
-  std::vector<double> rho_offset(length_configuration + length_D);
-  ppjsdm::Lightweight_matrix<double> log_lambda(length_configuration + length_D, number_types);
-  ppjsdm::Lightweight_matrix<double> alpha_input(length_configuration + length_D, number_types * (number_types + 1) / 2);
-  ppjsdm::Lightweight_matrix<double> covariates_input(length_configuration + length_D, covariates_length * number_types);
-
   // Make shift vector
   Rcpp::NumericVector shift(Rcpp::no_init(number_types));
   for(size_t j(0); j < number_types; ++j) {
@@ -79,21 +72,22 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 
   // Precompute dispersion and other computation-intensive things.
   struct Result_type {
-    Result_type(): is_in_configuration(), type(), dispersion(), covariates() {}
+    Result_type(): is_in_configuration(), type(), dispersion(), medium_dispersion(), covariates() {}
 
-    Result_type(bool i, int t, std::vector<double> v, std::vector<double> w):
-      is_in_configuration(i), type(t), dispersion(std::move(v)), covariates(std::move(w)) {}
+    Result_type(bool i, int t, std::vector<double> v, std::vector<double> w, std::vector<double> x):
+      is_in_configuration(i), type(t), dispersion(std::move(v)), medium_dispersion(std::move(w)), covariates(std::move(x)) {}
 
     bool is_in_configuration;
     int type;
     std::vector<double> dispersion;
+    std::vector<double> medium_dispersion;
     std::vector<double> covariates;
   };
   std::vector<Result_type> precomputed_results;
   precomputed_results.reserve(length_configuration + length_D);
 
 #pragma omp parallel
-{
+  {
   std::vector<Result_type> results_private;
   results_private.reserve(length_configuration + length_D);
 #pragma omp for nowait
@@ -102,6 +96,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     Configuration configuration_copy(configuration);
     ppjsdm::remove_point_by_index(configuration_copy, i);
     const auto d(dispersion_model.compute(configuration[i], number_types, configuration_copy));
+    const auto e(medium_dispersion_model.compute(configuration[i], number_types, configuration_copy));
     std::vector<double> cov(covariates_length);
     for(size_t k(0); k < covariates_length; ++k) {
       const auto covariate(covariates[k](configuration[i]));
@@ -110,11 +105,12 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
       }
       cov[k] = covariate;
     }
-    results_private.emplace_back(true, ppjsdm::get_type(configuration[i]), std::move(d), std::move(cov));
+    results_private.emplace_back(true, ppjsdm::get_type(configuration[i]), std::move(d), std::move(e), std::move(cov));
   }
 #pragma omp for nowait
   for(size_t i = 0; i < length_D; ++i) {
     const auto d(dispersion_model.compute(D[i], number_types, configuration));
+    const auto e(medium_dispersion_model.compute(D[i], number_types, configuration));
     std::vector<double> cov(covariates_length);
     for(size_t k(0); k < covariates_length; ++k) {
       const auto covariate(covariates[k](D[i]));
@@ -123,11 +119,20 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
       }
       cov[k] = covariate;
     }
-    results_private.emplace_back(false, ppjsdm::get_type(D[i]), std::move(d), std::move(cov));
+    results_private.emplace_back(false, ppjsdm::get_type(D[i]), std::move(d), std::move(e), std::move(cov));
   }
 #pragma omp critical
   precomputed_results.insert(precomputed_results.end(), results_private.begin(), results_private.end());
-}
+  }
+
+  // Default-initialise the data
+  std::vector<int> response(length_configuration + length_D);
+  std::vector<double> rho_offset(length_configuration + length_D);
+  ppjsdm::Lightweight_matrix<double> log_lambda(length_configuration + length_D, number_types);
+  ppjsdm::Lightweight_matrix<double> alpha_input(length_configuration + length_D, number_types * (number_types + 1) / 2);
+  ppjsdm::Lightweight_matrix<double> gamma_input(length_configuration + length_D, number_types * (number_types + 1) / 2);
+  ppjsdm::Lightweight_matrix<double> covariates_input(length_configuration + length_D, covariates_length * number_types);
+
 
   // Fill the regressors, response, offset and shift with what we precomputed.
   for(size_t i(0); i < precomputed_results.size(); ++i) {
@@ -149,7 +154,8 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 
         // fill alpha
         for(size_t k(j); k < number_types; ++k) {
-          alpha_input(i, index++) = precomputed_results[i].dispersion[k];
+          alpha_input(i, index) = precomputed_results[i].dispersion[k];
+          gamma_input(i, index++) = precomputed_results[i].medium_dispersion[k];
         }
       } else {
         // fill log_lambda
@@ -163,9 +169,11 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
         // fill alpha
         for(size_t k(j); k < number_types; ++k) {
           if(k == type_index) {
-            alpha_input(i, index++) = precomputed_results[i].dispersion[j];
+            alpha_input(i, index) = precomputed_results[i].dispersion[j];
+            gamma_input(i, index++) = precomputed_results[i].medium_dispersion[j];
           } else {
-            alpha_input(i, index++) = 0;
+            alpha_input(i, index) = 0;
+            gamma_input(i, index++) = 0;
           }
         }
       }
@@ -184,10 +192,12 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 
   // Set names.
   Rcpp::CharacterVector alpha_names(Rcpp::no_init(alpha_input.ncol()));
+  Rcpp::CharacterVector gamma_names(Rcpp::no_init(alpha_input.ncol()));
   size_t index(0);
   for(size_t j(0); j < number_types; ++j) {
     for(size_t k(j); k < number_types; ++k) {
-      alpha_names[index++] = std::string("alpha_") + std::to_string(j + 1) + std::string("_") + std::to_string(k + 1);
+      alpha_names[index] = std::string("alpha_") + std::to_string(j + 1) + std::string("_") + std::to_string(k + 1);
+      gamma_names[index++] = std::string("gamma_") + std::to_string(j + 1) + std::string("_") + std::to_string(k + 1);
     }
   }
   Rcpp::CharacterVector covariates_input_names(Rcpp::no_init(covariates_length * number_types));
@@ -210,7 +220,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   // TODO: Might also be simpler to just construct regressors straight away
   // Put all the regressors into a unique matrix that'll be sent to glm / glmnet.
   Rcpp::NumericMatrix regressors(Rcpp::no_init(log_lambda.nrow(),
-                                               log_lambda.ncol() + alpha_input.ncol() + covariates_input.ncol()));
+                                               log_lambda.ncol() + alpha_input.ncol() + gamma_input.ncol() + covariates_input.ncol()));
   Rcpp::CharacterVector col_names(Rcpp::no_init(regressors.ncol()));
   for(R_xlen_t j(0); j < static_cast<R_xlen_t>(log_lambda.ncol()); ++j) {
     col_names[j] = log_lambda_names[j];
@@ -224,10 +234,16 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
       regressors(i, j + log_lambda.ncol()) = alpha_input(i, j);
     }
   }
-  for(R_xlen_t j(0); j < static_cast<R_xlen_t>(covariates_input.ncol()); ++j) {
-    col_names[j + log_lambda.ncol() + alpha_input.ncol()] = covariates_input_names[j];
+  for(R_xlen_t j(0); j < static_cast<R_xlen_t>(gamma_input.ncol()); ++j) {
+    col_names[j + log_lambda.ncol() + alpha_input.ncol()] = gamma_names[j];
     for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-      regressors(i, j + log_lambda.ncol() + alpha_input.ncol()) = covariates_input(i, j);
+      regressors(i, j + log_lambda.ncol() + alpha_input.ncol()) = gamma_input(i, j);
+    }
+  }
+  for(R_xlen_t j(0); j < static_cast<R_xlen_t>(covariates_input.ncol()); ++j) {
+    col_names[j + log_lambda.ncol() + alpha_input.ncol() + gamma_input.ncol()] = covariates_input_names[j];
+    for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+      regressors(i, j + log_lambda.ncol() + alpha_input.ncol() + gamma_input.ncol()) = covariates_input(i, j);
     }
   }
   Rcpp::colnames(regressors) = col_names;
@@ -259,11 +275,10 @@ Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covar
     const auto number_types(points_by_type.size());
     const auto sh(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(short_range, 0.1 * w.diameter(), number_types));
     return ppjsdm::call_on_dispersion_model(model, sh, saturation, [number_types, medium_range_model, medium_range, long_range, saturation, &vector_configuration, &w, &covariates, &points_by_type](const auto& short_papangelou) {
-      // TODO: Use medium range Papangelou
       const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0.1 * w.diameter(), number_types));
       const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0.2 * w.diameter(), number_types));
-      return ppjsdm::call_on_medium_range_dispersion_model(medium_range_model, me, lo, saturation, [&short_papangelou, &vector_configuration, &w, &covariates, &points_by_type](const auto&) {
-        return prepare_gibbsm_data_helper(vector_configuration, w, ppjsdm::Im_list_wrapper(covariates), short_papangelou, points_by_type);
+      return ppjsdm::call_on_medium_range_dispersion_model(medium_range_model, me, lo, saturation, [&short_papangelou, &vector_configuration, &w, &covariates, &points_by_type](const auto& medium_papangelou) {
+        return prepare_gibbsm_data_helper(vector_configuration, w, ppjsdm::Im_list_wrapper(covariates), short_papangelou, medium_papangelou, points_by_type);
       });
     });
   });
