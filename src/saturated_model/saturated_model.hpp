@@ -279,7 +279,8 @@ const constexpr char* const short_range_models[] = {
   "square_exponential",
   "bump",
   "square_bump",
-  "Geyer"
+  "Geyer",
+  "linear"
 };
 
 template<typename F>
@@ -295,6 +296,8 @@ inline auto call_on_dispersion_model(Rcpp::CharacterVector model, Rcpp::NumericM
     return f(Saturated_model<potentials::Square_bump>(saturation, radius));
   } else if(model_string == short_range_models[4]) {
     return f(Saturated_model<potentials::Strauss>(saturation, radius));
+  } else if(model_string == short_range_models[5]) {
+    return f(Saturated_model<potentials::Linear>(saturation, radius));
   } else {
     Rcpp::stop("Incorrect model entered. A call to show_short_range_models() will show you the available choices.\n");
   }

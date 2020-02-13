@@ -269,7 +269,7 @@ alpha <- cbind(c(-1, .7), c(.7, -0.5))
 gamma <- cbind(c(0.5, -1), c(-1, 0.5))
 beta <- matrix(0, nspecies, ncovariates)
 covariates <- list()
-model <- "Geyer"
+model <- "linear"
 medium_range_model <- "square_exponential"
 short_range <- cbind(c(0.1, 0), c(0, 0.2))
 medium_range <- cbind(c(0.1, 0), c(0, 0.2))

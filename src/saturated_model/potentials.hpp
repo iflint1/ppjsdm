@@ -8,6 +8,7 @@
 #include "../point/square_distance.hpp"
 #include "../utility/lightweight_matrix.hpp"
 
+#include <algorithm> // std::max
 #include <cmath> // std::sqrt, std::exp, std::log
 #include <type_traits> // std::enable_if, std::false_type, std::true_type
 #include <utility> // std::declval
@@ -202,6 +203,18 @@ struct Exponential_implementation {
   }
 };
 
+struct Linear_implementation {
+  static constexpr bool is_nonincreasing = true;
+
+  static double set(double radius) {
+    return -1. / radius;
+  }
+
+  static double apply(double square_distance, double constant) {
+    return std::max<double>(0., 1. + constant * std::sqrt(square_distance));
+  }
+};
+
 struct Strauss_implementation {
   static constexpr double nonzero_value = 1.0;
 
@@ -239,6 +252,7 @@ using Square_bump = Short_range_potential<Square_bump_implementation>;
 using Exponential = Short_range_potential<Exponential_implementation>;
 using Square_exponential = Short_range_potential<Square_exponential_implementation>;
 using Strauss = Short_range_potential<Strauss_implementation>;
+using Linear = Short_range_potential<Linear_implementation>;
 
 using Medium_range_square_exponential = Medium_range_potential<Half_square_exponential_implementation>;
 using Medium_range_Geyer = Medium_range_potential<Strauss_implementation>;
