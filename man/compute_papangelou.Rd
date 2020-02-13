@@ -10,11 +10,15 @@ compute_papangelou(
   y,
   type,
   model,
+  medium_range_model,
   alpha,
   lambda,
   beta,
+  gamma,
   covariates,
-  radius,
+  short_range,
+  medium_range,
+  long_range,
   saturation
 )
 }
@@ -27,17 +31,25 @@ compute_papangelou(
 
 \item{type}{Type of the point (as an integer >= 1).}
 
-\item{model}{String representing the model to simulate from. You can check the currently authorised models with a call to `show_model()`.}
+\item{model}{String representing the model to use. You can check the currently authorised models with a call to `show_models()`.}
 
-\item{alpha}{Repulsion matrix.}
+\item{medium_range_model}{String representing the medium range model to use. You can check the currently authorised models with a call to `show_medium_range_models()`.}
+
+\item{alpha}{Short range repulsion matrix.}
 
 \item{lambda}{A vector representing the intensities of the point processes.}
 
 \item{beta}{Coefficients related to covariates.}
 
+\item{gamma}{Medium range repulsion matrix.}
+
 \item{covariates}{Covariates.}
 
-\item{radius}{Interaction radii.}
+\item{short_range}{Short range interaction radii.}
+
+\item{medium_range}{Medium range interaction radii.}
+
+\item{long_range}{Long range interaction radii.}
 
 \item{saturation}{Saturation parameter.}
 }

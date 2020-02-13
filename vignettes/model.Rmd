@@ -63,7 +63,10 @@ alpha <- matrix(0, nspecies, nspecies)
 beta <- matrix(0, nspecies, ncovariates)
 covariates <- vector(mode = "list", length = ncovariates)
 model <- "Geyer"
-radius <- matrix(0.1, nspecies, nspecies)
+medium_range_model <- "square_exponential"
+short_range <- matrix(0.1, nspecies, nspecies)
+medium_range <- matrix(0.1, nspecies, nspecies)
+long_range <- matrix(0.2, nspecies, nspecies)
 saturation <- 2
 window <- Rectangle_window()
 spatstat_window <- owin()
@@ -93,8 +96,8 @@ Now, we can compute the Papangelou conditional intensity over the region.
 x_axis <- seq(from = 0, to = 1, by = 0.001)
 y_axis <- x_axis
 z <- outer(x_axis, y_axis, function(x, y) {
-  compute_papangelou(configuration, x, y, 1, model, alpha, 
-                     lambda, beta, covariates, radius, saturation)
+  compute_papangelou(configuration, x, y, 1, model, medium_range_model, alpha, 
+                     lambda, beta, covariates, short_range, medium_range, long_range, saturation)
 })
 ```
 
@@ -120,21 +123,24 @@ Writing a function to sample from the distribution and plot the configuration an
 (Note: we use the plotting facilities from `spatstat` here and in the remainder of the vignette.)
 
 ```{r}
-plot_pap <- function(type, model, alpha, 
-                     lambda, beta, covariates, radius, saturation) {
+plot_pap <- function(type, model, medium_range_model, alpha, 
+                     lambda, beta, covariates, short_range, medium_range, long_range, saturation) {
   configuration <- rgibbs(window = window, 
                         alpha = alpha, 
                         lambda = lambda, 
                         beta = beta, 
                         covariates = covariates,
-                        radius = radius,
+                        short_range = short_range,
+                        medium_range = medium_range,
+                        long_range = long_range,
                         saturation = saturation,
-                        model = model)
+                        model = model,
+                        medium_range_model = medium_range_model)
   x_axis <- seq(from = 0, to = 1, by = 0.001)
   y_axis <- x_axis
   z <- outer(x_axis, y_axis, function(x, y) {
-    compute_papangelou(configuration, x, y, type, model, alpha, 
-                      lambda, beta, covariates, radius, saturation)
+    compute_papangelou(configuration, x, y, type, model, medium_range_model, alpha, 
+                      lambda, beta, covariates, short_range, medium_range, long_range, saturation)
   })
   par(mar = c(5, 4, 4, 13) + 0.1)
   plot(as.im(t(z), W = spatstat_window))

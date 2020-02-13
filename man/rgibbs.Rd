@@ -7,15 +7,19 @@
 rgibbs(
   window = NULL,
   alpha = NULL,
+  gamma = NULL,
   lambda = NULL,
   covariates = NULL,
   beta = NULL,
-  radius = NULL,
+  short_range = NULL,
+  medium_range = NULL,
+  long_range = NULL,
   saturation = 2,
   steps = 0,
   nsim = 1,
   types = NULL,
   model = "square_bump",
+  medium_range_model = "square_exponential",
   drop = TRUE
 )
 }
@@ -23,6 +27,8 @@ rgibbs(
 \item{window}{Simulation window.}
 
 \item{alpha}{Repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.}
+
+\item{gamma}{Medium range repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.}
 
 \item{lambda}{A vector representing the intensities of the point processes.
 Default is a vector of same size as types, filled with ones.}
@@ -32,7 +38,11 @@ Default is a vector of same size as types, filled with ones.}
 \item{beta}{Fitted coefficients related to covariates. Default is square matrix of zeroes of the same
 number of rows/columns as the covariates.}
 
-\item{radius}{Symmetric matrix of interaction radii. Filled with 0.1 times the window radius by default.}
+\item{short_range}{Symmetric matrix of short range interaction radii. Filled with 0.1 times the window radius by default.}
+
+\item{medium_range}{Symmetric matrix of medium range interaction radii. Filled with 0.1 times the window radius by default.}
+
+\item{long_range}{Symmetric matrix of long range interaction radii. Filled with 0.2 times the window radius by default.}
 
 \item{saturation}{Saturation parameter of the point process. Default is 2.}
 
@@ -43,7 +53,9 @@ Default is 0.}
 
 \item{types}{Types of the points. Default is a vector (type1, type2, ...) of same size as n.}
 
-\item{model}{String representing the model to simulate from. You can check the currently authorised models with a call to `show_model()`.}
+\item{model}{String representing the model to use You can check the currently authorised models with a call to `show_short_range_models()`.}
+
+\item{medium_range_model}{String representing the model to use You can check the currently authorised models with a call to `show_medium_range_models()`.}
 
 \item{drop}{If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration. Default is TRUE.}
 }

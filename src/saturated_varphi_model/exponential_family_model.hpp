@@ -132,53 +132,64 @@ inline auto compute_alpha_dot_dispersion_maximum(const Alpha& alpha, double disp
 
 } // namespace detail
 
-template<typename Dispersion, typename Lambda>
+template<typename Dispersion, typename MediumRangeDispersion, typename Lambda>
 class Exponential_family_model {
 public:
-  template<typename D, std::enable_if_t<std::is_same<Dispersion, std::remove_reference_t<D>>::value>* = nullptr>
+  template<typename D, typename E, std::enable_if_t<std::is_same<Dispersion, std::remove_reference_t<D>>::value && std::is_same<MediumRangeDispersion, std::remove_reference_t<E>>::value>* = nullptr>
   Exponential_family_model(const Lambda& lambda,
                            D&& dispersion,
+                           E&& medium_range_dispersion,
                            Rcpp::NumericMatrix alpha,
                            Rcpp::NumericMatrix beta,
+                           Rcpp::NumericMatrix gamma,
                            Rcpp::List covariates):
     dispersion_(std::forward<D>(dispersion)),
+    medium_range_dispersion_(std::forward<E>(medium_range_dispersion)),
     lambda_(lambda),
     alpha_(alpha),
     beta_(beta),
+    gamma_(gamma),
     covariates_(covariates) {}
 
   template<typename Point, typename Configuration>
   double compute_papangelou(const Point& point, const Configuration& configuration) const {
-    const auto dispersion(dispersion_.compute(point, alpha_.nrow(), configuration));
-    double alpha_dispersion(detail::compute_alpha_dot_dispersion(point, alpha_, dispersion));
+    const auto dalpha(dispersion_.compute(point, alpha_.nrow(), configuration));
+    double alpha_dispersion(detail::compute_alpha_dot_dispersion(point, alpha_, dalpha));
+    const auto dgamma(medium_range_dispersion_.compute(point, alpha_.nrow(), configuration));
+    double gamma_dispersion(detail::compute_alpha_dot_dispersion(point, gamma_, dgamma));
     double beta_covariates(detail::compute_beta_dot_covariates(point, beta_, covariates_));
-    return lambda_[get_type(point)] * std::exp(alpha_dispersion + beta_covariates);
+    return lambda_[get_type(point)] * std::exp(alpha_dispersion + beta_covariates + gamma_dispersion);
   }
 
 protected:
   Dispersion dispersion_;
+  MediumRangeDispersion medium_range_dispersion_;
   Lambda lambda_;
   Rcpp::NumericMatrix alpha_;
   Rcpp::NumericMatrix beta_;
+  Rcpp::NumericMatrix gamma_;
   Im_list_wrapper covariates_;
 };
 
-template<typename Window, typename Dispersion, typename Lambda>
-class Exponential_family_model_over_window: public Exponential_family_model<Dispersion, Lambda> {
+template<typename Window, typename Dispersion, typename MediumRangeDispersion, typename Lambda>
+class Exponential_family_model_over_window: public Exponential_family_model<Dispersion, MediumRangeDispersion, Lambda> {
 private:
-  using Model = Exponential_family_model<Dispersion, Lambda>;
+  using Model = Exponential_family_model<Dispersion, MediumRangeDispersion, Lambda>;
 public:
-  template<typename D>
+  template<typename D, typename E>
   Exponential_family_model_over_window(const Window& window,
                                        const Lambda& lambda,
                                        D&& dispersion,
+                                       E&& medium_range_dispersion,
                                        Rcpp::NumericMatrix alpha,
                                        Rcpp::NumericMatrix beta,
+                                       Rcpp::NumericMatrix gamma,
                                        Rcpp::List covariates):
-    Model(lambda, std::forward<D>(dispersion), alpha, beta, covariates),
+    Model(lambda, std::forward<D>(dispersion), std::forward<E>(medium_range_dispersion), alpha, beta, gamma, covariates),
     window_(window),
     beta_dot_covariates_maximum_(detail::compute_beta_dot_covariates_maximum(beta, Model::covariates_)),
-    alpha_dot_dispersion_maximum_(detail::compute_alpha_dot_dispersion_maximum(alpha, dispersion.get_maximum(window))) {}
+    alpha_dot_dispersion_maximum_(detail::compute_alpha_dot_dispersion_maximum(alpha, dispersion.get_maximum(window))),
+    gamma_dot_dispersion_maximum_(detail::compute_alpha_dot_dispersion_maximum(gamma, medium_range_dispersion.get_maximum(window))){}
 
   template<typename Point>
   auto get_log_normalized_bounding_intensity(const Point& point) const {
@@ -211,7 +222,7 @@ public:
     std::vector<double> upper_bound(number_types);
     using size_t = decltype(Model::lambda_.size());
     for(size_t i(0); i < number_types; ++i) {
-      const auto value(Model::lambda_[i] * std::exp(alpha_dot_dispersion_maximum_[i] + beta_dot_covariates_maximum_[i]));
+      const auto value(Model::lambda_[i] * std::exp(alpha_dot_dispersion_maximum_[i] + gamma_dot_dispersion_maximum_[i] + beta_dot_covariates_maximum_[i]));
       if(std::isinf(value)) {
         Rcpp::stop("Infinite value obtained as the bound to the Papangelou intensity.");
       }
@@ -221,6 +232,7 @@ public:
   }
 
   // TODO: Factorise and make this function more readable.
+  // TODO: Does not take into account gamma dispersion
   template<typename Point, typename Configuration>
   void add_to_L_or_U(double exp_mark, const Point& point, Configuration& l, Configuration& l_complement) const {
     double alpha_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(Model::alpha_, Model::dispersion_.get_maximum(window_), get_type(point)));
@@ -260,16 +272,27 @@ public:
   }
 
   double compute_log_alpha_min_lower_bound(R_xlen_t type) const {
-    double sum(0);
+    double sum_alpha(0);
     for(R_xlen_t j(0); j < Model::alpha_.ncol(); ++j) {
       const auto a(Model::alpha_(type, j));
       if(a > 0) {
-        sum -= a;
+        sum_alpha -= a;
       } else {
-        sum += a;
+        sum_alpha += a;
       }
     }
-    return sum * Model::dispersion_.get_maximum(window_);
+    double sum_gamma(0);
+    for(R_xlen_t j(0); j < Model::gamma_.ncol(); ++j) {
+      const auto g(Model::gamma_(type, j));
+      if(g > 0) {
+        sum_gamma -= g;
+      } else {
+        sum_gamma += g;
+      }
+    }
+
+    return sum_alpha * Model::dispersion_.get_maximum(window_)
+      + sum_gamma * Model::medium_range_dispersion_.get_maximum(window_);
   }
 
   const auto& get_window() const {
@@ -280,34 +303,49 @@ private:
   Window window_;
   std::vector<double> beta_dot_covariates_maximum_;
   std::vector<double> alpha_dot_dispersion_maximum_;
+  std::vector<double> gamma_dot_dispersion_maximum_;
 };
 
 template<typename F, typename Lambda, typename... Args>
 inline auto call_on_model(Rcpp::CharacterVector model,
+                          Rcpp::CharacterVector medium_range_model,
                           const Lambda& lambda,
-                          Rcpp::NumericMatrix radius,
+                          Rcpp::NumericMatrix short_range,
+                          Rcpp::NumericMatrix medium_range,
+                          Rcpp::NumericMatrix long_range,
                           unsigned long long int saturation,
                           const F& f,
                           Args... args) {
-  return call_on_dispersion_model(model, radius, saturation, [&lambda, &f, args...](auto&& varphi) {
-    using Model_type = Exponential_family_model<std::remove_cv_t<std::remove_reference_t<decltype(varphi)>>, Lambda>;
-    return f(Model_type(lambda, std::forward<decltype(varphi)>(varphi), args...));
+  return call_on_dispersion_model(model, short_range, saturation, [medium_range_model, medium_range, long_range, saturation, &lambda, &f, args...](auto&& varphi) {
+    return call_on_medium_range_dispersion_model(medium_range_model, medium_range, long_range, saturation, [&varphi, &lambda, &f, args...](auto&& psi) {
+
+    using Model_type = Exponential_family_model<std::remove_cv_t<std::remove_reference_t<decltype(varphi)>>,
+                                                std::remove_cv_t<std::remove_reference_t<decltype(psi)>>,
+                                                Lambda>;
+    return f(Model_type(lambda, std::forward<decltype(varphi)>(varphi), std::forward<decltype(psi)>(psi), args...));
+    });
   });
 }
 
 template<typename Window, typename F, typename Lambda, typename... Args>
 inline auto call_on_model(const Window& window,
                           Rcpp::CharacterVector model,
+                          Rcpp::CharacterVector medium_range_model,
                           const Lambda& lambda,
-                          Rcpp::NumericMatrix radius,
+                          Rcpp::NumericMatrix short_range,
+                          Rcpp::NumericMatrix medium_range,
+                          Rcpp::NumericMatrix long_range,
                           unsigned long long int saturation,
                           const F& f,
                           Args... args) {
-  return call_on_dispersion_model(model, radius, saturation, [&window, &lambda, &f, args...](auto&& varphi) {
-    using Model_type = Exponential_family_model_over_window<Window,
-                                                            std::remove_cv_t<std::remove_reference_t<decltype(varphi)>>,
-                                                            Lambda>;
-    return f(Model_type(window, lambda, std::forward<decltype(varphi)>(varphi), args...));
+  return call_on_dispersion_model(model, short_range, saturation, [medium_range_model, medium_range, long_range, saturation, &window, &lambda, &f, args...](auto&& varphi) {
+    return call_on_medium_range_dispersion_model(medium_range_model, medium_range, long_range, saturation, [&varphi, &window, &lambda, &f, args...](auto&& psi) {
+      using Model_type = Exponential_family_model_over_window<Window,
+                                                              std::remove_cv_t<std::remove_reference_t<decltype(varphi)>>,
+                                                              std::remove_cv_t<std::remove_reference_t<decltype(psi)>>,
+                                                              Lambda>;
+      return f(Model_type(window, lambda, std::forward<decltype(varphi)>(varphi), std::forward<decltype(psi)>(psi), args...));
+    });
   });
 }
 

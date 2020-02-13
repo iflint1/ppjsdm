@@ -46,13 +46,14 @@ inline SEXP rgibbs_helper(const Model& model, const Window& window, R_xlen_t nsi
 // TODO: Make rgibbs work with R::Inf
 
 // [[Rcpp::export]]
-SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP beta, SEXP radius, R_xlen_t saturation, R_xlen_t steps, R_xlen_t nsim, SEXP types, Rcpp::CharacterVector model, bool drop) {
+SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP beta, SEXP gamma, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, R_xlen_t steps, R_xlen_t nsim, SEXP types, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, bool drop) {
   if(Rf_isNull(covariates)) {
     covariates = Rcpp::wrap(Rcpp::List(0));
   }
 
-  const auto number_types(ppjsdm::get_number_types_and_check_conformance(alpha, lambda, radius, types));
+  const auto number_types(ppjsdm::get_number_types_and_check_conformance(alpha, gamma, lambda, short_range, medium_range, long_range, types));
   alpha = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(alpha, 0., number_types);
+  gamma = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(gamma, 0., number_types);
   lambda = ppjsdm::construct_if_missing<Rcpp::NumericVector>(lambda, 1., number_types);
 
   const auto beta_nrows(number_types);
@@ -64,17 +65,19 @@ SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP beta
   }
 
   types = ppjsdm::make_types(types, number_types, lambda);
-  return ppjsdm::call_on_wrapped_window(window, [alpha, lambda, beta, covariates, radius, saturation, steps, nsim, types, model, drop, number_types](const auto& w) {
-    return ppjsdm::call_on_list_or_vector(lambda, [alpha, lambda, beta, covariates, radius, saturation, steps, nsim, types, model, drop, number_types, &w](const auto& l) {
-      const auto r(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(radius, 0.1 * w.diameter(), number_types));
+  return ppjsdm::call_on_wrapped_window(window, [alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, number_types](const auto& w) {
+    return ppjsdm::call_on_list_or_vector(lambda, [alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, number_types, &w](const auto& l) {
+      const auto sh(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(short_range, 0.1 * w.diameter(), number_types));
+      const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0.1 * w.diameter(), number_types));
+      const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0.2 * w.diameter(), number_types));
       if(steps == 0) {
-      return ppjsdm::call_on_model(w, model, l, r, saturation, [nsim, types, drop, number_types](const auto& model) {
-        return rgibbs_helper(model, nsim, types, drop, number_types);
-      }, alpha, beta, covariates);
+        return ppjsdm::call_on_model(w, model, medium_range_model, l, sh, me, lo, saturation, [nsim, types, drop, number_types](const auto& model) {
+          return rgibbs_helper(model, nsim, types, drop, number_types);
+        }, alpha, beta, gamma, covariates);
       } else {
-        return ppjsdm::call_on_model(model, l, r, saturation, [&w, steps, nsim, types, drop, number_types](const auto& model) {
+        return ppjsdm::call_on_model(model, medium_range_model, l, sh, me, lo, saturation, [&w, steps, nsim, types, drop, number_types](const auto& model) {
           return rgibbs_helper(model, w, nsim, types, drop, number_types, steps);
-        }, alpha, beta, covariates);
+        }, alpha, beta, gamma, covariates);
       }
     });
   });

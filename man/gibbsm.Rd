@@ -10,7 +10,10 @@ gibbsm(
   covariates = list(),
   traits = list(),
   model = "square_bump",
-  radius = NULL,
+  medium_range_model = "square_exponential",
+  short_range = NULL,
+  medium_range = NULL,
+  long_range = NULL,
   saturation = 2,
   print = TRUE,
   use_glmnet = TRUE
@@ -25,9 +28,15 @@ gibbsm(
 
 \item{traits}{Species' traits.}
 
-\item{model}{String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_model()`.}
+\item{model}{String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_short_range_models()`.}
 
-\item{radius}{Interaction radius. Filled with 0.1 times the window radius by default.}
+\item{medium_range_model}{String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_medium_range_models()`.}
+
+\item{short_range}{Short range interaction radius.}
+
+\item{medium_range}{Medium range interaction radius.}
+
+\item{long_range}{Long range interaction radius.}
 
 \item{saturation}{Saturation parameter of the point process.}
 

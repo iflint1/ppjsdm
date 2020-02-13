@@ -241,7 +241,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 }
 
 // [[Rcpp::export]]
-Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covariates, Rcpp::CharacterVector model, SEXP radius, R_xlen_t saturation) {
+Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation) {
   const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
   const auto length_configuration(ppjsdm::size(wrapped_configuration));
   if(length_configuration == 0) {
@@ -252,14 +252,19 @@ Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covar
   for(decltype(ppjsdm::size(wrapped_configuration)) i(0); i < length_configuration; ++i) {
     vector_configuration[i] = wrapped_configuration[i];
   }
-  return ppjsdm::call_on_wrapped_window(window, [&vector_configuration, &covariates, &model, radius, saturation](const auto& w) {
+  return ppjsdm::call_on_wrapped_window(window, [&vector_configuration, &covariates, model, medium_range_model, short_range, medium_range, long_range, saturation](const auto& w) {
     // The trick below allows us to find the number of different types in the configuration.
-    // That number is then used to default construct `radius`.
+    // That number is then used to default construct `short_range`.
     const auto points_by_type(ppjsdm::get_number_points(vector_configuration));
     const auto number_types(points_by_type.size());
-    const auto r(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(radius, 0.1 * w.diameter(), number_types));
-    return ppjsdm::call_on_dispersion_model(model, r, saturation, [&vector_configuration, &w, &covariates, &model, &points_by_type](const auto& papangelou) {
-      return prepare_gibbsm_data_helper(vector_configuration, w, ppjsdm::Im_list_wrapper(covariates), papangelou, points_by_type);
+    const auto sh(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(short_range, 0.1 * w.diameter(), number_types));
+    return ppjsdm::call_on_dispersion_model(model, sh, saturation, [number_types, medium_range_model, medium_range, long_range, saturation, &vector_configuration, &w, &covariates, &points_by_type](const auto& short_papangelou) {
+      // TODO: Use medium range Papangelou
+      const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0.1 * w.diameter(), number_types));
+      const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0.2 * w.diameter(), number_types));
+      return ppjsdm::call_on_medium_range_dispersion_model(medium_range_model, me, lo, saturation, [&short_papangelou, &vector_configuration, &w, &covariates, &points_by_type](const auto&) {
+        return prepare_gibbsm_data_helper(vector_configuration, w, ppjsdm::Im_list_wrapper(covariates), short_papangelou, points_by_type);
+      });
     });
   });
 }

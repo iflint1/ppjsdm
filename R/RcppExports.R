@@ -7,18 +7,22 @@
 #' @param x Coordinates along the x-axis of the points at which to evaluate the Papangelou conditional intensity.
 #' @param y Coordinates along the x-axis of the points at which to evaluate the Papangelou conditional intensity.
 #' @param type Type of the point (as an integer >= 1).
-#' @param model String representing the model to simulate from. You can check the currently authorised models with a call to `show_model()`.
-#' @param alpha Repulsion matrix.
+#' @param model String representing the model to use. You can check the currently authorised models with a call to `show_models()`.
+#' @param medium_range_model String representing the medium range model to use. You can check the currently authorised models with a call to `show_medium_range_models()`.
+#' @param alpha Short range repulsion matrix.
 #' @param lambda A vector representing the intensities of the point processes.
 #' @param beta Coefficients related to covariates.
+#' @param gamma Medium range repulsion matrix.
 #' @param covariates Covariates.
-#' @param radius Interaction radii.
+#' @param short_range Short range interaction radii.
+#' @param medium_range Medium range interaction radii.
+#' @param long_range Long range interaction radii.
 #' @param saturation Saturation parameter.
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-compute_papangelou <- function(configuration, x, y, type, model, alpha, lambda, beta, covariates, radius, saturation) {
-    .Call('_ppjsdm_compute_papangelou', PACKAGE = 'ppjsdm', configuration, x, y, type, model, alpha, lambda, beta, covariates, radius, saturation)
+compute_papangelou <- function(configuration, x, y, type, model, medium_range_model, alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation) {
+    .Call('_ppjsdm_compute_papangelou', PACKAGE = 'ppjsdm', configuration, x, y, type, model, medium_range_model, alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation)
 }
 
 #' Check if a configuration contains duplicates.
@@ -31,8 +35,8 @@ has_duplicates <- function(configuration) {
     .Call('_ppjsdm_has_duplicates', PACKAGE = 'ppjsdm', configuration)
 }
 
-prepare_gibbsm_data <- function(configuration, window, covariates, model, radius, saturation) {
-    .Call('_ppjsdm_prepare_gibbsm_data', PACKAGE = 'ppjsdm', configuration, window, covariates, model, radius, saturation)
+prepare_gibbsm_data <- function(configuration, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation) {
+    .Call('_ppjsdm_prepare_gibbsm_data', PACKAGE = 'ppjsdm', configuration, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation)
 }
 
 #' Sample a binomial point processes
@@ -51,8 +55,8 @@ rbinomialpp <- function(window = NULL, n = NULL, nsim = 1L, types = NULL, drop =
     .Call('_ppjsdm_rbinomialpp', PACKAGE = 'ppjsdm', window, n, nsim, types, drop)
 }
 
-rgibbs_cpp <- function(window, alpha, lambda, covariates, beta, radius, saturation, steps, nsim, types, model, drop) {
-    .Call('_ppjsdm_rgibbs_cpp', PACKAGE = 'ppjsdm', window, alpha, lambda, covariates, beta, radius, saturation, steps, nsim, types, model, drop)
+rgibbs_cpp <- function(window, alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop) {
+    .Call('_ppjsdm_rgibbs_cpp', PACKAGE = 'ppjsdm', window, alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop)
 }
 
 #' Sample a Poisson point processes
@@ -71,12 +75,21 @@ rppp <- function(window = NULL, lambda = NULL, nsim = 1L, types = NULL, drop = T
     .Call('_ppjsdm_rppp', PACKAGE = 'ppjsdm', window, lambda, nsim, types, drop)
 }
 
-#' Show the authorised models.
+#' Show the authorised short range models.
 #'
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-show_models <- function() {
-    invisible(.Call('_ppjsdm_show_models', PACKAGE = 'ppjsdm'))
+show_short_range_models <- function() {
+    invisible(.Call('_ppjsdm_show_short_range_models', PACKAGE = 'ppjsdm'))
+}
+
+#' Show the authorised medium range models.
+#'
+#' @export
+#' @useDynLib ppjsdm
+#' @import Rcpp
+show_medium_range_models <- function() {
+    invisible(.Call('_ppjsdm_show_medium_range_models', PACKAGE = 'ppjsdm'))
 }
 

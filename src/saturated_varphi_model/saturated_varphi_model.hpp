@@ -214,7 +214,7 @@ private:
   unsigned long long int saturation_;
 };
 
-const constexpr char* const models[] = {
+const constexpr char* const short_range_models[] = {
   "exponential",
   "square_exponential",
   "bump",
@@ -225,18 +225,32 @@ const constexpr char* const models[] = {
 template<typename F>
 inline auto call_on_dispersion_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, unsigned long long int saturation, const F& f) {
   const auto model_string(model[0]);
-  if(model_string == models[0]) {
+  if(model_string == short_range_models[0]) {
     return f(Saturated_varphi_model<varphi::Exponential>(saturation, radius));
-  } else if(model_string == models[1]) {
+  } else if(model_string == short_range_models[1]) {
     return f(Saturated_varphi_model<varphi::Square_exponential>(saturation, radius));
-  } else if(model_string == models[2]) {
+  } else if(model_string == short_range_models[2]) {
     return f(Saturated_varphi_model<varphi::Bump>(saturation, radius));
-  } else if(model_string == models[3]) {
+  } else if(model_string == short_range_models[3]) {
     return f(Saturated_varphi_model<varphi::Square_bump>(saturation, radius));
-  } else if(model_string == models[4]) {
+  } else if(model_string == short_range_models[4]) {
     return f(Saturated_varphi_model<varphi::Strauss>(saturation, radius));
   } else {
-    Rcpp::stop("Incorrect model entered. A call to show_models() will show you the available choices.\n");
+    Rcpp::stop("Incorrect model entered. A call to show_short_range_models() will show you the available choices.\n");
+  }
+}
+
+const constexpr char* const medium_range_models[] = {
+  "square_exponential"
+};
+
+template<typename F>
+inline auto call_on_medium_range_dispersion_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, unsigned long long int saturation, const F& f) {
+  const auto model_string(model[0]);
+  if(model_string == medium_range_models[0]) {
+    return f(Saturated_varphi_model<varphi::Medium_range_square_exponential>(saturation, medium_range, long_range));
+  } else {
+    Rcpp::stop("Incorrect model entered. A call to show_medium_range_models() will show you the available choices.\n");
   }
 }
 

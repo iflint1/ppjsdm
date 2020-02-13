@@ -51,7 +51,7 @@ log_lambda <- rep(8, nspecies)
 configuration <- ppjsdm::rgibbs(lambda = exp(log_lambda), 
                                 alpha = alpha,
                                 model = model,
-                                radius = radii)
+                                short_range = radii)
 ```
 
 The dataset is plotted below.
@@ -66,7 +66,7 @@ The function `gibbsm` fits a multivariate Gibbs point process to our dataset.
 ```{r}
 fit <- ppjsdm::gibbsm(configuration,
                       model = model,
-                      radius = radii)
+                      short_range = radii)
 ```
 
 For reference, the actual values used are given below.
@@ -116,7 +116,7 @@ configuration <- ppjsdm::rgibbs(lambda = exp(log_lambda),
                                 covariates = covariates, 
                                 beta = beta,
                                 model = model,
-                                radius = radii)
+                                short_range = radii)
 ```
 
 The dataset is plotted below.
@@ -132,7 +132,7 @@ The function `gibbsm` fits a multivariate Gibbs point process to our dataset.
 fit <- ppjsdm::gibbsm(configuration, 
                       covariates = covariates,
                       model = model,
-                      radius = radii)
+                      short_range = radii)
 ```
 
 For reference, the actual values used are given below.
@@ -200,7 +200,7 @@ configurations <- append(ppjsdm::rgibbs(lambda = c(50, 50),
                                         nsim = 100, 
                                         types = c("type1", "type2"), 
                                         model = model, 
-                                        radius = radii[c(1, 2), c(1, 2)],
+                                        short_range = radii[c(1, 2), c(1, 2)],
                                         drop = FALSE),
                                       
                          ppjsdm::rgibbs(lambda = c(50, 50, 50), 
@@ -208,7 +208,7 @@ configurations <- append(ppjsdm::rgibbs(lambda = c(50, 50),
                                         nsim = 100,
                                         types = c("type1", "type2", "type3"), 
                                         model = model, 
-                                        radius = radii,
+                                        short_range = radii,
                                         drop = FALSE))
 ```
 
@@ -225,7 +225,7 @@ The function `gibbsm` then fits a multivariate Gibbs point process to our datase
 fit <- ppjsdm::gibbsm(configurations, 
                       traits = traits, 
                       model = model, 
-                      radius = radii, 
+                      short_range = radii, 
                       print = FALSE)
 fit$traits
 fit$joint_traits
