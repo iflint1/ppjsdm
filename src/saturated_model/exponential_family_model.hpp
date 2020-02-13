@@ -3,7 +3,7 @@
 
 #include <Rcpp.h>
 
-#include "saturated_varphi_model.hpp"
+#include "saturated_model.hpp"
 #include "../configuration/configuration_manipulation.hpp"
 #include "../point/point_manipulation.hpp"
 #include "../utility/im_wrapper.hpp"

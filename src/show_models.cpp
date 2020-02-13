@@ -1,6 +1,6 @@
 #include <Rcpp.h>
 
-#include "saturated_varphi_model/saturated_varphi_model.hpp"
+#include "saturated_model/saturated_model.hpp"
 
 //' Show the authorised short range models.
 //'

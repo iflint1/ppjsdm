@@ -45,7 +45,7 @@ struct is_nonincreasing_after_lower_endpoint<T, std::enable_if_t<has_square_lowe
 template<typename T>
 constexpr bool is_nonincreasing_after_lower_endpoint_v = is_nonincreasing_after_lower_endpoint<T>::value;
 
-namespace varphi {
+namespace potentials {
 
 // Note: Public inheritance in order to inherit member variables if they exist in Varphi.
 template<typename Varphi>
@@ -243,7 +243,7 @@ using Strauss = Short_range_potential<Strauss_implementation>;
 using Medium_range_square_exponential = Medium_range_potential<Half_square_exponential_implementation>;
 using Medium_range_Geyer = Medium_range_potential<Strauss_implementation>;
 
-} // namespace varphi
+} // namespace potentials
 } // namespace ppjsdm
 
 #endif // INCLUDE_PPJSDM_PHI_DISTANCE

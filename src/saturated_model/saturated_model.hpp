@@ -1,9 +1,9 @@
-#ifndef INCLUDE_PPJSDM_SATURATED_VARPHI
-#define INCLUDE_PPJSDM_SATURATED_VARPHI
+#ifndef INCLUDE_PPJSDM_SATURATED_MODEL
+#define INCLUDE_PPJSDM_SATURATED_MODEL
 
 #include <Rcpp.h>
 
-#include "potential.hpp"
+#include "potentials.hpp"
 #include "../configuration/configuration_manipulation.hpp"
 #include "../point/point_manipulation.hpp"
 #include "../point/square_distance.hpp"
@@ -242,19 +242,19 @@ public:
 
 // Note: Use inheritance to benefit from EBO.
 template<typename Varphi>
-class Saturated_varphi_model: public Varphi {
+class Saturated_model: public Varphi {
 private:
   template<typename, typename, typename>
   friend class detail::Compute_dispersion_implementation;
 public:
   template<typename... Args>
-  Saturated_varphi_model(unsigned long long int saturation, Args&&... args):
+  Saturated_model(unsigned long long int saturation, Args&&... args):
     Varphi(std::forward<Args>(args)...), saturation_(saturation) {}
 
   template<typename Point>
   auto get_compute_dispersion_object(const Point& point,
                                      R_xlen_t number_types) const {
-    return Compute_dispersion<Point, Saturated_varphi_model<Varphi>>(point, number_types, *this);
+    return Compute_dispersion<Point, Saturated_model<Varphi>>(point, number_types, *this);
   }
 
   template<typename Point, typename Configuration>
@@ -286,15 +286,15 @@ template<typename F>
 inline auto call_on_dispersion_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, unsigned long long int saturation, const F& f) {
   const auto model_string(model[0]);
   if(model_string == short_range_models[0]) {
-    return f(Saturated_varphi_model<varphi::Exponential>(saturation, radius));
+    return f(Saturated_model<potentials::Exponential>(saturation, radius));
   } else if(model_string == short_range_models[1]) {
-    return f(Saturated_varphi_model<varphi::Square_exponential>(saturation, radius));
+    return f(Saturated_model<potentials::Square_exponential>(saturation, radius));
   } else if(model_string == short_range_models[2]) {
-    return f(Saturated_varphi_model<varphi::Bump>(saturation, radius));
+    return f(Saturated_model<potentials::Bump>(saturation, radius));
   } else if(model_string == short_range_models[3]) {
-    return f(Saturated_varphi_model<varphi::Square_bump>(saturation, radius));
+    return f(Saturated_model<potentials::Square_bump>(saturation, radius));
   } else if(model_string == short_range_models[4]) {
-    return f(Saturated_varphi_model<varphi::Strauss>(saturation, radius));
+    return f(Saturated_model<potentials::Strauss>(saturation, radius));
   } else {
     Rcpp::stop("Incorrect model entered. A call to show_short_range_models() will show you the available choices.\n");
   }
@@ -309,9 +309,9 @@ template<typename F>
 inline auto call_on_medium_range_dispersion_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, unsigned long long int saturation, const F& f) {
   const auto model_string(model[0]);
   if(model_string == medium_range_models[0]) {
-    return f(Saturated_varphi_model<varphi::Medium_range_square_exponential>(saturation, medium_range, long_range));
+    return f(Saturated_model<potentials::Medium_range_square_exponential>(saturation, medium_range, long_range));
   } else if(model_string == medium_range_models[1]) {
-    return f(Saturated_varphi_model<varphi::Medium_range_Geyer>(saturation, medium_range, long_range));
+    return f(Saturated_model<potentials::Medium_range_Geyer>(saturation, medium_range, long_range));
   } else {
     Rcpp::stop("Incorrect model entered. A call to show_medium_range_models() will show you the available choices.\n");
   }
@@ -319,4 +319,4 @@ inline auto call_on_medium_range_dispersion_model(Rcpp::CharacterVector model, R
 
 } // namespace ppjsdm
 
-#endif // INCLUDE_PPJSDM_SATURATED_VARPHI
+#endif // INCLUDE_PPJSDM_SATURATED_MODEL
