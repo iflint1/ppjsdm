@@ -67,8 +67,8 @@ protected:
     }
     for(size_t i(0); i < static_cast<size_t>(medium_dim); ++i) {
       for(size_t j(0); j < static_cast<size_t>(medium_dim); ++j) {
-        medium_(i, j) = Varphi::set_lower(medium_range(i, j));
-        long_(i, j) = Varphi::set_upper(long_range(i, j));
+        medium_(i, j) = Varphi::set_lower(medium_range(i, j), long_range(i, j));
+        long_(i, j) = Varphi::set_upper(medium_range(i, j), long_range(i, j));
       }
     }
   }
@@ -119,12 +119,13 @@ struct Square_exponential_implementation {
     return -std::log(2) / (radius * radius);
   }
 
-  static double set_lower(double radius) {
-    return radius * radius;
+  static double set_lower(double lower, double) {
+    return lower;
   }
 
-  static double set_upper(double radius) {
-    return set(radius);
+  static double set_upper(double lower, double upper) {
+    const auto delta(upper - lower);
+    return -std::log(2) / (delta * delta);
   }
 
   static double apply(double square_distance, double constant) {
@@ -132,7 +133,7 @@ struct Square_exponential_implementation {
   }
 
   static double apply(double square_distance, double lower, double upper) {
-    if(square_distance >= lower) {
+    if(square_distance >= lower * lower) {
       const auto distance(std::sqrt(square_distance) - lower);
       return std::exp(upper * distance * distance);
     } else {
