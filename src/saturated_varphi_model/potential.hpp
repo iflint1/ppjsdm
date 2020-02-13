@@ -17,15 +17,64 @@ namespace varphi {
 
 // Note: Public inheritance in order to inherit member variables if they exist in Varphi.
 template<typename Varphi>
-class Generic_potential: public Varphi {
+class Short_range_potential: public Varphi {
 private:
   Lightweight_square_matrix<double> matrix_;
   using size_t = typename decltype(matrix_)::size_type;
 protected:
-  explicit Generic_potential(Rcpp::NumericMatrix radius): matrix_(radius) {}
+  explicit Short_range_potential(Rcpp::NumericMatrix radius): matrix_(radius.nrow()) {
+    const size_t dim(radius.nrow());
+    if(static_cast<size_t>(radius.ncol()) != dim) {
+      Rcpp::stop("The matrix is not a square matrix, as was expected.");
+    }
+    for(size_t i(0); i < static_cast<size_t>(dim); ++i) {
+      for(size_t j(0); j < static_cast<size_t>(dim); ++j) {
+        matrix_(i, j) = Varphi::set(radius(i, j));
+      }
+    }
+  }
 
   double apply(double square_distance, size_t i, size_t j) const {
-    return Varphi::apply(square_distance, Varphi::set(matrix_(i, j)));
+    return Varphi::apply(square_distance, matrix_(i, j));
+  }
+
+  template<typename Point, typename Other>
+  double apply(const Point& point, const Other& other) const {
+    return apply(square_distance(point, other), get_type(point), get_type(other));
+  }
+
+  template<typename Window>
+  constexpr static double get_maximum(const Window&) {
+    return 1.0;
+  }
+};
+
+template<typename Varphi>
+class Medium_range_potential: public Varphi {
+private:
+  Lightweight_square_matrix<double> medium_;
+  Lightweight_square_matrix<double> long_;
+  using size_t = typename decltype(medium_)::size_type;
+protected:
+  Medium_range_potential(Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range):
+  medium_(medium_range.nrow()),
+  long_(long_range.nrow()){
+    const size_t medium_dim(medium_range.nrow());
+    if(static_cast<size_t>(medium_range.ncol()) != medium_dim
+         || static_cast<size_t>(long_range.ncol()) != medium_dim
+         || static_cast<size_t>(long_range.nrow()) != medium_dim) {
+      Rcpp::stop("One of the matrices does not have the right dimensions.");
+    }
+    for(size_t i(0); i < static_cast<size_t>(medium_dim); ++i) {
+      for(size_t j(0); j < static_cast<size_t>(medium_dim); ++j) {
+        medium_(i, j) = Varphi::set_lower(medium_range(i, j));
+        long_(i, j) = Varphi::set_upper(long_range(i, j));
+      }
+    }
+  }
+
+  double apply(double square_distance, size_t i, size_t j) const {
+    return Varphi::apply(square_distance, medium_(i, j), long_(i, j));
   }
 
   template<typename Point, typename Other>
@@ -70,8 +119,25 @@ struct Square_exponential_implementation {
     return -std::log(2) / (radius * radius);
   }
 
+  static double set_lower(double radius) {
+    return radius * radius;
+  }
+
+  static double set_upper(double radius) {
+    return set(radius);
+  }
+
   static double apply(double square_distance, double constant) {
     return std::exp(constant * square_distance);
+  }
+
+  static double apply(double square_distance, double lower, double upper) {
+    if(square_distance >= lower) {
+      const auto distance(std::sqrt(square_distance) - lower);
+      return std::exp(upper * distance * distance);
+    } else {
+      return 0.;
+    }
   }
 };
 
@@ -104,11 +170,13 @@ struct Strauss_implementation {
   }
 };
 
-using Bump = Generic_potential<Bump_implementation>;
-using Square_bump = Generic_potential<Square_bump_implementation>;
-using Exponential = Generic_potential<Exponential_implementation>;
-using Square_exponential = Generic_potential<Square_exponential_implementation>;
-using Strauss = Generic_potential<Strauss_implementation>;
+using Bump = Short_range_potential<Bump_implementation>;
+using Square_bump = Short_range_potential<Square_bump_implementation>;
+using Exponential = Short_range_potential<Exponential_implementation>;
+using Square_exponential = Short_range_potential<Square_exponential_implementation>;
+using Strauss = Short_range_potential<Strauss_implementation>;
+
+using Medium_range_square_exponential = Medium_range_potential<Square_exponential_implementation>;
 
 } // namespace varphi
 
