@@ -59,7 +59,9 @@ protected:
 };
 
 template<typename Point, typename Dispersion>
-class Compute_dispersion_implementation<Point, Dispersion, std::enable_if_t<!has_nonzero_value_v<Dispersion> && Dispersion::is_nonincreasing>> {
+class Compute_dispersion_implementation<Point, Dispersion,
+                                        std::enable_if_t<!has_nonzero_value_v<Dispersion>
+                                                          && Dispersion::is_nonincreasing>> {
 protected:
   Compute_dispersion_implementation(const Point& point,
                                     R_xlen_t number_types,
@@ -108,7 +110,65 @@ protected:
 };
 
 template<typename Point, typename Dispersion>
-class Compute_dispersion_implementation<Point, Dispersion, std::enable_if_t<!has_nonzero_value_v<Dispersion> && !Dispersion::is_nonincreasing>> {
+class Compute_dispersion_implementation<Point, Dispersion,
+                                        std::enable_if_t<!has_nonzero_value_v<Dispersion>
+                                                          && !Dispersion::is_nonincreasing
+                                                          && is_nonincreasing_after_lower_endpoint_v<Dispersion>>> {
+protected:
+  Compute_dispersion_implementation(const Point& point,
+                                    R_xlen_t number_types,
+                                    const Dispersion& dispersion):
+  point_(point),
+  dispersion_(dispersion),
+  count_vector_(number_types) {}
+
+  using CountType = std::vector<std::vector<double>>;
+  const Point& point_;
+  const Dispersion& dispersion_;
+  CountType count_vector_;
+
+  template<typename Configuration>
+  void update_count(const Configuration& configuration) {
+    using size_t = size_t<Configuration>;
+    for(size_t i(0); i < size(configuration); ++i) {
+      const auto& current_point(configuration[i]);
+      const auto sq(square_distance(current_point, point_));
+      // TODO: This doesn't really change from the case above; factorise?
+      if(sq >= Dispersion::get_square_lower_endpoint(get_type(current_point), get_type(point_))) {
+        auto& current(count_vector_[get_type(current_point)]);
+        if(current.size() < dispersion_.saturation_) {
+          current.emplace_back(sq);
+          std::push_heap(current.begin(), current.end());
+        } else if(sq < current[0]) {
+          current.emplace_back(sq);
+          std::pop_heap(current.begin(), current.end());
+          current.pop_back();
+        }
+      }
+    }
+  }
+
+  auto compute_dispersion(const CountType& count) const {
+    const auto number_types(count.size());
+    std::vector<double> dispersion(number_types);
+    using size_t = typename decltype(dispersion)::size_type;
+    const auto point_type(get_type(point_));
+    for(size_t i(0); i < static_cast<size_t>(number_types); ++i) {
+      double d(0);
+      for(const auto& c: count[i]) {
+        d += dispersion_.apply(c, i, point_type);
+      }
+      dispersion[i] = d;
+    }
+    return dispersion;
+  }
+};
+
+template<typename Point, typename Dispersion>
+class Compute_dispersion_implementation<Point, Dispersion,
+                                        std::enable_if_t<!has_nonzero_value_v<Dispersion>
+                                                          && !Dispersion::is_nonincreasing
+                                                          && !is_nonincreasing_after_lower_endpoint_v<Dispersion>>> {
 protected:
   Compute_dispersion_implementation(const Point& point,
                                     R_xlen_t number_types,
