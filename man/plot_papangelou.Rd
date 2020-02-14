@@ -18,7 +18,8 @@ plot_papangelou(
   short_range,
   medium_range,
   long_range,
-  saturation
+  saturation,
+  grid_steps = 1000
 )
 }
 \arguments{
