@@ -44,6 +44,7 @@ inline SEXP rgibbs_helper(const Model& model, const Window& window, R_xlen_t nsi
 }
 
 // TODO: Make rgibbs work with R::Inf
+// TODO: Add a check for symmetry for matrices alpha, gamma, short_range, etc.
 
 // [[Rcpp::export]]
 SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP beta, SEXP gamma, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, R_xlen_t steps, R_xlen_t nsim, SEXP types, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, bool drop) {
