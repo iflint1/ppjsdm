@@ -34,11 +34,7 @@ inline void add_to_formula(std::string& formula, Rcpp::CharacterVector names) {
 
 template<typename Configuration, typename Window, typename DispersionModel, typename MediumDispersionModel, typename Vector>
 Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const Window& window, const ppjsdm::Im_list_wrapper& covariates, const DispersionModel& dispersion_model, const MediumDispersionModel& medium_dispersion_model, const Vector& points_by_type) {
-  const auto length_configuration(ppjsdm::size(configuration));
   using size_t = ppjsdm::size_t<Configuration>;
-  const size_t number_types(points_by_type.size());
-  const size_t covariates_length(covariates.size());
-  const auto volume(window.volume());
 
   // Sample the dummy points D.
   // This choice of rho is the guideline from the Baddeley et al. paper, see p. 8 therein.
@@ -49,10 +45,12 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     n = mult_by_four < 500 ? 500 : mult_by_four;
     length_D += n;
   }
+  const size_t number_types(points_by_type.size());
   auto D(ppjsdm::rbinomialpp_single<std::vector<ppjsdm::Marked_point>>(window, rho_times_volume, number_types, length_D));
 
   // Make shift vector
   Rcpp::NumericVector shift(Rcpp::no_init(number_types));
+  const auto volume(window.volume());
   for(size_t j(0); j < number_types; ++j) {
     shift[j] = -std::log(static_cast<double>(rho_times_volume[j]) / volume);
   }
@@ -71,8 +69,10 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     std::vector<double> covariates;
   };
   std::vector<Result_type> precomputed_results;
+  const auto length_configuration(ppjsdm::size(configuration));
   precomputed_results.reserve(length_configuration + length_D);
 
+  const size_t covariates_length(covariates.size());
 #pragma omp parallel
   {
   std::vector<Result_type> results_private;
@@ -177,11 +177,9 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 
   // Convert response and rho_offset to Rcpp objects.
   Rcpp::IntegerMatrix response_rcpp(Rcpp::no_init(response.size(), 1));
+  Rcpp::NumericMatrix rho_offset_rcpp(Rcpp::no_init(response.size(), 1));
   for(R_xlen_t i(0); i < static_cast<R_xlen_t>(response.size()); ++i) {
     response_rcpp(i, 0) = response[i];
-  }
-  Rcpp::NumericMatrix rho_offset_rcpp(Rcpp::no_init(rho_offset.size(), 1));
-  for(R_xlen_t i(0); i < static_cast<R_xlen_t>(rho_offset.size()); ++i) {
     rho_offset_rcpp(i, 0) = rho_offset[i];
   }
 
@@ -211,8 +209,6 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   Rcpp::colnames(rho_offset_rcpp) = Rcpp::wrap("rho");
   Rcpp::colnames(response_rcpp) = Rcpp::wrap("response");
 
-  // TODO: Write rbind that also works with names?
-  // TODO: Might also be simpler to just construct regressors straight away
   // Put all the regressors into a unique matrix that'll be sent to glm / glmnet.
   Rcpp::NumericMatrix regressors(Rcpp::no_init(log_lambda.nrow(),
                                                log_lambda.ncol() + alpha_input.ncol() + gamma_input.ncol() + covariates_input.ncol()));
@@ -223,22 +219,25 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
       regressors(i, j) = log_lambda(i, j);
     }
   }
+  R_xlen_t index_shift(log_lambda.ncol());
   for(R_xlen_t j(0); j < static_cast<R_xlen_t>(alpha_input.ncol()); ++j) {
-    col_names[j + log_lambda.ncol()] = alpha_names[j];
+    col_names[j + index_shift] = alpha_names[j];
     for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-      regressors(i, j + log_lambda.ncol()) = alpha_input(i, j);
+      regressors(i, j + index_shift) = alpha_input(i, j);
     }
   }
+  index_shift = log_lambda.ncol() + alpha_input.ncol();
   for(R_xlen_t j(0); j < static_cast<R_xlen_t>(gamma_input.ncol()); ++j) {
-    col_names[j + log_lambda.ncol() + alpha_input.ncol()] = gamma_names[j];
+    col_names[j + index_shift] = gamma_names[j];
     for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-      regressors(i, j + log_lambda.ncol() + alpha_input.ncol()) = gamma_input(i, j);
+      regressors(i, j + index_shift) = gamma_input(i, j);
     }
   }
+  index_shift = log_lambda.ncol() + alpha_input.ncol() + gamma_input.ncol();
   for(R_xlen_t j(0); j < static_cast<R_xlen_t>(covariates_input.ncol()); ++j) {
-    col_names[j + log_lambda.ncol() + alpha_input.ncol() + gamma_input.ncol()] = covariates_input_names[j];
+    col_names[j + index_shift] = covariates_input_names[j];
     for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-      regressors(i, j + log_lambda.ncol() + alpha_input.ncol() + gamma_input.ncol()) = covariates_input(i, j);
+      regressors(i, j + index_shift) = covariates_input(i, j);
     }
   }
   Rcpp::colnames(regressors) = col_names;
