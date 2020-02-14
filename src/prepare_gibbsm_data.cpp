@@ -43,27 +43,13 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   // Sample the dummy points D.
   // This choice of rho is the guideline from the Baddeley et al. paper, see p. 8 therein.
   Vector rho_times_volume(points_by_type);
-  size_t length_rho_times_volume(0);
+  size_t length_D(0);
   for(auto& n: rho_times_volume) {
     const auto mult_by_four(n * 4);
     n = mult_by_four < 500 ? 500 : mult_by_four;
-    length_rho_times_volume += n;
+    length_D += n;
   }
-  auto D(ppjsdm::rbinomialpp_single<std::vector<ppjsdm::Marked_point>>(window, rho_times_volume, number_types, length_rho_times_volume));
-
-
-  // Get rid of locations with an NA value for one of the covariates
-  // TODO: I'm recomputing all the covariates below; might be able to remove the points at that point!
-  D.erase(std::remove_if(D.begin(), D.end(), [&covariates, covariates_length](const auto& point) {
-    for(size_t j(0); j < covariates_length; ++j) {
-      const auto covariate(covariates[j](ppjsdm::get_x(point),  ppjsdm::get_y(point)));
-      if(R_IsNA(covariate)) {
-        return true;
-      }
-    }
-    return false;
-  }), D.end());
-  const size_t length_D(D.size());
+  auto D(ppjsdm::rbinomialpp_single<std::vector<ppjsdm::Marked_point>>(window, rho_times_volume, number_types, length_D));
 
   // Make shift vector
   Rcpp::NumericVector shift(Rcpp::no_init(number_types));
@@ -110,33 +96,41 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   }
 #pragma omp for nowait
   for(size_t i = 0; i < length_D; ++i) {
-    const auto d(dispersion_model.compute(D[i], number_types, configuration));
-    const auto e(medium_dispersion_model.compute(D[i], number_types, configuration));
+    bool one_of_covariates_na(false);
     std::vector<double> cov(covariates_length);
     for(size_t k(0); k < covariates_length; ++k) {
       const auto covariate(covariates[k](D[i]));
       if(R_IsNA(covariate)) {
-        Rcpp::stop("One of the covariates' value is NA on one of the locations in the dataset.");
+        one_of_covariates_na = true;
+        break;
       }
       cov[k] = covariate;
     }
+    // Get rid of locations with an NA value for one of the covariates.
+    if(one_of_covariates_na) {
+      continue;
+    }
+    const auto d(dispersion_model.compute(D[i], number_types, configuration));
+    const auto e(medium_dispersion_model.compute(D[i], number_types, configuration));
     results_private.emplace_back(false, ppjsdm::get_type(D[i]), std::move(d), std::move(e), std::move(cov));
   }
 #pragma omp critical
   precomputed_results.insert(precomputed_results.end(), results_private.begin(), results_private.end());
   }
 
+  const auto total_points(precomputed_results.size());
+
   // Default-initialise the data
-  std::vector<int> response(length_configuration + length_D);
-  std::vector<double> rho_offset(length_configuration + length_D);
-  ppjsdm::Lightweight_matrix<double> log_lambda(length_configuration + length_D, number_types);
-  ppjsdm::Lightweight_matrix<double> alpha_input(length_configuration + length_D, number_types * (number_types + 1) / 2);
-  ppjsdm::Lightweight_matrix<double> gamma_input(length_configuration + length_D, number_types * (number_types + 1) / 2);
-  ppjsdm::Lightweight_matrix<double> covariates_input(length_configuration + length_D, covariates_length * number_types);
+  std::vector<int> response(total_points);
+  std::vector<double> rho_offset(total_points);
+  ppjsdm::Lightweight_matrix<double> log_lambda(total_points, number_types);
+  ppjsdm::Lightweight_matrix<double> alpha_input(total_points, number_types * (number_types + 1) / 2);
+  ppjsdm::Lightweight_matrix<double> gamma_input(total_points, number_types * (number_types + 1) / 2);
+  ppjsdm::Lightweight_matrix<double> covariates_input(total_points, covariates_length * number_types);
 
 
   // Fill the regressors, response, offset and shift with what we precomputed.
-  for(size_t i(0); i < precomputed_results.size(); ++i) {
+  for(size_t i(0); i < total_points; ++i) {
     response[i] = precomputed_results[i].is_in_configuration ? 1 : 0;
     const size_t type_index(precomputed_results[i].type);
 
