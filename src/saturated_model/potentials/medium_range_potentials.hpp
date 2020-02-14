@@ -88,6 +88,24 @@ struct Half_square_exponential_implementation {
   }
 };
 
+struct Two_sided_square_exponential_implementation {
+  static constexpr bool is_nonincreasing = false;
+
+  static double set_lower(double lower, double upper) {
+    return (lower + upper ) / 2.;
+  }
+
+  static double set_upper(double lower, double upper) {
+    const auto delta(upper - lower);
+    return -std::log(2) / (delta * delta);
+  }
+
+  static double apply(double square_distance, double lower, double upper) {
+    const auto distance(std::sqrt(square_distance) - lower);
+    return std::exp(upper * distance * distance);
+  }
+};
+
 struct Two_sided_Strauss_implementation {
   static constexpr double nonzero_value = 1.0;
 
@@ -137,7 +155,8 @@ struct Two_sided_linear_implementation {
   }
 };
 
-using Medium_range_square_exponential = Medium_range_potential<Half_square_exponential_implementation>;
+using Medium_range_square_exponential = Medium_range_potential<Two_sided_square_exponential_implementation>;
+using Medium_range_half_square_exponential = Medium_range_potential<Half_square_exponential_implementation>;
 using Medium_range_Geyer = Medium_range_potential<Two_sided_Strauss_implementation>;
 using Medium_range_linear = Medium_range_potential<Two_sided_linear_implementation>;
 

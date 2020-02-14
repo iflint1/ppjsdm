@@ -307,6 +307,7 @@ inline auto call_on_dispersion_model(Rcpp::CharacterVector model, Rcpp::NumericM
 
 const constexpr char* const medium_range_models[] = {
   "square_exponential",
+  "half_square_exponential",
   "Geyer",
   "linear"
 };
@@ -317,8 +318,10 @@ inline auto call_on_medium_range_dispersion_model(Rcpp::CharacterVector model, R
   if(model_string == medium_range_models[0]) {
     return f(Saturated_model<potentials::Medium_range_square_exponential>(saturation, medium_range, long_range));
   } else if(model_string == medium_range_models[1]) {
-    return f(Saturated_model<potentials::Medium_range_Geyer>(saturation, medium_range, long_range));
+    return f(Saturated_model<potentials::Medium_range_half_square_exponential>(saturation, medium_range, long_range));
   } else if(model_string == medium_range_models[2]) {
+    return f(Saturated_model<potentials::Medium_range_Geyer>(saturation, medium_range, long_range));
+  } else if(model_string == medium_range_models[3]) {
     return f(Saturated_model<potentials::Medium_range_linear>(saturation, medium_range, long_range));
   } else {
     Rcpp::stop("Incorrect model entered. A call to show_medium_range_models() will show you the available choices.\n");

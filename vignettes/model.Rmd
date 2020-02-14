@@ -270,10 +270,10 @@ gamma <- cbind(c(0.5, -1), c(-1, 0.5))
 beta <- matrix(0, nspecies, ncovariates)
 covariates <- list()
 model <- "square_exponential"
-medium_range_model <- "linear"
+medium_range_model <- "square_exponential"
 short_range <- cbind(c(0.05, 0.1), c(0.1, 0.2))
-medium_range <- cbind(c(0.05, 0), c(0, 0.2))
-long_range <- cbind(c(0.2, 0), c(0, 0.4))
+medium_range <- cbind(c(0.1, 0), c(0, 0.2))
+long_range <- cbind(c(0.15, 0), c(0, 0.4))
 saturation <- 2
 window <- Rectangle_window()
 spatstat_window <- owin()
