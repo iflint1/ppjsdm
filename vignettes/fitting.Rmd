@@ -212,7 +212,7 @@ Finally, we sample the observations.
 ```{r}
 configurations <- append(ppjsdm::rgibbs(lambda = c(50, 50), 
                                         alpha = alpha[c(1, 2), c(1, 2)],
-                                        nsim = 100, 
+                                        nsim = 5, 
                                         types = c("type1", "type2"), 
                                         model = model, 
                                         short_range = short_range[c(1, 2), c(1, 2)],
@@ -220,7 +220,7 @@ configurations <- append(ppjsdm::rgibbs(lambda = c(50, 50),
                                       
                          ppjsdm::rgibbs(lambda = c(50, 50, 50), 
                                         alpha = alpha,
-                                        nsim = 100,
+                                        nsim = 5,
                                         types = c("type1", "type2", "type3"), 
                                         model = model, 
                                         short_range = short_range,
