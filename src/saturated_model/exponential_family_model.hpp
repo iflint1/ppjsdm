@@ -50,7 +50,9 @@ inline auto compute_alpha_dot_dispersion(const Point& point,
                                          const Dispersion& dispersion) {
   double sum(0);
   for(R_xlen_t i(0); i < alpha.ncol(); ++i) {
-    sum += alpha(get_type(point), i) * dispersion[i];
+    if(dispersion[i] != 0) { // This ensures that \infty \times 0 = 0.
+      sum += alpha(get_type(point), i) * dispersion[i];
+    }
   }
   return sum;
 }
