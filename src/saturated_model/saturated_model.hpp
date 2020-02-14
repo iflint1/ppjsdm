@@ -3,7 +3,9 @@
 
 #include <Rcpp.h>
 
-#include "potentials.hpp"
+#include "potentials/medium_range_potentials.hpp"
+#include "potentials/short_range_potentials.hpp"
+#include "potentials/traits.hpp"
 #include "../configuration/configuration_manipulation.hpp"
 #include "../point/point_manipulation.hpp"
 #include "../point/square_distance.hpp"
@@ -305,7 +307,8 @@ inline auto call_on_dispersion_model(Rcpp::CharacterVector model, Rcpp::NumericM
 
 const constexpr char* const medium_range_models[] = {
   "square_exponential",
-  "Geyer"
+  "Geyer",
+  "linear"
 };
 
 template<typename F>
@@ -315,6 +318,8 @@ inline auto call_on_medium_range_dispersion_model(Rcpp::CharacterVector model, R
     return f(Saturated_model<potentials::Medium_range_square_exponential>(saturation, medium_range, long_range));
   } else if(model_string == medium_range_models[1]) {
     return f(Saturated_model<potentials::Medium_range_Geyer>(saturation, medium_range, long_range));
+  } else if(model_string == medium_range_models[2]) {
+    return f(Saturated_model<potentials::Medium_range_linear>(saturation, medium_range, long_range));
   } else {
     Rcpp::stop("Incorrect model entered. A call to show_medium_range_models() will show you the available choices.\n");
   }
