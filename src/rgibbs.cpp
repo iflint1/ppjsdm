@@ -14,6 +14,7 @@
 #include "utility/construct_if_missing.hpp"
 #include "utility/get_list_or_first_element.hpp"
 #include "utility/get_number_types.hpp"
+#include "utility/is_symmetric_matrix.hpp"
 #include "utility/make_default_types.hpp"
 #include "utility/window_utilities.hpp"
 
@@ -44,7 +45,6 @@ inline SEXP rgibbs_helper(const Model& model, const Window& window, R_xlen_t nsi
 }
 
 // TODO: Make rgibbs work with R::Inf
-// TODO: Add a check for symmetry for matrices alpha, gamma, short_range, etc.
 
 // [[Rcpp::export]]
 SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP beta, SEXP gamma, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, R_xlen_t steps, R_xlen_t nsim, SEXP types, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, bool drop) {
@@ -56,6 +56,9 @@ SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP beta
   alpha = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(alpha, 0., number_types);
   gamma = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(gamma, 0., number_types);
   lambda = ppjsdm::construct_if_missing<Rcpp::NumericVector>(lambda, 1., number_types);
+  if(!ppjsdm::is_symmetric_matrix(alpha) || !ppjsdm::is_symmetric_matrix(gamma)) {
+    Rcpp::stop("Either alpha or gamma is not symmetric.");
+  }
 
   const auto beta_nrows(number_types);
   const auto beta_ncols(Rcpp::as<Rcpp::List>(covariates).size());
@@ -71,6 +74,9 @@ SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP beta
       const auto sh(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(short_range, 0.1 * w.diameter(), number_types));
       const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0.1 * w.diameter(), number_types));
       const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0.2 * w.diameter(), number_types));
+      if(!ppjsdm::is_symmetric_matrix(sh) || !ppjsdm::is_symmetric_matrix(me) || !ppjsdm::is_symmetric_matrix(lo)) {
+        Rcpp::stop("One of the interaction radii matrices is not symmetric.");
+      }
       if(steps == 0) {
         return ppjsdm::call_on_model(w, model, medium_range_model, l, sh, me, lo, saturation, [nsim, types, drop, number_types](const auto& model) {
           return rgibbs_helper(model, nsim, types, drop, number_types);

@@ -13,6 +13,7 @@
 
 #include "utility/construct_if_missing.hpp"
 #include "utility/im_wrapper.hpp"
+#include "utility/is_symmetric_matrix.hpp"
 #include "utility/lightweight_matrix.hpp"
 #include "utility/window_utilities.hpp"
 
@@ -274,9 +275,15 @@ Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covar
     const auto points_by_type(ppjsdm::get_number_points(vector_configuration));
     const auto number_types(points_by_type.size());
     const auto sh(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(short_range, 0.1 * w.diameter(), number_types));
+    if(!ppjsdm::is_symmetric_matrix(sh)) {
+      Rcpp::stop("Short range interaction radius matrix is not symmetric.");
+    }
     return ppjsdm::call_on_dispersion_model(model, sh, saturation, [number_types, medium_range_model, medium_range, long_range, saturation, &vector_configuration, &w, &covariates, &points_by_type](const auto& short_papangelou) {
       const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0.1 * w.diameter(), number_types));
       const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0.2 * w.diameter(), number_types));
+      if(!ppjsdm::is_symmetric_matrix(me) || !ppjsdm::is_symmetric_matrix(lo)) {
+        Rcpp::stop("Medium or long range interaction radius matrix is not symmetric.");
+      }
       return ppjsdm::call_on_medium_range_dispersion_model(medium_range_model, me, lo, saturation, [&short_papangelou, &vector_configuration, &w, &covariates, &points_by_type](const auto& medium_papangelou) {
         return prepare_gibbsm_data_helper(vector_configuration, w, ppjsdm::Im_list_wrapper(covariates), short_papangelou, medium_papangelou, points_by_type);
       });
