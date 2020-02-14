@@ -4,7 +4,7 @@
 \alias{as.ppp.Configuration}
 \title{Convert a configuration class to a ppp from the SpatStat package.}
 \usage{
-as.ppp.Configuration(X, W, ..., fatal = TRUE)
+\method{as.ppp}{Configuration}(X, W, ..., fatal = TRUE)
 }
 \arguments{
 \item{X}{Configuration.}

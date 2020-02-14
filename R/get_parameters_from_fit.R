@@ -1,4 +1,4 @@
-#' Get parameters from a fit
+#' Get parameters from a fit.
 #'
 #' @param fit Fit.
 #' @export

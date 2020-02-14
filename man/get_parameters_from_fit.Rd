@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_parameters_from_fit.R
 \name{get_parameters_from_fit}
 \alias{get_parameters_from_fit}
-\title{Get parameters from a fit}
+\title{Get parameters from a fit.}
 \usage{
 get_parameters_from_fit(fit)
 }
@@ -10,5 +10,5 @@ get_parameters_from_fit(fit)
 \item{fit}{Fit.}
 }
 \description{
-Get parameters from a fit
+Get parameters from a fit.
 }
