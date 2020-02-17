@@ -36,7 +36,7 @@ private:
     int& type_;
   };
 
-  class Const_marked_point_reference {
+  class Const_marked_point_reference  {
   public:
     Const_marked_point_reference(const double& x, const double& y, const int& type):
     x_(x), y_(y), type_(type) {}
@@ -176,10 +176,11 @@ public:
     return Marked_point(x_[index], y_[index], types_[index] - 1);
   }
 
-  void erase(R_xlen_t index) {
-    x_.erase(x_.begin() + index);
-    y_.erase(y_.begin() + index);
-    types_.erase(types_.begin() + index);
+  template<typename Iterator>
+  void erase(Iterator iterator) {
+    x_.erase(x_[iterator.i_]);
+    y_.erase(y_[iterator.i_]);
+    types_.erase(types_[iterator.i_]);
   }
 
   Rcpp::NumericVector x() const {
@@ -249,9 +250,10 @@ namespace traits {
 
 template<>
 struct configuration_manipulation<Configuration_wrapper>: public configuration_manipulation_defaults<Configuration_wrapper> {
-  static inline auto remove_point_by_index(Configuration_wrapper& configuration, R_xlen_t index) {
-    auto point(configuration[index]);
-    configuration.erase(index);
+  template<typename Iterator>
+  static inline auto remove_point_by_iterator(Configuration_wrapper& configuration, Iterator iterator) {
+    const auto point(*iterator);
+    configuration.erase(iterator);
     return point;
   }
 };

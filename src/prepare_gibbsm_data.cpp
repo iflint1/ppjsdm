@@ -19,6 +19,7 @@
 
 #include <algorithm> // std::remove_if
 #include <cmath> // std::log
+#include <iterator> // std::next
 #include <string> // std::string, std::to_string
 #include <vector> // std::vector
 
@@ -81,7 +82,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   for(size_t i = 0; i < length_configuration; ++i) {
     // TODO: Avoidable?
     Configuration configuration_copy(configuration);
-    ppjsdm::remove_point_by_index(configuration_copy, i);
+    ppjsdm::remove_point_by_iterator(configuration_copy, std::next(configuration_copy.begin(), i));
     const auto d(dispersion_model.compute(configuration[i], number_types, configuration_copy));
     const auto e(medium_dispersion_model.compute(configuration[i], number_types, configuration_copy));
     std::vector<double> cov(covariates_length);

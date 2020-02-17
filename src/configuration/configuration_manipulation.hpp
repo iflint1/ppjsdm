@@ -31,8 +31,9 @@ struct configuration_manipulation_defaults {
     return configuration.empty();
   }
 
-  static inline auto remove_point_by_index(Configuration& configuration, R_xlen_t index) {
-    auto iterator(std::next(configuration.begin(), index));
+  template<typename Iterator>
+  static inline auto remove_point_by_iterator(Configuration& configuration, Iterator iterator) {
+    //auto iterator(std::next(configuration.begin(), index));
     const auto point(*iterator);
     configuration.erase(iterator);
     return point;
@@ -62,16 +63,17 @@ inline auto size(const Configuration& configuration) {
 template<typename T>
 using size_t = decltype(size(std::declval<T>()));
 
-template<typename Configuration>
-inline auto remove_point_by_index(Configuration& configuration, size_t<Configuration> index) {
-  return traits::configuration_manipulation<Configuration>::remove_point_by_index(configuration, index);
+// TODO: Implement wrapper::iterator and avoid template
+template<typename Configuration, typename Iterator>
+inline auto remove_point_by_iterator(Configuration& configuration, Iterator iterator) {
+  return traits::configuration_manipulation<Configuration>::remove_point_by_iterator(configuration, iterator);
 }
 
 template<typename Configuration>
 inline auto remove_random_point(Configuration& configuration) {
   using difference_type = typename std::iterator_traits<decltype(configuration.begin())>::difference_type;
   const difference_type index(Rcpp::sample(size(configuration), 1, false, R_NilValue, false)[0]);
-  return remove_point_by_index(configuration, index);
+  return remove_point_by_iterator(configuration, std::next(configuration.begin(), index));
 }
 
 template<typename Configuration>
@@ -81,11 +83,10 @@ inline bool empty(const Configuration& configuration) {
 
 template <typename Configuration, typename Point>
 inline bool remove_point(Configuration& configuration, const Point& point) {
-  for(size_t<Configuration> i(0); i < size(configuration); ++i) {
-    if(configuration[i] == point) {
-      remove_point_by_index(configuration, i);
-      return true;
-    }
+  const auto iterator(std::find(configuration.begin(), configuration.end(), point));
+  if(iterator != configuration.end()) {
+    remove_point_by_iterator(configuration, iterator);
+    return true;
   }
   return false;
 }

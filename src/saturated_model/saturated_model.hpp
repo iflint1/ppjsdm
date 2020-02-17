@@ -39,9 +39,8 @@ protected:
 
   template<typename Configuration>
   void update_count(const Configuration& configuration) {
-    using size_t = size_t<Configuration>;
-    for(size_t i(0); i < size(configuration); ++i) {
-      const auto& current_point(configuration[i]);
+    for(const auto& c: configuration) {
+      const Marked_point& current_point(c);
       if(count_vector_[get_type(current_point)] < dispersion_.saturation_ && dispersion_.apply(current_point, point_) > 0) {
         ++count_vector_[get_type(current_point)];
       }
@@ -79,9 +78,8 @@ protected:
 
   template<typename Configuration>
   void update_count(const Configuration& configuration) {
-    using size_t = size_t<Configuration>;
-    for(size_t i(0); i < size(configuration); ++i) {
-      const auto& current_point(configuration[i]);
+    for(const auto& c: configuration) {
+      const Marked_point current_point(c);
       const auto sq(square_distance(current_point, point_));
       auto& current(count_vector_[get_type(current_point)]);
       if(current.size() < dispersion_.saturation_) {
@@ -186,9 +184,8 @@ protected:
 
   template<typename Configuration>
   void update_count(const Configuration& configuration) {
-    using size_t = size_t<Configuration>;
-    for(size_t i(0); i < size(configuration); ++i) {
-      const auto& current_point(configuration[i]);
+    for(const auto& c: configuration) {
+      const Marked_point& current_point(c);
       const auto disp(dispersion_.apply(current_point, point_));
       auto& current(count_vector_[get_type(current_point)]);
       if(current.size() < dispersion_.saturation_) {
