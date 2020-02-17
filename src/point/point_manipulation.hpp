@@ -11,13 +11,13 @@ namespace traits {
 
 template<typename Point>
 struct point_manipulation_defaults {
-  static inline decltype(auto) get_x(const Point& point) {
+  static inline auto get_x(const Point& point) {
     return std::get<0>(point);
   }
-  static inline decltype(auto) get_y(const Point& point) {
+  static inline auto get_y(const Point& point) {
     return std::get<1>(point);
   }
-  static inline decltype(auto) get_type(const Point& point) {
+  static inline auto get_type(const Point& point) {
     return std::get<2>(point);
   }
 };
@@ -28,17 +28,17 @@ struct point_manipulation: public point_manipulation_defaults<Point> {};
 } // namespace traits
 
 template<typename Point>
-inline decltype(auto) get_x(const Point& point) {
+inline auto get_x(const Point& point) {
   return traits::point_manipulation<Point>::get_x(point);
 }
 
 template<typename Point>
-inline decltype(auto) get_y(const Point& point) {
+inline auto get_y(const Point& point) {
   return traits::point_manipulation<Point>::get_y(point);
 }
 
 template<typename Point>
-inline decltype(auto) get_type(const Point& point) {
+inline auto get_type(const Point& point) {
   return traits::point_manipulation<Point>::get_type(point);
 }
 

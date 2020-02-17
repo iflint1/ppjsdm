@@ -15,40 +15,34 @@ namespace ppjsdm {
 class Configuration_wrapper {
 private:
   class Marked_point_reference {
+  private:
+    std::tuple<double&, double&, int&> point_;
   public:
     Marked_point_reference(double& x, double& y, int& type):
-    x_(x), y_(y), type_(type) {}
+    point_(x, y, type) {}
 
     Marked_point_reference& operator=(const Marked_point& point) {
-      x_ = get_x(point);
-      y_ = get_y(point);
-      type_ = get_type(point) + 1;
+      std::get<0>(point_) = get_x(point);
+      std::get<1>(point_) = get_y(point);
+      std::get<2>(point_) = get_type(point) + 1;
       return *this;
     }
 
     operator Marked_point() const {
-      return Marked_point(x_, y_, type_);
+      return Marked_point(std::get<0>(point_), std::get<1>(point_), std::get<2>(point_) + 1);
     }
-
-  private:
-    double& x_;
-    double& y_;
-    int& type_;
   };
 
-  class Const_marked_point_reference  {
+  class Const_marked_point_reference {
+  private:
+    std::tuple<const double&, const double&, const int&> point_;
   public:
     Const_marked_point_reference(const double& x, const double& y, const int& type):
-    x_(x), y_(y), type_(type) {}
+    point_(x, y, type) {}
 
     operator Marked_point() const {
-      return Marked_point(x_, y_, type_);
+      return Marked_point(std::get<0>(point_), std::get<1>(point_), std::get<2>(point_) + 1);
     }
-
-  private:
-    const double& x_;
-    const double& y_;
-    const int& type_;
   };
 
 public:
