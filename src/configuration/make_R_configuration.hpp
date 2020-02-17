@@ -6,6 +6,8 @@
 #include "../configuration/configuration_manipulation.hpp"
 #include "../configuration/configuration_wrapper.hpp"
 
+#include <algorithm> // std::copy_n
+
 namespace ppjsdm {
 
 inline Rcpp::List make_R_configuration(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector types_vector, Rcpp::CharacterVector types) {
@@ -24,11 +26,8 @@ inline auto make_R_configuration(const Configuration_wrapper& configuration, Rcp
 template<typename Configuration>
 inline auto make_R_configuration(const Configuration& configuration, Rcpp::CharacterVector types) {
   const auto configuration_size(size(configuration));
-  using size_t = size_t<Configuration>;
   Configuration_wrapper r_configuration(configuration_size);
-  for(size_t i(0); i < configuration_size; ++i) {
-    r_configuration[i] = configuration[i];
-  }
+  std::copy_n(configuration.begin(), configuration_size, r_configuration.begin());
   return make_R_configuration(r_configuration, types);
 }
 
