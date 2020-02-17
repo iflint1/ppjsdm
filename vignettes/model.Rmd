@@ -168,7 +168,7 @@ plot_papangelou(window = window,
 Making `alpha` positive instead of negative changes the behaviour.
 
 ```{r}
-alpha <- matrix(0.5)
+alpha <- matrix(0.2)
 plot_papangelou(window = window,
                 type = 1, 
                 model = model, 

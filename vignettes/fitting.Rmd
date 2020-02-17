@@ -190,9 +190,9 @@ print(traits_maximum_difference)
 traits_maximum <- apply(traits_matrix, 1, function(c) max(abs(c)))
 print(traits_maximum)
   
-gamma <- c(0, 0)
-beta <- c(-2, 2)
-delta <- c(1.5, -1.5)
+gamma <- c(-0.1, 0)
+beta <- c(-1, 1)
+delta <- c(1., -1)
 
 alpha <- matrix(NA, nspecies, nspecies)
 for(i in seq_len(nspecies)) {
@@ -212,7 +212,7 @@ Finally, we sample the observations.
 ```{r}
 configurations <- append(ppjsdm::rgibbs(lambda = c(50, 50), 
                                         alpha = alpha[c(1, 2), c(1, 2)],
-                                        nsim = 5, 
+                                        nsim = 100, 
                                         types = c("type1", "type2"), 
                                         model = model, 
                                         short_range = short_range[c(1, 2), c(1, 2)],
@@ -220,7 +220,7 @@ configurations <- append(ppjsdm::rgibbs(lambda = c(50, 50),
                                       
                          ppjsdm::rgibbs(lambda = c(50, 50, 50), 
                                         alpha = alpha,
-                                        nsim = 5,
+                                        nsim = 100,
                                         types = c("type1", "type2", "type3"), 
                                         model = model, 
                                         short_range = short_range,
