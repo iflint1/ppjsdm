@@ -16,6 +16,7 @@ class Configuration_wrapper {
 private:
   class Marked_point_reference {
   private:
+    friend struct traits::point_manipulation<Marked_point_reference>;
     std::tuple<double&, double&, int&> point_;
   public:
     Marked_point_reference(double& x, double& y, int& type):
@@ -35,6 +36,7 @@ private:
 
   class Const_marked_point_reference {
   private:
+    friend struct traits::point_manipulation<Const_marked_point_reference>;
     std::tuple<const double&, const double&, const int&> point_;
   public:
     Const_marked_point_reference(const double& x, const double& y, const int& type):
@@ -45,6 +47,8 @@ private:
     }
   };
 
+  friend struct traits::point_manipulation<Marked_point_reference>;
+  friend struct traits::point_manipulation<Const_marked_point_reference>;
 public:
   // TODO: A lot of this iterator and reference stuff is untested; use at your own risk or do some more testing!
   template<typename N, typename I, typename Point>
@@ -240,6 +244,35 @@ private:
   Rcpp::IntegerVector types_;
 };
 
+namespace traits {
+
+template<>
+struct point_manipulation<Configuration_wrapper::Const_marked_point_reference> {
+  static inline auto get_x(const Configuration_wrapper::Const_marked_point_reference& point) {
+    return std::get<0>(point.point_);
+  }
+  static inline auto get_y(const Configuration_wrapper::Const_marked_point_reference& point) {
+    return std::get<1>(point.point_);
+  }
+  static inline auto get_type(const Configuration_wrapper::Const_marked_point_reference& point) {
+    return std::get<2>(point.point_) - 1;
+  }
+};
+
+template<>
+struct point_manipulation<Configuration_wrapper::Marked_point_reference> {
+  static inline auto get_x(const Configuration_wrapper::Marked_point_reference& point) {
+    return std::get<0>(point.point_);
+  }
+  static inline auto get_y(const Configuration_wrapper::Marked_point_reference& point) {
+    return std::get<1>(point.point_);
+  }
+  static inline auto get_type(const Configuration_wrapper::Marked_point_reference& point) {
+    return std::get<2>(point.point_) - 1;
+  }
+};
+
+} // namespace traits
 } // namespace ppjsdm
 
 #endif // INCLUDE_PPJSDM_CONFIGURATION_WRAPPER

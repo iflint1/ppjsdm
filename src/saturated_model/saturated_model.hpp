@@ -39,7 +39,7 @@ protected:
 
   template<typename Configuration>
   void update_count(const Configuration& configuration) {
-    for(const Marked_point& current_point: configuration) {
+    for(const auto& current_point: configuration) {
       if(count_vector_[get_type(current_point)] < dispersion_.saturation_ && dispersion_.apply(current_point, point_) > 0) {
         ++count_vector_[get_type(current_point)];
       }
@@ -77,7 +77,7 @@ protected:
 
   template<typename Configuration>
   void update_count(const Configuration& configuration) {
-    for(const Marked_point& current_point: configuration) {
+    for(const auto& current_point: configuration) {
       const auto sq(square_distance(current_point, point_));
       auto& current(count_vector_[get_type(current_point)]);
       if(current.size() < dispersion_.saturation_) {
@@ -127,7 +127,7 @@ protected:
 
   template<typename Configuration>
   void update_count(const Configuration& configuration) {
-    for(const Marked_point& current_point: configuration) {
+    for(const auto& current_point: configuration) {
       const auto sq(square_distance(current_point, point_));
       // TODO: This doesn't really change from the case above; factorise?
       if(sq >= Dispersion::get_square_lower_endpoint(get_type(current_point), get_type(point_))) {
@@ -180,7 +180,7 @@ protected:
 
   template<typename Configuration>
   void update_count(const Configuration& configuration) {
-    for(const Marked_point& current_point: configuration) {
+    for(const auto& current_point: configuration) {
       const auto disp(dispersion_.apply(current_point, point_));
       auto& current(count_vector_[get_type(current_point)]);
       if(current.size() < dispersion_.saturation_) {
