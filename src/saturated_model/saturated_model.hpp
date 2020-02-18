@@ -280,19 +280,19 @@ const constexpr char* const short_range_models[] = {
 template<typename F>
 inline auto call_on_dispersion_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, unsigned long long int saturation, const F& f) {
   const auto model_string(model[0]);
-  if(model_string == short_range_models[0]) {
+  /*if(model_string == short_range_models[0]) {
     return f(Saturated_model<potentials::Exponential>(saturation, radius));
-  } else if(model_string == short_range_models[1]) {
+  } else */if(model_string == short_range_models[1]) {
     return f(Saturated_model<potentials::Square_exponential>(saturation, radius));
-  } else if(model_string == short_range_models[2]) {
+  } /*else if(model_string == short_range_models[2]) {
     return f(Saturated_model<potentials::Bump>(saturation, radius));
-  } else if(model_string == short_range_models[3]) {
+  } */else if(model_string == short_range_models[3]) {
     return f(Saturated_model<potentials::Square_bump>(saturation, radius));
   } else if(model_string == short_range_models[4]) {
     return f(Saturated_model<potentials::Strauss>(saturation, radius));
-  } else if(model_string == short_range_models[5]) {
+  } else /*if(model_string == short_range_models[5]) {
     return f(Saturated_model<potentials::Linear>(saturation, radius));
-  } else {
+  } else*/ {
     Rcpp::stop("Incorrect model entered. A call to show_short_range_models() will show you the available choices.\n");
   }
 }
@@ -309,13 +309,13 @@ inline auto call_on_medium_range_dispersion_model(Rcpp::CharacterVector model, R
   const auto model_string(model[0]);
   if(model_string == medium_range_models[0]) {
     return f(Saturated_model<potentials::Medium_range_square_exponential>(saturation, medium_range, long_range));
-  } else if(model_string == medium_range_models[1]) {
+  } /*else if(model_string == medium_range_models[1]) {
     return f(Saturated_model<potentials::Medium_range_half_square_exponential>(saturation, medium_range, long_range));
-  } else if(model_string == medium_range_models[2]) {
+  } */else if(model_string == medium_range_models[2]) {
     return f(Saturated_model<potentials::Medium_range_Geyer>(saturation, medium_range, long_range));
-  } else if(model_string == medium_range_models[3]) {
+  } /*else if(model_string == medium_range_models[3]) {
     return f(Saturated_model<potentials::Medium_range_linear>(saturation, medium_range, long_range));
-  } else {
+  } */else {
     Rcpp::stop("Incorrect model entered. A call to show_medium_range_models() will show you the available choices.\n");
   }
 }

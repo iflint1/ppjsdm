@@ -232,11 +232,11 @@ plot_papangelou(window = window,
 ```
 
 There are also various kinds of smoothing functions available via the `model` parameter (which correspond to $\varphi_{r_{i,j}}$ in the model).
-Here is what the exponential smoothing looks like.
+Here is what the square exponential smoothing looks like.
 
 ```{r}
 saturation <- 2
-model <- "exponential"
+model <- "square_exponential"
 plot_papangelou(window = window,
                 type = 1, 
                 model = model, 
