@@ -174,11 +174,10 @@ public:
     return Marked_point(x_[index], y_[index], types_[index] - 1);
   }
 
-  template<typename Iterator>
-  void erase(Iterator iterator) {
-    x_.erase(x_[iterator.i_]);
-    y_.erase(y_[iterator.i_]);
-    types_.erase(types_[iterator.i_]);
+  void erase(iterator it) {
+    x_.erase(x_[it.i_]);
+    y_.erase(y_[it.i_]);
+    types_.erase(types_[it.i_]);
   }
 
   Rcpp::NumericVector x() const {

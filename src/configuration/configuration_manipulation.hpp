@@ -31,8 +31,7 @@ struct configuration_manipulation_defaults {
     return configuration.empty();
   }
 
-  template<typename Iterator>
-  static inline auto remove_point_by_iterator(Configuration& configuration, Iterator iterator) {
+  static inline auto remove_point_by_iterator(Configuration& configuration, typename Configuration::iterator iterator) {
     //auto iterator(std::next(configuration.begin(), index));
     const auto point(*iterator);
     configuration.erase(iterator);
@@ -64,8 +63,8 @@ template<typename T>
 using size_t = decltype(size(std::declval<T>()));
 
 // TODO: Implement wrapper::iterator and avoid template
-template<typename Configuration, typename Iterator>
-inline auto remove_point_by_iterator(Configuration& configuration, Iterator iterator) {
+template<typename Configuration>
+inline auto remove_point_by_iterator(Configuration& configuration, typename Configuration::iterator iterator) {
   return traits::configuration_manipulation<Configuration>::remove_point_by_iterator(configuration, iterator);
 }
 
