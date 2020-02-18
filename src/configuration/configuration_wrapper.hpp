@@ -29,7 +29,7 @@ private:
     }
 
     operator Marked_point() const {
-      return Marked_point(std::get<0>(point_), std::get<1>(point_), std::get<2>(point_) + 1);
+      return Marked_point(std::get<0>(point_), std::get<1>(point_), std::get<2>(point_) - 1);
     }
   };
 
@@ -41,7 +41,7 @@ private:
     point_(x, y, type) {}
 
     operator Marked_point() const {
-      return Marked_point(std::get<0>(point_), std::get<1>(point_), std::get<2>(point_) + 1);
+      return Marked_point(std::get<0>(point_), std::get<1>(point_), std::get<2>(point_) - 1);
     }
   };
 
