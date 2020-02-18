@@ -240,19 +240,6 @@ private:
   Rcpp::IntegerVector types_;
 };
 
-namespace traits {
-
-template<>
-struct configuration_manipulation<Configuration_wrapper>: public configuration_manipulation_defaults<Configuration_wrapper> {
-  template<typename Iterator>
-  static inline auto remove_point_by_iterator(Configuration_wrapper& configuration, Iterator iterator) {
-    const auto point(*iterator);
-    configuration.erase(iterator);
-    return point;
-  }
-};
-
-} // namespace traits
 } // namespace ppjsdm
 
 #endif // INCLUDE_PPJSDM_CONFIGURATION_WRAPPER
