@@ -13,9 +13,8 @@ inline void for_each_container(F&&) {
 // Apply a function over a variadic number of containers which can be indexed but do not necessarily have iterators.
 template<typename F, typename Container, typename... Others>
 inline void for_each_container(F&& f, const Container& container, Others&&... others) {
-  using size_t = decltype(size(container));
-  for(size_t i(0); i < size(container); ++i) {
-    f(container[i]);
+  for(const auto& element: container) {
+    f(element);
   }
   for_each_container(std::forward<F>(f), std::forward<Others>(others)...);
 }

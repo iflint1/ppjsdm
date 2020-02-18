@@ -7,8 +7,8 @@
 #include "configuration_manipulation.hpp"
 #include "../point/point_manipulation.hpp"
 
-#include <cstddef> // std::size_t
 #include <iterator> // std::iterator
+#include <utility> // std::declval
 
 namespace ppjsdm {
 
@@ -53,15 +53,17 @@ public:
   // TODO: A lot of this iterator and reference stuff is untested; use at your own risk or do some more testing!
   template<typename N, typename I, typename Point>
   class Configuration_iterator : public std::iterator<std::random_access_iterator_tag, Point> {
+  private:
     friend class Configuration_wrapper;
+    using size_t = decltype(size(std::declval<N>()));
   protected:
     using Base = std::iterator<std::random_access_iterator_tag, Point>;
     N* px_;
     N* py_;
     I* ptypes_;
-    std::size_t i_;
+    size_t i_;
 
-    Configuration_iterator(N* px, N* py, I* ptypes, std::size_t i) :
+    Configuration_iterator(N* px, N* py, I* ptypes, size_t i) :
       px_(px), py_(py), ptypes_(ptypes), i_(i) {}
   public:
     using pointer = typename Base::pointer;

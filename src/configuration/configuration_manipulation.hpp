@@ -62,7 +62,6 @@ inline auto size(const Configuration& configuration) {
 template<typename T>
 using size_t = decltype(size(std::declval<T>()));
 
-// TODO: Implement wrapper::iterator and avoid template
 template<typename Configuration>
 inline auto remove_point_by_iterator(Configuration& configuration, typename Configuration::iterator iterator) {
   return traits::configuration_manipulation<Configuration>::remove_point_by_iterator(configuration, iterator);
