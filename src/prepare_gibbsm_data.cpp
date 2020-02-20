@@ -34,7 +34,7 @@ inline void add_to_formula(std::string& formula, Rcpp::CharacterVector names) {
 }
 
 template<typename Configuration, typename Window, typename DispersionModel, typename MediumDispersionModel, typename Vector>
-Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const Window& window, const ppjsdm::Im_list_wrapper& covariates, const DispersionModel& dispersion_model, const MediumDispersionModel& medium_dispersion_model, const Vector& points_by_type) {
+Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const Window& window, const ppjsdm::Im_list_wrapper& covariates, Rcpp::List traits, const DispersionModel& dispersion_model, const MediumDispersionModel& medium_dispersion_model, const Vector& points_by_type) {
   using size_t = ppjsdm::size_t<Configuration>;
 
   // Sample the dummy points D.
@@ -120,6 +120,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   }
 
   const auto total_points(precomputed_results.size());
+  const size_t number_traits(traits.size());
 
   // Default-initialise the data
   std::vector<int> response(total_points);
@@ -128,6 +129,10 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   ppjsdm::Lightweight_matrix<double> alpha_input(total_points, number_types * (number_types + 1) / 2);
   ppjsdm::Lightweight_matrix<double> gamma_input(total_points, number_types * (number_types + 1) / 2);
   ppjsdm::Lightweight_matrix<double> covariates_input(total_points, covariates_length * number_types);
+  ppjsdm::Lightweight_matrix<double> short_range_traits_input(total_points, 1 + number_traits);
+  ppjsdm::Lightweight_matrix<double> short_range_joint_traits_input(total_points, 1 + number_traits);
+  ppjsdm::Lightweight_matrix<double> medium_range_traits_input(total_points, 1 + number_traits);
+  ppjsdm::Lightweight_matrix<double> medium_range_joint_traits_input(total_points, 1 + number_traits);
 
 
   // Fill the regressors, response, offset and shift with what we precomputed.
@@ -136,6 +141,35 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     const size_t type_index(precomputed_results[i].type);
 
     rho_offset[i] = -std::log(static_cast<double>(rho_times_volume[type_index]) / volume);
+
+    // fill traits
+    short_range_traits_input(i, 0) = precomputed_results[i].dispersion[type_index];
+    medium_range_traits_input(i, 0) = precomputed_results[i].medium_dispersion[type_index];
+    // TODO: Initialisation probably not needed, just testing some things out.
+    short_range_joint_traits_input(i, 0) = 0;
+    medium_range_joint_traits_input(i, 0) = 0;
+    for(size_t j(0); j < number_types; ++j) {
+      if(j != type_index) {
+        short_range_joint_traits_input(i, 0) += precomputed_results[i].dispersion[j];
+        medium_range_joint_traits_input(i, 0) += precomputed_results[i].medium_dispersion[j];
+      }
+    }
+
+    for(size_t k(0); k < number_traits; ++k) {
+      short_range_traits_input(i, k + 1) = Rcpp::as<Rcpp::NumericVector>(traits[k])[type_index] * precomputed_results[i].dispersion[type_index];
+      medium_range_traits_input(i, k + 1) = Rcpp::as<Rcpp::NumericVector>(traits[k])[type_index] * precomputed_results[i].medium_dispersion[type_index];
+      // TODO: Initialisation probably not needed, just testing some things out.
+      short_range_joint_traits_input(i, k + 1) = 0;
+      medium_range_joint_traits_input(i, k + 1) = 0;
+      for(size_t j(0); j < number_types; ++j) {
+        if(j != type_index) {
+          const auto delta(std::abs(Rcpp::as<Rcpp::NumericVector>(traits[k])[j] - Rcpp::as<Rcpp::NumericVector>(traits[k])[type_index]));
+          short_range_joint_traits_input(i, k + 1) += delta * precomputed_results[i].dispersion[j];
+          medium_range_joint_traits_input(i, k + 1) += delta * precomputed_results[i].medium_dispersion[j];
+        }
+      }
+    }
+
     // TODO: index or formula here and in other vectors?
     size_t index(0);
     for(size_t j(0); j < number_types; ++j) {
@@ -168,6 +202,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
             alpha_input(i, index) = precomputed_results[i].dispersion[j];
             gamma_input(i, index++) = precomputed_results[i].medium_dispersion[j];
           } else {
+            // TODO: Not necessary since zero-initialized.
             alpha_input(i, index) = 0;
             gamma_input(i, index++) = 0;
           }
@@ -187,6 +222,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   // Set names.
   Rcpp::CharacterVector alpha_names(Rcpp::no_init(alpha_input.ncol()));
   Rcpp::CharacterVector gamma_names(Rcpp::no_init(alpha_input.ncol()));
+
   size_t index(0);
   for(size_t j(0); j < number_types; ++j) {
     for(size_t k(j); k < number_types; ++k) {
@@ -194,6 +230,19 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
       gamma_names[index++] = std::string("gamma_") + std::to_string(j + 1) + std::string("_") + std::to_string(k + 1);
     }
   }
+
+  // TODO: Better names
+  Rcpp::CharacterVector a_names(Rcpp::no_init(short_range_traits_input.ncol()));
+  Rcpp::CharacterVector b_names(Rcpp::no_init(medium_range_traits_input.ncol()));
+  Rcpp::CharacterVector c_names(Rcpp::no_init(short_range_joint_traits_input.ncol()));
+  Rcpp::CharacterVector d_names(Rcpp::no_init(medium_range_joint_traits_input.ncol()));
+  for(size_t i(0); i < short_range_traits_input.ncol(); ++i) {
+    a_names[i] = std::string("short_range_direct_") + (i == 0 ? std::string("intercept") : std::to_string(i));
+    b_names[i] = std::string("medium_range_direct_") + (i == 0 ? std::string("intercept") : std::to_string(i));
+    c_names[i] = std::string("short_range_joint_") + (i == 0 ? std::string("intercept") : std::to_string(i));
+    d_names[i] = std::string("medium_range_joint_") + (i == 0 ? std::string("intercept") : std::to_string(i));
+  }
+
   Rcpp::CharacterVector covariates_input_names(Rcpp::no_init(covariates_length * number_types));
   if(covariates_length > 0) {
     const auto covariates_names(covariates.names());
@@ -203,6 +252,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
       }
     }
   }
+
   Rcpp::CharacterVector log_lambda_names(Rcpp::no_init(number_types));
   for(size_t i(0); i < number_types; ++i) {
     log_lambda_names[i] = std::string("shifted_log_lambda") + std::to_string(i + 1);
@@ -210,38 +260,86 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
   Rcpp::colnames(rho_offset_rcpp) = Rcpp::wrap("rho");
   Rcpp::colnames(response_rcpp) = Rcpp::wrap("response");
 
-  // Put all the regressors into a unique matrix that'll be sent to glm / glmnet.
-  Rcpp::NumericMatrix regressors(Rcpp::no_init(log_lambda.nrow(),
-                                               log_lambda.ncol() + alpha_input.ncol() + gamma_input.ncol() + covariates_input.ncol()));
-  Rcpp::CharacterVector col_names(Rcpp::no_init(regressors.ncol()));
-  for(R_xlen_t j(0); j < static_cast<R_xlen_t>(log_lambda.ncol()); ++j) {
-    col_names[j] = log_lambda_names[j];
-    for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-      regressors(i, j) = log_lambda(i, j);
+  // Put all the regressors into a unique matrix that will be sent to glm / glmnet.
+  Rcpp::NumericMatrix regressors;
+  if(number_traits > 0) {
+    regressors = Rcpp::no_init(log_lambda.nrow(),
+                               log_lambda.ncol() + short_range_traits_input.ncol() + medium_range_traits_input.ncol() + short_range_joint_traits_input.ncol() + medium_range_joint_traits_input.ncol() + covariates_input.ncol());
+    Rcpp::CharacterVector col_names(Rcpp::no_init(regressors.ncol()));
+    for(R_xlen_t j(0); j < static_cast<R_xlen_t>(log_lambda.ncol()); ++j) {
+      col_names[j] = log_lambda_names[j];
+      for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+        regressors(i, j) = log_lambda(i, j);
+      }
     }
-  }
-  R_xlen_t index_shift(log_lambda.ncol());
-  for(R_xlen_t j(0); j < static_cast<R_xlen_t>(alpha_input.ncol()); ++j) {
-    col_names[j + index_shift] = alpha_names[j];
-    for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-      regressors(i, j + index_shift) = alpha_input(i, j);
+    R_xlen_t index_shift(log_lambda.ncol());
+    for(R_xlen_t j(0); j < static_cast<R_xlen_t>(short_range_traits_input.ncol()); ++j) {
+      col_names[j + index_shift] = a_names[j];
+      for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+        regressors(i, j + index_shift) = short_range_traits_input(i, j);
+      }
     }
-  }
-  index_shift = log_lambda.ncol() + alpha_input.ncol();
-  for(R_xlen_t j(0); j < static_cast<R_xlen_t>(gamma_input.ncol()); ++j) {
-    col_names[j + index_shift] = gamma_names[j];
-    for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-      regressors(i, j + index_shift) = gamma_input(i, j);
+    index_shift = log_lambda.ncol() + short_range_traits_input.ncol();
+    for(R_xlen_t j(0); j < static_cast<R_xlen_t>(medium_range_traits_input.ncol()); ++j) {
+      col_names[j + index_shift] = b_names[j];
+      for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+        regressors(i, j + index_shift) = medium_range_traits_input(i, j);
+      }
     }
-  }
-  index_shift = log_lambda.ncol() + alpha_input.ncol() + gamma_input.ncol();
-  for(R_xlen_t j(0); j < static_cast<R_xlen_t>(covariates_input.ncol()); ++j) {
-    col_names[j + index_shift] = covariates_input_names[j];
-    for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-      regressors(i, j + index_shift) = covariates_input(i, j);
+    index_shift = log_lambda.ncol() + short_range_traits_input.ncol() + medium_range_traits_input.ncol();
+    for(R_xlen_t j(0); j < static_cast<R_xlen_t>(short_range_joint_traits_input.ncol()); ++j) {
+      col_names[j + index_shift] = c_names[j];
+      for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+        regressors(i, j + index_shift) = short_range_joint_traits_input(i, j);
+      }
     }
+    index_shift = log_lambda.ncol() + short_range_traits_input.ncol() + medium_range_traits_input.ncol() + short_range_joint_traits_input.ncol();
+    for(R_xlen_t j(0); j < static_cast<R_xlen_t>(medium_range_joint_traits_input.ncol()); ++j) {
+      col_names[j + index_shift] = d_names[j];
+      for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+        regressors(i, j + index_shift) = medium_range_joint_traits_input(i, j);
+      }
+    }
+    index_shift = log_lambda.ncol() + short_range_traits_input.ncol() + medium_range_traits_input.ncol() + short_range_joint_traits_input.ncol() + medium_range_joint_traits_input.ncol();
+    for(R_xlen_t j(0); j < static_cast<R_xlen_t>(covariates_input.ncol()); ++j) {
+      col_names[j + index_shift] = covariates_input_names[j];
+      for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+        regressors(i, j + index_shift) = covariates_input(i, j);
+      }
+    }
+    Rcpp::colnames(regressors) = col_names;
+  } else {
+    regressors = Rcpp::no_init(log_lambda.nrow(),
+                               log_lambda.ncol() + alpha_input.ncol() + gamma_input.ncol() + covariates_input.ncol());    Rcpp::CharacterVector col_names(Rcpp::no_init(regressors.ncol()));
+    for(R_xlen_t j(0); j < static_cast<R_xlen_t>(log_lambda.ncol()); ++j) {
+      col_names[j] = log_lambda_names[j];
+      for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+        regressors(i, j) = log_lambda(i, j);
+      }
+    }
+    R_xlen_t index_shift(log_lambda.ncol());
+    for(R_xlen_t j(0); j < static_cast<R_xlen_t>(alpha_input.ncol()); ++j) {
+      col_names[j + index_shift] = alpha_names[j];
+      for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+        regressors(i, j + index_shift) = alpha_input(i, j);
+      }
+    }
+    index_shift = log_lambda.ncol() + alpha_input.ncol();
+    for(R_xlen_t j(0); j < static_cast<R_xlen_t>(gamma_input.ncol()); ++j) {
+      col_names[j + index_shift] = gamma_names[j];
+      for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+        regressors(i, j + index_shift) = gamma_input(i, j);
+      }
+    }
+    index_shift = log_lambda.ncol() + alpha_input.ncol() + gamma_input.ncol();
+    for(R_xlen_t j(0); j < static_cast<R_xlen_t>(covariates_input.ncol()); ++j) {
+      col_names[j + index_shift] = covariates_input_names[j];
+      for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+        regressors(i, j + index_shift) = covariates_input(i, j);
+      }
+    }
+    Rcpp::colnames(regressors) = col_names;
   }
-  Rcpp::colnames(regressors) = col_names;
 
 
   return Rcpp::List::create(Rcpp::Named("response") = response_rcpp,
@@ -252,7 +350,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 }
 
 // [[Rcpp::export]]
-Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation) {
+Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covariates, Rcpp::List traits, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation) {
   const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
   const auto length_configuration(ppjsdm::size(wrapped_configuration));
   if(length_configuration == 0) {
@@ -263,7 +361,7 @@ Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covar
   for(decltype(ppjsdm::size(wrapped_configuration)) i(0); i < length_configuration; ++i) {
     vector_configuration[i] = wrapped_configuration[i];
   }
-  return ppjsdm::call_on_wrapped_window(window, [&vector_configuration, &covariates, model, medium_range_model, short_range, medium_range, long_range, saturation](const auto& w) {
+  return ppjsdm::call_on_wrapped_window(window, [&vector_configuration, &covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation](const auto& w) {
     // The trick below allows us to find the number of different types in the configuration.
     // That number is then used to default construct `short_range`.
     const auto points_by_type(ppjsdm::get_number_points(vector_configuration));
@@ -272,14 +370,14 @@ Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covar
     if(!ppjsdm::is_symmetric_matrix(sh)) {
       Rcpp::stop("Short range interaction radius matrix is not symmetric.");
     }
-    return ppjsdm::call_on_dispersion_model(model, sh, saturation, [number_types, medium_range_model, medium_range, long_range, saturation, &vector_configuration, &w, &covariates, &points_by_type](const auto& short_papangelou) {
+    return ppjsdm::call_on_dispersion_model(model, sh, saturation, [number_types, medium_range_model, medium_range, long_range, saturation, &vector_configuration, &w, &covariates, traits, &points_by_type](const auto& short_papangelou) {
       const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0.1 * w.diameter(), number_types));
       const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0.2 * w.diameter(), number_types));
       if(!ppjsdm::is_symmetric_matrix(me) || !ppjsdm::is_symmetric_matrix(lo)) {
         Rcpp::stop("Medium or long range interaction radius matrix is not symmetric.");
       }
-      return ppjsdm::call_on_medium_range_dispersion_model(medium_range_model, me, lo, saturation, [&short_papangelou, &vector_configuration, &w, &covariates, &points_by_type](const auto& medium_papangelou) {
-        return prepare_gibbsm_data_helper(vector_configuration, w, ppjsdm::Im_list_wrapper(covariates), short_papangelou, medium_papangelou, points_by_type);
+      return ppjsdm::call_on_medium_range_dispersion_model(medium_range_model, me, lo, saturation, [&short_papangelou, &vector_configuration, &w, &covariates, traits, &points_by_type](const auto& medium_papangelou) {
+        return prepare_gibbsm_data_helper(vector_configuration, w, ppjsdm::Im_list_wrapper(covariates), traits, short_papangelou, medium_papangelou, points_by_type);
       });
     });
   });

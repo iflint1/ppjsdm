@@ -42,21 +42,22 @@ BEGIN_RCPP
 END_RCPP
 }
 // prepare_gibbsm_data
-Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation);
-RcppExport SEXP _ppjsdm_prepare_gibbsm_data(SEXP configurationSEXP, SEXP windowSEXP, SEXP covariatesSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP) {
+Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covariates, Rcpp::List traits, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation);
+RcppExport SEXP _ppjsdm_prepare_gibbsm_data(SEXP configurationSEXP, SEXP windowSEXP, SEXP covariatesSEXP, SEXP traitsSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type configuration(configurationSEXP);
     Rcpp::traits::input_parameter< SEXP >::type window(windowSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type covariates(covariatesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type traits(traitsSEXP);
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type model(modelSEXP);
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type medium_range_model(medium_range_modelSEXP);
     Rcpp::traits::input_parameter< SEXP >::type short_range(short_rangeSEXP);
     Rcpp::traits::input_parameter< SEXP >::type medium_range(medium_rangeSEXP);
     Rcpp::traits::input_parameter< SEXP >::type long_range(long_rangeSEXP);
     Rcpp::traits::input_parameter< R_xlen_t >::type saturation(saturationSEXP);
-    rcpp_result_gen = Rcpp::wrap(prepare_gibbsm_data(configuration, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation));
+    rcpp_result_gen = Rcpp::wrap(prepare_gibbsm_data(configuration, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -138,7 +139,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_ppjsdm_compute_papangelou", (DL_FUNC) &_ppjsdm_compute_papangelou, 15},
     {"_ppjsdm_has_duplicates", (DL_FUNC) &_ppjsdm_has_duplicates, 1},
-    {"_ppjsdm_prepare_gibbsm_data", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data, 9},
+    {"_ppjsdm_prepare_gibbsm_data", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data, 10},
     {"_ppjsdm_rbinomialpp", (DL_FUNC) &_ppjsdm_rbinomialpp, 5},
     {"_ppjsdm_rgibbs_cpp", (DL_FUNC) &_ppjsdm_rgibbs_cpp, 16},
     {"_ppjsdm_rppp", (DL_FUNC) &_ppjsdm_rppp, 5},

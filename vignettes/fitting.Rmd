@@ -171,11 +171,15 @@ This section assumes you have a series of traits explaining a given dataset.
 To illustrate how the package works, we define arbitrarily the following traits.
 
 ```{r}
+model <- "square_exponential"
+
 nspecies <- 3
 short_range <- matrix(0.1, nspecies, nspecies)
+medium_range <- matrix(0, nspecies, nspecies)
+long_range <- matrix(0, nspecies, nspecies)
 
-average_height <- c(type1 = 1, type2 = 7, type3 = 10)
-average_seed_size <- c(type1 = 3, type2 = 5, type3 = 1)
+average_height <- c(type1 = 0.5, type2 = 1, type3 = 0.4)
+average_seed_size <- c(type1 = 2, type2 = 0.1, type3 = 1)
 
 traits <- list(average_height = average_height, average_seed_size = average_seed_size)
 ```
@@ -189,18 +193,18 @@ traits_maximum_difference <- apply(traits_matrix, 1, function(c) max(abs(outer(c
 print(traits_maximum_difference)
 traits_maximum <- apply(traits_matrix, 1, function(c) max(abs(c)))
 print(traits_maximum)
-  
-gamma <- c(-0.1, 0)
-beta <- c(-1, 1)
-delta <- c(1., -1)
+
+gamma <- c(0.4, -0.2)
+beta <- c(-0.4, -0.6)
+delta <- c(0.5, 0.2)
 
 alpha <- matrix(NA, nspecies, nspecies)
 for(i in seq_len(nspecies)) {
   for(j in seq_len(nspecies)) {
     if(i == j) {
-      alpha[i, j] <- gamma[1] + beta %*% (traits_matrix[, i] / traits_maximum)
+      alpha[i, j] <- gamma[1] + beta %*% traits_matrix[, i]
     } else {
-      alpha[i, j] <- gamma[2] + delta %*% (abs(traits_matrix[, i] - traits_matrix[, j]) / traits_maximum_difference)
+      alpha[i, j] <- gamma[2] + delta %*% abs(traits_matrix[, i] - traits_matrix[, j])
     }
   }
 }
@@ -210,44 +214,34 @@ print(alpha)
 Finally, we sample the observations.
 
 ```{r}
-configurations <- append(ppjsdm::rgibbs(lambda = c(50, 50), 
-                                        alpha = alpha[c(1, 2), c(1, 2)],
-                                        nsim = 100, 
-                                        types = c("type1", "type2"), 
-                                        model = model, 
-                                        short_range = short_range[c(1, 2), c(1, 2)],
-                                        drop = FALSE),
-                                      
-                         ppjsdm::rgibbs(lambda = c(50, 50, 50), 
-                                        alpha = alpha,
-                                        nsim = 100,
-                                        types = c("type1", "type2", "type3"), 
-                                        model = model, 
-                                        short_range = short_range,
-                                        drop = FALSE))
+configuration <- ppjsdm::rgibbs(lambda = c(150, 150, 150), 
+                                alpha = alpha,
+                                model = model, 
+                                short_range = short_range,
+                                medium_range = medium_range,
+                                long_range = long_range)
 ```
 
-One of the samples is plotted below.
+The sample is plotted below.
 
 ```{r}
 par(mar = c(5, 4, 4, 13) + 0.1)
-plot(configurations[[1]])
+plot(configuration)
 ```
 
 The function `gibbsm` then fits a multivariate Gibbs point process to our dataset.
 
 ```{r}
-fit <- ppjsdm::gibbsm(configurations, 
+fit <- ppjsdm::gibbsm(configuration, 
                       traits = traits, 
                       model = model, 
-                      short_range = short_range, 
-                      print = FALSE)
-fit$traits
-fit$joint_traits
+                      short_range = short_range,
+                      medium_range = medium_range,
+                      long_range = long_range)
 ```
 
 The actual values used are
 
 ```{r}
-c(gamma[1], beta, gamma[2], delta)
+c(beta, delta)
 ```

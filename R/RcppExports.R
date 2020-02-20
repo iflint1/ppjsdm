@@ -35,8 +35,8 @@ has_duplicates <- function(configuration) {
     .Call('_ppjsdm_has_duplicates', PACKAGE = 'ppjsdm', configuration)
 }
 
-prepare_gibbsm_data <- function(configuration, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation) {
-    .Call('_ppjsdm_prepare_gibbsm_data', PACKAGE = 'ppjsdm', configuration, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation)
+prepare_gibbsm_data <- function(configuration, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation) {
+    .Call('_ppjsdm_prepare_gibbsm_data', PACKAGE = 'ppjsdm', configuration, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation)
 }
 
 #' Sample a binomial point processes
