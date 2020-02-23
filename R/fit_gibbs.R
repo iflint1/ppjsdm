@@ -13,7 +13,13 @@ fit_gibbs <- function(gibbsm_data_list, use_glmnet = TRUE) {
                     family = "binomial",
                     penalty.factor = pfactor)
 
-      coef <- coefficients(fit, s = 0)
+      tLL <- fit$nulldev - deviance(fit)
+      k <- fit$df
+      n <- fit$nobs
+      aic <- -tLL + 2 * k + 2 * k * (k + 1) / (n - k - 1)
+      bic <- log(n) * k - tLL
+
+      coef <- coefficients(fit)[, min(aic) == aic]
 
       # We don't use an offset explicitely because the call to glmnet above returns nonsensical results or hangs.
       # Instead, use a shift for all the log_lambda regressors according to -log(rho).
@@ -21,19 +27,15 @@ fit_gibbs <- function(gibbsm_data_list, use_glmnet = TRUE) {
       number_types <- length(shift)
       for(i in seq_len(number_types)) {
         # Shift all columns with row name shifted_log_lambdai
-        v <- coef[paste0("shifted_log_lambda", i), ]
+        v <- coef[paste0("shifted_log_lambda", i)]
         v[v != 0] <- v[v != 0] - shift[i]
-        coef[paste0("shifted_log_lambda", i), ] <- v
+        coef[paste0("shifted_log_lambda", i)] <- v
 
         # Remove "shifted" in front of log_lambda names.
-        dimnames(coef)[[1]][match(paste0("shifted_log_lambda", i), dimnames(coef)[[1]])] <- paste0("log_lambda", i)
+        names(coef)[match(paste0("shifted_log_lambda", i), names(coef))] <- paste0("log_lambda", i)
       }
 
-      cv <- cv.glmnet(x = regressors,
-                      y = gibbsm_data$response,
-                      offset = gibbsm_data$offset)
-
-      list(fit = fit, coefficients = coef, cv = cv)
+      list(fit = fit, coefficients = coef, aic = min(aic), bic = bic[min(aic) == aic])
     })
   } else {
     lapply(gibbsm_data_list, function(gibbsm_data) {

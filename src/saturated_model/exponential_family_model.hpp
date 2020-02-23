@@ -190,8 +190,10 @@ public:
     Model(lambda, std::forward<D>(dispersion), std::forward<E>(medium_range_dispersion), alpha, beta, gamma, covariates),
     window_(window),
     beta_dot_covariates_maximum_(detail::compute_beta_dot_covariates_maximum(beta, Model::covariates_)),
-    alpha_dot_dispersion_maximum_(detail::compute_alpha_dot_dispersion_maximum(alpha, dispersion.get_maximum(window))),
-    gamma_dot_dispersion_maximum_(detail::compute_alpha_dot_dispersion_maximum(gamma, medium_range_dispersion.get_maximum(window))){}
+    dot_dispersion_maximum_(detail::compute_alpha_dot_dispersion_maximum(alpha, dispersion.get_maximum(window))) {
+    const auto gamma_dot_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(gamma, medium_range_dispersion.get_maximum(window)));
+    dot_dispersion_maximum_.insert(dot_dispersion_maximum_.end(), gamma_dot_dispersion_maximum.begin(), gamma_dot_dispersion_maximum.end());
+  }
 
   template<typename Point>
   auto get_log_normalized_bounding_intensity(const Point& point) const {
@@ -206,7 +208,7 @@ public:
     const auto number_types(Model::beta_.nrow());
     for(R_xlen_t i(0); i < number_types; ++i) {
       integral += Model::lambda_[i] * Model::covariates_.get_integral_of_dot([i, this](double x) {
-        return std::exp(x + alpha_dot_dispersion_maximum_[i] + gamma_dot_dispersion_maximum_[i]);
+        return std::exp(x + dot_dispersion_maximum_[i]);
       }, Model::beta_(i, Rcpp::_));
     }
     return integral / static_cast<double>(number_types);
@@ -226,7 +228,7 @@ public:
     std::vector<double> upper_bound(number_types);
     using size_t = decltype(Model::lambda_.size());
     for(size_t i(0); i < number_types; ++i) {
-      const auto value(Model::lambda_[i] * std::exp(alpha_dot_dispersion_maximum_[i] + gamma_dot_dispersion_maximum_[i] + beta_dot_covariates_maximum_[i]));
+      const auto value(Model::lambda_[i] * std::exp(dot_dispersion_maximum_[i] + beta_dot_covariates_maximum_[i]));
       if(std::isinf(value)) {
         Rcpp::stop("Infinite value obtained as the bound to the Papangelou intensity.");
       }
@@ -236,11 +238,9 @@ public:
   }
 
   // TODO: Factorise and make this function more readable.
-  // TODO: Does not take into account gamma dispersion
   template<typename Point, typename Configuration>
   void add_to_L_or_U(double exp_mark, const Point& point, Configuration& l, Configuration& l_complement) const {
-    double alpha_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(Model::alpha_, Model::dispersion_.get_maximum(window_), get_type(point)));
-    double gamma_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(Model::gamma_, Model::medium_range_dispersion_.get_maximum(window_), get_type(point)));
+    double dot_dispersion_maximum(dot_dispersion_maximum_[get_type(point)]);
     auto compute_alpha_dispersion(Model::dispersion_.get_compute_dispersion_object(point, Model::alpha_.nrow()));
     auto compute_gamma_dispersion(Model::medium_range_dispersion_.get_compute_dispersion_object(point, Model::gamma_.nrow()));
     compute_alpha_dispersion.add_configuration(l);
@@ -254,26 +254,26 @@ public:
       const auto gamma_dispersion_u(compute_gamma_dispersion.compute());
       const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_u));
       const auto gamma_dispersion(detail::compute_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_u));
-      if(alpha_dispersion + gamma_dispersion - alpha_dispersion_maximum - gamma_dispersion_maximum + exp_mark > 0) {
+      if(alpha_dispersion + gamma_dispersion - dot_dispersion_maximum + exp_mark > 0) {
         const auto alpha_dispersion_l(compute_alpha_dispersion.compute_from_state(save_alpha));
         const auto gamma_dispersion_l(compute_gamma_dispersion.compute_from_state(save_gamma));
         const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_l));
         const auto gamma_dispersion(detail::compute_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_l));
-        add_point(alpha_dispersion + gamma_dispersion - alpha_dispersion_maximum - gamma_dispersion_maximum + exp_mark > 0 ? l : l_complement, point);
+        add_point(alpha_dispersion + gamma_dispersion - dot_dispersion_maximum + exp_mark > 0 ? l : l_complement, point);
       }
     } else if(detail::is_alpha_non_positive(point, Model::alpha_) && detail::is_alpha_non_positive(point, Model::gamma_)) {
       const auto alpha_dispersion_l(compute_alpha_dispersion.compute());
       const auto gamma_dispersion_l(compute_gamma_dispersion.compute());
       const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_l));
       const auto gamma_dispersion(detail::compute_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_l));
-      if(alpha_dispersion + gamma_dispersion - alpha_dispersion_maximum - gamma_dispersion_maximum + exp_mark > 0) {
+      if(alpha_dispersion + gamma_dispersion - dot_dispersion_maximum + exp_mark > 0) {
         compute_alpha_dispersion.add_configuration(l_complement);
         compute_gamma_dispersion.add_configuration(l_complement);
         const auto alpha_dispersion_u(compute_alpha_dispersion.compute());
         const auto gamma_dispersion_u(compute_gamma_dispersion.compute());
         const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_u));
         const auto gamma_dispersion(detail::compute_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_u));
-        add_point(alpha_dispersion + gamma_dispersion - alpha_dispersion_maximum - gamma_dispersion_maximum + exp_mark > 0 ? l : l_complement, point);
+        add_point(alpha_dispersion + gamma_dispersion - dot_dispersion_maximum + exp_mark > 0 ? l : l_complement, point);
       }
     } else {
       const auto alpha_dispersion_l(compute_alpha_dispersion.compute());
@@ -286,12 +286,12 @@ public:
       const auto negative_alpha(detail::compute_negative_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_l));
       const auto positive_gamma(detail::compute_positive_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_u));
       const auto negative_gamma(detail::compute_negative_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_l));
-      if(positive_alpha + negative_alpha + positive_gamma + negative_gamma - alpha_dispersion_maximum - gamma_dispersion_maximum + exp_mark > 0) {
+      if(positive_alpha + negative_alpha + positive_gamma + negative_gamma - dot_dispersion_maximum + exp_mark > 0) {
         const auto positive_alpha(detail::compute_positive_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_l));
         const auto negative_alpha(detail::compute_negative_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_u));
         const auto positive_gamma(detail::compute_positive_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_l));
         const auto negative_gamma(detail::compute_negative_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_u));
-        add_point(positive_alpha + negative_alpha + positive_gamma + negative_gamma - alpha_dispersion_maximum - gamma_dispersion_maximum + exp_mark > 0 ? l : l_complement, point);
+        add_point(positive_alpha + negative_alpha + positive_gamma + negative_gamma - dot_dispersion_maximum + exp_mark > 0 ? l : l_complement, point);
       }
     }
   }
@@ -327,8 +327,7 @@ public:
 private:
   Window window_;
   std::vector<double> beta_dot_covariates_maximum_;
-  std::vector<double> alpha_dot_dispersion_maximum_;
-  std::vector<double> gamma_dot_dispersion_maximum_;
+  std::vector<double> dot_dispersion_maximum_;
 };
 
 template<typename F, typename Lambda, typename... Args>

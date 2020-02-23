@@ -162,7 +162,6 @@ Diagnostics may be obtained as follows.
 
 ```{r}
 plot(fit$complete)
-plot(fit$cv)
 ```
 
 # Fitting samples driven by traits
@@ -214,7 +213,7 @@ print(alpha)
 Finally, we sample the observations.
 
 ```{r}
-configuration <- ppjsdm::rgibbs(lambda = c(150, 150, 150), 
+configuration <- ppjsdm::rgibbs(lambda = exp(c(5, 5, 5)), 
                                 alpha = alpha,
                                 model = model, 
                                 short_range = short_range,
