@@ -88,6 +88,28 @@ struct Half_square_exponential_implementation {
   }
 };
 
+struct Half_exponential_implementation {
+  static constexpr bool is_nonincreasing = false;
+  static constexpr bool is_nonincreasing_after_lower_endpoint = true;
+
+  static double set_lower(double lower, double) {
+    return lower;
+  }
+
+  static double set_upper(double lower, double upper) {
+    return -std::log(2) / (upper - lower);
+  }
+
+  static double apply(double square_distance, double lower, double upper) {
+    if(square_distance >= lower * lower) {
+      const auto distance(std::sqrt(square_distance) - lower);
+      return std::exp(upper * distance);
+    } else {
+      return 0.;
+    }
+  }
+};
+
 struct Two_sided_square_exponential_implementation {
   static constexpr bool is_nonincreasing = false;
 
@@ -159,6 +181,7 @@ using Medium_range_square_exponential = Medium_range_potential<Two_sided_square_
 using Medium_range_half_square_exponential = Medium_range_potential<Half_square_exponential_implementation>;
 using Medium_range_Geyer = Medium_range_potential<Two_sided_Strauss_implementation>;
 using Medium_range_linear = Medium_range_potential<Two_sided_linear_implementation>;
+using Medium_range_exponential = Medium_range_potential<Half_exponential_implementation>;
 
 } // namespace potentials
 } // namespace ppjsdm
