@@ -16,7 +16,8 @@ gibbsm(
   long_range = NULL,
   saturation = 2,
   print = TRUE,
-  use_glmnet = TRUE
+  use_glmnet = TRUE,
+  use_aic = FALSE
 )
 }
 \arguments{
@@ -43,6 +44,8 @@ gibbsm(
 \item{print}{Print the fitted coefficients?}
 
 \item{use_glmnet}{Use `glmnet` instead of `glm`?}
+
+\item{use_aic}{Use AIC instead of BIC for model fitting?}
 }
 \description{
 Fit a multivariate Gibbs model to a dataset.

@@ -12,12 +12,13 @@
 #' @param saturation Saturation parameter of the point process.
 #' @param print Print the fitted coefficients?
 #' @param use_glmnet Use `glmnet` instead of `glm`?
+#' @param use_aic Use AIC instead of BIC for model fitting?
 #' @importFrom glmnet glmnet cv.glmnet
 #' @importFrom stats as.formula binomial coefficients glm.fit lm
 #' @importFrom spatstat as.im as.owin
 #' @importFrom GA ga
 #' @export
-gibbsm <- function(configuration_list, window = Rectangle_window(), covariates = list(), traits = list(), model = "square_bump", medium_range_model = "square_exponential", short_range = NULL, medium_range = NULL, long_range = NULL, saturation = 2, print = TRUE, use_glmnet = TRUE) {
+gibbsm <- function(configuration_list, window = Rectangle_window(), covariates = list(), traits = list(), model = "square_bump", medium_range_model = "square_exponential", short_range = NULL, medium_range = NULL, long_range = NULL, saturation = 2, print = TRUE, use_glmnet = TRUE, use_aic = FALSE) {
   # Make covariates im objects with proper names.
   covariates <- coerce_to_named_im_objects(covariates, "unnamed_covariate", window)
 
@@ -58,26 +59,37 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
       gibbsm_data_list <- lapply(configuration_list, function(configuration) {
         prepare_gibbsm_data(configuration, window, covariates, traits, model, medium_range_model, sh, me, lo, saturation)
       })
-      fit <- fit_gibbs(gibbsm_data_list, use_glmnet)
+      fit <- fit_gibbs(gibbsm_data_list, use_glmnet, use_aic)
       list(fit = fit, sh = sh, me = me, lo = lo)
     }
+
     to_optimise <- function(v) {
-      fit <- get_fit(v)$fit
-      average_aic <- mean(sapply(fit, function(element) element$aic))
-      average_aic
+      out <- tryCatch(
+      {
+        fit <- get_fit(v)$fit
+        if(use_aic) {
+          average <- mean(sapply(fit, function(element) element$aic))
+        } else {
+          average <- mean(sapply(fit, function(element) element$bic))
+        }
+        average
+      },
+      error = function(cond) {
+        return(Inf)
+      })
+      out
     }
     # MC
-    # best_aic <- Inf
+    # best_metric <- Inf
     # for(i in seq_len(100)) {
     #   v <- runif(3 * (1 + number_types), lower, upper)
-    #   aic <- to_optimise(v)
-    #   if(aic < best_aic) {
-    #     best_aic <- aic
+    #   metric <- to_optimise(v)
+    #   if(metric < best_metric) {
+    #     best_metric <- metric
     #     best_v <- v
     #   }
     # }
     # result <- get_fit(best_v)
-    # aic <- best_aic
 
     # GA
     GA <- ga(type = "real-valued",
@@ -87,11 +99,11 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
              optim = TRUE,
              parallel = TRUE)
     result <- get_fit(GA@solution)
-    aic <- -GA@fitnessValue
 
     # optim
     # opt <- optim(initial, to_optimise, lower = lower, upper = upper, method = "L-BFGS-B")
     # result <- get_fit(opt$par)
+
     fitted <- result$fit
     best_short <- result$sh
     best_medium <- result$me
@@ -100,10 +112,12 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
     gibbsm_data_list <- lapply(configuration_list, function(configuration) {
       prepare_gibbsm_data(configuration, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation)
     })
-    fitted <- fit_gibbs(gibbsm_data_list, use_glmnet)
+    fitted <- fit_gibbs(gibbsm_data_list, use_glmnet, use_aic)
   }
   fits <-  lapply(fitted, function(fit) fit$fit)
   fits_coefficients <-lapply(fitted, function(fit) fit$coefficients)
+  aic <-  lapply(fitted, function(fit) fit$aic)
+  bic <-lapply(fitted, function(fit) fit$bic)
 
   if(print) {
     lapply(fits_coefficients, function(fit) print(fit))
@@ -112,11 +126,13 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
   if(number_configurations == 1) {
     fits <- fits[[1]]
     fits_coefficients <- fits_coefficients[[1]]
+    aic <- aic[[1]]
+    bic <- bic[[1]]
   }
   if(estimate_radii) {
-    ret <- list(complete = fits, coefficients = fits_coefficients, best_short = best_short, best_medium = best_medium, best_long = best_long, aic = aic)
+    ret <- list(complete = fits, coefficients = fits_coefficients, aic = aic, bic = bic, best_short = best_short, best_medium = best_medium, best_long = best_long)
   } else {
-    ret <- list(complete = fits, coefficients = fits_coefficients)
+    ret <- list(complete = fits, coefficients = fits_coefficients, aic = aic, bic = bic)
   }
   ret
 }

@@ -1,4 +1,4 @@
-fit_gibbs <- function(gibbsm_data_list, use_glmnet = TRUE) {
+fit_gibbs <- function(gibbsm_data_list, use_glmnet, use_aic) {
   if(use_glmnet) {
     lapply(gibbsm_data_list, function(gibbsm_data) {
       regressors <- gibbsm_data$regressors
@@ -19,7 +19,11 @@ fit_gibbs <- function(gibbsm_data_list, use_glmnet = TRUE) {
       aic <- -tLL + 2 * k + 2 * k * (k + 1) / (n - k - 1)
       bic <- log(n) * k - tLL
 
-      coef <- coefficients(fit)[, min(aic) == aic]
+      if(use_aic) {
+        coef <- coefficients(fit)[, min(aic) == aic]
+      } else {
+        coef <- coefficients(fit)[, min(bic) == bic]
+      }
 
       # We don't use an offset explicitely because the call to glmnet above returns nonsensical results or hangs.
       # Instead, use a shift for all the log_lambda regressors according to -log(rho).
@@ -34,7 +38,11 @@ fit_gibbs <- function(gibbsm_data_list, use_glmnet = TRUE) {
         names(coef)[match(paste0("shifted_log_lambda", i), names(coef))] <- paste0("log_lambda", i)
       }
 
-      list(fit = fit, coefficients = coef, aic = min(aic), bic = bic[min(aic) == aic])
+      if(use_aic) {
+        list(fit = fit, coefficients = coef, aic = min(aic), bic = bic[min(aic) == aic])
+      } else {
+        list(fit = fit, coefficients = coef, aic = aic[min(bic) == bic], bic = min(bic))
+      }
     })
   } else {
     lapply(gibbsm_data_list, function(gibbsm_data) {
