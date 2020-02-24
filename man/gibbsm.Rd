@@ -17,7 +17,7 @@ gibbsm(
   saturation = 2,
   print = TRUE,
   use_glmnet = TRUE,
-  use_aic = FALSE
+  use_aic = TRUE
 )
 }
 \arguments{

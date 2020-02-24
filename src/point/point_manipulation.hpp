@@ -5,7 +5,7 @@
 
 namespace ppjsdm {
 
-using Marked_point = std::tuple<double, double, int>;
+using Marked_point = std::tuple<double, double, int, double>;
 
 namespace traits {
 
@@ -19,6 +19,9 @@ struct point_manipulation_defaults {
   }
   static inline auto get_type(const Point& point) {
     return std::get<2>(point);
+  }
+  static inline auto get_mark(const Point& point) {
+    return std::get<3>(point);
   }
 };
 
@@ -40,6 +43,11 @@ inline auto get_y(const Point& point) {
 template<typename Point>
 inline auto get_type(const Point& point) {
   return traits::point_manipulation<Point>::get_type(point);
+}
+
+template<typename Point>
+inline auto get_mark(const Point& point) {
+  return traits::point_manipulation<Point>::get_mark(point);
 }
 
 } // namespace ppjsdm

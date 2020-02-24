@@ -4,7 +4,7 @@
 \alias{Configuration}
 \title{Configuration constructor.}
 \usage{
-Configuration(x, y, types)
+Configuration(x, y, types, marks)
 }
 \arguments{
 \item{x}{Values along the x-axis.}
@@ -12,6 +12,8 @@ Configuration(x, y, types)
 \item{y}{Values along the y-axis.}
 
 \item{types}{Types of the points.}
+
+\item{mark}{Marks of the points.}
 }
 \description{
 Configuration constructor.

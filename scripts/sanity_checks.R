@@ -35,31 +35,3 @@ spatstat_result <- t.test(spatstat_number_points, conf.interval = confidence)
 
 message(paste0("ppjsdm confidence interval: [", paste0(ppjsdm_result$conf.int, collapse = ", "),
                "], spatstat confidence interval: [", paste0(spatstat_result$conf.int, collapse = ", "), "]."))
-
-
-# These values used to give absurd results
-window <- Rectangle_window(c(0, 56), c(0, 38))
-alpha <- -4.8
-lambda <- exp(-1.38)
-gamma <- 0.59
-model <- "square_bump"
-medium_range_model <- "square_exponential"
-short_range <- 1.54
-medium_range <- 6.38
-long_range <- 8.07
-saturation <- 2
-
-
-N <- 1
-cftp_configurations <- rgibbs(window = window, saturation = saturation, alpha = alpha, lambda = lambda, gamma = gamma, model = model, medium_range_model = medium_range_model, short_range = short_range, medium_range = medium_range, long_range = long_range, nsim = N)
-cftp_number_points <- sapply(cftp_configurations, function(a) length(a$x))
-cftp_result <- t.test(cftp_number_points, conf.interval = confidence)
-
-N <- 100
-steps <- 100000
-mh_configurations <- rgibbs(window = window, saturation = saturation, alpha = alpha, lambda = lambda, gamma = gamma, model = model, medium_range_model = medium_range_model, short_range = short_range, medium_range = medium_range, long_range = long_range, nsim = N, steps = steps)
-mh_number_points <- sapply(mh_configurations, function(a) length(a$x))
-mh_result <- t.test(mh_number_points, conf.interval = confidence)
-
-message(paste0("cftp confidence interval: [", paste0(cftp_result$conf.int, collapse = ", "),
-               "], mh confidence interval: [", paste0(mh_result$conf.int, collapse = ", "), "]."))

@@ -10,17 +10,17 @@
 
 namespace ppjsdm {
 
-inline Rcpp::List make_R_configuration(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector types_vector, Rcpp::CharacterVector types) {
+inline Rcpp::List make_R_configuration(Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::IntegerVector types_vector, Rcpp::NumericVector marks, Rcpp::CharacterVector types) {
   types_vector.attr("class") = "factor";
   types_vector.attr("levels") = types;
 
-  auto configuration = Rcpp::List::create(Rcpp::Named("x") = x, Rcpp::Named("y") = y, Rcpp::Named("types") = types_vector);
+  auto configuration = Rcpp::List::create(Rcpp::Named("x") = x, Rcpp::Named("y") = y, Rcpp::Named("types") = types_vector, Rcpp::Named("marks") = marks);
   configuration.attr("class") = "Configuration";
   return configuration;
 }
 
 inline auto make_R_configuration(const Configuration_wrapper& configuration, Rcpp::CharacterVector types) {
-  return make_R_configuration(configuration.x(), configuration.y(), configuration.types(), types);
+  return make_R_configuration(configuration.x(), configuration.y(), configuration.types(), configuration.marks(), types);
 }
 
 template<typename Configuration>

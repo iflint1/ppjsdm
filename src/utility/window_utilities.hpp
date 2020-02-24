@@ -33,7 +33,8 @@ public:
   }
 
   auto sample(int type = 0) const {
-    return Marked_point(x_0_ + unif_rand() * delta_x_,  y_0_ + unif_rand() * delta_y_, type);
+    // TODO: Also sample mark?
+    return Marked_point(x_0_ + unif_rand() * delta_x_,  y_0_ + unif_rand() * delta_y_, type, 1.0);
   }
 
   double volume() const {
@@ -72,7 +73,7 @@ public:
       const auto x(2 * unif_rand() - 1.0);
       const auto y(2 * unif_rand() - 1.0);
       if(x * x + y * y <= 1) {
-        return Marked_point(x_ + radius_ * x,  y_ + radius_ * y, type);
+        return Marked_point(x_ + radius_ * x,  y_ + radius_ * y, type, 1.0);
       }
     }
   }
@@ -111,7 +112,7 @@ public:
       const auto x(delta_x * unif_rand() + x_min);
       const auto y(delta_y * unif_rand() + y_min);
       if(im_.is_in(x, y)) {
-        return Marked_point(x,  y, type);
+        return Marked_point(x,  y, type, 1.0);
       }
     }
   }

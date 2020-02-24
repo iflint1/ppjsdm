@@ -280,9 +280,9 @@ const constexpr char* const short_range_models[] = {
 template<typename F>
 inline auto call_on_dispersion_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, unsigned long long int saturation, const F& f) {
   const auto model_string(model[0]);
-  if(model_string == short_range_models[0]) {
+  /*if(model_string == short_range_models[0]) {
     return f(Saturated_model<potentials::Exponential>(saturation, radius));
-  } else if(model_string == short_range_models[1]) {
+  } else */if(model_string == short_range_models[1]) {
     return f(Saturated_model<potentials::Square_exponential>(saturation, radius));
   } /*else if(model_string == short_range_models[2]) {
     return f(Saturated_model<potentials::Bump>(saturation, radius));
@@ -316,9 +316,9 @@ inline auto call_on_medium_range_dispersion_model(Rcpp::CharacterVector model, R
     return f(Saturated_model<potentials::Medium_range_Geyer>(saturation, medium_range, long_range));
   } /*else if(model_string == medium_range_models[3]) {
     return f(Saturated_model<potentials::Medium_range_linear>(saturation, medium_range, long_range));
-  } */else if(model_string == medium_range_models[4]) {
+  } else if(model_string == medium_range_models[4]) {
     return f(Saturated_model<potentials::Medium_range_exponential>(saturation, medium_range, long_range));
-  } else {
+  } */else {
     Rcpp::stop("Incorrect model entered. A call to show_medium_range_models() will show you the available choices.\n");
   }
 }

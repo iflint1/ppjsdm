@@ -35,7 +35,8 @@ Rcpp::NumericVector compute_papangelou(SEXP configuration, Rcpp::NumericVector x
     const auto length_x(x.size());
     Rcpp::NumericVector result(Rcpp::no_init(length_x));
     for(R_xlen_t i(0); i < length_x; ++i) {
-      result[i] = model.compute_papangelou(ppjsdm::Marked_point(x[i], y[i], type - 1), wrapped_configuration);
+      // TODO: Add mark to the parameters.
+      result[i] = model.compute_papangelou(ppjsdm::Marked_point(x[i], y[i], type - 1, 1.0), wrapped_configuration);
     }
     return result;
   }, alpha, beta, gamma, covariates);

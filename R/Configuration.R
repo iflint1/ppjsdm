@@ -3,10 +3,11 @@
 #' @param x Values along the x-axis.
 #' @param y Values along the y-axis.
 #' @param types Types of the points.
+#' @param mark Marks of the points.
 #' @importFrom methods is
 #' @export
 Configuration <- local({
-  function(x, y, types) {
+  function(x, y, types, marks) {
     if(nargs() == 1 && !missing(x)) {
       configuration <- as.Configuration(x)
     } else {
@@ -22,7 +23,15 @@ Configuration <- local({
           stop("The types argument should be a factor with the same length as that of x.")
         }
       }
-      configuration <- structure(list(x = x, y = y, types = types), class = "Configuration")
+
+      if(missing(marks)) {
+        marks <- rep(1, length(x))
+      } else {
+        if(length(marks) != length(x) || !is.vector(marks) || !is.numeric(marks)) {
+          stop("The marks argument should be a numeric vector with the same length as that of x.")
+        }
+      }
+      configuration <- structure(list(x = x, y = y, types = types, marks = marks), class = "Configuration")
     }
     if(has_duplicates(configuration)) {
       warning("There are duplicate points in the configuration.")
@@ -40,7 +49,7 @@ Configuration <- local({
 "[.Configuration" <- function(x, i) {
   types <- x$types
   subset_indices <- types %in% levels(types)[as.integer(i)]
-  Configuration(x = x$x[subset_indices], y = x$y[subset_indices], types = factor(types[subset_indices]))
+  Configuration(x = x$x[subset_indices], y = x$y[subset_indices], types = factor(types[subset_indices]), marks = x$marks[subset_indices])
 }
 
 format <- function(configuration) {
@@ -58,6 +67,8 @@ format <- function(configuration) {
     str <- paste0(str, paste0(configuration$y, collapse = ", "))
     str <- paste0(str, ".\n\nType(s) of the point(s): ")
     str <- paste0(str, paste0(configuration$types, collapse = ", "))
+    str <- paste0(str, ".\n\nMarks(s) of the point(s): ")
+    str <- paste0(str, paste0(configuration$marks, collapse = ", "))
     str <- paste0(str, ".\n")
   }
   str
@@ -157,6 +168,15 @@ types <- function(configuration) {
   configuration$types
 }
 
+#' Access marks of a configuration
+#'
+#' @param configuration The configuration.
+#' @export
+marks <- function(configuration) {
+  configuration$marks
+}
+
+# TODO: Check code below and make it work with marks.
 #' Convert a configuration class to a ppp from the SpatStat package.
 #'
 #' @param X Configuration.
