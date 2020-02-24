@@ -25,18 +25,18 @@
 //' @param medium_range Medium range interaction radii.
 //' @param long_range Long range interaction radii.
 //' @param saturation Saturation parameter.
+//' @param mark Mark of the point to add.
 //' @export
 //' @useDynLib ppjsdm
 //' @import Rcpp
 // [[Rcpp::export]]
-Rcpp::NumericVector compute_papangelou(SEXP configuration, Rcpp::NumericVector x, Rcpp::NumericVector y, R_xlen_t type, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericMatrix beta, Rcpp::NumericMatrix gamma, Rcpp::List covariates, Rcpp::NumericMatrix short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation) {
+Rcpp::NumericVector compute_papangelou(SEXP configuration, Rcpp::NumericVector x, Rcpp::NumericVector y, R_xlen_t type, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericMatrix beta, Rcpp::NumericMatrix gamma, Rcpp::List covariates, Rcpp::NumericMatrix short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, double mark = 1.0) {
   const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
-  return ppjsdm::call_on_model(model, medium_range_model, lambda, short_range, medium_range, long_range, saturation, [&wrapped_configuration, &x, &y, type](const auto& model) {
+  return ppjsdm::call_on_model(model, medium_range_model, lambda, short_range, medium_range, long_range, saturation, [&wrapped_configuration, &x, &y, type, mark](const auto& model) {
     const auto length_x(x.size());
     Rcpp::NumericVector result(Rcpp::no_init(length_x));
     for(R_xlen_t i(0); i < length_x; ++i) {
-      // TODO: Add mark to the parameters.
-      result[i] = model.compute_papangelou(ppjsdm::Marked_point(x[i], y[i], type - 1, 1.0), wrapped_configuration);
+      result[i] = model.compute_papangelou(ppjsdm::Marked_point(x[i], y[i], type - 1, mark), wrapped_configuration);
     }
     return result;
   }, alpha, beta, gamma, covariates);

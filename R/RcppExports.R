@@ -18,11 +18,12 @@
 #' @param medium_range Medium range interaction radii.
 #' @param long_range Long range interaction radii.
 #' @param saturation Saturation parameter.
+#' @param mark Mark of the point to add.
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-compute_papangelou <- function(configuration, x, y, type, model, medium_range_model, alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation) {
-    .Call('_ppjsdm_compute_papangelou', PACKAGE = 'ppjsdm', configuration, x, y, type, model, medium_range_model, alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation)
+compute_papangelou <- function(configuration, x, y, type, model, medium_range_model, alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation, mark = 1.0) {
+    .Call('_ppjsdm_compute_papangelou', PACKAGE = 'ppjsdm', configuration, x, y, type, model, medium_range_model, alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation, mark)
 }
 
 #' Check if a configuration contains duplicates.

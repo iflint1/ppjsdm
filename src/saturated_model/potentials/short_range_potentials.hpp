@@ -32,13 +32,13 @@ protected:
     }
   }
 
-  double apply(double square_distance, size_t i, size_t j) const {
-    return Varphi::apply(square_distance, matrix_(i, j));
+  double apply(double normalized_square_distance, size_t i, size_t j) const {
+    return Varphi::apply(normalized_square_distance, matrix_(i, j));
   }
 
   template<typename Point, typename Other>
   double apply(const Point& point, const Other& other) const {
-    return apply(square_distance(point, other), get_type(point), get_type(other));
+    return apply(normalized_square_distance(point, other), get_type(point), get_type(other));
   }
 
   template<typename Window>

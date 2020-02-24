@@ -19,7 +19,8 @@ compute_papangelou(
   short_range,
   medium_range,
   long_range,
-  saturation
+  saturation,
+  mark = 1
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ compute_papangelou(
 \item{long_range}{Long range interaction radii.}
 
 \item{saturation}{Saturation parameter.}
+
+\item{mark}{Mark of the point to add.}
 }
 \description{
 Compute Papangelou conditional intensity of the model.

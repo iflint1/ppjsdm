@@ -25,7 +25,7 @@ Configuration <- local({
       }
 
       if(missing(marks)) {
-        marks <- rep(1, length(x))
+        marks <- rep(1.0, length(x))
       } else {
         if(length(marks) != length(x) || !is.vector(marks) || !is.numeric(marks)) {
           stop("The marks argument should be a numeric vector with the same length as that of x.")

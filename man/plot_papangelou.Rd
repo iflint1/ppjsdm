@@ -19,7 +19,8 @@ plot_papangelou(
   medium_range,
   long_range,
   saturation,
-  grid_steps = 1000
+  grid_steps = 1000,
+  mark = 1
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ plot_papangelou(
 \item{saturation}{Saturation.}
 
 \item{grid_steps}{Number of horizontal and vertical grid steps.}
+
+\item{mark}{Mark of the point.}
 }
 \description{
 Plot the Papangelou conditional intensity.
