@@ -20,9 +20,9 @@ fit_gibbs <- function(gibbsm_data_list, use_glmnet, use_aic) {
       bic <- log(n) * k - tLL
 
       if(use_aic) {
-        coef <- coefficients(fit)[, min(aic) == aic]
+        coef <- coefficients(fit)[, which.min(aic)]
       } else {
-        coef <- coefficients(fit)[, min(bic) == bic]
+        coef <- coefficients(fit)[, which.min(bic)]
       }
 
       # We don't use an offset explicitely because the call to glmnet above returns nonsensical results or hangs.
@@ -39,9 +39,9 @@ fit_gibbs <- function(gibbsm_data_list, use_glmnet, use_aic) {
       }
 
       if(use_aic) {
-        list(fit = fit, coefficients = coef, aic = min(aic), bic = bic[min(aic) == aic])
+        list(fit = fit, coefficients = coef, aic = min(aic), bic = bic[which.min(aic)])
       } else {
-        list(fit = fit, coefficients = coef, aic = aic[min(bic) == bic], bic = min(bic))
+        list(fit = fit, coefficients = coef, aic = aic[which.min(bic)], bic = min(bic))
       }
     })
   } else {

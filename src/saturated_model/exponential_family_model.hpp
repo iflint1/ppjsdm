@@ -207,7 +207,7 @@ public:
     double integral(0);
     const auto number_types(Model::beta_.nrow());
     for(R_xlen_t i(0); i < number_types; ++i) {
-      integral += Model::lambda_[i] * Model::covariates_.get_integral_of_dot([i, this](double x) {
+      integral += Model::lambda_[i] * Model::covariates_.get_integral_of_dot(window_, [i, this](double x) {
         return std::exp(x + dot_dispersion_maximum_[i]);
       }, Model::beta_(i, Rcpp::_));
     }
