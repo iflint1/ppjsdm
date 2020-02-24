@@ -27,8 +27,7 @@ fit_gibbs <- function(gibbsm_data_list, use_glmnet = TRUE) {
       number_types <- length(shift)
       for(i in seq_len(number_types)) {
         # Shift all columns with row name shifted_log_lambdai
-        v <- coef[paste0("shifted_log_lambda", i)]
-        v[v != 0] <- v[v != 0] - shift[i]
+        v <- coef[paste0("shifted_log_lambda", i)] - shift[i]
         coef[paste0("shifted_log_lambda", i)] <- v
 
         # Remove "shifted" in front of log_lambda names.
