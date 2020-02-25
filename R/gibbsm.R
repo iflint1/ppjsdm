@@ -97,8 +97,7 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
     GA <- ga(type = "real-valued",
              fitness =  function(v) -to_optimise(v),
              lower = lower,
-             upper = upper,
-             parallel = TRUE)
+             upper = upper)
     result <- get_fit(GA@solution)
 
     # optim

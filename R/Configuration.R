@@ -228,7 +228,6 @@ as.Configuration.default <- function(configuration) {
                  y = configuration[, 2],
                  types = factor(rep("default", length(configuration[, 1]))),
                  marks = rep(1, length(configuration[, 1]))), class = "Configuration")
-
 }
 
 
