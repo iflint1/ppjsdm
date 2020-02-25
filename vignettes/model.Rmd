@@ -252,34 +252,34 @@ plot_papangelou(window = window,
                 saturation = saturation) 
 ```
 
-# Discussion of the different variations
+<!-- # Discussion of the different variations -->
 
-These different variations of the model generate quite different samples in extreme cases.
-For example, for a very large value of the repulsion parameter, the Geyer model exhibits extreme regularity.
-The Geyer model does not have any smoothing, i.e. it corresponds to the choice $\varphi_{r_{i,j}}(r)=\mathbf1_{\{r\le r_{i,j}\}}$, where $\mathbf1$ is the indicator function.
+<!-- These different variations of the model generate quite different samples in extreme cases. -->
+<!-- For example, for a very large value of the repulsion parameter, the Geyer model exhibits extreme regularity. -->
+<!-- The Geyer model does not have any smoothing, i.e. it corresponds to the choice $\varphi_{r_{i,j}}(r)=\mathbf1_{\{r\le r_{i,j}\}}$, where $\mathbf1$ is the indicator function. -->
 
-```{r}
-extreme_configuration <- rgibbs(window = window, 
-                                alpha = matrix(-Inf), 
-                                lambda = 100, 
-                                model = "Geyer",
-                                short_range = short_range)
-par(mar = c(5, 4, 4, 13) + 0.1)
-plot(extreme_configuration, window = window)
-```
+<!-- ```{r} -->
+<!-- extreme_configuration <- rgibbs(window = window,  -->
+<!--                                 alpha = matrix(-Inf),  -->
+<!--                                 lambda = 100,  -->
+<!--                                 model = "Geyer", -->
+<!--                                 short_range = short_range) -->
+<!-- par(mar = c(5, 4, 4, 13) + 0.1) -->
+<!-- plot(extreme_configuration, window = window) -->
+<!-- ``` -->
 
-Other variants of the model show some interesting features.
-As an illustration, here is a plot of an extremely attractive square exponential version of the model.
+<!-- Other variants of the model show some interesting features. -->
+<!-- As an illustration, here is a plot of an extremely attractive square exponential version of the model. -->
 
-```{r}
-extreme_configuration <- rgibbs(window = window, 
-                                alpha = matrix(3), 
-                                lambda = 1, 
-                                model = "square_exponential",
-                                short_range = short_range)
-par(mar = c(5, 4, 4, 13) + 0.1)
-plot(extreme_configuration, window = window)
-```
+<!-- ```{r} -->
+<!-- extreme_configuration <- rgibbs(window = window,  -->
+<!--                                 alpha = matrix(3),  -->
+<!--                                 lambda = 1,  -->
+<!--                                 model = "square_exponential", -->
+<!--                                 short_range = short_range) -->
+<!-- par(mar = c(5, 4, 4, 13) + 0.1) -->
+<!-- plot(extreme_configuration, window = window) -->
+<!-- ``` -->
 
 # Adding covariates
 

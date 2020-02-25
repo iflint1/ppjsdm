@@ -3,7 +3,7 @@ title: "Fitting procedure"
 output: pdf_document
 vignette: >
   %\VignetteIndexEntry{fitting}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::knitr}
   %\VignetteEncoding{UTF-8}
 ---
 
