@@ -20,7 +20,8 @@ rgibbs(
   types = NULL,
   model = "square_bump",
   medium_range_model = "square_exponential",
-  drop = TRUE
+  drop = TRUE,
+  mark_range = c(1, 1)
 )
 }
 \arguments{
@@ -58,6 +59,8 @@ Default is 0.}
 \item{medium_range_model}{String representing the model to use You can check the currently authorised models with a call to `show_medium_range_models()`.}
 
 \item{drop}{If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration. Default is TRUE.}
+
+\item{mark_range}{Range of additional marks to give to the points.}
 }
 \description{
 Sample a multivariate Gibbs point processes

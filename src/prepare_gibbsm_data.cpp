@@ -350,7 +350,7 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 }
 
 // [[Rcpp::export]]
-Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covariates, Rcpp::List traits, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation) {
+Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covariates, Rcpp::List traits, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, Rcpp::NumericVector mark_range) {
   const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
   const auto length_configuration(ppjsdm::size(wrapped_configuration));
   if(length_configuration == 0) {
@@ -361,7 +361,7 @@ Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covar
   for(decltype(ppjsdm::size(wrapped_configuration)) i(0); i < length_configuration; ++i) {
     vector_configuration[i] = wrapped_configuration[i];
   }
-  return ppjsdm::call_on_wrapped_window(window, [&vector_configuration, &covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation](const auto& w) {
+  return ppjsdm::call_on_wrapped_window(window, mark_range, [&vector_configuration, &covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation](const auto& w) {
     // The trick below allows us to find the number of different types in the configuration.
     // That number is then used to default construct `short_range`.
     const auto points_by_type(ppjsdm::get_number_points(vector_configuration));

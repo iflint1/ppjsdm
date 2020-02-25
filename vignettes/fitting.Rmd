@@ -34,8 +34,8 @@ This vignette explains how to calibrate a model in different situations.
 We use the Geyer model.
 
 ```{r}
-model <- "square_exponential"
-medium_range_model <- "square_exponential"
+model <- "Geyer"
+medium_range_model <- "Geyer"
 ```
 
 We begin by defining the parameters of the point process.
@@ -49,9 +49,9 @@ alpha <- matrix(cbind(c(-0.6, 0.2, -0.3), c(0.2, -0.2, -0.4), c(-0.3, -0.4, -0.5
 gamma <- matrix(cbind(c(0.6, 0.2, -0.3), c(0.2, 0.1, -0.4), c(-0.3, -0.4, 0.3)), 
                 nspecies, 
                 nspecies)
-short_range <- matrix(0.01, nspecies, nspecies)
-medium_range <- matrix(0.02, nspecies, nspecies)
-long_range <- matrix(0.03, nspecies, nspecies)
+short_range <- matrix(0.005, nspecies, nspecies)
+medium_range <- matrix(0.01, nspecies, nspecies)
+long_range <- matrix(0.015, nspecies, nspecies)
 log_lambda <- rep(7, nspecies)
 
 configuration <- ppjsdm::rgibbs(lambda = exp(log_lambda), 

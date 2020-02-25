@@ -4,7 +4,14 @@
 \alias{rbinomialpp}
 \title{Sample a binomial point processes}
 \usage{
-rbinomialpp(window = NULL, n = NULL, nsim = 1L, types = NULL, drop = TRUE)
+rbinomialpp(
+  window = NULL,
+  n = NULL,
+  nsim = 1L,
+  types = NULL,
+  drop = TRUE,
+  mark_range = as.numeric(c(1, 1))
+)
 }
 \arguments{
 \item{window}{Simulation window. Default is a Rectangle window [0, 1]^2.}
@@ -18,6 +25,8 @@ Default is a vector of same size as types, filled with ones.}
 
 \item{drop}{If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration.
 Default is TRUE.}
+
+\item{mark_range}{Range of additional marks to give to the points.}
 }
 \description{
 Sample a binomial point processes

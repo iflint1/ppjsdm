@@ -34,15 +34,16 @@ inline SEXP rppp_helper(const Window& window, const Lambda& lambda, R_xlen_t nsi
 //' @param types Types of the points. Default is a vector (type1, type2, ...) of same size as n.
 //' @param drop If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration.
 //' Default is TRUE.
+//' @param mark_range Range of additional marks to give to the points.
 //' @export
 //' @useDynLib ppjsdm
 //' @import Rcpp
 // [[Rcpp::export]]
-SEXP rppp(SEXP window = R_NilValue, SEXP lambda = R_NilValue, R_xlen_t nsim = 1, SEXP types = R_NilValue, bool drop = true) {
+SEXP rppp(SEXP window = R_NilValue, SEXP lambda = R_NilValue, R_xlen_t nsim = 1, SEXP types = R_NilValue, bool drop = true, Rcpp::NumericVector mark_range = Rcpp::NumericVector::create(1., 1.)) {
   const auto number_types(ppjsdm::get_number_types_and_check_conformance(lambda, types));
   lambda = ppjsdm::construct_if_missing<Rcpp::NumericVector>(lambda, 1., number_types);
   types = ppjsdm::make_types(types, number_types, lambda);
-  return ppjsdm::call_on_wrapped_window(window, [number_types, &lambda, nsim, &types, drop](const auto& w) {
+  return ppjsdm::call_on_wrapped_window(window, mark_range, [number_types, &lambda, nsim, &types, drop](const auto& w) {
     return ppjsdm::call_on_list_or_vector(lambda, [number_types, &w, nsim, &types, drop](const auto& l) {
       return rppp_helper(w, l, nsim, types, drop, number_types);
     });

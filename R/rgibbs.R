@@ -20,6 +20,7 @@
 #' @param model String representing the model to use You can check the currently authorised models with a call to `show_short_range_models()`.
 #' @param medium_range_model String representing the model to use You can check the currently authorised models with a call to `show_medium_range_models()`.
 #' @param drop If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration. Default is TRUE.
+#' @param mark_range Range of additional marks to give to the points.
 #' @export
 rgibbs <- function(window = NULL,
                    alpha = NULL,
@@ -36,12 +37,13 @@ rgibbs <- function(window = NULL,
                    types = NULL,
                    model = "square_bump",
                    medium_range_model = "square_exponential",
-                   drop = TRUE) {
+                   drop = TRUE,
+                   mark_range = c(1.0, 1.0)) {
   if(is.null(window)) {
     window <- Rectangle_window()
   }
   # Make covariates im objects with proper names.
   covariates <- coerce_to_named_im_objects(covariates, "unnamed_covariate", window)
 
-  rgibbs_cpp(window, alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop)
+  rgibbs_cpp(window, alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, mark_range)
 }

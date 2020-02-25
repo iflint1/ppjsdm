@@ -172,7 +172,7 @@ types <- function(configuration) {
 #'
 #' @param configuration The configuration.
 #' @export
-marks <- function(configuration) {
+get_marks <- function(configuration) {
   configuration$marks
 }
 

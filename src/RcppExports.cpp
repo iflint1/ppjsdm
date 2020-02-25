@@ -43,8 +43,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // prepare_gibbsm_data
-Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covariates, Rcpp::List traits, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation);
-RcppExport SEXP _ppjsdm_prepare_gibbsm_data(SEXP configurationSEXP, SEXP windowSEXP, SEXP covariatesSEXP, SEXP traitsSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP) {
+Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covariates, Rcpp::List traits, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, Rcpp::NumericVector mark_range);
+RcppExport SEXP _ppjsdm_prepare_gibbsm_data(SEXP configurationSEXP, SEXP windowSEXP, SEXP covariatesSEXP, SEXP traitsSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP mark_rangeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -58,13 +58,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type medium_range(medium_rangeSEXP);
     Rcpp::traits::input_parameter< SEXP >::type long_range(long_rangeSEXP);
     Rcpp::traits::input_parameter< R_xlen_t >::type saturation(saturationSEXP);
-    rcpp_result_gen = Rcpp::wrap(prepare_gibbsm_data(configuration, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation));
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type mark_range(mark_rangeSEXP);
+    rcpp_result_gen = Rcpp::wrap(prepare_gibbsm_data(configuration, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range));
     return rcpp_result_gen;
 END_RCPP
 }
 // rbinomialpp
-SEXP rbinomialpp(SEXP window, SEXP n, R_xlen_t nsim, SEXP types, bool drop);
-RcppExport SEXP _ppjsdm_rbinomialpp(SEXP windowSEXP, SEXP nSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP dropSEXP) {
+SEXP rbinomialpp(SEXP window, SEXP n, R_xlen_t nsim, SEXP types, bool drop, Rcpp::NumericVector mark_range);
+RcppExport SEXP _ppjsdm_rbinomialpp(SEXP windowSEXP, SEXP nSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP dropSEXP, SEXP mark_rangeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -73,13 +74,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< R_xlen_t >::type nsim(nsimSEXP);
     Rcpp::traits::input_parameter< SEXP >::type types(typesSEXP);
     Rcpp::traits::input_parameter< bool >::type drop(dropSEXP);
-    rcpp_result_gen = Rcpp::wrap(rbinomialpp(window, n, nsim, types, drop));
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type mark_range(mark_rangeSEXP);
+    rcpp_result_gen = Rcpp::wrap(rbinomialpp(window, n, nsim, types, drop, mark_range));
     return rcpp_result_gen;
 END_RCPP
 }
 // rgibbs_cpp
-SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP beta, SEXP gamma, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, R_xlen_t steps, R_xlen_t nsim, SEXP types, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, bool drop);
-RcppExport SEXP _ppjsdm_rgibbs_cpp(SEXP windowSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP covariatesSEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP stepsSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP dropSEXP) {
+SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP beta, SEXP gamma, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, R_xlen_t steps, R_xlen_t nsim, SEXP types, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, bool drop, Rcpp::NumericVector mark_range);
+RcppExport SEXP _ppjsdm_rgibbs_cpp(SEXP windowSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP covariatesSEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP stepsSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP dropSEXP, SEXP mark_rangeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -99,13 +101,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type model(modelSEXP);
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type medium_range_model(medium_range_modelSEXP);
     Rcpp::traits::input_parameter< bool >::type drop(dropSEXP);
-    rcpp_result_gen = Rcpp::wrap(rgibbs_cpp(window, alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop));
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type mark_range(mark_rangeSEXP);
+    rcpp_result_gen = Rcpp::wrap(rgibbs_cpp(window, alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, mark_range));
     return rcpp_result_gen;
 END_RCPP
 }
 // rppp
-SEXP rppp(SEXP window, SEXP lambda, R_xlen_t nsim, SEXP types, bool drop);
-RcppExport SEXP _ppjsdm_rppp(SEXP windowSEXP, SEXP lambdaSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP dropSEXP) {
+SEXP rppp(SEXP window, SEXP lambda, R_xlen_t nsim, SEXP types, bool drop, Rcpp::NumericVector mark_range);
+RcppExport SEXP _ppjsdm_rppp(SEXP windowSEXP, SEXP lambdaSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP dropSEXP, SEXP mark_rangeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -114,7 +117,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< R_xlen_t >::type nsim(nsimSEXP);
     Rcpp::traits::input_parameter< SEXP >::type types(typesSEXP);
     Rcpp::traits::input_parameter< bool >::type drop(dropSEXP);
-    rcpp_result_gen = Rcpp::wrap(rppp(window, lambda, nsim, types, drop));
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type mark_range(mark_rangeSEXP);
+    rcpp_result_gen = Rcpp::wrap(rppp(window, lambda, nsim, types, drop, mark_range));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -140,10 +144,10 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_ppjsdm_compute_papangelou", (DL_FUNC) &_ppjsdm_compute_papangelou, 16},
     {"_ppjsdm_has_duplicates", (DL_FUNC) &_ppjsdm_has_duplicates, 1},
-    {"_ppjsdm_prepare_gibbsm_data", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data, 10},
-    {"_ppjsdm_rbinomialpp", (DL_FUNC) &_ppjsdm_rbinomialpp, 5},
-    {"_ppjsdm_rgibbs_cpp", (DL_FUNC) &_ppjsdm_rgibbs_cpp, 16},
-    {"_ppjsdm_rppp", (DL_FUNC) &_ppjsdm_rppp, 5},
+    {"_ppjsdm_prepare_gibbsm_data", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data, 11},
+    {"_ppjsdm_rbinomialpp", (DL_FUNC) &_ppjsdm_rbinomialpp, 6},
+    {"_ppjsdm_rgibbs_cpp", (DL_FUNC) &_ppjsdm_rgibbs_cpp, 17},
+    {"_ppjsdm_rppp", (DL_FUNC) &_ppjsdm_rppp, 6},
     {"_ppjsdm_show_short_range_models", (DL_FUNC) &_ppjsdm_show_short_range_models, 0},
     {"_ppjsdm_show_medium_range_models", (DL_FUNC) &_ppjsdm_show_medium_range_models, 0},
     {NULL, NULL, 0}
