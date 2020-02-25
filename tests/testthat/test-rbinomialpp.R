@@ -147,9 +147,9 @@ test_that("Samples from the window populated by right amount of calls to runif."
   window <- Rectangle_window(default_range, default_range)
 
   set.seed(arbitrary_seed)
-  expected_values <- runif(n = 4, min = 0, max = 1)
+  expected_values <- runif(n = 6, min = 0, max = 1) # Note: need two additional uniforms to sample the marks.
   set.seed(arbitrary_seed)
   output <- rbinomialpp(window = window, n = 2, nsim = 1)
   output_values <- c(x_coordinates(output), y_coordinates(output))
-  expect_true(setequal(expected_values, output_values))
+  expect_true(all(output_values %in% expected_values))
 })

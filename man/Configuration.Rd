@@ -13,7 +13,7 @@ Configuration(x, y, types, marks)
 
 \item{types}{Types of the points.}
 
-\item{mark}{Marks of the points.}
+\item{marks}{Marks of the points.}
 }
 \description{
 Configuration constructor.

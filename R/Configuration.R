@@ -3,7 +3,7 @@
 #' @param x Values along the x-axis.
 #' @param y Values along the y-axis.
 #' @param types Types of the points.
-#' @param mark Marks of the points.
+#' @param marks Marks of the points.
 #' @importFrom methods is
 #' @export
 Configuration <- local({

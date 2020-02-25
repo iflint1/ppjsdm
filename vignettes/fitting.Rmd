@@ -43,16 +43,16 @@ We begin by defining the parameters of the point process.
 ```{r}
 nspecies <- 3
 
-alpha <- matrix(cbind(c(-0.6, 0.2, -0.3), c(0.2, -0.2, -0.4), c(-0.3, -0.4, -0.5)), 
+alpha <- matrix(cbind(c(-1.2, 0.9, -0.5), c(0.9, -0.9, -1.3), c(-0.5, -1.3, 0.5)), 
                 nspecies, 
                 nspecies)
-gamma <- matrix(cbind(c(0.6, 0.2, -0.3), c(0.2, 0.1, -0.4), c(-0.3, -0.4, 0.3)), 
+gamma <- matrix(cbind(c(0.8, 0.6, -0.7), c(0.6, 0.5, -0.9), c(-0.7, -0.9, -0.9)), 
                 nspecies, 
                 nspecies)
 short_range <- matrix(0.005, nspecies, nspecies)
 medium_range <- matrix(0.01, nspecies, nspecies)
 long_range <- matrix(0.015, nspecies, nspecies)
-log_lambda <- rep(7, nspecies)
+log_lambda <- rep(6, nspecies)
 
 configuration <- ppjsdm::rgibbs(lambda = exp(log_lambda), 
                                 alpha = alpha,
