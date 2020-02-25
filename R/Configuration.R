@@ -210,11 +210,13 @@ as.Configuration.ppp <- function(configuration) {
   if(is.null(marks)) {
     structure(list(x = configuration$x,
                    y = configuration$y,
-                   types = factor(rep("default", length(configuration$x)))), class = "Configuration")
+                   types = factor(rep("default", length(configuration$x))),
+                   marks = rep(1, length(configuration[, 1]))), class = "Configuration")
   } else {
     structure(list(x = configuration$x,
                    y = configuration$y,
-                   types = configuration$marks), class = "Configuration")
+                   types = configuration$marks,
+                   marks = rep(1, length(configuration[, 1]))), class = "Configuration")
   }
 
 }
@@ -224,7 +226,8 @@ as.Configuration.ppp <- function(configuration) {
 as.Configuration.default <- function(configuration) {
   structure(list(x = configuration[, 1],
                  y = configuration[, 2],
-                 types = factor(rep("default", length(configuration[, 1])))), class = "Configuration")
+                 types = factor(rep("default", length(configuration[, 1]))),
+                 marks = rep(1, length(configuration[, 1]))), class = "Configuration")
 
 }
 
