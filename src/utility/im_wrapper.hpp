@@ -16,6 +16,7 @@
 
 namespace ppjsdm {
 
+// TODO: Ideally, I'd want to make this independent of the internal representation of `im` objects by spatstat (see their warning).
 class Im_wrapper {
   friend class Im_list_wrapper;
 private:

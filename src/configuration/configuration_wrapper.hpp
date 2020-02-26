@@ -12,6 +12,7 @@
 
 namespace ppjsdm {
 
+// TODO: I really don't like this organisation--think about it some more...
 class Configuration_wrapper {
 private:
   class Marked_point_reference {
@@ -38,10 +39,9 @@ private:
   class Const_marked_point_reference {
   private:
     friend struct traits::point_manipulation<Const_marked_point_reference>;
-    std::tuple<const double&, const double&, const int&, const double&> point_;
+    std::tuple<double, double, int, double> point_;
   public:
-    // TODO: Pass by value
-    Const_marked_point_reference(const double& x, const double& y, const int& type, const double& mark):
+    Const_marked_point_reference(double x, double y, int type, double mark):
     point_(x, y, type, mark) {}
 
     operator Marked_point() const {

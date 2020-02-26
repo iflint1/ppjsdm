@@ -132,7 +132,7 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
     bic <- bic[[1]]
   }
   if(estimate_radii) {
-    ret <- list(complete = fits, coefficients = fits_coefficients, aic = aic, bic = bic, best_short = best_short, best_medium = best_medium, best_long = best_long)
+    ret <- list(complete = fits, coefficients = append(fits_coefficients, list(short_range = best_short, medium_range = best_medium, long_range = best_long)), aic = aic, bic = bic)
   } else {
     ret <- list(complete = fits, coefficients = fits_coefficients, aic = aic, bic = bic)
   }
