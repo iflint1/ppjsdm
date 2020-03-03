@@ -61,7 +61,8 @@ configuration <- ppjsdm::rgibbs(lambda = exp(log_lambda),
                                 medium_range_model = medium_range_model,
                                 short_range = short_range,
                                 medium_range = medium_range,
-                                long_range = long_range)
+                                long_range = long_range,
+                                steps = 1000000)
 print(configuration)
 ```
 
@@ -120,7 +121,7 @@ nspecies <- 2
 
 beta <- cbind(c(1, -2), c(-1, 0.5), c(2, -0.5))
 alpha <- matrix(cbind(c(-0.5, 0.1), c(0.1, -0.3)), nspecies, nspecies)
-log_lambda <- rep(8, nspecies)
+log_lambda <- rep(6, nspecies)
 ```
 
 Finally, we need a dataset to work on.
@@ -131,7 +132,8 @@ configuration <- ppjsdm::rgibbs(lambda = exp(log_lambda),
                                 covariates = covariates, 
                                 beta = beta,
                                 model = model,
-                                short_range = short_range)
+                                short_range = short_range,
+                                steps = 1000000)
 ```
 
 The dataset is plotted below.
@@ -218,7 +220,8 @@ configuration <- ppjsdm::rgibbs(lambda = exp(c(5, 5, 5)),
                                 model = model, 
                                 short_range = short_range,
                                 medium_range = medium_range,
-                                long_range = long_range)
+                                long_range = long_range,
+                                steps = 1000000)
 ```
 
 The sample is plotted below.

@@ -214,12 +214,14 @@ public:
         return std::exp(x + dot_dispersion_maximum_[i]);
       }, Model::beta_(i, Rcpp::_));
     }
-    return integral / static_cast<double>(number_types);
+    return integral;
   }
 
-  auto sample_point_from_bounding_intensity(R_xlen_t type) const {
+  auto sample_point_from_bounding_intensity() const {
+    // Sample type proportionally to the \lambda_i.
+    const auto random_type(Rcpp::sample(Model::lambda_.size(), 1, false, Rcpp::sugar::probs_t(Model::lambda_), false)[0]);
     while(true) {
-      const auto sample(window_.sample(type));
+      const auto sample(window_.sample(random_type));
       if(exp_rand() + get_log_normalized_bounding_intensity(sample) >= 0) {
         return sample;
       }

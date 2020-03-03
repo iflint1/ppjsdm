@@ -116,8 +116,7 @@ private:
   std::vector<std::tuple<double, Marked_point>> chain_;
 
   void insert_uniform_point_in_configuration_and_update_chain(Configuration& configuration) {
-    const auto random_type(Rcpp::sample(number_types_, 1, false, R_NilValue, false)[0]);
-    const auto point(model_.sample_point_from_bounding_intensity(random_type));
+    const auto point(model_.sample_point_from_bounding_intensity());
     chain_.emplace_back(detail::do_not_need_mark, point);
     add_point(configuration, std::move(point));
   }
@@ -130,7 +129,6 @@ private:
     } else {
       chain_.emplace_back(e, std::move(point));
     }
-
   }
 };
 
