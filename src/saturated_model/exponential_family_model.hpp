@@ -8,7 +8,9 @@
 #include "../point/point_manipulation.hpp"
 #include "../utility/im_wrapper.hpp"
 
+#include <algorithm> // std::transform
 #include <cmath> // std::exp, std::log, std::fabs, std::isinf
+#include <functional> // std::plus
 #include <type_traits> // std::remove_cv, std::remove_reference, std::is_same, std::enable_if
 #include <utility> // std::forward, std::move
 #include <vector> // std::vector
@@ -157,7 +159,7 @@ public:
   double compute_papangelou(const Point& point, const Configuration& configuration) const {
     const auto dalpha(dispersion_.compute(point, alpha_.nrow(), configuration));
     double alpha_dispersion(detail::compute_alpha_dot_dispersion(point, alpha_, dalpha));
-    const auto dgamma(medium_range_dispersion_.compute(point, alpha_.nrow(), configuration));
+    const auto dgamma(medium_range_dispersion_.compute(point, gamma_.nrow(), configuration));
     double gamma_dispersion(detail::compute_alpha_dot_dispersion(point, gamma_, dgamma));
     double beta_covariates(detail::compute_beta_dot_covariates(point, beta_, covariates_));
     return lambda_[get_type(point)] * std::exp(alpha_dispersion + beta_covariates + gamma_dispersion);
@@ -192,7 +194,8 @@ public:
     beta_dot_covariates_maximum_(detail::compute_beta_dot_covariates_maximum(beta, Model::covariates_)),
     dot_dispersion_maximum_(detail::compute_alpha_dot_dispersion_maximum(alpha, dispersion.get_maximum(window))) {
     const auto gamma_dot_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(gamma, medium_range_dispersion.get_maximum(window)));
-    dot_dispersion_maximum_.insert(dot_dispersion_maximum_.end(), gamma_dot_dispersion_maximum.begin(), gamma_dot_dispersion_maximum.end());
+      std::transform(dot_dispersion_maximum_.begin(), dot_dispersion_maximum_.end(), gamma_dot_dispersion_maximum.begin(),
+                     dot_dispersion_maximum_.begin(), std::plus<double>());
   }
 
   template<typename Point>
