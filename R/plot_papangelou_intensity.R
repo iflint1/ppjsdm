@@ -14,12 +14,14 @@
 #' @param medium_range Matrix of medium range distances.
 #' @param long_range Matrix of long range distances.
 #' @param saturation Saturation.
+#' @param max_points Maximum number of points.
 #' @param grid_steps Number of horizontal and vertical grid steps.
 #' @param mark Mark of the point.
+#' @param steps Nunber of steps in the Metropolis-Hastings simulation algorithm.
 #' @importFrom spatstat as.im as.owin as.ppp
 #' @export
 plot_papangelou <- function(window, type, configuration, model, medium_range_model, alpha, lambda,
-                            beta, gamma, covariates, short_range, medium_range, long_range, saturation, grid_steps = 1000, mark = 1.0) {
+                            beta, gamma, covariates, short_range, medium_range, long_range, saturation, max_points, grid_steps = 1000, mark = 1.0, steps = 0) {
   if(missing(configuration)) {
     configuration <- rgibbs(window = window,
                             alpha = alpha,
@@ -30,9 +32,11 @@ plot_papangelou <- function(window, type, configuration, model, medium_range_mod
                             medium_range = medium_range,
                             long_range = long_range,
                             saturation = saturation,
+                            max_points = max_points,
                             model = model,
                             medium_range_model = medium_range_model,
-                            gamma = gamma)
+                            gamma = gamma,
+                            steps = steps)
   }
   window <- as.owin(window)
   x_range <- window$xrange
@@ -41,7 +45,7 @@ plot_papangelou <- function(window, type, configuration, model, medium_range_mod
   y_axis <- seq(from = y_range[1], to = y_range[2], length.out = grid_steps)
   z <- outer(x_axis, y_axis, function(x, y) {
     compute_papangelou(configuration, x, y, type, model, medium_range_model, alpha,
-                       lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation, mark)
+                       lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation, max_points, mark)
   })
   plot(as.im(t(z), W = window))
   plot(as.ppp(configuration, window), add = TRUE)

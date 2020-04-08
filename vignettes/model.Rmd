@@ -7,342 +7,343 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
-is_check <- ("CheckExEnv" %in% search()) || any(c("_R_CHECK_TIMINGS_",
-             "_R_CHECK_LICENSE_") %in% names(Sys.getenv()))
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  eval = !is_check,
-  purl = !is_check
-)
-```
-
-```{r setup}
-library(ppjsdm)
-library(spatstat)
-
-remove(list = ls())
-
-set.seed(1)
-```
-
-In this vignette, we give some details on the model we are using.
-
-We begin by introducing the Papangelou conditional intensity.
-For a point configuration $\omega$, a location in space $x$, and a species index $i$, the Papangelou conditional intensity $\pi$ is such that $\pi((x,i),\omega)\cdot\Delta x$ is the probability of finding an individual of species $i$ in the infinitesimal volume $\Delta x$ around $x$, conditional on $\omega$ outside of $\Delta x$.
-Our general model for the Papangelou conditional intensity is
-$$\pi((x,i),\omega)
-=\lambda_i\exp\biggl(\sum_{k=1}^n\beta_{i,k}X_k(x)
-+\sum_{j=1}^p\alpha_{i,j}\sum_{z\in\omega_i^{(N)}}\varphi_{r_{i,j}}(\|z-x\|)\biggr).$$
-In the equation above,
-
-* $\lambda_i$ is the intensity of species $i$ if the $\beta_{i,k}$ and $\alpha_{i,j}$ were to all be zero;
-* $n$ is the number of environmental covariates;
-* $X_k(x)$ is the environmental covariate number $k$ evaluated at location $x$;
-* $\beta_{i,k}$ represents the effect on the distribution of species $i$ of the environmental covariate $k$;
-* $p$ is the number of different species;
-* $\alpha_{i,j}$ is the repulsion parameter between species $i$ and $j$ (it can be nonnegative or positive);
-* $N$ is what we call the saturation parameter, i.e. the maximum number of different individuals which can interact with a given one;
-* $\omega_i^{(N)}$ is the subset of the $N$ individuals in $\omega$ of type $i$ which are closest to location $x$;
-* $r_{i,j}$ are interaction radii which denote the typical distance within which species $i$ and $j$ interact (The functions $\varphi_{r_{i,j}}$ are chosen to be nonincreasing, between $0$ and $1$, and have value $0.5$ at $r_{i,j}$.);
-* $\varphi_{r_{i,j}}$ are smoothing functions.
-
-Since the above definition is quite technical, we will spend the rest of this vignette illustrating this concept with some examples.
-The package includes a function to compute the Papangelou conditional intensity above, which will make things easier!
-
-# No interaction: Poisson point process
-
-We begin by considering a single species, with no repulsion, no covariates, and a given intensity.
-
-```{r}
-nspecies <- 1
-ncovariates <- 0
-lambda <- 50
-alpha <- matrix(0, nspecies, nspecies)
-beta <- matrix(0, nspecies, ncovariates)
-gamma <- matrix(0, nspecies, nspecies)
-covariates <- vector(mode = "list", length = ncovariates)
-model <- "Geyer"
-medium_range_model <- "square_exponential"
-short_range <- matrix(0.1, nspecies, nspecies)
-medium_range <- matrix(0.1, nspecies, nspecies)
-long_range <- matrix(0.2, nspecies, nspecies)
-saturation <- 2
-window <- Rectangle_window()
-spatstat_window <- owin()
-```
-
-Take a single sample from the corresponding point process,
-
-```{r}
-configuration <- rgibbs(window = window, 
-                        alpha = alpha, 
-                        lambda = lambda, 
-                        beta = beta, 
-                        covariates = covariates,
-                        model = model,
-                        medium_range_model = medium_range_model,
-                        short_range = short_range, 
-                        medium_range = medium_range,
-                        long_range = long_range,
-                        gamma = gamma)
-```
-
-and plot it below.
-
-```{r, fig.align = 'center', fig}
-par(mar = c(5, 4, 4, 13) + 0.1)
-plot(configuration)
-```
-
-Now, we can compute the Papangelou conditional intensity over the region.
-
-```{r}
-x_axis <- seq(from = 0, to = 1, by = 0.001)
-y_axis <- x_axis
-z <- outer(x_axis, y_axis, function(x, y) {
-  compute_papangelou(configuration, x, y, 1, model, medium_range_model, alpha, 
-                     lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation)
-})
-```
-
-In this case, the Papangelou conditional intensity is equal to the intensity over the whole region:
-
-```{r}
-all(z == lambda)
-```
-
-This means that the probability of finding a point anywhere on the region conditional on the given locations is independent of the locations, and proportional to the intensity everywhere.
-In other words, the associated point process is a Poisson point process of intensity `lambda`.
-
-# Adding interactions
-
-We now add interactions between individuals, as controlled by the parameter `alpha`.
-
-```{r}
-alpha <- matrix(-1)
-```
-
-Let us see how this changes the sample and its Papangelou conditional intensity.
-The package contains a function to sample from the distribution and plot the configuration and the Papangelou conditional intensity.
-We can plot the Papangelou conditional intensity by a call to that function.
-The circles represent a sample from the target distribution, and we have added the Papangelou conditional intensity as an overlay.
-
-```{r}
-plot_papangelou(window = window,
-                type = 1, 
-                model = model, 
-                medium_range_model = medium_range_model, 
-                alpha = alpha, 
-                lambda = lambda, 
-                beta = beta, 
-                gamma = gamma, 
-                covariates = covariates, 
-                short_range = short_range, 
-                medium_range = medium_range, 
-                long_range = long_range, 
-                saturation = saturation) 
-```
-
-The plot indicates repulsion within a given interaction radius: at locations far from existing individuals in the configuration, the Papangelou conditional intensity is equal to `lambda`, and it decreases within the interaction radius.
-The parameter `alpha` controls the strength of the repulsion, and when it is increased (in absolute value) the point process becomes more repulsive.
-
-```{r}
-alpha <- matrix(-4)
-plot_papangelou(window = window,
-                type = 1, 
-                model = model, 
-                medium_range_model = medium_range_model, 
-                alpha = alpha, 
-                lambda = lambda, 
-                beta = beta, 
-                gamma = gamma, 
-                covariates = covariates, 
-                short_range = short_range, 
-                medium_range = medium_range, 
-                long_range = long_range, 
-                saturation = saturation) 
-```
-
-Making `alpha` positive instead of negative changes the behaviour.
-
-```{r}
-alpha <- matrix(0.2)
-plot_papangelou(window = window,
-                type = 1, 
-                model = model, 
-                medium_range_model = medium_range_model, 
-                alpha = alpha, 
-                lambda = lambda, 
-                beta = beta, 
-                gamma = gamma, 
-                covariates = covariates, 
-                short_range = short_range, 
-                medium_range = medium_range, 
-                long_range = long_range, 
-                saturation = saturation) 
-```
-
-The Papangelou conditional intensity is now larger at locations closer to existing individuals, indicating that the point process is attractive.
-Thus, our model is either attractive or repulsive depending on the sign of `alpha`.
-
-# Changing features of the interaction
-
-Different features of the interaction can be customised.
-To begin with, you can control the radii of interaction (which correspond to $r_{i,j}$ in the model).
-
-```{r}
-alpha <- matrix(-0.1)
-short_range <- matrix(0.05, nspecies, nspecies)
-plot_papangelou(window = window,
-                type = 1, 
-                model = model, 
-                medium_range_model = medium_range_model, 
-                alpha = alpha, 
-                lambda = lambda, 
-                beta = beta, 
-                gamma = gamma, 
-                covariates = covariates, 
-                short_range = short_range, 
-                medium_range = medium_range, 
-                long_range = long_range, 
-                saturation = saturation) 
-```
-
-It is possible to change the number of individuals that are taken into account, via the `saturation` parameter (which corresponds to $N$ in the model).
-For example, let us account for the five closest individuals instead of the two closest.
-
-```{r}
-short_range <- matrix(0.1, nspecies, nspecies)
-saturation <- 5
-plot_papangelou(window = window,
-                type = 1, 
-                model = model, 
-                medium_range_model = medium_range_model, 
-                alpha = alpha, 
-                lambda = lambda, 
-                beta = beta, 
-                gamma = gamma, 
-                covariates = covariates, 
-                short_range = short_range, 
-                medium_range = medium_range, 
-                long_range = long_range, 
-                saturation = saturation) 
-```
-
-There are also various kinds of smoothing functions available via the `model` parameter (which correspond to $\varphi_{r_{i,j}}$ in the model).
-Here is what the square exponential smoothing looks like.
-
-```{r}
-saturation <- 2
-model <- "square_exponential"
-plot_papangelou(window = window,
-                type = 1, 
-                model = model, 
-                medium_range_model = medium_range_model, 
-                alpha = alpha, 
-                lambda = lambda, 
-                beta = beta, 
-                gamma = gamma, 
-                covariates = covariates, 
-                short_range = short_range, 
-                medium_range = medium_range, 
-                long_range = long_range, 
-                saturation = saturation) 
-```
-
-<!-- # Discussion of the different variations -->
-
-<!-- These different variations of the model generate quite different samples in extreme cases. -->
-<!-- For example, for a very large value of the repulsion parameter, the Geyer model exhibits extreme regularity. -->
-<!-- The Geyer model does not have any smoothing, i.e. it corresponds to the choice $\varphi_{r_{i,j}}(r)=\mathbf1_{\{r\le r_{i,j}\}}$, where $\mathbf1$ is the indicator function. -->
-
-<!-- ```{r} -->
-<!-- extreme_configuration <- rgibbs(window = window,  -->
-<!--                                 alpha = matrix(-Inf),  -->
-<!--                                 lambda = 100,  -->
-<!--                                 model = "Geyer", -->
-<!--                                 short_range = short_range) -->
-<!-- par(mar = c(5, 4, 4, 13) + 0.1) -->
-<!-- plot(extreme_configuration, window = window) -->
+<!-- ```{r, include = FALSE} -->
+<!-- is_check <- ("CheckExEnv" %in% search()) || any(c("_R_CHECK_TIMINGS_", -->
+<!--              "_R_CHECK_LICENSE_") %in% names(Sys.getenv())) -->
+<!-- knitr::opts_chunk$set( -->
+<!--   collapse = TRUE, -->
+<!--   comment = "#>", -->
+<!--   eval = !is_check, -->
+<!--   purl = !is_check -->
+<!-- ) -->
 <!-- ``` -->
 
-<!-- Other variants of the model show some interesting features. -->
-<!-- As an illustration, here is a plot of an extremely attractive square exponential version of the model. -->
+<!-- ```{r setup} -->
+<!-- library(ppjsdm) -->
+<!-- library(spatstat) -->
 
-<!-- ```{r} -->
-<!-- extreme_configuration <- rgibbs(window = window,  -->
-<!--                                 alpha = matrix(3),  -->
-<!--                                 lambda = 1,  -->
-<!--                                 model = "square_exponential", -->
-<!--                                 short_range = short_range) -->
-<!-- par(mar = c(5, 4, 4, 13) + 0.1) -->
-<!-- plot(extreme_configuration, window = window) -->
+<!-- remove(list = ls()) -->
+
+<!-- set.seed(1) -->
 <!-- ``` -->
 
-# Adding covariates
+<!-- In this vignette, we give some details on the model we are using. -->
 
-Adding covariates is also possible.
-It is best to provide the covariates as `spatstat::im` objects, and it is usually easy to convert to that format thanks to the conversion functions provided by `spatstat`.
+<!-- We begin by introducing the Papangelou conditional intensity. -->
+<!-- For a point configuration $\omega$, a location in space $x$, and a species index $i$, the Papangelou conditional intensity $\pi$ is such that $\pi((x,i),\omega)\cdot\Delta x$ is the probability of finding an individual of species $i$ in the infinitesimal volume $\Delta x$ around $x$, conditional on $\omega$ outside of $\Delta x$. -->
+<!-- Our general model for the Papangelou conditional intensity is -->
+<!-- $$\pi((x,i),\omega) -->
+<!-- =\lambda_i\exp\biggl(\sum_{k=1}^n\beta_{i,k}X_k(x) -->
+<!-- +\sum_{j=1}^p\alpha_{i,j}\sum_{z\in\omega_i^{(N)}}\varphi_{r_{i,j}}(\|z-x\|)\biggr).$$ -->
+<!-- In the equation above, -->
 
-```{r}
-model <- "Geyer"
-covariates <- list(temperature = as.im(function(x, y) x - 0.5, W = spatstat_window))
-beta <- matrix(2)
-plot_papangelou(window = window,
-                type = 1, 
-                model = model, 
-                medium_range_model = medium_range_model, 
-                alpha = alpha, 
-                lambda = lambda, 
-                beta = beta, 
-                gamma = gamma, 
-                covariates = covariates, 
-                short_range = short_range, 
-                medium_range = medium_range, 
-                long_range = long_range, 
-                saturation = saturation) 
-```
+<!-- * $\lambda_i$ is the intensity of species $i$ if the $\beta_{i,k}$ and $\alpha_{i,j}$ were to all be zero; -->
+<!-- * $n$ is the number of environmental covariates; -->
+<!-- * $X_k(x)$ is the environmental covariate number $k$ evaluated at location $x$; -->
+<!-- * $\beta_{i,k}$ represents the effect on the distribution of species $i$ of the environmental covariate $k$; -->
+<!-- * $p$ is the number of different species; -->
+<!-- * $\alpha_{i,j}$ is the repulsion parameter between species $i$ and $j$ (it can be nonnegative or positive); -->
+<!-- * $N$ is what we call the saturation parameter, i.e. the maximum number of different individuals which can interact with a given one; -->
+<!-- * $\omega_i^{(N)}$ is the subset of the $N$ individuals in $\omega$ of type $i$ which are closest to location $x$; -->
+<!-- * $r_{i,j}$ are interaction radii which denote the typical distance within which species $i$ and $j$ interact (The functions $\varphi_{r_{i,j}}$ are chosen to be nonincreasing, between $0$ and $1$, and have value $0.5$ at $r_{i,j}$.); -->
+<!-- * $\varphi_{r_{i,j}}$ are smoothing functions. -->
 
-# Multiple species setting
+<!-- Since the above definition is quite technical, we will spend the rest of this vignette illustrating this concept with some examples. -->
+<!-- The package includes a function to compute the Papangelou conditional intensity above, which will make things easier! -->
 
-The package also works with multiple species.
+<!-- # No interaction: Poisson point process -->
 
-```{r}
-nspecies <- 2
-ncovariates <- 0
-lambda <- c(10, 10)
-alpha <- cbind(c(-1, -1), c(-1, -0.5))
-gamma <- cbind(c(0.5, 0), c(0, 0.5))
-beta <- matrix(0, nspecies, ncovariates)
-covariates <- list()
-model <- "square_bump"
-medium_range_model <- "square_exponential"
-short_range <- cbind(c(0.05, 0.1), c(0.1, 0.2))
-medium_range <- cbind(c(0.075, 0), c(0, 0.2))
-long_range <- cbind(c(0.15, 0), c(0, 0.4))
-saturation <- 2
-window <- Rectangle_window()
-spatstat_window <- owin()
-```
+<!-- We begin by considering a single species, with no repulsion, no covariates, and a given intensity. -->
 
-As in the previous sections, we sample from this distribution and compute the corresponding Papangelou conditional intensity for an individual of the first species.
+<!-- ```{r} -->
+<!-- nspecies <- 1 -->
+<!-- ncovariates <- 0 -->
+<!-- lambda <- 50 -->
+<!-- alpha <- matrix(0, nspecies, nspecies) -->
+<!-- beta <- matrix(0, nspecies, ncovariates) -->
+<!-- gamma <- matrix(0, nspecies, nspecies) -->
+<!-- covariates <- vector(mode = "list", length = ncovariates) -->
+<!-- model <- "Geyer" -->
+<!-- medium_range_model <- "square_exponential" -->
+<!-- short_range <- matrix(0.1, nspecies, nspecies) -->
+<!-- medium_range <- matrix(0.1, nspecies, nspecies) -->
+<!-- long_range <- matrix(0.2, nspecies, nspecies) -->
+<!-- saturation <- 100 -->
+<!-- window <- Rectangle_window() -->
+<!-- spatstat_window <- owin() -->
+<!-- ``` -->
 
-```{r}
-plot_papangelou(window = window,
-                type = 1, 
-                model = model, 
-                medium_range_model = medium_range_model, 
-                alpha = alpha, 
-                lambda = lambda, 
-                beta = beta, 
-                gamma = gamma, 
-                covariates = covariates, 
-                short_range = short_range, 
-                medium_range = medium_range, 
-                long_range = long_range, 
-                saturation = saturation) 
-```
+<!-- Take a single sample from the corresponding point process, -->
 
-It can be seen that the new individual exhibits repulsion from individuals of its own species (the circles) and is instead attracted to individuals of the other species (the triangles).
+<!-- ```{r} -->
+<!-- configuration <- rgibbs(window = window,  -->
+<!--                         alpha = alpha,  -->
+<!--                         lambda = lambda,  -->
+<!--                         beta = beta,  -->
+<!--                         covariates = covariates, -->
+<!--                         model = model, -->
+<!--                         medium_range_model = medium_range_model, -->
+<!--                         short_range = short_range,  -->
+<!--                         medium_range = medium_range, -->
+<!--                         long_range = long_range, -->
+<!--                         saturation = saturation, -->
+<!--                         gamma = gamma) -->
+<!-- ``` -->
+
+<!-- and plot it below. -->
+
+<!-- ```{r, fig.align = 'center', fig} -->
+<!-- par(mar = c(5, 4, 4, 13) + 0.1) -->
+<!-- plot(configuration) -->
+<!-- ``` -->
+
+<!-- Now, we can compute the Papangelou conditional intensity over the region. -->
+
+<!-- ```{r} -->
+<!-- x_axis <- seq(from = 0, to = 1, by = 0.001) -->
+<!-- y_axis <- x_axis -->
+<!-- z <- outer(x_axis, y_axis, function(x, y) { -->
+<!--   compute_papangelou(configuration, x, y, 1, model, medium_range_model, alpha,  -->
+<!--                      lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation) -->
+<!-- }) -->
+<!-- ``` -->
+
+<!-- In this case, the Papangelou conditional intensity is equal to the intensity over the whole region: -->
+
+<!-- ```{r} -->
+<!-- all(z == lambda) -->
+<!-- ``` -->
+
+<!-- This means that the probability of finding a point anywhere on the region conditional on the given locations is independent of the locations, and proportional to the intensity everywhere. -->
+<!-- In other words, the associated point process is a Poisson point process of intensity `lambda`. -->
+
+<!-- # Adding interactions -->
+
+<!-- We now add interactions between individuals, as controlled by the parameter `alpha`. -->
+
+<!-- ```{r} -->
+<!-- alpha <- matrix(-1) -->
+<!-- ``` -->
+
+<!-- Let us see how this changes the sample and its Papangelou conditional intensity. -->
+<!-- The package contains a function to sample from the distribution and plot the configuration and the Papangelou conditional intensity. -->
+<!-- We can plot the Papangelou conditional intensity by a call to that function. -->
+<!-- The circles represent a sample from the target distribution, and we have added the Papangelou conditional intensity as an overlay. -->
+
+<!-- ```{r} -->
+<!-- plot_papangelou(window = window, -->
+<!--                 type = 1,  -->
+<!--                 model = model,  -->
+<!--                 medium_range_model = medium_range_model,  -->
+<!--                 alpha = alpha,  -->
+<!--                 lambda = lambda,  -->
+<!--                 beta = beta,  -->
+<!--                 gamma = gamma,  -->
+<!--                 covariates = covariates,  -->
+<!--                 short_range = short_range,  -->
+<!--                 medium_range = medium_range,  -->
+<!--                 long_range = long_range,  -->
+<!--                 saturation = saturation)  -->
+<!-- ``` -->
+
+<!-- The plot indicates repulsion within a given interaction radius: at locations far from existing individuals in the configuration, the Papangelou conditional intensity is equal to `lambda`, and it decreases within the interaction radius. -->
+<!-- The parameter `alpha` controls the strength of the repulsion, and when it is increased (in absolute value) the point process becomes more repulsive. -->
+
+<!-- ```{r} -->
+<!-- alpha <- matrix(-4) -->
+<!-- plot_papangelou(window = window, -->
+<!--                 type = 1,  -->
+<!--                 model = model,  -->
+<!--                 medium_range_model = medium_range_model,  -->
+<!--                 alpha = alpha,  -->
+<!--                 lambda = lambda,  -->
+<!--                 beta = beta,  -->
+<!--                 gamma = gamma,  -->
+<!--                 covariates = covariates,  -->
+<!--                 short_range = short_range,  -->
+<!--                 medium_range = medium_range,  -->
+<!--                 long_range = long_range,  -->
+<!--                 saturation = saturation)  -->
+<!-- ``` -->
+
+<!-- Making `alpha` positive instead of negative changes the behaviour. -->
+
+<!-- ```{r} -->
+<!-- alpha <- matrix(0.2) -->
+<!-- plot_papangelou(window = window, -->
+<!--                 type = 1,  -->
+<!--                 model = model,  -->
+<!--                 medium_range_model = medium_range_model,  -->
+<!--                 alpha = alpha,  -->
+<!--                 lambda = lambda,  -->
+<!--                 beta = beta,  -->
+<!--                 gamma = gamma,  -->
+<!--                 covariates = covariates,  -->
+<!--                 short_range = short_range,  -->
+<!--                 medium_range = medium_range,  -->
+<!--                 long_range = long_range,  -->
+<!--                 saturation = saturation)  -->
+<!-- ``` -->
+
+<!-- The Papangelou conditional intensity is now larger at locations closer to existing individuals, indicating that the point process is attractive. -->
+<!-- Thus, our model is either attractive or repulsive depending on the sign of `alpha`. -->
+
+<!-- # Changing features of the interaction -->
+
+<!-- Different features of the interaction can be customised. -->
+<!-- To begin with, you can control the radii of interaction (which correspond to $r_{i,j}$ in the model). -->
+
+<!-- ```{r} -->
+<!-- alpha <- matrix(-0.1) -->
+<!-- short_range <- matrix(0.05, nspecies, nspecies) -->
+<!-- plot_papangelou(window = window, -->
+<!--                 type = 1,  -->
+<!--                 model = model,  -->
+<!--                 medium_range_model = medium_range_model,  -->
+<!--                 alpha = alpha,  -->
+<!--                 lambda = lambda,  -->
+<!--                 beta = beta,  -->
+<!--                 gamma = gamma,  -->
+<!--                 covariates = covariates,  -->
+<!--                 short_range = short_range,  -->
+<!--                 medium_range = medium_range,  -->
+<!--                 long_range = long_range,  -->
+<!--                 saturation = saturation)  -->
+<!-- ``` -->
+
+<!-- It is possible to change the number of individuals that are taken into account, via the `saturation` parameter (which corresponds to $N$ in the model). -->
+<!-- For example, let us account for the five closest individuals instead of the two closest. -->
+
+<!-- ```{r} -->
+<!-- short_range <- matrix(0.1, nspecies, nspecies) -->
+<!-- saturation <- 5 -->
+<!-- plot_papangelou(window = window, -->
+<!--                 type = 1,  -->
+<!--                 model = model,  -->
+<!--                 medium_range_model = medium_range_model,  -->
+<!--                 alpha = alpha,  -->
+<!--                 lambda = lambda,  -->
+<!--                 beta = beta,  -->
+<!--                 gamma = gamma,  -->
+<!--                 covariates = covariates,  -->
+<!--                 short_range = short_range,  -->
+<!--                 medium_range = medium_range,  -->
+<!--                 long_range = long_range,  -->
+<!--                 saturation = saturation)  -->
+<!-- ``` -->
+
+<!-- There are also various kinds of smoothing functions available via the `model` parameter (which correspond to $\varphi_{r_{i,j}}$ in the model). -->
+<!-- Here is what the square exponential smoothing looks like. -->
+
+<!-- ```{r} -->
+<!-- saturation <- 2 -->
+<!-- model <- "square_exponential" -->
+<!-- plot_papangelou(window = window, -->
+<!--                 type = 1,  -->
+<!--                 model = model,  -->
+<!--                 medium_range_model = medium_range_model,  -->
+<!--                 alpha = alpha,  -->
+<!--                 lambda = lambda,  -->
+<!--                 beta = beta,  -->
+<!--                 gamma = gamma,  -->
+<!--                 covariates = covariates,  -->
+<!--                 short_range = short_range,  -->
+<!--                 medium_range = medium_range,  -->
+<!--                 long_range = long_range,  -->
+<!--                 saturation = saturation)  -->
+<!-- ``` -->
+
+<!-- <!-- # Discussion of the different variations --> -->
+
+<!-- <!-- These different variations of the model generate quite different samples in extreme cases. --> -->
+<!-- <!-- For example, for a very large value of the repulsion parameter, the Geyer model exhibits extreme regularity. --> -->
+<!-- <!-- The Geyer model does not have any smoothing, i.e. it corresponds to the choice $\varphi_{r_{i,j}}(r)=\mathbf1_{\{r\le r_{i,j}\}}$, where $\mathbf1$ is the indicator function. --> -->
+
+<!-- <!-- ```{r} --> -->
+<!-- <!-- extreme_configuration <- rgibbs(window = window,  --> -->
+<!-- <!--                                 alpha = matrix(-Inf),  --> -->
+<!-- <!--                                 lambda = 100,  --> -->
+<!-- <!--                                 model = "Geyer", --> -->
+<!-- <!--                                 short_range = short_range) --> -->
+<!-- <!-- par(mar = c(5, 4, 4, 13) + 0.1) --> -->
+<!-- <!-- plot(extreme_configuration, window = window) --> -->
+<!-- <!-- ``` --> -->
+
+<!-- <!-- Other variants of the model show some interesting features. --> -->
+<!-- <!-- As an illustration, here is a plot of an extremely attractive square exponential version of the model. --> -->
+
+<!-- <!-- ```{r} --> -->
+<!-- <!-- extreme_configuration <- rgibbs(window = window,  --> -->
+<!-- <!--                                 alpha = matrix(3),  --> -->
+<!-- <!--                                 lambda = 1,  --> -->
+<!-- <!--                                 model = "square_exponential", --> -->
+<!-- <!--                                 short_range = short_range) --> -->
+<!-- <!-- par(mar = c(5, 4, 4, 13) + 0.1) --> -->
+<!-- <!-- plot(extreme_configuration, window = window) --> -->
+<!-- <!-- ``` --> -->
+
+<!-- # Adding covariates -->
+
+<!-- Adding covariates is also possible. -->
+<!-- It is best to provide the covariates as `spatstat::im` objects, and it is usually easy to convert to that format thanks to the conversion functions provided by `spatstat`. -->
+
+<!-- ```{r} -->
+<!-- model <- "Geyer" -->
+<!-- covariates <- list(temperature = as.im(function(x, y) x - 0.5, W = spatstat_window)) -->
+<!-- beta <- matrix(2) -->
+<!-- plot_papangelou(window = window, -->
+<!--                 type = 1,  -->
+<!--                 model = model,  -->
+<!--                 medium_range_model = medium_range_model,  -->
+<!--                 alpha = alpha,  -->
+<!--                 lambda = lambda,  -->
+<!--                 beta = beta,  -->
+<!--                 gamma = gamma,  -->
+<!--                 covariates = covariates,  -->
+<!--                 short_range = short_range,  -->
+<!--                 medium_range = medium_range,  -->
+<!--                 long_range = long_range,  -->
+<!--                 saturation = saturation)  -->
+<!-- ``` -->
+
+<!-- # Multiple species setting -->
+
+<!-- The package also works with multiple species. -->
+
+<!-- ```{r} -->
+<!-- nspecies <- 2 -->
+<!-- ncovariates <- 0 -->
+<!-- lambda <- c(10, 10) -->
+<!-- alpha <- cbind(c(-1, -1), c(-1, -0.5)) -->
+<!-- gamma <- cbind(c(0.5, 0), c(0, 0.5)) -->
+<!-- beta <- matrix(0, nspecies, ncovariates) -->
+<!-- covariates <- list() -->
+<!-- model <- "square_bump" -->
+<!-- medium_range_model <- "square_exponential" -->
+<!-- short_range <- cbind(c(0.05, 0.1), c(0.1, 0.2)) -->
+<!-- medium_range <- cbind(c(0.075, 0), c(0, 0.2)) -->
+<!-- long_range <- cbind(c(0.15, 0), c(0, 0.4)) -->
+<!-- saturation <- 2 -->
+<!-- window <- Rectangle_window() -->
+<!-- spatstat_window <- owin() -->
+<!-- ``` -->
+
+<!-- As in the previous sections, we sample from this distribution and compute the corresponding Papangelou conditional intensity for an individual of the first species. -->
+
+<!-- ```{r} -->
+<!-- plot_papangelou(window = window, -->
+<!--                 type = 1,  -->
+<!--                 model = model,  -->
+<!--                 medium_range_model = medium_range_model,  -->
+<!--                 alpha = alpha,  -->
+<!--                 lambda = lambda,  -->
+<!--                 beta = beta,  -->
+<!--                 gamma = gamma,  -->
+<!--                 covariates = covariates,  -->
+<!--                 short_range = short_range,  -->
+<!--                 medium_range = medium_range,  -->
+<!--                 long_range = long_range,  -->
+<!--                 saturation = saturation)  -->
+<!-- ``` -->
+
+<!-- It can be seen that the new individual exhibits repulsion from individuals of its own species (the circles) and is instead attracted to individuals of the other species (the triangles). -->

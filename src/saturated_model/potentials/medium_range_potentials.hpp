@@ -119,7 +119,7 @@ struct Two_sided_square_exponential_implementation {
 
   static double set_upper(double lower, double upper) {
     const auto delta(upper - lower);
-    return -std::log(2) / (delta * delta);
+    return -4 * std::log(2) / (delta * delta);
   }
 
   static double apply(double square_distance, double lower, double upper) {

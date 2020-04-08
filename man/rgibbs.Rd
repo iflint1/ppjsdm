@@ -15,6 +15,7 @@ rgibbs(
   medium_range = NULL,
   long_range = NULL,
   saturation = 2,
+  max_points = Inf,
   steps = 0,
   nsim = 1,
   types = NULL,
@@ -46,6 +47,8 @@ number of rows/columns as the covariates.}
 \item{long_range}{Symmetric matrix of long range interaction radii. Filled with 0.2 times the window radius by default.}
 
 \item{saturation}{Saturation parameter of the point process. Default is 2.}
+
+\item{max_points}{Maximum number of points. Default is Inf.}
 
 \item{steps}{Number of steps in the Metropolis algorithm. If `steps = 0`, uses the coupling from the past algorithm instead.
 Default is 0.}

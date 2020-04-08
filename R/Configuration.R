@@ -17,11 +17,14 @@ Configuration <- local({
       if(missing(types)) {
         types <- factor(rep("default", length(x)))
       } else if(!is.factor(types)) {
-        types <- factor(rep(types, length(x)))
-      } else {
-        if(length(types) != length(x)) {
-          stop("The types argument should be a factor with the same length as that of x.")
+        if(length(types) == length(x)) {
+          types <- factor(types)
+        } else {
+          types <- factor(rep(types, length(x)))
         }
+      }
+      if(length(types) != length(x)) {
+        stop("The types argument should be a factor with the same length as that of x.")
       }
 
       if(missing(marks)) {

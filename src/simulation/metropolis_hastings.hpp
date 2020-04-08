@@ -30,7 +30,7 @@ inline auto simulate_metropolis_hastings(const Model& model, const Window& windo
       const auto birth_ratio(papangelou * precomputed_constant / (1 + points_size));
 
       // Use C++ short-circuiting
-      if(birth_ratio >= 1 || unif_rand() <= birth_ratio) {
+      if(birth_ratio >= 1. || unif_rand() <= birth_ratio) {
         add_point(points, point);
         ++points_size;
       }
@@ -40,7 +40,7 @@ inline auto simulate_metropolis_hastings(const Model& model, const Window& windo
       const auto papangelou(model.compute_papangelou(saved_point, points));
       const auto death_ratio(points_size / (precomputed_constant * papangelou));
       // Use C++ short-circuiting
-      if(death_ratio >= 1 || unif_rand() <= death_ratio) {
+      if(death_ratio >= 1. || unif_rand() <= death_ratio) {
         --points_size;
       } else {
         add_point(points, saved_point);

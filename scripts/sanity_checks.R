@@ -115,15 +115,15 @@ message(paste0("cftp confidence interval: [", paste0(cftp_result$conf.int, colla
                "], mh confidence interval: [", paste0(mh_result$conf.int, collapse = ", "), "]."))
 
 window <- Rectangle_window(c(0, 1), c(0, 1))
-alpha <- cbind(c(-1.0, -0.3), c(-0.3, -0.4))
-lambda <- c(30, 30)
-gamma <- cbind(c(0.4, -0.6), c(-0.6, -0.9))
+alpha <- 2.5
+lambda <- 10
+gamma <- 0
 model <- "Geyer"
 medium_range_model <- "Geyer"
-short_range <- matrix(0.05, 2, 2)
-medium_range <- matrix(0.1, 2, 2)
-long_range <- matrix(0.15, 2, 2)
-saturation <- 2
+short_range <- 0.05
+medium_range <- 0.1
+long_range <- 0.15
+saturation <- 1
 
 
 N <- 10000

@@ -18,12 +18,13 @@
 #' @param medium_range Medium range interaction radii.
 #' @param long_range Long range interaction radii.
 #' @param saturation Saturation parameter.
+#' @param max_points Maximum number of points.
 #' @param mark Mark of the point to add.
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-compute_papangelou <- function(configuration, x, y, type, model, medium_range_model, alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation, mark = 1.0) {
-    .Call('_ppjsdm_compute_papangelou', PACKAGE = 'ppjsdm', configuration, x, y, type, model, medium_range_model, alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation, mark)
+compute_papangelou <- function(configuration, x, y, type, model, medium_range_model, alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation, max_points, mark = 1.0) {
+    .Call('_ppjsdm_compute_papangelou', PACKAGE = 'ppjsdm', configuration, x, y, type, model, medium_range_model, alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation, max_points, mark)
 }
 
 #' Check if a configuration contains duplicates.
@@ -36,8 +37,8 @@ has_duplicates <- function(configuration) {
     .Call('_ppjsdm_has_duplicates', PACKAGE = 'ppjsdm', configuration)
 }
 
-prepare_gibbsm_data <- function(configuration, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range) {
-    .Call('_ppjsdm_prepare_gibbsm_data', PACKAGE = 'ppjsdm', configuration, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range)
+prepare_gibbsm_data <- function(configuration, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, approximate) {
+    .Call('_ppjsdm_prepare_gibbsm_data', PACKAGE = 'ppjsdm', configuration, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, approximate)
 }
 
 #' Sample a binomial point processes
@@ -57,8 +58,8 @@ rbinomialpp <- function(window = NULL, n = NULL, nsim = 1L, types = NULL, drop =
     .Call('_ppjsdm_rbinomialpp', PACKAGE = 'ppjsdm', window, n, nsim, types, drop, mark_range)
 }
 
-rgibbs_cpp <- function(window, alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, mark_range) {
-    .Call('_ppjsdm_rgibbs_cpp', PACKAGE = 'ppjsdm', window, alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, mark_range)
+rgibbs_cpp <- function(window, alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, saturation, max_points, steps, nsim, types, model, medium_range_model, drop, mark_range) {
+    .Call('_ppjsdm_rgibbs_cpp', PACKAGE = 'ppjsdm', window, alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, saturation, max_points, steps, nsim, types, model, medium_range_model, drop, mark_range)
 }
 
 #' Sample a Poisson point processes

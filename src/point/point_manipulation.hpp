@@ -50,6 +50,14 @@ inline auto get_mark(const Point& point) {
   return traits::point_manipulation<Point>::get_mark(point);
 }
 
+template<typename Point, typename Other>
+inline bool is_equal(const Point& point, const Other& other) {
+  return get_x(point) == get_x(other)
+          && get_y(point) == get_y(other)
+          && get_type(point) == get_type(other)
+          && get_mark(point) == get_mark(other);
+}
+
 } // namespace ppjsdm
 
 #endif // INCLUDE_PPJSDM_POINT_MANIPULATION

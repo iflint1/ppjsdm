@@ -19,8 +19,10 @@ plot_papangelou(
   medium_range,
   long_range,
   saturation,
+  max_points,
   grid_steps = 1000,
-  mark = 1
+  mark = 1,
+  steps = 0
 )
 }
 \arguments{
@@ -52,9 +54,13 @@ plot_papangelou(
 
 \item{saturation}{Saturation.}
 
+\item{max_points}{Maximum number of points.}
+
 \item{grid_steps}{Number of horizontal and vertical grid steps.}
 
 \item{mark}{Mark of the point.}
+
+\item{steps}{Nunber of steps in the Metropolis-Hastings simulation algorithm.}
 }
 \description{
 Plot the Papangelou conditional intensity.
