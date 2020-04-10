@@ -34,19 +34,19 @@ inline void add_to_formula(std::string& formula, Rcpp::CharacterVector names) {
 }
 
 template<bool Approximate, typename Configuration, typename Window, typename DispersionModel, typename MediumDispersionModel, typename Vector>
-Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const Window& window, const ppjsdm::Im_list_wrapper& covariates, Rcpp::List traits, const DispersionModel& dispersion_model, const MediumDispersionModel& medium_dispersion_model, const Vector& points_by_type) {
+Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configuration_list, const Window& window, const ppjsdm::Im_list_wrapper& covariates, Rcpp::List traits, const DispersionModel& dispersion_model, const MediumDispersionModel& medium_dispersion_model, const Vector& max_points_by_type) {
   using size_t = ppjsdm::size_t<Configuration>;
 
   // Sample the dummy points D.
   // This choice of rho is the guideline from the Baddeley et al. paper, see p. 8 therein.
-  Vector rho_times_volume(points_by_type);
+  Vector rho_times_volume(max_points_by_type);
   size_t length_D(0);
   for(auto& n: rho_times_volume) {
     const auto mult_by_four(n * 4);
     n = mult_by_four < 500 ? 500 : mult_by_four;
     length_D += n;
   }
-  const size_t number_types(points_by_type.size());
+  const size_t number_types(max_points_by_type.size());
   auto D(ppjsdm::rbinomialpp_single<std::vector<ppjsdm::Marked_point>>(window, rho_times_volume, number_types, length_D));
 
   // Make shift vector
@@ -70,30 +70,41 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     std::vector<double> covariates;
   };
   std::vector<Result_type> precomputed_results;
-  const auto length_configuration(ppjsdm::size(configuration));
-  precomputed_results.reserve(length_configuration + length_D);
+  unsigned long long int total_configuration_length(0);
+  for(size_t i(0); i < configuration_list.size(); ++i) {
+    total_configuration_length += ppjsdm::size(configuration_list[i]);
+  }
+  precomputed_results.reserve(total_configuration_length + length_D * configuration_list.size());
 
   const size_t covariates_length(covariates.size());
 #pragma omp parallel
   {
   std::vector<Result_type> results_private;
-  results_private.reserve(length_configuration + length_D);
+  results_private.reserve(total_configuration_length + length_D * configuration_list.size());
 #pragma omp for nowait
-  for(size_t i = 0; i < length_configuration; ++i) {
+  for(size_t i = 0; i < total_configuration_length; ++i) {
+    size_t configuration_index(0);
+    unsigned long long int previous_count(0);
+    while(i >= previous_count + ppjsdm::size(configuration_list[configuration_index])) {
+      previous_count += ppjsdm::size(configuration_list[configuration_index]);
+      ++configuration_index;
+    }
+    // configuration_index contains the index of the configuration we're at in the loop.
+    const auto point_index(i - previous_count);
     // TODO: Avoidable?
-    Configuration configuration_copy(configuration);
-    ppjsdm::remove_point_by_iterator(configuration_copy, std::next(configuration_copy.begin(), i));
-    const auto d(dispersion_model.template compute<Approximate>(configuration[i], number_types, configuration_copy));
-    const auto e(medium_dispersion_model.template compute<Approximate>(configuration[i], number_types, configuration_copy));
+    Configuration configuration_copy(configuration_list[configuration_index]);
+    ppjsdm::remove_point_by_iterator(configuration_copy, std::next(configuration_copy.begin(), point_index));
+    const auto d(dispersion_model.template compute<Approximate>(configuration_list[configuration_index][point_index], number_types, configuration_copy));
+    const auto e(medium_dispersion_model.template compute<Approximate>(configuration_list[configuration_index][point_index], number_types, configuration_copy));
     std::vector<double> cov(covariates_length);
     for(size_t k(0); k < covariates_length; ++k) {
-      const auto covariate(covariates[k](configuration[i]));
+      const auto covariate(covariates[k](configuration_list[configuration_index][point_index]));
       if(R_IsNA(covariate)) {
         Rcpp::stop("One of the covariates' value is NA on one of the locations in the dataset.");
       }
       cov[k] = covariate;
     }
-    results_private.emplace_back(true, ppjsdm::get_type(configuration[i]), std::move(d), std::move(e), std::move(cov));
+    results_private.emplace_back(true, ppjsdm::get_type(configuration_list[configuration_index][point_index]), std::move(d), std::move(e), std::move(cov));
   }
 #pragma omp for nowait
   for(size_t i = 0; i < length_D; ++i) {
@@ -111,9 +122,11 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
     if(one_of_covariates_na) {
       continue;
     }
-    const auto d(dispersion_model.template compute<Approximate>(D[i], number_types, configuration));
-    const auto e(medium_dispersion_model.template compute<Approximate>(D[i], number_types, configuration));
-    results_private.emplace_back(false, ppjsdm::get_type(D[i]), std::move(d), std::move(e), std::move(cov));
+    for(size_t j(0); j < configuration_list.size(); ++j) {
+      const auto d(dispersion_model.template compute<Approximate>(D[i], number_types, configuration_list[j]));
+      const auto e(medium_dispersion_model.template compute<Approximate>(D[i], number_types, configuration_list[j]));
+      results_private.emplace_back(false, ppjsdm::get_type(D[i]), std::move(d), std::move(e), std::move(cov));
+    }
   }
 #pragma omp critical
   precomputed_results.insert(precomputed_results.end(), results_private.begin(), results_private.end());
@@ -350,37 +363,51 @@ Rcpp::List prepare_gibbsm_data_helper(const Configuration& configuration, const 
 }
 
 // [[Rcpp::export]]
-Rcpp::List prepare_gibbsm_data(SEXP configuration, SEXP window, Rcpp::List covariates, Rcpp::List traits, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, Rcpp::NumericVector mark_range, bool approximate) {
-  const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
-  const auto length_configuration(ppjsdm::size(wrapped_configuration));
-  if(length_configuration == 0) {
-    Rcpp::stop("Empty configuration.");
+Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list, SEXP window, Rcpp::List covariates, Rcpp::List traits, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, Rcpp::NumericVector mark_range, bool approximate) {
+  // Construct std::vector of configurations.
+  std::vector<std::vector<ppjsdm::Marked_point>> vector_configurations(configuration_list.size());
+  for(R_xlen_t i(0); i < configuration_list.size(); ++i) {
+    const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::wrap(configuration_list[i]));
+    const auto length_configuration(ppjsdm::size(wrapped_configuration));
+
+    // Convert configurations to std::vector in order for parallelised version to work.
+    vector_configurations[i] = std::vector<ppjsdm::Marked_point>(length_configuration);
+    for(decltype(ppjsdm::size(wrapped_configuration)) j(0); j < length_configuration; ++j) {
+      vector_configurations[i][j] = wrapped_configuration[j];
+    }
   }
-  // Convert to std::vector in order for parallelised version to work.
-  std::vector<ppjsdm::Marked_point> vector_configuration(length_configuration);
-  for(decltype(ppjsdm::size(wrapped_configuration)) i(0); i < length_configuration; ++i) {
-    vector_configuration[i] = wrapped_configuration[i];
-  }
-  return ppjsdm::call_on_wrapped_window(window, mark_range, [approximate, &vector_configuration, &covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation](const auto& w) {
+
+  return ppjsdm::call_on_wrapped_window(window, mark_range, [approximate, &vector_configurations, &covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation](const auto& w) {
     // The trick below allows us to find the number of different types in the configuration.
     // That number is then used to default construct `short_range`.
-    const auto points_by_type(ppjsdm::get_number_points(vector_configuration));
-    const auto number_types(points_by_type.size());
+    std::vector<size_t> max_points_by_type(ppjsdm::get_number_points(vector_configurations[0]));
+    using size_t = typename decltype(vector_configurations)::size_type;
+    for(size_t i(0); i < vector_configurations.size(); ++i) {
+      const auto new_points_by_type(ppjsdm::get_number_points(vector_configurations[i]));
+      for(size_t j(0); j < max_points_by_type.size(); ++j) {
+        if(max_points_by_type[j] < new_points_by_type[j]) {
+          max_points_by_type[j] = new_points_by_type[j];
+        }
+      }
+    }
+    // TODO: Allow for cases in which all species are not present in all configurations, i.e. number_types = max_i(max_points_by_type[i].size())
+    const auto number_types(max_points_by_type.size());
+
     const auto sh(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(short_range, 0.1 * w.diameter(), number_types));
     if(!ppjsdm::is_symmetric_matrix(sh)) {
       Rcpp::stop("Short range interaction radius matrix is not symmetric.");
     }
-    return ppjsdm::call_on_dispersion_model(model, sh, saturation, [approximate, number_types, medium_range_model, medium_range, long_range, saturation, &vector_configuration, &w, &covariates, traits, &points_by_type](const auto& short_papangelou) {
+    return ppjsdm::call_on_dispersion_model(model, sh, saturation, [approximate, number_types, medium_range_model, medium_range, long_range, saturation, &vector_configurations, &w, &covariates, traits, &max_points_by_type](const auto& short_papangelou) {
       const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0.1 * w.diameter(), number_types));
       const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0.2 * w.diameter(), number_types));
       if(!ppjsdm::is_symmetric_matrix(me) || !ppjsdm::is_symmetric_matrix(lo)) {
         Rcpp::stop("Medium or long range interaction radius matrix is not symmetric.");
       }
-      return ppjsdm::call_on_medium_range_dispersion_model(medium_range_model, me, lo, saturation, [approximate, &short_papangelou, &vector_configuration, &w, &covariates, traits, &points_by_type](const auto& medium_papangelou) {
+      return ppjsdm::call_on_medium_range_dispersion_model(medium_range_model, me, lo, saturation, [approximate, &short_papangelou, &vector_configurations, &w, &covariates, traits, &max_points_by_type](const auto& medium_papangelou) {
         if(approximate) {
-          return prepare_gibbsm_data_helper<true>(vector_configuration, w, ppjsdm::Im_list_wrapper(covariates), traits, short_papangelou, medium_papangelou, points_by_type);
+          return prepare_gibbsm_data_helper<true>(vector_configurations, w, ppjsdm::Im_list_wrapper(covariates), traits, short_papangelou, medium_papangelou, max_points_by_type);
         } else {
-          return prepare_gibbsm_data_helper<false>(vector_configuration, w, ppjsdm::Im_list_wrapper(covariates), traits, short_papangelou, medium_papangelou, points_by_type);
+          return prepare_gibbsm_data_helper<false>(vector_configurations, w, ppjsdm::Im_list_wrapper(covariates), traits, short_papangelou, medium_papangelou, max_points_by_type);
         }
       });
     });

@@ -56,11 +56,10 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
       lo[lower] <- me[lower] + v[3 * (1 + number_types)]
       lo[upper] <- t(lo)[upper]
 
-      gibbsm_data_list <- lapply(configuration_list, function(configuration) {
-        # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
-        mark_range <- c(min(get_marks(configuration)), max(get_marks(configuration)))
-        prepare_gibbsm_data(configuration, window, covariates, traits, model, medium_range_model, sh, me, lo, saturation, mark_range, TRUE)
-      })
+      # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
+      mark_range <- c(min(get_marks(configuration_list[[1]])), max(get_marks(configuration_list[[1]])))
+      gibbsm_data_list <- prepare_gibbsm_data(configuration_list, window, covariates, traits, model, medium_range_model, sh, me, lo, saturation, mark_range, TRUE)
+
       fit <- fit_gibbs(gibbsm_data_list, use_glmnet, use_aic)
       list(fit = fit, sh = sh, me = me, lo = lo)
     }
@@ -70,9 +69,9 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
       {
         fit <- get_fit(v)$fit
         if(use_aic) {
-          average <- mean(sapply(fit, function(element) element$aic))
+          average <- fit$aic
         } else {
-          average <- mean(sapply(fit, function(element) element$bic))
+          average <- fit$bic
         }
         average
       },
@@ -97,7 +96,8 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
     GA <- ga(type = "real-valued",
              fitness =  function(v) -to_optimise(v),
              lower = lower,
-             upper = upper)
+             upper = upper,
+             parallel = TRUE)
     result <- get_fit(GA@solution)
 
     # optim
@@ -109,35 +109,27 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
     best_long <- result$lo
 
     # Refit with best radii and non-approximation
-    gibbsm_data_list <- lapply(configuration_list, function(configuration) {
-      # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
-      mark_range <- c(min(get_marks(configuration)), max(get_marks(configuration)))
-      prepare_gibbsm_data(configuration, window, covariates, traits, model, medium_range_model, best_short, best_medium, best_long, saturation, mark_range, FALSE)
-    })
+    # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
+    mark_range <- c(min(get_marks(configuration_list[[1]])), max(get_marks(configuration_list[[1]])))
+    gibbsm_data_list <- prepare_gibbsm_data(configuration_list, window, covariates, traits, model, medium_range_model, best_short, best_medium, best_long, saturation, mark_range, FALSE)
+
     fitted <- fit_gibbs(gibbsm_data_list, use_glmnet, use_aic)
   } else {
-    gibbsm_data_list <- lapply(configuration_list, function(configuration) {
-      # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
-      mark_range <- c(min(get_marks(configuration)), max(get_marks(configuration)))
-      prepare_gibbsm_data(configuration, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, FALSE)
-    })
+    # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
+    mark_range <- c(min(get_marks(configuration_list[[1]])), max(get_marks(configuration_list[[1]])))
+    gibbsm_data_list <- prepare_gibbsm_data(configuration_list, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, FALSE)
+
     fitted <- fit_gibbs(gibbsm_data_list, use_glmnet, use_aic)
   }
-  fits <-  lapply(fitted, function(fit) fit$fit)
-  fits_coefficients <-lapply(fitted, function(fit) fit$coefficients)
-  aic <-  lapply(fitted, function(fit) fit$aic)
-  bic <-lapply(fitted, function(fit) fit$bic)
+  fits <-  fitted$fit
+  fits_coefficients <- fitted$coefficients
+  aic <- fitted$aic
+  bic <- fitted$bic
 
   if(print) {
-    lapply(fits_coefficients, function(fit) print(fit))
+    print(fitted$coefficients)
   }
 
-  if(number_configurations == 1) {
-    fits <- fits[[1]]
-    fits_coefficients <- fits_coefficients[[1]]
-    aic <- aic[[1]]
-    bic <- bic[[1]]
-  }
   if(estimate_radii) {
     ret <- list(complete = fits, coefficients = append(fits_coefficients, list(short_range = best_short, medium_range = best_medium, long_range = best_long)), aic = aic, bic = bic)
   } else {
