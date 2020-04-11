@@ -58,6 +58,7 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
 
       # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
       mark_range <- c(min(get_marks(configuration_list[[1]])), max(get_marks(configuration_list[[1]])))
+
       gibbsm_data_list <- prepare_gibbsm_data(configuration_list, window, covariates, traits, model, medium_range_model, sh, me, lo, saturation, mark_range, TRUE)
 
       fit <- fit_gibbs(gibbsm_data_list, use_glmnet, use_aic)
