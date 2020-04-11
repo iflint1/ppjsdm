@@ -125,7 +125,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     for(size_t j(0); j < configuration_list.size(); ++j) {
       const auto d(dispersion_model.template compute<Approximate>(D[i], number_types, configuration_list[j]));
       const auto e(medium_dispersion_model.template compute<Approximate>(D[i], number_types, configuration_list[j]));
-      results_private.emplace_back(false, ppjsdm::get_type(D[i]), std::move(d), std::move(e), std::move(cov));
+      results_private.emplace_back(false, ppjsdm::get_type(D[i]), std::move(d), std::move(e), cov);
     }
   }
 #pragma omp critical
