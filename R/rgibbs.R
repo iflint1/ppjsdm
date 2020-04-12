@@ -47,5 +47,8 @@ rgibbs <- function(window = NULL,
   # Make covariates im objects with proper names.
   covariates <- coerce_to_named_im_objects(covariates, "unnamed_covariate", window)
 
+  if(!missing(beta)) {
+    beta <- as.matrix(beta)
+  }
   rgibbs_cpp(window, alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, saturation, max_points, steps, nsim, types, model, medium_range_model, drop, mark_range)
 }
