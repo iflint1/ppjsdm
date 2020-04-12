@@ -653,7 +653,7 @@ public:
     CountType count_vector(number_types);
 
     for_each_container([&count_vector, &point, &varphi, saturation = varphi.saturation_, &configurations...](const auto& current_point) {
-      if(count_vector[get_type(current_point)] < saturation && varphi.apply(current_point, point) > 0) {
+      if(count_vector[get_type(current_point)] < saturation && apply_potential(varphi, current_point, point) > 0) {
         ++count_vector[get_type(current_point)];
       }
     }, std::forward<Configurations>(configurations)...);
@@ -662,12 +662,12 @@ public:
       for_each_container([&count_vector, &point, &varphi, saturation = varphi.saturation_, configurations...](const auto& current_point) {
         unsigned long long int count(0);
         for_each_container([&point, &count, &current_point, &varphi, saturation](const auto& other_point) {
-          if(!is_equal(other_point, current_point) && get_type(other_point) == get_type(point) && count < saturation && varphi.apply(other_point, current_point) > 0) {
+          if(!is_equal(other_point, current_point) && get_type(other_point) == get_type(point) && count < saturation && apply_potential(varphi, other_point, current_point) > 0) {
             ++count;
           }
         }, configurations...);
         count_vector[get_type(current_point)] -= count;
-        if(!is_equal(point, current_point) && count < saturation && varphi.apply(point, current_point) > 0) {
+        if(!is_equal(point, current_point) && count < saturation && apply_potential(varphi, point, current_point) > 0) {
           ++count;
         }
         count_vector[get_type(current_point)] += count;
@@ -873,7 +873,7 @@ public:
 private:
   template<typename Point, typename Other>
   static void update_count(const Varphi& varphi, typename CountType::value_type& count, const Point& point, const Other& other) {
-    const auto disp(varphi.apply(other, point));
+    const auto disp(apply_potential(varphi, other, point));
     if(count.size() < varphi.saturation_) {
       count.emplace_back(disp);
       std::push_heap(count.begin(), count.end(), std::greater<double>{});
