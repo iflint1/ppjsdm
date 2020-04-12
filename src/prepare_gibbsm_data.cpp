@@ -323,7 +323,8 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     Rcpp::colnames(regressors) = col_names;
   } else {
     regressors = Rcpp::no_init(log_lambda.nrow(),
-                               log_lambda.ncol() + alpha_input.ncol() + gamma_input.ncol() + covariates_input.ncol());    Rcpp::CharacterVector col_names(Rcpp::no_init(regressors.ncol()));
+                               log_lambda.ncol() + alpha_input.ncol() + gamma_input.ncol() + covariates_input.ncol());
+    Rcpp::CharacterVector col_names(Rcpp::no_init(regressors.ncol()));
     for(R_xlen_t j(0); j < static_cast<R_xlen_t>(log_lambda.ncol()); ++j) {
       col_names[j] = log_lambda_names[j];
       for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
