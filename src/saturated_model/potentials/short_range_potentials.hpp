@@ -41,7 +41,6 @@ protected:
     return apply(normalized_square_distance(point, other), get_type(point), get_type(other));
   }
 
-  template<typename Window>
   constexpr static double get_maximum(const Window&) {
     return 1.0;
   }

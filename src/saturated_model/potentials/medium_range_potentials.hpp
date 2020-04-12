@@ -7,6 +7,7 @@
 #include "../../point/point_manipulation.hpp"
 #include "../../point/square_distance.hpp"
 #include "../../utility/lightweight_matrix.hpp"
+#include "../../utility/window_utilities.hpp"
 
 #include <cmath> // std::sqrt, std::exp, std::log
 #include <type_traits> // std::enable_if, std::false_type, std::true_type
@@ -50,7 +51,6 @@ protected:
     return apply(normalized_square_distance(point, other), get_type(point), get_type(other));
   }
 
-  template<typename Window>
   constexpr static double get_maximum(const Window&) {
     return 1.0;
   }

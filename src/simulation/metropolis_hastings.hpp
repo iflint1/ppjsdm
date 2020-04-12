@@ -9,7 +9,7 @@
 
 namespace ppjsdm {
 
-template<typename Configuration, typename Model, typename Window>
+template<typename Configuration, typename Model>
 inline auto simulate_metropolis_hastings(const Model& model, const Window& window, unsigned long long int steps, R_xlen_t number_types) {
   constexpr double prob(0.5);
   const double precomputed_constant((1 - prob) * window.volume() * static_cast<double>(number_types) / prob);

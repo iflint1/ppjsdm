@@ -907,7 +907,6 @@ public:
   }
 
   // TODO: This doesn't return the correct result.
-  template<typename Window>
   double get_maximum(const Window& window) const {
     return Varphi::get_maximum(window) * static_cast<double>(saturation_);
   }

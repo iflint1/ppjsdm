@@ -4,10 +4,11 @@
 #include <Rinternals.h>
 
 #include "../configuration/configuration_manipulation.hpp"
+#include "../utility/window_utilities.hpp"
 
 namespace ppjsdm {
 
-template<typename Configuration, typename Window, typename N>
+template<typename Configuration, typename N>
 inline auto rbinomialpp_single(const Window& window, const N& n, R_xlen_t number_types, size_t<Configuration> total_number) {
   Configuration configuration(total_number);
 

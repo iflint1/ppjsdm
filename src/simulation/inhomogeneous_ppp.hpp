@@ -10,7 +10,7 @@
 
 namespace ppjsdm {
 
-template<typename Configuration, typename Window, typename Intensity, typename UpperBound>
+template<typename Configuration, typename Intensity, typename UpperBound>
 inline auto simulate_inhomogeneous_ppp(const Window& window, const Intensity& log_normalised_intensity, const UpperBound& upper_bound, R_xlen_t number_types) {
   const auto volume(window.volume());
 

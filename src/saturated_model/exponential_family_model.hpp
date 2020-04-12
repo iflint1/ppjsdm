@@ -521,7 +521,7 @@ public:
   }
 
 private:
-  Window window_;
+  const Window& window_;
   std::vector<double> beta_dot_covariates_maximum_;
   std::vector<double> dot_dispersion_maximum_;
 };

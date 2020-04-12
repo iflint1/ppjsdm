@@ -14,8 +14,8 @@
 #include "utility/make_default_types.hpp"
 #include "utility/window_utilities.hpp"
 
-template<typename Window, typename Lambda>
-inline SEXP rppp_helper(const Window& window, const Lambda& lambda, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
+template<typename Lambda>
+inline SEXP rppp_helper(const ppjsdm::Window& window, const Lambda& lambda, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
   Rcpp::List samples(nsim);
 
   for(R_xlen_t i(0); i < nsim; ++i) {
@@ -43,9 +43,8 @@ SEXP rppp(SEXP window = R_NilValue, SEXP lambda = R_NilValue, R_xlen_t nsim = 1,
   const auto number_types(ppjsdm::get_number_types_and_check_conformance(lambda, types));
   lambda = ppjsdm::construct_if_missing<Rcpp::NumericVector>(lambda, 1., number_types);
   types = ppjsdm::make_types(types, number_types, lambda);
-  return ppjsdm::call_on_wrapped_window(window, mark_range, [number_types, &lambda, nsim, &types, drop](const auto& w) {
-    return ppjsdm::call_on_list_or_vector(lambda, [number_types, &w, nsim, &types, drop](const auto& l) {
-      return rppp_helper(w, l, nsim, types, drop, number_types);
-    });
+  const auto cpp_window(ppjsdm::get_window_ptr_from_R_object(window, mark_range));
+  return ppjsdm::call_on_list_or_vector(lambda, [number_types, &cpp_window, nsim, &types, drop](const auto& l) {
+    return rppp_helper(*cpp_window, l, nsim, types, drop, number_types);
   });
 }

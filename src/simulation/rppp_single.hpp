@@ -10,7 +10,7 @@
 
 namespace ppjsdm {
 
-template<typename Configuration, typename Window, typename Lambda>
+template<typename Configuration, typename Lambda>
 inline auto rppp_single(const Window& window, const Lambda& lambda, R_xlen_t number_types) {
   const auto volume(window.volume());
   std::vector<R_xlen_t> number_points(number_types);

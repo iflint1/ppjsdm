@@ -6,25 +6,20 @@
 
 #include "../point/point_manipulation.hpp"
 #include "../utility/im_wrapper.hpp"
+#include "window_base.hpp"
 
 #include <cmath> // std::sqrt
 #include <string> // std::string
 
 namespace ppjsdm {
-namespace detail {
 
-enum class Window {rectangle, disk, im};
-
-template <Window WindowType>
-class Window_wrapper;
-
-template <>
-class Window_wrapper<Window::rectangle> {
+class Rectangle_window: public Window {
 public:
-  Window_wrapper(Rcpp::NumericVector marked_range): x_0_(0), delta_x_(1), y_0_(0), delta_y_(1),
+  Rectangle_window(Rcpp::NumericVector marked_range): x_0_(0), delta_x_(1), y_0_(0), delta_y_(1),
   mark_lower_(marked_range[0]),
   delta_mark_(marked_range[1] - marked_range[0]) {}
-  explicit Window_wrapper(Rcpp::List window, Rcpp::NumericVector marked_range):
+
+  explicit Rectangle_window(Rcpp::List window, Rcpp::NumericVector marked_range):
   mark_lower_(marked_range[0]),
   delta_mark_(marked_range[1] - marked_range[0]) {
     const auto x(Rcpp::as<Rcpp::NumericVector>(window["x_range"]));
@@ -36,20 +31,20 @@ public:
     delta_y_ = y[1] - y_0_;
   }
 
-  auto sample(int type = 0) const {
+  Marked_point sample(int type = 0) const override {
     // TODO: Also sample mark?
     return Marked_point(x_0_ + unif_rand() * delta_x_,  y_0_ + unif_rand() * delta_y_, type, mark_lower_ + delta_mark_ * unif_rand());
   }
 
-  double volume() const {
+  double volume() const override {
     return delta_x_ * delta_y_;
   }
 
-  double square_diameter() const {
+  double square_diameter() const override {
     return delta_x_ * delta_x_ + delta_y_ * delta_y_;
   }
 
-  double diameter() const {
+  double diameter() const override {
     return std::sqrt(square_diameter());
   }
 
@@ -62,13 +57,13 @@ private:
   double delta_mark_;
 };
 
-template <>
-class Window_wrapper<Window::disk> {
+class Disk_window: public Window {
 public:
-  Window_wrapper(Rcpp::NumericVector marked_range): x_(0), y_(0), radius_(1),
+  Disk_window(Rcpp::NumericVector marked_range): x_(0), y_(0), radius_(1),
   mark_lower_(marked_range[0]),
   delta_mark_(marked_range[1] - marked_range[0]) {}
-  explicit Window_wrapper(Rcpp::List window, Rcpp::NumericVector marked_range):
+
+  explicit Disk_window(Rcpp::List window, Rcpp::NumericVector marked_range):
   mark_lower_(marked_range[0]),
   delta_mark_(marked_range[1] - marked_range[0])  {
     const auto centre(Rcpp::as<Rcpp::NumericVector>(window["centre"]));
@@ -78,7 +73,7 @@ public:
     radius_ = static_cast<double>(window["radius"]);
   }
 
-  auto sample(int type = 0) const {
+  Marked_point sample(int type = 0) const override {
     while(true) {
       const auto x(2 * unif_rand() - 1.0);
       const auto y(2 * unif_rand() - 1.0);
@@ -88,15 +83,15 @@ public:
     }
   }
 
-  double volume() const {
+  double volume() const override {
     return M_PI * radius_ * radius_;
   }
 
-  double square_diameter() const {
+  double square_diameter() const override {
     return 4 * radius_ * radius_;
   }
 
-  double diameter() const {
+  double diameter() const override {
     return 2 * radius_;
   }
 
@@ -108,16 +103,15 @@ private:
   double delta_mark_;
 };
 
-template <>
-class Window_wrapper<Window::im> {
+class Im_window: public Window {
 public:
-  explicit Window_wrapper(Rcpp::List im, Rcpp::NumericVector marked_range):
+  explicit Im_window(Rcpp::List im, Rcpp::NumericVector marked_range):
     im_(im),
     volume_(im_.volume()),
     mark_lower_(marked_range[0]),
     delta_mark_(marked_range[1] - marked_range[0]) {}
 
-  auto sample(int type = 0) const {
+  Marked_point sample(int type = 0) const override {
     const auto x_min(im_.x_min());
     const auto y_min(im_.y_min());
     const auto delta_x(im_.delta_x());
@@ -131,15 +125,15 @@ public:
     }
   }
 
-  double volume() const {
+  double volume() const override {
     return volume_;
   }
 
-  double square_diameter() const {
+  double square_diameter() const override {
     return im_.square_diameter();
   }
 
-  double diameter() const {
+  double diameter() const override {
     return std::sqrt(square_diameter());
   }
 
@@ -150,21 +144,18 @@ private:
   double delta_mark_;
 };
 
-} // namespace detail
-
-template<typename F>
-inline auto call_on_wrapped_window(SEXP window, Rcpp::NumericVector marked_range, const F& f) {
+inline std::unique_ptr<Window> get_window_ptr_from_R_object(SEXP window, Rcpp::NumericVector marked_range) {
   if(Rf_isNull(window)) {
-    return f(detail::Window_wrapper<detail::Window::rectangle>(marked_range));
+    return std::make_unique<Rectangle_window>(marked_range);
   }
   else {
     const std::string window_class = Rcpp::as<Rcpp::RObject>(window).attr("class");
     if(window_class == "Rectangle_window") {
-      return f(detail::Window_wrapper<detail::Window::rectangle>(window, marked_range));
+      return std::make_unique<Rectangle_window>(window, marked_range);
     } else if(window_class == "Disk_window") {
-      return f(detail::Window_wrapper<detail::Window::disk>(window, marked_range));
+      return std::make_unique<Disk_window>(window, marked_range);
     } else if(window_class == "im") {
-      return f(detail::Window_wrapper<detail::Window::im>(window, marked_range));
+      return std::make_unique<Im_window>(window, marked_range);
     } else {
       Rcpp::stop("Unrecognised window type.");
     }

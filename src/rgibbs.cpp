@@ -32,8 +32,8 @@ inline SEXP rgibbs_helper(const Model& model, R_xlen_t nsim, Rcpp::CharacterVect
   return ppjsdm::get_list_or_first_element(samples, nsim, drop);
 }
 
-template<typename Model, typename Window>
-inline SEXP rgibbs_helper(const Model& model, const Window& window, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t number_types, R_xlen_t steps) {
+template<typename Model>
+inline SEXP rgibbs_helper(const Model& model, const ppjsdm::Window& window, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t number_types, R_xlen_t steps) {
   Rcpp::List samples(nsim);
 
   for(R_xlen_t i(0); i < nsim; ++i) {
@@ -67,23 +67,22 @@ SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP beta
   }
 
   types = ppjsdm::make_types(types, number_types, lambda);
-  return ppjsdm::call_on_wrapped_window(window, mark_range, [alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, number_types, max_points](const auto& w) {
-    return ppjsdm::call_on_list_or_vector(lambda, [alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, number_types, &w, max_points](const auto& l) {
-      const auto sh(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(short_range, 0.1 * w.diameter(), number_types));
-      const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0.1 * w.diameter(), number_types));
-      const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0.2 * w.diameter(), number_types));
-      if(!ppjsdm::is_symmetric_matrix(sh) || !ppjsdm::is_symmetric_matrix(me) || !ppjsdm::is_symmetric_matrix(lo)) {
-        Rcpp::stop("One of the interaction radii matrices is not symmetric.");
-      }
-      if(steps == 0) {
-        return ppjsdm::call_on_model(w, model, medium_range_model, l, sh, me, lo, saturation, max_points, [nsim, types, drop, number_types](const auto& model) {
-          return rgibbs_helper(model, nsim, types, drop, number_types);
-        }, alpha, beta, gamma, covariates);
-      } else {
-        return ppjsdm::call_on_model(model, medium_range_model, l, sh, me, lo, saturation, max_points, [&w, steps, nsim, types, drop, number_types](const auto& model) {
-          return rgibbs_helper(model, w, nsim, types, drop, number_types, steps);
-        }, alpha, beta, gamma, covariates);
-      }
-    });
+  const auto cpp_window(ppjsdm::get_window_ptr_from_R_object(window, mark_range));
+  return ppjsdm::call_on_list_or_vector(lambda, [alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, number_types, &cpp_window, max_points](const auto& l) {
+    const auto sh(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(short_range, 0.1 * cpp_window->diameter(), number_types));
+    const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0.1 * cpp_window->diameter(), number_types));
+    const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0.2 * cpp_window->diameter(), number_types));
+    if(!ppjsdm::is_symmetric_matrix(sh) || !ppjsdm::is_symmetric_matrix(me) || !ppjsdm::is_symmetric_matrix(lo)) {
+      Rcpp::stop("One of the interaction radii matrices is not symmetric.");
+    }
+    if(steps == 0) {
+      return ppjsdm::call_on_model(*cpp_window, model, medium_range_model, l, sh, me, lo, saturation, max_points, [nsim, types, drop, number_types](const auto& model) {
+        return rgibbs_helper(model, nsim, types, drop, number_types);
+      }, alpha, beta, gamma, covariates);
+    } else {
+      return ppjsdm::call_on_model(model, medium_range_model, l, sh, me, lo, saturation, max_points, [&cpp_window, steps, nsim, types, drop, number_types](const auto& model) {
+        return rgibbs_helper(model, *cpp_window, nsim, types, drop, number_types, steps);
+      }, alpha, beta, gamma, covariates);
+    }
   });
 }

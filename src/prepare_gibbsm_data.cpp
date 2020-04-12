@@ -33,8 +33,8 @@ inline void add_to_formula(std::string& formula, Rcpp::CharacterVector names) {
   }
 }
 
-template<bool Approximate, typename Configuration, typename Window, typename DispersionModel, typename MediumDispersionModel, typename Vector>
-Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configuration_list, const Window& window, const ppjsdm::Im_list_wrapper& covariates, Rcpp::List traits, const DispersionModel& dispersion_model, const MediumDispersionModel& medium_dispersion_model, const Vector& max_points_by_type) {
+template<bool Approximate, typename Configuration, typename DispersionModel, typename MediumDispersionModel, typename Vector>
+Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configuration_list, const ppjsdm::Window& window, const ppjsdm::Im_list_wrapper& covariates, Rcpp::List traits, const DispersionModel& dispersion_model, const MediumDispersionModel& medium_dispersion_model, const Vector& max_points_by_type) {
   using size_t = ppjsdm::size_t<Configuration>;
 
   // Sample the dummy points D.
@@ -378,39 +378,38 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list, SEXP window, Rcpp:
     }
   }
 
-  return ppjsdm::call_on_wrapped_window(window, mark_range, [approximate, &vector_configurations, &covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation](const auto& w) {
-    // The trick below allows us to find the number of different types in the configuration.
-    // That number is then used to default construct `short_range`.
-    std::vector<size_t> max_points_by_type(ppjsdm::get_number_points(vector_configurations[0]));
-    using size_t = typename decltype(vector_configurations)::size_type;
-    for(size_t i(0); i < vector_configurations.size(); ++i) {
-      const auto new_points_by_type(ppjsdm::get_number_points(vector_configurations[i]));
-      for(size_t j(0); j < max_points_by_type.size(); ++j) {
-        if(max_points_by_type[j] < new_points_by_type[j]) {
-          max_points_by_type[j] = new_points_by_type[j];
-        }
+  const auto cpp_window(ppjsdm::get_window_ptr_from_R_object(window, mark_range));
+  // The trick below allows us to find the number of different types in the configuration.
+  // That number is then used to default construct `short_range`.
+  std::vector<size_t> max_points_by_type(ppjsdm::get_number_points(vector_configurations[0]));
+  using size_t = typename decltype(vector_configurations)::size_type;
+  for(size_t i(0); i < vector_configurations.size(); ++i) {
+    const auto new_points_by_type(ppjsdm::get_number_points(vector_configurations[i]));
+    for(size_t j(0); j < max_points_by_type.size(); ++j) {
+      if(max_points_by_type[j] < new_points_by_type[j]) {
+        max_points_by_type[j] = new_points_by_type[j];
       }
     }
-    // TODO: Allow for cases in which all species are not present in all configurations, i.e. number_types = max_i(max_points_by_type[i].size())
-    const auto number_types(max_points_by_type.size());
+  }
+  // TODO: Allow for cases in which all species are not present in all configurations, i.e. number_types = max_i(max_points_by_type[i].size())
+  const auto number_types(max_points_by_type.size());
 
-    const auto sh(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(short_range, 0.1 * w.diameter(), number_types));
-    if(!ppjsdm::is_symmetric_matrix(sh)) {
-      Rcpp::stop("Short range interaction radius matrix is not symmetric.");
+  const auto sh(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(short_range, 0.1 * cpp_window->diameter(), number_types));
+  if(!ppjsdm::is_symmetric_matrix(sh)) {
+    Rcpp::stop("Short range interaction radius matrix is not symmetric.");
+  }
+  return ppjsdm::call_on_dispersion_model(model, sh, saturation, [approximate, number_types, medium_range_model, medium_range, long_range, saturation, &vector_configurations, &cpp_window, &covariates, traits, &max_points_by_type](const auto& short_papangelou) {
+    const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0.1 * cpp_window->diameter(), number_types));
+    const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0.2 * cpp_window->diameter(), number_types));
+    if(!ppjsdm::is_symmetric_matrix(me) || !ppjsdm::is_symmetric_matrix(lo)) {
+      Rcpp::stop("Medium or long range interaction radius matrix is not symmetric.");
     }
-    return ppjsdm::call_on_dispersion_model(model, sh, saturation, [approximate, number_types, medium_range_model, medium_range, long_range, saturation, &vector_configurations, &w, &covariates, traits, &max_points_by_type](const auto& short_papangelou) {
-      const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0.1 * w.diameter(), number_types));
-      const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0.2 * w.diameter(), number_types));
-      if(!ppjsdm::is_symmetric_matrix(me) || !ppjsdm::is_symmetric_matrix(lo)) {
-        Rcpp::stop("Medium or long range interaction radius matrix is not symmetric.");
+    return ppjsdm::call_on_medium_range_dispersion_model(medium_range_model, me, lo, saturation, [approximate, &short_papangelou, &vector_configurations, &cpp_window, &covariates, traits, &max_points_by_type](const auto& medium_papangelou) {
+      if(approximate) {
+        return prepare_gibbsm_data_helper<true>(vector_configurations, *cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, short_papangelou, medium_papangelou, max_points_by_type);
+      } else {
+        return prepare_gibbsm_data_helper<false>(vector_configurations, *cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, short_papangelou, medium_papangelou, max_points_by_type);
       }
-      return ppjsdm::call_on_medium_range_dispersion_model(medium_range_model, me, lo, saturation, [approximate, &short_papangelou, &vector_configurations, &w, &covariates, traits, &max_points_by_type](const auto& medium_papangelou) {
-        if(approximate) {
-          return prepare_gibbsm_data_helper<true>(vector_configurations, w, ppjsdm::Im_list_wrapper(covariates), traits, short_papangelou, medium_papangelou, max_points_by_type);
-        } else {
-          return prepare_gibbsm_data_helper<false>(vector_configurations, w, ppjsdm::Im_list_wrapper(covariates), traits, short_papangelou, medium_papangelou, max_points_by_type);
-        }
-      });
     });
   });
 }

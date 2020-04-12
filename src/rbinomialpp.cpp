@@ -14,8 +14,8 @@
 #include "utility/sum.hpp"
 #include "utility/window_utilities.hpp"
 
-template<typename Window, typename N>
-inline SEXP rbinomialpp_helper(const Window& window, const N& n, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t number_types) {
+template<typename N>
+inline SEXP rbinomialpp_helper(const ppjsdm::Window& window, const N& n, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t number_types) {
   const auto total_number(ppjsdm::sum<R_xlen_t>(n, number_types));
 
   Rcpp::List samples(nsim);
@@ -44,9 +44,8 @@ SEXP rbinomialpp(SEXP window = R_NilValue, SEXP n = R_NilValue, R_xlen_t nsim = 
   const auto number_types(ppjsdm::get_number_types_and_check_conformance(n, types));
   n = ppjsdm::construct_if_missing<Rcpp::IntegerVector>(n, 1, number_types);
   types = ppjsdm::make_types(types, number_types, n);
-  return ppjsdm::call_on_wrapped_window(window, mark_range, [&n, nsim, &types, drop, number_types](const auto& w) {
-    return ppjsdm::call_on_list_or_vector(n, [&w, nsim, &types, drop, number_types](const auto& m) {
-      return rbinomialpp_helper(w, m, nsim, types, drop, number_types);
-    });
+  const auto cpp_window(ppjsdm::get_window_ptr_from_R_object(window, mark_range));
+  return ppjsdm::call_on_list_or_vector(n, [&cpp_window, nsim, &types, drop, number_types](const auto& m) {
+    return rbinomialpp_helper(*cpp_window, m, nsim, types, drop, number_types);
   });
 }
