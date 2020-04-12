@@ -40,10 +40,6 @@ protected:
   double apply(const Point& point, const Other& other) const {
     return apply(normalized_square_distance(point, other), get_type(point), get_type(other));
   }
-
-  constexpr static double get_maximum(const Window&) {
-    return 1.0;
-  }
 };
 
 struct Bump_implementation {

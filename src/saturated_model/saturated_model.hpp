@@ -907,8 +907,8 @@ public:
   }
 
   // TODO: This doesn't return the correct result.
-  double get_maximum(const Window& window) const {
-    return Varphi::get_maximum(window) * static_cast<double>(saturation_);
+  double get_maximum() const {
+    return static_cast<double>(saturation_);
   }
 private:
   unsigned long long int saturation_;

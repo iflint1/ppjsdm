@@ -192,8 +192,8 @@ public:
     Model(lambda, std::forward<D>(dispersion), std::forward<E>(medium_range_dispersion), alpha, beta, gamma, covariates),
     window_(window),
     beta_dot_covariates_maximum_(detail::compute_beta_dot_covariates_maximum(beta, Model::covariates_)),
-    dot_dispersion_maximum_(detail::compute_alpha_dot_dispersion_maximum(alpha, dispersion.get_maximum(window))) {
-    const auto gamma_dot_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(gamma, medium_range_dispersion.get_maximum(window)));
+    dot_dispersion_maximum_(detail::compute_alpha_dot_dispersion_maximum(alpha, dispersion.get_maximum())) {
+    const auto gamma_dot_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(gamma, medium_range_dispersion.get_maximum()));
     std::transform(dot_dispersion_maximum_.begin(), dot_dispersion_maximum_.end(), gamma_dot_dispersion_maximum.begin(),
                    dot_dispersion_maximum_.begin(), std::plus<double>());
   }
@@ -309,8 +309,8 @@ public:
       }
     }
 
-    return sum_alpha * Model::dispersion_.get_maximum(window_)
-      + sum_gamma * Model::medium_range_dispersion_.get_maximum(window_);
+    return sum_alpha * Model::dispersion_.get_maximum()
+      + sum_gamma * Model::medium_range_dispersion_.get_maximum();
   }
 
   const auto& get_window() const {
@@ -387,8 +387,8 @@ public:
     Model(lambda, std::forward<D>(dispersion), std::forward<E>(medium_range_dispersion), alpha, beta, gamma, covariates, max_points),
     window_(window),
     beta_dot_covariates_maximum_(detail::compute_beta_dot_covariates_maximum(beta, Model::covariates_)),
-    dot_dispersion_maximum_(detail::compute_alpha_dot_dispersion_maximum(alpha, dispersion.get_maximum(window))) {
-    const auto gamma_dot_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(gamma, medium_range_dispersion.get_maximum(window)));
+    dot_dispersion_maximum_(detail::compute_alpha_dot_dispersion_maximum(alpha, dispersion.get_maximum())) {
+    const auto gamma_dot_dispersion_maximum(detail::compute_alpha_dot_dispersion_maximum(gamma, medium_range_dispersion.get_maximum()));
     std::transform(dot_dispersion_maximum_.begin(), dot_dispersion_maximum_.end(), gamma_dot_dispersion_maximum.begin(),
                    dot_dispersion_maximum_.begin(), std::plus<double>());
   }
@@ -512,8 +512,8 @@ public:
     //   }
     // }
     //
-    // return sum_alpha * Model::dispersion_.get_maximum(window_)
-    //   + sum_gamma * Model::medium_range_dispersion_.get_maximum(window_);
+    // return sum_alpha * Model::dispersion_.get_maximum()
+    //   + sum_gamma * Model::medium_range_dispersion_.get_maximum();
   }
 
   const auto& get_window() const {
@@ -548,7 +548,7 @@ inline auto call_on_model(Rcpp::CharacterVector model,
   });
 }
 
-template<typename Window, typename F, typename Lambda, typename... Args>
+template<typename F, typename Lambda, typename... Args>
 inline auto call_on_model(const Window& window,
                           Rcpp::CharacterVector model,
                           Rcpp::CharacterVector medium_range_model,

@@ -51,10 +51,6 @@ protected:
     return apply(normalized_square_distance(point, other), get_type(point), get_type(other));
   }
 
-  constexpr static double get_maximum(const Window&) {
-    return 1.0;
-  }
-
   template<typename V = Varphi, std::enable_if_t<has_square_lower_endpoint_v<V>>* = nullptr>
   double get_square_lower_endpoint(size_t i, size_t j) const {
     return get_square_lower_endpoint(medium_range(i, j));
