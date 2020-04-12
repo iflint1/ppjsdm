@@ -15,7 +15,7 @@ medium_range <- cbind(c(0.15, 0.15), c(0.15, 0.15))
 long_range <- cbind(c(0.2, 0.2), c(0.2, 0.2))
 alpha <- cbind(c(-1, 0.2), c(0.2, -0.5))
 gamma <- cbind(c(0.8, -0.1), c(-0.1, 0.4))
-beta <- cbind(c(-0.2, 0.3))
+beta <- cbind(c(-0.2, 0.1))
 saturation <- 2
 steps <- 100000
 model <- "square_exponential"
