@@ -14,7 +14,7 @@
 #' @param use_glmnet Use `glmnet` instead of `glm`?
 #' @param use_aic Use AIC instead of BIC for model fitting?
 #' @importFrom glmnet glmnet cv.glmnet
-#' @importFrom stats as.formula binomial coefficients deviance glm.fit lm
+#' @importFrom stats AIC BIC binomial coefficients deviance glm.fit lm
 #' @importFrom spatstat as.im as.owin
 #' @importFrom GA ga
 #' @export
