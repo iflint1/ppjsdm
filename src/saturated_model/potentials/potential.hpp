@@ -14,11 +14,6 @@ public:
   virtual double apply(double normalized_square_distance, int i, int j) const = 0;
 };
 
-template<typename Point, typename Other>
-inline auto apply_potential(const Potential& potential, const Point& point, const Other& other) {
-  return potential.apply(normalized_square_distance(point, other), get_type(point), get_type(other));
-}
-
 } // namespace ppjsdm
 
 #endif // INCLUDE_PPJSDM_SHORT_RANGE_POTENTIALS

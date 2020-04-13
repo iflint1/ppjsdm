@@ -634,18 +634,37 @@ private:
   unsigned long long int saturation_;
 };*/
 
+// TODO: Don't need an abstract base class for potentials, everything is here.
+class Saturated_model {
+public:
+  virtual bool is_nonincreasing() const = 0;
+  virtual bool is_nonincreasing_after_lower_endpoint() const = 0;
+  virtual bool is_two_valued() const = 0;
+  virtual double apply(double normalized_square_distance, int i, int j) const = 0;
+  virtual double get_maximum() const = 0;
+  virtual unsigned long long int get_saturation() const = 0;
+  virtual double get_square_lower_endpoint(int i, int j) const = 0;
+};
+
+template<typename Point, typename Other>
+inline auto apply_potential(const Saturated_model& potential, const Point& point, const Other& other) {
+  return potential.apply(normalized_square_distance(point, other), get_type(point), get_type(other));
+}
+
 namespace detail {
 
-template<bool Approximate, typename Varphi, typename Select = void>
-class compute_delta_dispersion;
+enum class dispersionMethod {two_values, nonincreasing, nonincreasing_after_lower_endpoint, generic};
 
-template<bool Approximate, typename Varphi>
-class compute_delta_dispersion<Approximate, Varphi, std::enable_if_t<has_nonzero_value_v<Varphi>>> {
+template<bool Approximate, dispersionMethod Method>
+class compute_dispersion;
+
+template<bool Approximate>
+class compute_dispersion<Approximate, dispersionMethod::two_values> {
 public:
-  compute_delta_dispersion() {}
+  compute_dispersion() {}
 
   template<typename Point, typename... Configurations>
-  auto operator()(const Varphi& varphi,
+  auto operator()(const Saturated_model& varphi,
                 const Point& point,
                 R_xlen_t number_types,
                 Configurations&&... configurations) const {
@@ -675,24 +694,22 @@ public:
     }
     std::vector<double> dispersion(number_types);
     using size_t = typename decltype(dispersion)::size_type;
-    constexpr double nonzero_value(Varphi::nonzero_value);
     for(size_t i(0); i < static_cast<size_t>(number_types); ++i) {
-      dispersion[i] = nonzero_value * static_cast<double>(count_vector[i]);
+      dispersion[i] = static_cast<double>(count_vector[i]);
     }
     return dispersion;
   }
 };
 
-template<bool Approximate, typename Varphi>
-class compute_delta_dispersion<Approximate, Varphi, std::enable_if_t<!has_nonzero_value_v<Varphi>
-&& Varphi::is_nonincreasing>> {
+template<bool Approximate>
+class compute_dispersion<Approximate, dispersionMethod::nonincreasing> {
 private:
   using CountType = std::vector<std::vector<double>>;
 public:
-  compute_delta_dispersion() {}
+  compute_dispersion() {}
 
   template<typename Point, typename... Configurations>
-  auto operator()(const Varphi& varphi,
+  auto operator()(const Saturated_model& varphi,
                 const Point& point,
                 R_xlen_t number_types,
                 Configurations&&... configurations) const {
@@ -742,7 +759,7 @@ public:
   }
 private:
   template<typename Point, typename Other>
-  static void update_count(const Varphi& varphi, typename CountType::value_type& count, const Point& point, const Other& other) {
+  static void update_count(const Saturated_model& varphi, typename CountType::value_type& count, const Point& point, const Other& other) {
     const auto sq(normalized_square_distance(point, other));
     if(count.size() < varphi.get_saturation()) {
       count.emplace_back(sq);
@@ -755,16 +772,15 @@ private:
   }
 };
 
-template<bool Approximate, typename Varphi>
-class compute_delta_dispersion<Approximate, Varphi, std::enable_if_t<!has_nonzero_value_v<Varphi>
-&& !Varphi::is_nonincreasing && is_nonincreasing_after_lower_endpoint_v<Varphi>>> {
+template<bool Approximate>
+class compute_dispersion<Approximate, dispersionMethod::nonincreasing_after_lower_endpoint> {
 private:
   using CountType = std::vector<std::vector<double>>;
 public:
-  compute_delta_dispersion() {}
+  compute_dispersion() {}
 
   template<typename Point, typename... Configurations>
-  auto operator()(const Varphi& varphi,
+  auto operator()(const Saturated_model& varphi,
                 const Point& point,
                 R_xlen_t number_types,
                 Configurations&&... configurations) const {
@@ -814,9 +830,9 @@ public:
   }
 private:
   template<typename Point, typename Other>
-  static void update_count(const Varphi& varphi, typename CountType::value_type& count, const Point& point, const Other& other) {
+  static void update_count(const Saturated_model& varphi, typename CountType::value_type& count, const Point& point, const Other& other) {
     const auto sq(normalized_square_distance(point, other));
-    if(sq >= Varphi::get_square_lower_endpoint(get_type(point), get_type(other))) {
+    if(sq >= varphi.get_square_lower_endpoint(get_type(point), get_type(other))) {
       if(count.size() < varphi.get_saturation()) {
         count.emplace_back(sq);
         std::push_heap(count.begin(), count.end());
@@ -829,16 +845,15 @@ private:
   }
 };
 
-template<bool Approximate, typename Varphi>
-class compute_delta_dispersion<Approximate, Varphi, std::enable_if_t<!has_nonzero_value_v<Varphi>
-&& !Varphi::is_nonincreasing && !is_nonincreasing_after_lower_endpoint_v<Varphi>>> {
+template<bool Approximate>
+class compute_dispersion<Approximate, dispersionMethod::generic> {
 private:
   using CountType = std::vector<std::vector<double>>;
 public:
-  compute_delta_dispersion() {}
+  compute_dispersion() {}
 
   template<typename Point, typename... Configurations>
-  auto operator()(const Varphi& varphi,
+  auto operator()(const Saturated_model& varphi,
                 const Point& point,
                 R_xlen_t number_types,
                 Configurations&&... configurations) const {
@@ -872,7 +887,7 @@ public:
   }
 private:
   template<typename Point, typename Other>
-  static void update_count(const Varphi& varphi, typename CountType::value_type& count, const Point& point, const Other& other) {
+  static void update_count(const Saturated_model& varphi, typename CountType::value_type& count, const Point& point, const Other& other) {
     const auto disp(apply_potential(varphi, other, point));
     if(count.size() < varphi.get_saturation()) {
       count.emplace_back(disp);
@@ -887,33 +902,35 @@ private:
 
 } // namespace detail
 
-// TODO: Don't need an abstract base class for potentials, everything is here.
-class Saturated_model {
-public:
-  static const bool is_nonincreasing;
-  static const bool is_nonincreasing_after_lower_endpoint;
-  static const bool is_two_valued;
-
-  virtual double apply(double normalized_square_distance, int i, int j) const = 0;
-  virtual double get_maximum() const = 0;
-  virtual unsigned long long int get_saturation() const = 0;
-};
-
-template<bool Approximate = false, typename Model, typename Point, typename... Configurations>
-inline auto compute_dispersion(const Model& model,
+template<bool Approximate = false, typename Point, typename... Configurations>
+inline auto compute_dispersion(const Saturated_model& model,
                                const Point& point,
                                R_xlen_t number_types,
                                Configurations&&... configurations) {
-  return detail::compute_delta_dispersion<Approximate, Model>{}(model, point, number_types, std::forward<Configurations>(configurations)...);
+  if(model.is_two_valued()) {
+    return detail::compute_dispersion<Approximate, detail::dispersionMethod::two_values>{}(model, point, number_types, std::forward<Configurations>(configurations)...);
+  } else if(model.is_nonincreasing()) {
+    return detail::compute_dispersion<Approximate, detail::dispersionMethod::nonincreasing>{}(model, point, number_types, std::forward<Configurations>(configurations)...);
+  } else if(model.is_nonincreasing_after_lower_endpoint()) {
+    return detail::compute_dispersion<Approximate, detail::dispersionMethod::nonincreasing_after_lower_endpoint>{}(model, point, number_types, std::forward<Configurations>(configurations)...);
+  } else {
+    return detail::compute_dispersion<Approximate, detail::dispersionMethod::generic>{}(model, point, number_types, std::forward<Configurations>(configurations)...);
+  }
 }
 
 // Note: Use inheritance to benefit from EBO.
 template<typename Varphi>
 class New_saturated_model: public Saturated_model, public Varphi {
 public:
-  static const bool is_nonincreasing = Varphi::is_nonincreasing;
-  static const bool is_nonincreasing_after_lower_endpoint = Varphi::is_nonincreasing_after_lower_endpoint;
-  static const bool is_two_valued = Varphi::is_two_valued;
+  bool is_nonincreasing() const {
+    return Varphi::is_nonincreasing;
+  }
+  bool is_nonincreasing_after_lower_endpoint() const {
+    return Varphi::is_nonincreasing_after_lower_endpoint;
+  }
+  bool is_two_valued() const {
+    return Varphi::is_two_valued;
+  }
 
   template<typename... Args>
   New_saturated_model(unsigned long long int saturation, Args&&... args):
@@ -931,6 +948,10 @@ public:
   unsigned long long int get_saturation() const override {
     return saturation_;
   };
+
+  double get_square_lower_endpoint(int i, int j) const override {
+    return Varphi::get_square_lower_endpoint(i, j);
+  }
 private:
   unsigned long long int saturation_;
 };

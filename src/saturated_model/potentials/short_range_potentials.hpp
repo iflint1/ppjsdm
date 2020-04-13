@@ -40,6 +40,10 @@ public:
   double apply(double normalized_square_distance, int i, int j) const override {
     return Varphi::apply(normalized_square_distance, matrix_(i, j));
   }
+
+  double get_square_lower_endpoint(int, int) const {
+    return 0.;
+  }
 };
 
 struct Bump_implementation {

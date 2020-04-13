@@ -52,9 +52,8 @@ public:
     return Varphi::apply(normalized_square_distance, medium_(i, j), long_(i, j));
   }
 
-  template<typename V = Varphi, std::enable_if_t<has_square_lower_endpoint_v<V>>* = nullptr>
-  double get_square_lower_endpoint(size_t i, size_t j) const {
-    return get_square_lower_endpoint(medium_range(i, j));
+  double get_square_lower_endpoint(int i, int j) const {
+    return Varphi::get_square_lower_endpoint(medium_(i, j));
   }
 };
 
@@ -99,6 +98,10 @@ struct Half_exponential_implementation {
     return -std::log(2) / (upper - lower);
   }
 
+  static double get_square_lower_endpoint(double) {
+    return 0.;
+  }
+
   static double apply(double square_distance, double lower, double upper) {
     if(square_distance >= lower * lower) {
       const auto distance(std::sqrt(square_distance) - lower);
@@ -123,6 +126,10 @@ struct Two_sided_square_exponential_implementation {
     return -4 * std::log(2) / (delta * delta);
   }
 
+  static double get_square_lower_endpoint(double) {
+    return 0.;
+  }
+
   static double apply(double square_distance, double lower, double upper) {
     const auto distance(std::sqrt(square_distance) - lower);
     return std::exp(upper * distance * distance);
@@ -140,6 +147,10 @@ struct Two_sided_Strauss_implementation {
 
   static double set_upper(double, double upper) {
     return upper * upper;
+  }
+
+  static double get_square_lower_endpoint(double) {
+    return 0.;
   }
 
   static double apply(double square_distance, double lower, double upper) {
@@ -162,6 +173,10 @@ struct Two_sided_linear_implementation {
 
   static double set_upper(double, double upper) {
     return upper;
+  }
+
+  static double get_square_lower_endpoint(double) {
+    return 0.;
   }
 
   static double apply(double square_distance, double lower, double upper) {
