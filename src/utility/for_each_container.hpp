@@ -6,6 +6,9 @@
 namespace ppjsdm {
 
 template<typename F>
+inline void for_each_container(F&&);
+
+template<typename F>
 inline void for_each_container(F&&) {
   return;
 }
