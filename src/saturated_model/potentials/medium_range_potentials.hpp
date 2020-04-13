@@ -24,10 +24,14 @@ private:
   Lightweight_square_matrix<double> medium_;
   Lightweight_square_matrix<double> long_;
   using size_t = typename decltype(medium_)::size_type;
-protected:
+public:
+  static const bool is_nonincreasing = Varphi::is_nonincreasing;
+  static const bool is_nonincreasing_after_lower_endpoint = Varphi::is_nonincreasing_after_lower_endpoint;
+  static const bool is_two_valued = Varphi::is_two_valued;
+
   Medium_range_potential(Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range):
   medium_(medium_range.nrow()),
-  long_(medium_range.nrow()){
+  long_(medium_range.nrow()) {
     const size_t medium_dim(medium_range.nrow());
     if(static_cast<size_t>(medium_range.ncol()) != medium_dim
          || static_cast<size_t>(long_range.ncol()) != medium_dim
@@ -57,6 +61,7 @@ protected:
 struct Half_square_exponential_implementation {
   static constexpr bool is_nonincreasing = false;
   static constexpr bool is_nonincreasing_after_lower_endpoint = true;
+  static constexpr bool is_two_valued = false;
 
   static double set_lower(double lower, double) {
     return lower;
@@ -84,6 +89,7 @@ struct Half_square_exponential_implementation {
 struct Half_exponential_implementation {
   static constexpr bool is_nonincreasing = false;
   static constexpr bool is_nonincreasing_after_lower_endpoint = true;
+  static constexpr bool is_two_valued = false;
 
   static double set_lower(double lower, double) {
     return lower;
@@ -105,6 +111,8 @@ struct Half_exponential_implementation {
 
 struct Two_sided_square_exponential_implementation {
   static constexpr bool is_nonincreasing = false;
+  static constexpr bool is_nonincreasing_after_lower_endpoint = false;
+  static constexpr bool is_two_valued = false;
 
   static double set_lower(double lower, double upper) {
     return (lower + upper ) / 2.;
@@ -122,7 +130,9 @@ struct Two_sided_square_exponential_implementation {
 };
 
 struct Two_sided_Strauss_implementation {
-  static constexpr double nonzero_value = 1.0;
+  static constexpr bool is_nonincreasing = false;
+  static constexpr bool is_nonincreasing_after_lower_endpoint = false;
+  static constexpr bool is_two_valued = true;
 
   static double set_lower(double lower, double) {
     return lower * lower;
@@ -143,6 +153,8 @@ struct Two_sided_Strauss_implementation {
 
 struct Two_sided_linear_implementation {
   static constexpr bool is_nonincreasing = false;
+  static constexpr bool is_nonincreasing_after_lower_endpoint = false;
+  static constexpr bool is_two_valued = false;
 
   static double set_lower(double lower, double) {
     return lower;

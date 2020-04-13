@@ -652,14 +652,14 @@ public:
     using CountType = std::vector<unsigned long long int>;
     CountType count_vector(number_types);
 
-    for_each_container([&count_vector, &point, &varphi, saturation = varphi.saturation_, &configurations...](const auto& current_point) {
+    for_each_container([&count_vector, &point, &varphi, saturation = varphi.get_saturation(), &configurations...](const auto& current_point) {
       if(count_vector[get_type(current_point)] < saturation && apply_potential(varphi, current_point, point) > 0) {
         ++count_vector[get_type(current_point)];
       }
     }, std::forward<Configurations>(configurations)...);
     // TODO: Ideally, use if constexpr
     if(!Approximate) {
-      for_each_container([&count_vector, &point, &varphi, saturation = varphi.saturation_, configurations...](const auto& current_point) {
+      for_each_container([&count_vector, &point, &varphi, saturation = varphi.get_saturation(), configurations...](const auto& current_point) {
         unsigned long long int count(0);
         for_each_container([&point, &count, &current_point, &varphi, saturation](const auto& other_point) {
           if(!is_equal(other_point, current_point) && get_type(other_point) == get_type(point) && count < saturation && apply_potential(varphi, other_point, current_point) > 0) {
@@ -744,7 +744,7 @@ private:
   template<typename Point, typename Other>
   static void update_count(const Varphi& varphi, typename CountType::value_type& count, const Point& point, const Other& other) {
     const auto sq(normalized_square_distance(point, other));
-    if(count.size() < varphi.saturation_) {
+    if(count.size() < varphi.get_saturation()) {
       count.emplace_back(sq);
       std::push_heap(count.begin(), count.end());
     } else if(sq < count[0]) {
@@ -817,7 +817,7 @@ private:
   static void update_count(const Varphi& varphi, typename CountType::value_type& count, const Point& point, const Other& other) {
     const auto sq(normalized_square_distance(point, other));
     if(sq >= Varphi::get_square_lower_endpoint(get_type(point), get_type(other))) {
-      if(count.size() < varphi.saturation_) {
+      if(count.size() < varphi.get_saturation()) {
         count.emplace_back(sq);
         std::push_heap(count.begin(), count.end());
       } else if(sq < count[0]) {
@@ -874,7 +874,7 @@ private:
   template<typename Point, typename Other>
   static void update_count(const Varphi& varphi, typename CountType::value_type& count, const Point& point, const Other& other) {
     const auto disp(apply_potential(varphi, other, point));
-    if(count.size() < varphi.saturation_) {
+    if(count.size() < varphi.get_saturation()) {
       count.emplace_back(disp);
       std::push_heap(count.begin(), count.end(), std::greater<double>{});
     } else if(disp > count[0]) {
@@ -887,29 +887,50 @@ private:
 
 } // namespace detail
 
+// TODO: Don't need an abstract base class for potentials, everything is here.
+class Saturated_model {
+public:
+  static const bool is_nonincreasing;
+  static const bool is_nonincreasing_after_lower_endpoint;
+  static const bool is_two_valued;
+
+  virtual double apply(double normalized_square_distance, int i, int j) const = 0;
+  virtual double get_maximum() const = 0;
+  virtual unsigned long long int get_saturation() const = 0;
+};
+
+template<bool Approximate = false, typename Model, typename Point, typename... Configurations>
+inline auto compute_dispersion(const Model& model,
+                               const Point& point,
+                               R_xlen_t number_types,
+                               Configurations&&... configurations) {
+  return detail::compute_delta_dispersion<Approximate, Model>{}(model, point, number_types, std::forward<Configurations>(configurations)...);
+}
+
 // Note: Use inheritance to benefit from EBO.
 template<typename Varphi>
-class New_saturated_model: public Varphi {
-private:
-  template<typename, typename>
-  friend class detail::compute_delta_dispersion;
+class New_saturated_model: public Saturated_model, public Varphi {
 public:
+  static const bool is_nonincreasing = Varphi::is_nonincreasing;
+  static const bool is_nonincreasing_after_lower_endpoint = Varphi::is_nonincreasing_after_lower_endpoint;
+  static const bool is_two_valued = Varphi::is_two_valued;
+
   template<typename... Args>
   New_saturated_model(unsigned long long int saturation, Args&&... args):
     Varphi(std::forward<Args>(args)...),
     saturation_(saturation) {}
 
-  template<bool Approximate = false, typename Point, typename... Configurations>
-  auto compute(const Point& point,
-               R_xlen_t number_types,
-               Configurations&&... configurations) const {
-    return detail::compute_delta_dispersion<Approximate, New_saturated_model<Varphi>>{}(*this, point, number_types, std::forward<Configurations>(configurations)...);
+  double apply(double normalized_square_distance, int i, int j) const override {
+    return Varphi::apply(normalized_square_distance, i, j);
   }
-
   // TODO: This doesn't return the correct result.
-  double get_maximum() const {
+  double get_maximum() const override {
     return static_cast<double>(saturation_);
   }
+
+  unsigned long long int get_saturation() const override {
+    return saturation_;
+  };
 private:
   unsigned long long int saturation_;
 };

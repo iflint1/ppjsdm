@@ -94,8 +94,8 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     // TODO: Avoidable?
     Configuration configuration_copy(configuration_list[configuration_index]);
     ppjsdm::remove_point_by_iterator(configuration_copy, std::next(configuration_copy.begin(), point_index));
-    const auto d(dispersion_model.template compute<Approximate>(configuration_list[configuration_index][point_index], number_types, configuration_copy));
-    const auto e(medium_dispersion_model.template compute<Approximate>(configuration_list[configuration_index][point_index], number_types, configuration_copy));
+    const auto d(ppjsdm::compute_dispersion<Approximate>(dispersion_model, configuration_list[configuration_index][point_index], number_types, configuration_copy));
+    const auto e(ppjsdm::compute_dispersion<Approximate>(medium_dispersion_model, configuration_list[configuration_index][point_index], number_types, configuration_copy));
     std::vector<double> cov(covariates_length);
     for(size_t k(0); k < covariates_length; ++k) {
       const auto covariate(covariates[k](configuration_list[configuration_index][point_index]));
@@ -123,8 +123,8 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
       continue;
     }
     for(size_t j(0); j < configuration_list.size(); ++j) {
-      const auto d(dispersion_model.template compute<Approximate>(D[i], number_types, configuration_list[j]));
-      const auto e(medium_dispersion_model.template compute<Approximate>(D[i], number_types, configuration_list[j]));
+      const auto d(ppjsdm::compute_dispersion<Approximate>(dispersion_model, D[i], number_types, configuration_list[j]));
+      const auto e(ppjsdm::compute_dispersion<Approximate>(medium_dispersion_model, D[i], number_types, configuration_list[j]));
       results_private.emplace_back(false, ppjsdm::get_type(D[i]), std::move(d), std::move(e), cov);
     }
   }

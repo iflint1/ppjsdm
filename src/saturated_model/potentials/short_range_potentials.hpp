@@ -21,7 +21,10 @@ class Short_range_potential: public Potential, public Varphi {
 private:
   Lightweight_square_matrix<double> matrix_;
   using size_t = typename decltype(matrix_)::size_type;
-protected:
+public:
+  static const bool is_nonincreasing = Varphi::is_nonincreasing;
+  static const bool is_nonincreasing_after_lower_endpoint = Varphi::is_nonincreasing;
+  static const bool is_two_valued = Varphi::is_two_valued;
   explicit Short_range_potential(Rcpp::NumericMatrix radius): matrix_(radius.nrow()) {
     const size_t dim(radius.nrow());
     if(static_cast<size_t>(radius.ncol()) != dim) {
@@ -41,6 +44,7 @@ protected:
 
 struct Bump_implementation {
   static constexpr bool is_nonincreasing = true;
+  static constexpr bool is_two_valued = false;
 
   static double set(double radius) {
     return -radius * std::log(2);
@@ -53,6 +57,7 @@ struct Bump_implementation {
 
 struct Square_bump_implementation {
   static constexpr bool is_nonincreasing = true;
+  static constexpr bool is_two_valued = false;
 
   static double set(double radius) {
     return -radius * radius * std::log(2);
@@ -65,6 +70,7 @@ struct Square_bump_implementation {
 
 struct Square_exponential_implementation {
   static constexpr bool is_nonincreasing = true;
+  static constexpr bool is_two_valued = false;
 
   static double set(double radius) {
     return -std::log(2) / (radius * radius);
@@ -77,6 +83,7 @@ struct Square_exponential_implementation {
 
 struct Exponential_implementation {
   static constexpr bool is_nonincreasing = true;
+  static constexpr bool is_two_valued = false;
 
   static double set(double radius) {
     return -std::log(2) / radius;
@@ -89,6 +96,7 @@ struct Exponential_implementation {
 
 struct Linear_implementation {
   static constexpr bool is_nonincreasing = true;
+  static constexpr bool is_two_valued = false;
 
   static double set(double radius) {
     return -1. / radius;
@@ -100,7 +108,8 @@ struct Linear_implementation {
 };
 
 struct Strauss_implementation {
-  static constexpr double nonzero_value = 1.0;
+  static constexpr bool is_nonincreasing = false;
+  static constexpr bool is_two_valued = true;
 
   static double set(double radius) {
     return radius * radius;
