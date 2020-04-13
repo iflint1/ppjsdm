@@ -873,7 +873,7 @@ public:
     CountType count_vector(number_types);
 
     for_each_container([&count_vector, &point, &varphi](const auto& current_point) {
-      update_count(varphi, count_vector[get_type(current_point)], point, current_point);
+      compute_dispersion::update_count(varphi, count_vector[get_type(current_point)], point, current_point);
     }, std::forward<Configurations>(configurations)...);
 
     // TODO: Ideally, use if constexpr
