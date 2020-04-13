@@ -359,8 +359,8 @@ public:
   }
 
 protected:
-  Dispersion dispersion_;
-  MediumRangeDispersion medium_range_dispersion_;
+  const Dispersion& dispersion_;
+  const MediumRangeDispersion& medium_range_dispersion_;
   Lambda lambda_;
   Rcpp::NumericMatrix alpha_;
   Rcpp::NumericMatrix beta_;
@@ -537,15 +537,12 @@ inline auto call_on_model(Rcpp::CharacterVector model,
                           unsigned long long int max_points,
                           const F& f,
                           Args... args) {
-  return call_on_dispersion_model(model, short_range, saturation, [medium_range_model, medium_range, long_range, saturation, &lambda, &f, args..., max_points](auto&& varphi) {
-    return call_on_medium_range_dispersion_model(medium_range_model, medium_range, long_range, saturation, [&varphi, &lambda, &f, args..., max_points](auto&& psi) {
-
-    using Model_type = Truncated_exponential_family_model<std::remove_cv_t<std::remove_reference_t<decltype(varphi)>>,
-                                                std::remove_cv_t<std::remove_reference_t<decltype(psi)>>,
-                                                Lambda>;
-    return f(Model_type(lambda, std::forward<decltype(varphi)>(varphi), std::forward<decltype(psi)>(psi), args..., max_points));
-    });
-  });
+  const auto dispersion(get_dispersion_from_string(model, short_range, saturation));
+  const auto medium_range_dispersion(get_medium_range_dispersion_from_string(medium_range_model, medium_range, long_range, saturation));
+  using Model_type = Truncated_exponential_family_model<std::remove_cv_t<std::remove_reference_t<decltype(*dispersion)>>,
+                                                        std::remove_cv_t<std::remove_reference_t<decltype(*medium_range_dispersion)>>,
+                                                        Lambda>;
+  return f(Model_type(lambda, *dispersion, *medium_range_dispersion, args..., max_points));
 }
 
 template<typename F, typename Lambda, typename... Args>
@@ -560,16 +557,14 @@ inline auto call_on_model(const Window& window,
                           unsigned long long int max_points,
                           const F& f,
                           Args... args) {
-  return call_on_dispersion_model(model, short_range, saturation, [medium_range_model, medium_range, long_range, saturation, &window, &lambda, &f, args..., max_points](auto&& varphi) {
-    return call_on_medium_range_dispersion_model(medium_range_model, medium_range, long_range, saturation, [&varphi, &window, &lambda, &f, args..., max_points](auto&& psi) {
-      using Model_type = Truncated_exponential_family_model_over_window<Window,
-                                                              std::remove_cv_t<std::remove_reference_t<decltype(varphi)>>,
-                                                              std::remove_cv_t<std::remove_reference_t<decltype(psi)>>,
-                                                              Lambda>;
-      // TODO: Fix the endpoints
-      return f(Model_type(window, lambda, std::forward<decltype(varphi)>(varphi), std::forward<decltype(psi)>(psi), args..., max_points));
-    });
-  });
+  const auto dispersion(get_dispersion_from_string(model, short_range, saturation));
+  const auto medium_range_dispersion(get_medium_range_dispersion_from_string(medium_range_model, medium_range, long_range, saturation));
+  using Model_type = Truncated_exponential_family_model_over_window<Window,
+                                                                    std::remove_cv_t<std::remove_reference_t<decltype(*dispersion)>>,
+                                                                    std::remove_cv_t<std::remove_reference_t<decltype(*medium_range_dispersion)>>,
+                                                                    Lambda>;
+  // TODO: Fix the endpoints
+  return f(Model_type(window, lambda, *dispersion, *medium_range_dispersion, args..., max_points));
 }
 
 } // namespace ppjsdm

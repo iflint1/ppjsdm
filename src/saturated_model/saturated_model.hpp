@@ -966,21 +966,20 @@ const constexpr char* const short_range_models[] = {
   "Dixon"
 };
 
-template<typename F>
-inline auto call_on_dispersion_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, unsigned long long int saturation, const F& f) {
+inline std::unique_ptr<Saturated_model> get_dispersion_from_string(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, unsigned long long int saturation) {
   const auto model_string(model[0]);
   if(model_string == short_range_models[0]) {
-    return f(New_saturated_model<potentials::Exponential>(saturation, radius));
+    return std::make_unique<New_saturated_model<potentials::Exponential>>(saturation, radius);
   } else if(model_string == short_range_models[1]) {
-    return f(New_saturated_model<potentials::Square_exponential>(saturation, radius));
+    return std::make_unique<New_saturated_model<potentials::Square_exponential>>(saturation, radius);
   } else if(model_string == short_range_models[2]) {
-    return f(New_saturated_model<potentials::Bump>(saturation, radius));
+    return std::make_unique<New_saturated_model<potentials::Bump>>(saturation, radius);
   } else if(model_string == short_range_models[3]) {
-    return f(New_saturated_model<potentials::Square_bump>(saturation, radius));
+    return std::make_unique<New_saturated_model<potentials::Square_bump>>(saturation, radius);
   } else if(model_string == short_range_models[4]) {
-    return f(New_saturated_model<potentials::Strauss>(saturation, radius));
+    return std::make_unique<New_saturated_model<potentials::Strauss>>(saturation, radius);
   } else if(model_string == short_range_models[5]) {
-    return f(New_saturated_model<potentials::Linear>(saturation, radius));
+    return std::make_unique<New_saturated_model<potentials::Linear>>(saturation, radius);
   } /*else if(model_string == short_range_models[6]) {
     return f(Dixon_model(saturation));
   } */else {
@@ -996,19 +995,18 @@ const constexpr char* const medium_range_models[] = {
   "exponential"
 };
 
-template<typename F>
-inline auto call_on_medium_range_dispersion_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, unsigned long long int saturation, const F& f) {
+inline std::unique_ptr<Saturated_model> get_medium_range_dispersion_from_string(Rcpp::CharacterVector model, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, unsigned long long int saturation) {
   const auto model_string(model[0]);
   if(model_string == medium_range_models[0]) {
-    return f(New_saturated_model<potentials::Medium_range_square_exponential>(saturation, medium_range, long_range));
+    return std::make_unique<New_saturated_model<potentials::Medium_range_square_exponential>>(saturation, medium_range, long_range);
   } else if(model_string == medium_range_models[1]) {
-    return f(New_saturated_model<potentials::Medium_range_half_square_exponential>(saturation, medium_range, long_range));
+    return std::make_unique<New_saturated_model<potentials::Medium_range_half_square_exponential>>(saturation, medium_range, long_range);
   } else if(model_string == medium_range_models[2]) {
-    return f(New_saturated_model<potentials::Medium_range_Geyer>(saturation, medium_range, long_range));
+    return std::make_unique<New_saturated_model<potentials::Medium_range_Geyer>>(saturation, medium_range, long_range);
   } else if(model_string == medium_range_models[3]) {
-    return f(New_saturated_model<potentials::Medium_range_linear>(saturation, medium_range, long_range));
+    return std::make_unique<New_saturated_model<potentials::Medium_range_linear>>(saturation, medium_range, long_range);
   } else if(model_string == medium_range_models[4]) {
-    return f(New_saturated_model<potentials::Medium_range_exponential>(saturation, medium_range, long_range));
+    return std::make_unique<New_saturated_model<potentials::Medium_range_exponential>>(saturation, medium_range, long_range);
   } else {
     Rcpp::stop("Incorrect model entered. A call to show_medium_range_models() will show you the available choices.\n");
   }

@@ -398,18 +398,16 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list, SEXP window, Rcpp:
   if(!ppjsdm::is_symmetric_matrix(sh)) {
     Rcpp::stop("Short range interaction radius matrix is not symmetric.");
   }
-  return ppjsdm::call_on_dispersion_model(model, sh, saturation, [approximate, number_types, medium_range_model, medium_range, long_range, saturation, &vector_configurations, &cpp_window, &covariates, traits, &max_points_by_type](const auto& short_papangelou) {
-    const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0.1 * cpp_window->diameter(), number_types));
-    const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0.2 * cpp_window->diameter(), number_types));
-    if(!ppjsdm::is_symmetric_matrix(me) || !ppjsdm::is_symmetric_matrix(lo)) {
-      Rcpp::stop("Medium or long range interaction radius matrix is not symmetric.");
-    }
-    return ppjsdm::call_on_medium_range_dispersion_model(medium_range_model, me, lo, saturation, [approximate, &short_papangelou, &vector_configurations, &cpp_window, &covariates, traits, &max_points_by_type](const auto& medium_papangelou) {
-      if(approximate) {
-        return prepare_gibbsm_data_helper<true>(vector_configurations, *cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, short_papangelou, medium_papangelou, max_points_by_type);
-      } else {
-        return prepare_gibbsm_data_helper<false>(vector_configurations, *cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, short_papangelou, medium_papangelou, max_points_by_type);
-      }
-    });
-  });
+  const auto dispersion(ppjsdm::get_dispersion_from_string(model, sh, saturation));
+  const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0.1 * cpp_window->diameter(), number_types));
+  const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0.2 * cpp_window->diameter(), number_types));
+  if(!ppjsdm::is_symmetric_matrix(me) || !ppjsdm::is_symmetric_matrix(lo)) {
+    Rcpp::stop("Medium or long range interaction radius matrix is not symmetric.");
+  }
+  const auto medium_range_dispersion(ppjsdm::get_medium_range_dispersion_from_string(medium_range_model, me, lo, saturation));
+  if(approximate) {
+    return prepare_gibbsm_data_helper<true>(vector_configurations, *cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, *dispersion, *medium_range_dispersion, max_points_by_type);
+  } else {
+    return prepare_gibbsm_data_helper<false>(vector_configurations, *cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, *dispersion, *medium_range_dispersion, max_points_by_type);
+  }
 }
