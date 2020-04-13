@@ -729,7 +729,7 @@ public:
     CountType count_vector(number_types);
 
     for_each_container([&count_vector, &point, &varphi](const auto& current_point) {
-      update_count(varphi, count_vector[get_type(current_point)], current_point, point);
+      compute_dispersion::update_count(varphi, count_vector[get_type(current_point)], current_point, point);
     }, std::forward<Configurations>(configurations)...);
 
     // TODO: Ideally, use if constexpr
@@ -738,13 +738,13 @@ public:
         std::vector<double> count{};
         for_each_container([&point, &count, &current_point, &varphi](const auto& other_point) {
           if(!is_equal(other_point, current_point) && get_type(other_point) == get_type(point)) {
-            update_count(varphi, count, current_point, other_point);
+            compute_dispersion::update_count(varphi, count, current_point, other_point);
           }
         }, configurations...);
         for(auto c: count) {
           count_vector[get_type(current_point)].emplace_back(-c);
         }
-        update_count(varphi, count, current_point, point);
+        compute_dispersion::update_count(varphi, count, current_point, point);
         // TODO: Might be able to simplify this and above--only one element of count changes in the computation above.
         for(auto c: count) {
           count_vector[get_type(current_point)].emplace_back(c);
@@ -802,7 +802,7 @@ public:
     CountType count_vector(number_types);
 
     for_each_container([&count_vector, &point, &varphi](const auto& current_point) {
-      update_count(varphi, count_vector[get_type(current_point)], current_point, point);
+      compute_dispersion::update_count(varphi, count_vector[get_type(current_point)], current_point, point);
     }, std::forward<Configurations>(configurations)...);
 
     // TODO: Ideally, use if constexpr
@@ -811,13 +811,13 @@ public:
         std::vector<double> count{};
         for_each_container([&point, &count, &current_point, &varphi](const auto& other_point) {
           if(!is_equal(other_point, current_point) && get_type(other_point) == get_type(point)) {
-            update_count(varphi, count, current_point, other_point);
+            compute_dispersion::update_count(varphi, count, current_point, other_point);
           }
         }, configurations...);
         for(const auto& c: count) {
           count_vector[get_type(current_point)].emplace_back(-c);
         }
-        update_count(varphi, count, current_point, point);
+        compute_dispersion::update_count(varphi, count, current_point, point);
         // TODO: Might be able to simplify this and above--only one element of count changes in the computation above.
         for(const auto& c: count) {
           count_vector[get_type(current_point)].emplace_back(c);
@@ -882,11 +882,11 @@ public:
         std::vector<double> count{};
         for_each_container([&point, &count, &current_point, &varphi](const auto& other_point) {
           if(!is_equal(other_point, current_point) && get_type(other_point) == get_type(point)) {
-            update_count(varphi, count, other_point, current_point);
+            compute_dispersion::update_count(varphi, count, other_point, current_point);
           }
         }, configurations...);
         count_vector[get_type(current_point)].emplace_back(-std::accumulate(count.begin(), count.end(), 0.));
-        update_count(varphi, count, point, current_point);
+        compute_dispersion::update_count(varphi, count, point, current_point);
         count_vector[get_type(current_point)].emplace_back(std::accumulate(count.begin(), count.end(), 0.));
       }, std::forward<Configurations>(configurations)...);
     }
