@@ -22,10 +22,6 @@ private:
   Lightweight_square_matrix<double> long_;
   using size_t = typename decltype(medium_)::size_type;
 public:
-  static const bool is_nonincreasing = Varphi::is_nonincreasing;
-  static const bool is_nonincreasing_after_lower_endpoint = Varphi::is_nonincreasing_after_lower_endpoint;
-  static const bool is_two_valued = Varphi::is_two_valued;
-
   Medium_range_potential(Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range):
   medium_(medium_range.nrow()),
   long_(medium_range.nrow()) {

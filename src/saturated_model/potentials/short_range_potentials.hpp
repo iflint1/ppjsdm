@@ -20,9 +20,6 @@ private:
   Lightweight_square_matrix<double> matrix_;
   using size_t = typename decltype(matrix_)::size_type;
 public:
-  static const bool is_nonincreasing = Varphi::is_nonincreasing;
-  static const bool is_nonincreasing_after_lower_endpoint = Varphi::is_nonincreasing;
-  static const bool is_two_valued = Varphi::is_two_valued;
   explicit Short_range_potential(Rcpp::NumericMatrix radius): matrix_(radius.nrow()) {
     const size_t dim(radius.nrow());
     if(static_cast<size_t>(radius.ncol()) != dim) {
@@ -46,6 +43,7 @@ public:
 
 struct Bump_implementation {
   static constexpr bool is_nonincreasing = true;
+  static constexpr bool is_nonincreasing_after_lower_endpoint = true;
   static constexpr bool is_two_valued = false;
 
   static double set(double radius) {
@@ -59,6 +57,7 @@ struct Bump_implementation {
 
 struct Square_bump_implementation {
   static constexpr bool is_nonincreasing = true;
+  static constexpr bool is_nonincreasing_after_lower_endpoint = true;
   static constexpr bool is_two_valued = false;
 
   static double set(double radius) {
@@ -72,6 +71,7 @@ struct Square_bump_implementation {
 
 struct Square_exponential_implementation {
   static constexpr bool is_nonincreasing = true;
+  static constexpr bool is_nonincreasing_after_lower_endpoint = true;
   static constexpr bool is_two_valued = false;
 
   static double set(double radius) {
@@ -85,6 +85,7 @@ struct Square_exponential_implementation {
 
 struct Exponential_implementation {
   static constexpr bool is_nonincreasing = true;
+  static constexpr bool is_nonincreasing_after_lower_endpoint = true;
   static constexpr bool is_two_valued = false;
 
   static double set(double radius) {
@@ -98,6 +99,7 @@ struct Exponential_implementation {
 
 struct Linear_implementation {
   static constexpr bool is_nonincreasing = true;
+  static constexpr bool is_nonincreasing_after_lower_endpoint = true;
   static constexpr bool is_two_valued = false;
 
   static double set(double radius) {
@@ -111,6 +113,7 @@ struct Linear_implementation {
 
 struct Strauss_implementation {
   static constexpr bool is_nonincreasing = false;
+  static constexpr bool is_nonincreasing_after_lower_endpoint = false;
   static constexpr bool is_two_valued = true;
 
   static double set(double radius) {

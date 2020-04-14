@@ -918,7 +918,7 @@ inline auto compute_dispersion(const Saturated_model& model,
 
 // Note: Use inheritance to benefit from EBO.
 template<typename Varphi>
-class New_saturated_model: public Saturated_model, public Varphi {
+class New_saturated_model: public Saturated_model, private Varphi {
 public:
   bool is_nonincreasing() const {
     return Varphi::is_nonincreasing;
@@ -938,7 +938,7 @@ public:
   double apply(double normalized_square_distance, int i, int j) const override {
     return Varphi::apply(normalized_square_distance, i, j);
   }
-  // TODO: This doesn't return the correct result.
+
   double get_maximum() const override {
     return static_cast<double>(saturation_);
   }
@@ -960,8 +960,7 @@ const constexpr char* const short_range_models[] = {
   "bump",
   "square_bump",
   "Geyer",
-  "linear",
-  "Dixon"
+  "linear"
 };
 
 inline std::unique_ptr<Saturated_model> get_dispersion_from_string(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, unsigned long long int saturation) {
@@ -978,9 +977,7 @@ inline std::unique_ptr<Saturated_model> get_dispersion_from_string(Rcpp::Charact
     return std::make_unique<New_saturated_model<potentials::Strauss>>(saturation, radius);
   } else if(model_string == short_range_models[5]) {
     return std::make_unique<New_saturated_model<potentials::Linear>>(saturation, radius);
-  } /*else if(model_string == short_range_models[6]) {
-    return f(Dixon_model(saturation));
-  } */else {
+  } else {
     Rcpp::stop("Incorrect model entered. A call to show_short_range_models() will show you the available choices.\n");
   }
 }
