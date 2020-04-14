@@ -538,42 +538,6 @@ private:
   std::vector<double> dot_dispersion_maximum_;
 };
 
-template<typename F, typename Lambda, typename... Args>
-inline auto call_on_model(Rcpp::CharacterVector model,
-                          Rcpp::CharacterVector medium_range_model,
-                          const Lambda& lambda,
-                          Rcpp::NumericMatrix short_range,
-                          Rcpp::NumericMatrix medium_range,
-                          Rcpp::NumericMatrix long_range,
-                          unsigned long long int saturation,
-                          unsigned long long int max_points,
-                          const F& f,
-                          Args... args) {
-  const auto dispersion(Saturated_model(model, short_range, saturation));
-  const auto medium_range_dispersion(Saturated_model(medium_range_model, medium_range, long_range, saturation));
-  using Model_type = Truncated_exponential_family_model<Lambda>;
-  return f(Model_type(lambda, std::move(dispersion), std::move(medium_range_dispersion), args..., max_points));
-}
-
-template<typename F, typename Lambda, typename... Args>
-inline auto call_on_model(const Window& window,
-                          Rcpp::CharacterVector model,
-                          Rcpp::CharacterVector medium_range_model,
-                          const Lambda& lambda,
-                          Rcpp::NumericMatrix short_range,
-                          Rcpp::NumericMatrix medium_range,
-                          Rcpp::NumericMatrix long_range,
-                          unsigned long long int saturation,
-                          unsigned long long int max_points,
-                          const F& f,
-                          Args... args) {
-  const auto dispersion(Saturated_model(model, short_range, saturation));
-  const auto medium_range_dispersion(Saturated_model(medium_range_model, medium_range, long_range, saturation));
-  using Model_type = Truncated_exponential_family_model_over_window<Lambda>;
-  // TODO: Fix the endpoints
-  return f(Model_type(window, lambda, std::move(dispersion), std::move(medium_range_dispersion), args..., max_points));
-}
-
 } // namespace ppjsdm
 
 #endif // INCLUDE_PPJSDM_EXPONENTIAL_FAMILY
