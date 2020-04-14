@@ -5,8 +5,8 @@
 
 namespace ppjsdm {
 
-template<typename... Args>
-void for_each_container(Args&&...) {
+template<typename F>
+void for_each_container(F&&) {
   return;
 }
 
