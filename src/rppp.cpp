@@ -12,7 +12,7 @@
 #include "utility/get_list_or_first_element.hpp"
 #include "utility/get_number_types.hpp"
 #include "utility/make_default_types.hpp"
-#include "utility/window_utilities.hpp"
+#include "utility/window.hpp"
 
 template<typename Lambda>
 inline SEXP rppp_helper(const ppjsdm::Window& window, const Lambda& lambda, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t point_types) {
@@ -43,7 +43,7 @@ SEXP rppp(SEXP window = R_NilValue, SEXP lambda = R_NilValue, R_xlen_t nsim = 1,
   const auto number_types(ppjsdm::get_number_types_and_check_conformance(lambda, types));
   lambda = ppjsdm::construct_if_missing<Rcpp::NumericVector>(lambda, 1., number_types);
   types = ppjsdm::make_types(types, number_types, lambda);
-  const auto cpp_window(ppjsdm::get_window_from_R_object(window, mark_range));
+  const auto cpp_window(ppjsdm::Window(window, mark_range));
   return ppjsdm::call_on_list_or_vector(lambda, [number_types, &cpp_window, nsim, &types, drop](const auto& l) {
     return rppp_helper(cpp_window, l, nsim, types, drop, number_types);
   });

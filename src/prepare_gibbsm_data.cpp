@@ -15,7 +15,7 @@
 #include "utility/im_wrapper.hpp"
 #include "utility/is_symmetric_matrix.hpp"
 #include "utility/lightweight_matrix.hpp"
-#include "utility/window_utilities.hpp"
+#include "utility/window.hpp"
 
 #include <algorithm> // std::remove_if
 #include <cmath> // std::log
@@ -378,7 +378,7 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list, SEXP window, Rcpp:
     }
   }
 
-  const auto cpp_window(ppjsdm::get_window_from_R_object(window, mark_range));
+  const auto cpp_window(ppjsdm::Window(window, mark_range));
   // The trick below allows us to find the number of different types in the configuration.
   // That number is then used to default construct `short_range`.
   std::vector<size_t> max_points_by_type(ppjsdm::get_number_points(vector_configurations[0]));

@@ -6,7 +6,7 @@
 #include "../../point/point_manipulation.hpp"
 #include "../../point/square_distance.hpp"
 #include "../../utility/lightweight_matrix.hpp"
-#include "../../utility/window_utilities.hpp"
+#include "../../utility/window.hpp"
 
 #include <cmath> // std::sqrt, std::exp, std::log
 #include <type_traits> // std::enable_if, std::false_type, std::true_type

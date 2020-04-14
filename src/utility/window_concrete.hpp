@@ -1,12 +1,11 @@
-#ifndef INCLUDE_PPJSDM_WINDOW_UTILITIES
-#define INCLUDE_PPJSDM_WINDOW_UTILITIES
+#ifndef INCLUDE_PPJSDM_WINDOW_CONCRETE
+#define INCLUDE_PPJSDM_WINDOW_CONCRETE
 
 #include <Rcpp.h>
 #include <Rinternals.h>
 
 #include "../point/point_manipulation.hpp"
 #include "../utility/im_wrapper.hpp"
-#include "window_base.hpp"
 
 #include <cmath> // std::sqrt
 #include <string> // std::string
@@ -144,24 +143,6 @@ private:
   double delta_mark_;
 };
 
-inline Window get_window_from_R_object(SEXP window, Rcpp::NumericVector marked_range) {
-  if(Rf_isNull(window)) {
-    return Window(Rectangle_window(marked_range));
-  }
-  else {
-    const std::string window_class = Rcpp::as<Rcpp::RObject>(window).attr("class");
-    if(window_class == "Rectangle_window") {
-      return Window(Rectangle_window(window, marked_range));
-    } else if(window_class == "Disk_window") {
-      return Window(Disk_window(window, marked_range));
-    } else if(window_class == "im") {
-      return Window(Im_window(window, marked_range));
-    } else {
-      Rcpp::stop("Unrecognised window type.");
-    }
-  }
-}
-
 } // namespace ppjsdm
 
-#endif // INCLUDE_PPJSDM_WINDOW_UTILITIES
+#endif // INCLUDE_PPJSDM_WINDOW_CONCRETE

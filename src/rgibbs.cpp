@@ -16,7 +16,7 @@
 #include "utility/get_number_types.hpp"
 #include "utility/is_symmetric_matrix.hpp"
 #include "utility/make_default_types.hpp"
-#include "utility/window_utilities.hpp"
+#include "utility/window.hpp"
 
 #include <vector> // std::vector
 
@@ -67,7 +67,7 @@ SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP beta
   }
 
   types = ppjsdm::make_types(types, number_types, lambda);
-  const auto cpp_window(ppjsdm::get_window_from_R_object(window, mark_range));
+  const auto cpp_window(ppjsdm::Window(window, mark_range));
   return ppjsdm::call_on_list_or_vector(lambda, [alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, number_types, &cpp_window, max_points](const auto& l) {
     const auto sh(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(short_range, 0.1 * cpp_window.diameter(), number_types));
     const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0.1 * cpp_window.diameter(), number_types));

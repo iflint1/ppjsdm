@@ -1,5 +1,7 @@
-#ifndef INCLUDE_WINDOW_BASE
-#define INCLUDE_WINDOW_BASE
+#ifndef INCLUDE_WINDOW
+#define INCLUDE_WINDOW
+
+#include "window_concrete.hpp"
 
 #include <memory> // std::shared_ptr
 #include <type_traits> // std::remove_cv, std::remove_reference
@@ -9,9 +11,23 @@ namespace ppjsdm {
 
 class Window {
 public:
-  template<typename T>
-  Window(T&& object):
-    object_(std::make_shared<Concrete_window<std::remove_cv_t<std::remove_reference_t<T>>>>(std::forward<T>(object))) {}
+  Window(SEXP window, Rcpp::NumericVector marked_range) {
+    if(Rf_isNull(window)) {
+      object_ = std::make_shared<Concrete_window<Rectangle_window>>(marked_range);
+    }
+    else {
+      const std::string window_class = Rcpp::as<Rcpp::RObject>(window).attr("class");
+      if(window_class == "Rectangle_window") {
+        object_ = std::make_shared<Concrete_window<Rectangle_window>>(window, marked_range);
+      } else if(window_class == "Disk_window") {
+        object_ = std::make_shared<Concrete_window<Disk_window>>(window, marked_range);
+      } else if(window_class == "im") {
+        object_ = std::make_shared<Concrete_window<Im_window>>(window, marked_range);
+      } else {
+        Rcpp::stop("Unrecognised window type.");
+      }
+    }
+  }
 
   Marked_point sample(int type) const {
     return object_->sample(type);
@@ -41,8 +57,8 @@ private:
   template<typename T>
   class Concrete_window: public Concept {
   public:
-    template<typename S>
-    explicit Concrete_window(S&& object): object_(std::forward<S>(object)) {}
+    template<typename... Args>
+    explicit Concrete_window(Args&&... args): object_(std::forward<Args>(args)...) {}
 
     Marked_point sample(int type) const {
       return object_.sample(type);
@@ -66,6 +82,7 @@ private:
 
   std::shared_ptr<const Concept> object_;
 };
+
 } // namespace ppjsdm
 
-#endif // INCLUDE_WINDOW_BASE
+#endif // INCLUDE_WINDOW

@@ -4,7 +4,7 @@
 #include <Rinternals.h>
 
 #include "../configuration/configuration_manipulation.hpp"
-#include "../utility/window_utilities.hpp"
+#include "../utility/window.hpp"
 
 namespace ppjsdm {
 

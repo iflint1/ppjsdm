@@ -6,7 +6,7 @@
 
 #include "../configuration/configuration_manipulation.hpp"
 #include "../point/point_manipulation.hpp"
-#include "../utility/window_base.hpp"
+#include "../utility/window.hpp"
 
 #include <algorithm> // std::max, std::min
 #include <cmath> // std::round
@@ -238,8 +238,8 @@ public:
   // TODO: Make sure this is only called if number of rows and columns is the same, and xstep_ = ystep_
   // TODO: When the list is not empty, the function is not correctly restricted to window.
   // Computes \int_W f(\beta \cdot X(x)) dx.
-  template<typename F, typename Vector>
-  double get_integral_of_dot(const Window& window, const F& f, const Vector& vector) const {
+  template<typename W, typename F, typename Vector>
+  double get_integral_of_dot(const W& window, const F& f, const Vector& vector) const {
     if(im_list_.empty()) {
       return f(0.) * window.volume();
     }
