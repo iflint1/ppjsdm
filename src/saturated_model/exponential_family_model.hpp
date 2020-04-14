@@ -543,8 +543,8 @@ inline auto call_on_model(Rcpp::CharacterVector model,
                           unsigned long long int max_points,
                           const F& f,
                           Args... args) {
-  const auto dispersion(get_dispersion_from_string(model, short_range, saturation));
-  const auto medium_range_dispersion(get_medium_range_dispersion_from_string(medium_range_model, medium_range, long_range, saturation));
+  const auto dispersion(Saturated_model(model, short_range, saturation));
+  const auto medium_range_dispersion(Saturated_model(medium_range_model, medium_range, long_range, saturation));
   using Model_type = Truncated_exponential_family_model<Lambda>;
   return f(Model_type(lambda, std::move(dispersion), std::move(medium_range_dispersion), args..., max_points));
 }
@@ -561,8 +561,8 @@ inline auto call_on_model(const Window& window,
                           unsigned long long int max_points,
                           const F& f,
                           Args... args) {
-  const auto dispersion(get_dispersion_from_string(model, short_range, saturation));
-  const auto medium_range_dispersion(get_medium_range_dispersion_from_string(medium_range_model, medium_range, long_range, saturation));
+  const auto dispersion(Saturated_model(model, short_range, saturation));
+  const auto medium_range_dispersion(Saturated_model(medium_range_model, medium_range, long_range, saturation));
   using Model_type = Truncated_exponential_family_model_over_window<Lambda>;
   // TODO: Fix the endpoints
   return f(Model_type(window, lambda, std::move(dispersion), std::move(medium_range_dispersion), args..., max_points));

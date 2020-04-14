@@ -12,17 +12,68 @@
 
 #include <algorithm> // std::accumulate, std::pop_heap, std::push_heap
 #include <functional> // std::greater
+#include <memory> // std::shared_ptr
 #include <utility> // std::forward, std::move
 #include <vector> // std::vector
 
 namespace ppjsdm {
 
+const constexpr char* const short_range_models[] = {
+  "exponential",
+  "square_exponential",
+  "bump",
+  "square_bump",
+  "Geyer",
+  "linear"
+};
+
+const constexpr char* const medium_range_models[] = {
+  "square_exponential",
+  "half_square_exponential",
+  "Geyer",
+  "linear",
+  "exponential"
+};
+
 class Saturated_model {
 public:
-  template<typename T>
-  Saturated_model(T&& object, unsigned long long int saturation):
-    object_(std::make_shared<Concrete_model<std::remove_cv_t<std::remove_reference_t<T>>>>(std::forward<T>(object))),
-    saturation_(saturation) {}
+  Saturated_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, unsigned long long int saturation):
+  saturation_(saturation) {
+    const auto model_string(model[0]);
+    if(model_string == short_range_models[0]) {
+      object_ = std::make_shared<Concrete_model<potentials::Exponential>>(radius);
+    } else if(model_string == short_range_models[1]) {
+      object_ = std::make_shared<Concrete_model<potentials::Square_exponential>>(radius);
+    } else if(model_string == short_range_models[2]) {
+      object_ = std::make_shared<Concrete_model<potentials::Bump>>(radius);
+    } else if(model_string == short_range_models[3]) {
+      object_ = std::make_shared<Concrete_model<potentials::Square_bump>>(radius);
+    } else if(model_string == short_range_models[4]) {
+      object_ = std::make_shared<Concrete_model<potentials::Strauss>>(radius);
+    } else if(model_string == short_range_models[5]) {
+      object_ = std::make_shared<Concrete_model<potentials::Linear>>(radius);
+    } else {
+      Rcpp::stop("Incorrect model entered. A call to show_short_range_models() will show you the available choices.\n");
+    }
+  }
+
+  Saturated_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, unsigned long long int saturation):
+  saturation_(saturation) {
+    const auto model_string(model[0]);
+    if(model_string == medium_range_models[0]) {
+      object_ = std::make_shared<Concrete_model<potentials::Medium_range_square_exponential>>(medium_range, long_range);
+    } else if(model_string == medium_range_models[1]) {
+      object_ = std::make_shared<Concrete_model<potentials::Medium_range_half_square_exponential>>(medium_range, long_range);
+    } else if(model_string == medium_range_models[2]) {
+      object_ = std::make_shared<Concrete_model<potentials::Medium_range_Geyer>>(medium_range, long_range);
+    } else if(model_string == medium_range_models[3]) {
+      object_ = std::make_shared<Concrete_model<potentials::Medium_range_linear>>(medium_range, long_range);
+    } else if(model_string == medium_range_models[4]) {
+      object_ = std::make_shared<Concrete_model<potentials::Medium_range_exponential>>(medium_range, long_range);
+    } else {
+      Rcpp::stop("Incorrect model entered. A call to show_medium_range_models() will show you the available choices.\n");
+    }
+  }
 
   bool is_nonincreasing() const {
     return object_->is_nonincreasing();
@@ -363,96 +414,6 @@ inline auto compute_dispersion(const Saturated_model& model,
     return detail::compute_dispersion<Approximate, detail::dispersionMethod::nonincreasing_after_lower_endpoint>{}(model, point, number_types, std::forward<Configurations>(configurations)...);
   } else {
     return detail::compute_dispersion<Approximate, detail::dispersionMethod::generic>{}(model, point, number_types, std::forward<Configurations>(configurations)...);
-  }
-}
-
-template<typename Varphi>
-class New_saturated_model: public Saturated_model, private Varphi {
-public:
-  bool is_nonincreasing() const override {
-    return Varphi::is_nonincreasing;
-  }
-  bool is_nonincreasing_after_lower_endpoint() const override {
-    return Varphi::is_nonincreasing_after_lower_endpoint;
-  }
-  bool is_two_valued() const override {
-    return Varphi::is_two_valued;
-  }
-
-  template<typename... Args>
-  explicit New_saturated_model(unsigned long long int saturation, Args&&... args):
-    Varphi(std::forward<Args>(args)...),
-    saturation_(saturation) {}
-
-  double apply(double normalized_square_distance, int i, int j) const override {
-    return Varphi::apply(normalized_square_distance, i, j);
-  }
-
-  double get_maximum() const override {
-    return static_cast<double>(saturation_);
-  }
-
-  unsigned long long int get_saturation() const override {
-    return saturation_;
-  };
-
-  double get_square_lower_endpoint(int i, int j) const override {
-    return Varphi::get_square_lower_endpoint(i, j);
-  }
-private:
-  unsigned long long int saturation_;
-};
-
-const constexpr char* const short_range_models[] = {
-  "exponential",
-  "square_exponential",
-  "bump",
-  "square_bump",
-  "Geyer",
-  "linear"
-};
-
-inline Saturated_model get_dispersion_from_string(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, unsigned long long int saturation) {
-  const auto model_string(model[0]);
-  if(model_string == short_range_models[0]) {
-    return Saturated_model(potentials::Exponential(radius), saturation);
-  } else if(model_string == short_range_models[1]) {
-    return Saturated_model(potentials::Square_exponential(radius), saturation);
-  } else if(model_string == short_range_models[2]) {
-    return Saturated_model(potentials::Bump(radius), saturation);
-  } else if(model_string == short_range_models[3]) {
-    return Saturated_model(potentials::Square_bump(radius), saturation);
-  } else if(model_string == short_range_models[4]) {
-    return Saturated_model(potentials::Strauss(radius), saturation);
-  } else if(model_string == short_range_models[5]) {
-    return Saturated_model(potentials::Linear(radius), saturation);
-  } else {
-    Rcpp::stop("Incorrect model entered. A call to show_short_range_models() will show you the available choices.\n");
-  }
-}
-
-const constexpr char* const medium_range_models[] = {
-  "square_exponential",
-  "half_square_exponential",
-  "Geyer",
-  "linear",
-  "exponential"
-};
-
-inline Saturated_model get_medium_range_dispersion_from_string(Rcpp::CharacterVector model, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, unsigned long long int saturation) {
-  const auto model_string(model[0]);
-  if(model_string == medium_range_models[0]) {
-    return Saturated_model(potentials::Medium_range_square_exponential(medium_range, long_range), saturation);
-  } else if(model_string == medium_range_models[1]) {
-    return Saturated_model(potentials::Medium_range_half_square_exponential(medium_range, long_range), saturation);
-  } else if(model_string == medium_range_models[2]) {
-    return Saturated_model(potentials::Medium_range_Geyer(medium_range, long_range), saturation);
-  } else if(model_string == medium_range_models[3]) {
-    return Saturated_model(potentials::Medium_range_linear(medium_range, long_range), saturation);
-  } else if(model_string == medium_range_models[4]) {
-    return Saturated_model(potentials::Medium_range_exponential(medium_range, long_range), saturation);
-  } else {
-    Rcpp::stop("Incorrect model entered. A call to show_medium_range_models() will show you the available choices.\n");
   }
 }
 
