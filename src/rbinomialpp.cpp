@@ -44,8 +44,8 @@ SEXP rbinomialpp(SEXP window = R_NilValue, SEXP n = R_NilValue, R_xlen_t nsim = 
   const auto number_types(ppjsdm::get_number_types_and_check_conformance(n, types));
   n = ppjsdm::construct_if_missing<Rcpp::IntegerVector>(n, 1, number_types);
   types = ppjsdm::make_types(types, number_types, n);
-  const auto cpp_window(ppjsdm::get_window_ptr_from_R_object(window, mark_range));
+  const auto cpp_window(ppjsdm::get_window_from_R_object(window, mark_range));
   return ppjsdm::call_on_list_or_vector(n, [&cpp_window, nsim, &types, drop, number_types](const auto& m) {
-    return rbinomialpp_helper(*cpp_window, m, nsim, types, drop, number_types);
+    return rbinomialpp_helper(cpp_window, m, nsim, types, drop, number_types);
   });
 }

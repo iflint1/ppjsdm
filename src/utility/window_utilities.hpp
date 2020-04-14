@@ -13,7 +13,7 @@
 
 namespace ppjsdm {
 
-class Rectangle_window: public Window {
+class Rectangle_window {
 public:
   Rectangle_window(Rcpp::NumericVector marked_range): x_0_(0), delta_x_(1), y_0_(0), delta_y_(1),
   mark_lower_(marked_range[0]),
@@ -31,20 +31,20 @@ public:
     delta_y_ = y[1] - y_0_;
   }
 
-  Marked_point sample(int type = 0) const override {
+  Marked_point sample(int type = 0) const {
     // TODO: Also sample mark?
     return Marked_point(x_0_ + unif_rand() * delta_x_,  y_0_ + unif_rand() * delta_y_, type, mark_lower_ + delta_mark_ * unif_rand());
   }
 
-  double volume() const override {
+  double volume() const {
     return delta_x_ * delta_y_;
   }
 
-  double square_diameter() const override {
+  double square_diameter() const {
     return delta_x_ * delta_x_ + delta_y_ * delta_y_;
   }
 
-  double diameter() const override {
+  double diameter() const {
     return std::sqrt(square_diameter());
   }
 
@@ -57,7 +57,7 @@ private:
   double delta_mark_;
 };
 
-class Disk_window: public Window {
+class Disk_window {
 public:
   Disk_window(Rcpp::NumericVector marked_range): x_(0), y_(0), radius_(1),
   mark_lower_(marked_range[0]),
@@ -73,7 +73,7 @@ public:
     radius_ = static_cast<double>(window["radius"]);
   }
 
-  Marked_point sample(int type = 0) const override {
+  Marked_point sample(int type = 0) const {
     while(true) {
       const auto x(2 * unif_rand() - 1.0);
       const auto y(2 * unif_rand() - 1.0);
@@ -83,15 +83,15 @@ public:
     }
   }
 
-  double volume() const override {
+  double volume() const {
     return M_PI * radius_ * radius_;
   }
 
-  double square_diameter() const override {
+  double square_diameter() const {
     return 4 * radius_ * radius_;
   }
 
-  double diameter() const override {
+  double diameter() const {
     return 2 * radius_;
   }
 
@@ -103,7 +103,7 @@ private:
   double delta_mark_;
 };
 
-class Im_window: public Window {
+class Im_window {
 public:
   explicit Im_window(Rcpp::List im, Rcpp::NumericVector marked_range):
     im_(im),
@@ -111,7 +111,7 @@ public:
     mark_lower_(marked_range[0]),
     delta_mark_(marked_range[1] - marked_range[0]) {}
 
-  Marked_point sample(int type = 0) const override {
+  Marked_point sample(int type = 0) const {
     const auto x_min(im_.x_min());
     const auto y_min(im_.y_min());
     const auto delta_x(im_.delta_x());
@@ -125,15 +125,15 @@ public:
     }
   }
 
-  double volume() const override {
+  double volume() const {
     return volume_;
   }
 
-  double square_diameter() const override {
+  double square_diameter() const {
     return im_.square_diameter();
   }
 
-  double diameter() const override {
+  double diameter() const {
     return std::sqrt(square_diameter());
   }
 
@@ -144,18 +144,18 @@ private:
   double delta_mark_;
 };
 
-inline std::unique_ptr<Window> get_window_ptr_from_R_object(SEXP window, Rcpp::NumericVector marked_range) {
+inline Window get_window_from_R_object(SEXP window, Rcpp::NumericVector marked_range) {
   if(Rf_isNull(window)) {
-    return std::make_unique<Rectangle_window>(marked_range);
+    return Window(Rectangle_window(marked_range));
   }
   else {
     const std::string window_class = Rcpp::as<Rcpp::RObject>(window).attr("class");
     if(window_class == "Rectangle_window") {
-      return std::make_unique<Rectangle_window>(window, marked_range);
+      return Window(Rectangle_window(window, marked_range));
     } else if(window_class == "Disk_window") {
-      return std::make_unique<Disk_window>(window, marked_range);
+      return Window(Disk_window(window, marked_range));
     } else if(window_class == "im") {
-      return std::make_unique<Im_window>(window, marked_range);
+      return Window(Im_window(window, marked_range));
     } else {
       Rcpp::stop("Unrecognised window type.");
     }

@@ -2,7 +2,7 @@ library(microbenchmark)
 library(ppjsdm)
 library(spatstat)
 
-window <-Rectangle_window()
+window <- Rectangle_window()
 window_spatstat <- owin()
 
 set.seed(42)

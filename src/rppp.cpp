@@ -43,8 +43,8 @@ SEXP rppp(SEXP window = R_NilValue, SEXP lambda = R_NilValue, R_xlen_t nsim = 1,
   const auto number_types(ppjsdm::get_number_types_and_check_conformance(lambda, types));
   lambda = ppjsdm::construct_if_missing<Rcpp::NumericVector>(lambda, 1., number_types);
   types = ppjsdm::make_types(types, number_types, lambda);
-  const auto cpp_window(ppjsdm::get_window_ptr_from_R_object(window, mark_range));
+  const auto cpp_window(ppjsdm::get_window_from_R_object(window, mark_range));
   return ppjsdm::call_on_list_or_vector(lambda, [number_types, &cpp_window, nsim, &types, drop](const auto& l) {
-    return rppp_helper(*cpp_window, l, nsim, types, drop, number_types);
+    return rppp_helper(cpp_window, l, nsim, types, drop, number_types);
   });
 }

@@ -1,7 +1,7 @@
 library(microbenchmark)
 library(ppjsdm)
 
-window <-Rectangle_window()
+window <- Rectangle_window()
 
 set.seed(42)
 
