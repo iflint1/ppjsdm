@@ -38,42 +38,12 @@ const constexpr char* const medium_range_models[] = {
 class Saturated_model {
 public:
   Saturated_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius, unsigned long long int saturation):
-  saturation_(saturation) {
-    const auto model_string(model[0]);
-    if(model_string == short_range_models[0]) {
-      object_ = std::make_shared<Concrete_model<potentials::Exponential>>(radius);
-    } else if(model_string == short_range_models[1]) {
-      object_ = std::make_shared<Concrete_model<potentials::Square_exponential>>(radius);
-    } else if(model_string == short_range_models[2]) {
-      object_ = std::make_shared<Concrete_model<potentials::Bump>>(radius);
-    } else if(model_string == short_range_models[3]) {
-      object_ = std::make_shared<Concrete_model<potentials::Square_bump>>(radius);
-    } else if(model_string == short_range_models[4]) {
-      object_ = std::make_shared<Concrete_model<potentials::Strauss>>(radius);
-    } else if(model_string == short_range_models[5]) {
-      object_ = std::make_shared<Concrete_model<potentials::Linear>>(radius);
-    } else {
-      Rcpp::stop("Incorrect model entered. A call to show_short_range_models() will show you the available choices.\n");
-    }
-  }
+  object_(make_short_range_object(model, radius)),
+  saturation_(saturation) {}
 
   Saturated_model(Rcpp::CharacterVector model, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, unsigned long long int saturation):
-  saturation_(saturation) {
-    const auto model_string(model[0]);
-    if(model_string == medium_range_models[0]) {
-      object_ = std::make_shared<Concrete_model<potentials::Medium_range_square_exponential>>(medium_range, long_range);
-    } else if(model_string == medium_range_models[1]) {
-      object_ = std::make_shared<Concrete_model<potentials::Medium_range_half_square_exponential>>(medium_range, long_range);
-    } else if(model_string == medium_range_models[2]) {
-      object_ = std::make_shared<Concrete_model<potentials::Medium_range_Geyer>>(medium_range, long_range);
-    } else if(model_string == medium_range_models[3]) {
-      object_ = std::make_shared<Concrete_model<potentials::Medium_range_linear>>(medium_range, long_range);
-    } else if(model_string == medium_range_models[4]) {
-      object_ = std::make_shared<Concrete_model<potentials::Medium_range_exponential>>(medium_range, long_range);
-    } else {
-      Rcpp::stop("Incorrect model entered. A call to show_medium_range_models() will show you the available choices.\n");
-    }
-  }
+  object_(make_medium_range_object(model, medium_range, long_range)),
+  saturation_(saturation) {}
 
   bool is_nonincreasing() const {
     return object_->is_nonincreasing();
@@ -140,6 +110,42 @@ private:
       return Varphi::get_square_lower_endpoint(i, j);
     }
   };
+
+  static std::shared_ptr<const Concept> make_short_range_object(Rcpp::CharacterVector model, Rcpp::NumericMatrix radius) {
+    const auto model_string(model[0]);
+    if(model_string == short_range_models[0]) {
+      return std::make_shared<Concrete_model<potentials::Exponential>>(radius);
+    } else if(model_string == short_range_models[1]) {
+      return std::make_shared<Concrete_model<potentials::Square_exponential>>(radius);
+    } else if(model_string == short_range_models[2]) {
+      return std::make_shared<Concrete_model<potentials::Bump>>(radius);
+    } else if(model_string == short_range_models[3]) {
+      return std::make_shared<Concrete_model<potentials::Square_bump>>(radius);
+    } else if(model_string == short_range_models[4]) {
+      return std::make_shared<Concrete_model<potentials::Strauss>>(radius);
+    } else if(model_string == short_range_models[5]) {
+      return std::make_shared<Concrete_model<potentials::Linear>>(radius);
+    } else {
+      Rcpp::stop("Incorrect model entered. A call to show_short_range_models() will show you the available choices.\n");
+    }
+  }
+
+  static std::shared_ptr<const Concept> make_medium_range_object(Rcpp::CharacterVector model, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range) {
+    const auto model_string(model[0]);
+    if(model_string == medium_range_models[0]) {
+      return std::make_shared<Concrete_model<potentials::Medium_range_square_exponential>>(medium_range, long_range);
+    } else if(model_string == medium_range_models[1]) {
+      return std::make_shared<Concrete_model<potentials::Medium_range_half_square_exponential>>(medium_range, long_range);
+    } else if(model_string == medium_range_models[2]) {
+      return std::make_shared<Concrete_model<potentials::Medium_range_Geyer>>(medium_range, long_range);
+    } else if(model_string == medium_range_models[3]) {
+      return std::make_shared<Concrete_model<potentials::Medium_range_linear>>(medium_range, long_range);
+    } else if(model_string == medium_range_models[4]) {
+      return std::make_shared<Concrete_model<potentials::Medium_range_exponential>>(medium_range, long_range);
+    } else {
+      Rcpp::stop("Incorrect model entered. A call to show_medium_range_models() will show you the available choices.\n");
+    }
+  }
 
   std::shared_ptr<const Concept> object_;
   unsigned long long int saturation_;

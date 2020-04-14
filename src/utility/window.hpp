@@ -11,23 +11,8 @@ namespace ppjsdm {
 
 class Window {
 public:
-  Window(SEXP window, Rcpp::NumericVector marked_range) {
-    if(Rf_isNull(window)) {
-      object_ = std::make_shared<Concrete_window<Rectangle_window>>(marked_range);
-    }
-    else {
-      const std::string window_class = Rcpp::as<Rcpp::RObject>(window).attr("class");
-      if(window_class == "Rectangle_window") {
-        object_ = std::make_shared<Concrete_window<Rectangle_window>>(window, marked_range);
-      } else if(window_class == "Disk_window") {
-        object_ = std::make_shared<Concrete_window<Disk_window>>(window, marked_range);
-      } else if(window_class == "im") {
-        object_ = std::make_shared<Concrete_window<Im_window>>(window, marked_range);
-      } else {
-        Rcpp::stop("Unrecognised window type.");
-      }
-    }
-  }
+  Window(SEXP window, Rcpp::NumericVector marked_range):
+  object_(make_window(window, marked_range)) {}
 
   Marked_point sample(int type) const {
     return object_->sample(type);
@@ -79,6 +64,24 @@ private:
   private:
     T object_;
   };
+
+  static std::shared_ptr<const Concept> make_window(SEXP window, Rcpp::NumericVector marked_range) {
+    if(Rf_isNull(window)) {
+      return std::make_shared<Concrete_window<Rectangle_window>>(marked_range);
+    }
+    else {
+      const std::string window_class = Rcpp::as<Rcpp::RObject>(window).attr("class");
+      if(window_class == "Rectangle_window") {
+        return std::make_shared<Concrete_window<Rectangle_window>>(window, marked_range);
+      } else if(window_class == "Disk_window") {
+        return std::make_shared<Concrete_window<Disk_window>>(window, marked_range);
+      } else if(window_class == "im") {
+        return std::make_shared<Concrete_window<Im_window>>(window, marked_range);
+      } else {
+        Rcpp::stop("Unrecognised window type.");
+      }
+    }
+  }
 
   std::shared_ptr<const Concept> object_;
 };
