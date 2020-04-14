@@ -3,8 +3,6 @@
 
 #include <Rcpp.h>
 
-#include "potential.hpp"
-
 #include "../../point/point_manipulation.hpp"
 #include "../../point/square_distance.hpp"
 #include "../../utility/lightweight_matrix.hpp"
@@ -17,7 +15,7 @@ namespace potentials {
 
 // Note: Public inheritance in order to inherit member variables if they exist in Varphi.
 template<typename Varphi>
-class Short_range_potential: public Potential, public Varphi {
+class Short_range_potential: public Varphi {
 private:
   Lightweight_square_matrix<double> matrix_;
   using size_t = typename decltype(matrix_)::size_type;
@@ -37,7 +35,7 @@ public:
     }
   }
 
-  double apply(double normalized_square_distance, int i, int j) const override {
+  double apply(double normalized_square_distance, int i, int j) const {
     return Varphi::apply(normalized_square_distance, matrix_(i, j));
   }
 

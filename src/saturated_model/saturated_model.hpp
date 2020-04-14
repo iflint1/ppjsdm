@@ -5,7 +5,6 @@
 
 #include "potentials/medium_range_potentials.hpp"
 #include "potentials/short_range_potentials.hpp"
-#include "potentials/traits.hpp"
 #include "../configuration/configuration_manipulation.hpp"
 #include "../point/point_manipulation.hpp"
 #include "../point/square_distance.hpp"
@@ -634,7 +633,6 @@ private:
   unsigned long long int saturation_;
 };*/
 
-// TODO: Don't need an abstract base class for potentials, everything is here.
 class Saturated_model {
 public:
   virtual bool is_nonincreasing() const = 0;
