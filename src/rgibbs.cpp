@@ -76,13 +76,12 @@ SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP beta
       Rcpp::stop("One of the interaction radii matrices is not symmetric.");
     }
     if(steps == 0) {
-      return ppjsdm::call_on_model(cpp_window, model, medium_range_model, l, sh, me, lo, saturation, max_points, [nsim, types, drop, number_types](const auto& model) {
-        return rgibbs_helper(model, nsim, types, drop, number_types);
-      }, alpha, beta, gamma, covariates);
+      const ppjsdm::Truncated_exponential_family_model_over_window<std::remove_cv_t<std::remove_reference_t<decltype(l)>>> exponential_model(cpp_window, l, model, medium_range_model, alpha, beta, gamma, covariates, max_points, sh, me, lo, saturation);
+      return rgibbs_helper(exponential_model, nsim, types, drop, number_types);
+
     } else {
-      return ppjsdm::call_on_model(model, medium_range_model, l, sh, me, lo, saturation, max_points, [&cpp_window, steps, nsim, types, drop, number_types](const auto& model) {
-        return rgibbs_helper(model, cpp_window, nsim, types, drop, number_types, steps);
-      }, alpha, beta, gamma, covariates);
+      const ppjsdm::Truncated_exponential_family_model<std::remove_cv_t<std::remove_reference_t<decltype(l)>>> exponential_model(l, model, medium_range_model, alpha, beta, gamma, covariates, max_points, sh, me, lo, saturation);
+      return rgibbs_helper(exponential_model, cpp_window, nsim, types, drop, number_types, steps);
     }
   });
 }

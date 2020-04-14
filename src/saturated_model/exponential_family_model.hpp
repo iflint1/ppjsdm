@@ -327,17 +327,20 @@ inline auto compute_alpha_dot_dispersion_maximum(const Alpha& alpha, double disp
 template<typename Lambda>
 class Truncated_exponential_family_model {
 public:
-  template<typename S, typename T>
   Truncated_exponential_family_model(const Lambda& lambda,
-                                     S&& dispersion,
-                                     T&& medium_range_dispersion,
+                                     Rcpp::CharacterVector model,
+                                     Rcpp::CharacterVector medium_range_model,
                                      Rcpp::NumericMatrix alpha,
                                      Rcpp::NumericMatrix beta,
                                      Rcpp::NumericMatrix gamma,
                                      Rcpp::List covariates,
-                                     unsigned long long int max_points):
-    dispersion_(std::forward<S>(dispersion)),
-    medium_range_dispersion_(std::forward<T>(medium_range_dispersion)),
+                                     unsigned long long int max_points,
+                                     Rcpp::NumericMatrix short_range,
+                                     Rcpp::NumericMatrix medium_range,
+                                     Rcpp::NumericMatrix long_range,
+                                     unsigned long long int saturation):
+    dispersion_(Saturated_model(model, short_range, saturation)),
+    medium_range_dispersion_(Saturated_model(medium_range_model, medium_range, long_range, saturation)),
     lambda_(lambda),
     alpha_(alpha),
     beta_(beta),
@@ -380,17 +383,20 @@ private:
     return dispersion.get_maximum() + static_cast<double>(Model::max_points_);
   }
 public:
-  template<typename S, typename T>
   Truncated_exponential_family_model_over_window(const Window& window,
                                                  const Lambda& lambda,
-                                                 S&& dispersion,
-                                                 T&& medium_range_dispersion,
+                                                 Rcpp::CharacterVector model,
+                                                 Rcpp::CharacterVector medium_range_model,
                                                  Rcpp::NumericMatrix alpha,
                                                  Rcpp::NumericMatrix beta,
                                                  Rcpp::NumericMatrix gamma,
                                                  Rcpp::List covariates,
-                                                 unsigned long long int max_points):
-    Model(lambda, std::forward<S>(dispersion), std::forward<T>(medium_range_dispersion), alpha, beta, gamma, covariates, max_points),
+                                                 unsigned long long int max_points,
+                                                 Rcpp::NumericMatrix short_range,
+                                                 Rcpp::NumericMatrix medium_range,
+                                                 Rcpp::NumericMatrix long_range,
+                                                 unsigned long long int saturation):
+    Model(lambda, model, medium_range_model, alpha, beta, gamma, covariates, max_points, short_range, medium_range, long_range, saturation),
     window_(window),
     beta_dot_covariates_maximum_(detail::compute_beta_dot_covariates_maximum(beta, Model::covariates_)),
     dot_dispersion_maximum_(detail::compute_alpha_dot_dispersion_maximum(alpha, get_dispersion_maximum(Model::dispersion_))) {
