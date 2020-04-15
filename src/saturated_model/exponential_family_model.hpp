@@ -380,7 +380,7 @@ private:
 
   template<typename D>
   auto get_dispersion_maximum(const D& dispersion) const {
-    return dispersion.get_maximum() + static_cast<double>(Model::max_points_);
+    return 6 * dispersion.get_maximum();
   }
 public:
   Truncated_exponential_family_model_over_window(const Window& window,
