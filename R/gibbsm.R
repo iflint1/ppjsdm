@@ -61,7 +61,7 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
 
       gibbsm_data_list <- prepare_gibbsm_data(configuration_list, window, covariates, traits, model, medium_range_model, sh, me, lo, saturation, mark_range, TRUE)
 
-      fit <- fit_gibbs(gibbsm_data_list, use_glmnet, use_aic)
+      fit <- fit_gibbs(gibbsm_data_list, use_glmnet = FALSE, use_aic)
       list(fit = fit, sh = sh, me = me, lo = lo)
     }
 
