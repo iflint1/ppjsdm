@@ -277,24 +277,40 @@ public:
       const auto gamma_dispersion_u(compute_dispersion(Model::medium_range_dispersion_, point, Model::gamma_.nrow(), l, l_complement));
       const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_u));
       const auto gamma_dispersion(detail::compute_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_u));
-      if(alpha_dispersion + gamma_dispersion - dot_dispersion_maximum + exp_mark > 0) {
+      const auto log_alpha(alpha_dispersion + gamma_dispersion - dot_dispersion_maximum);
+      if(log_alpha > 0) {
+        Rcpp::stop("Bad upper-bound in the computation of alpha in the CFTP algorithm.");
+      }
+      if(log_alpha + exp_mark > 0) {
         const auto alpha_dispersion_l(compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l));
         const auto gamma_dispersion_l(compute_dispersion(Model::medium_range_dispersion_, point, Model::gamma_.nrow(), l));
         const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_l));
         const auto gamma_dispersion(detail::compute_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_l));
-          add_point(alpha_dispersion + gamma_dispersion - dot_dispersion_maximum + exp_mark > 0 ? l : l_complement, point);
+        const auto log_alpha(alpha_dispersion + gamma_dispersion - dot_dispersion_maximum);
+        if(log_alpha > 0) {
+          Rcpp::stop("Bad upper-bound in the computation of alpha in the CFTP algorithm.");
+        }
+        add_point(log_alpha + exp_mark > 0 ? l : l_complement, point);
       }
     } else if(detail::is_alpha_non_positive(point, Model::alpha_) && detail::is_alpha_non_positive(point, Model::gamma_)) {
       const auto alpha_dispersion_l(compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l));
       const auto gamma_dispersion_l(compute_dispersion(Model::medium_range_dispersion_, point, Model::gamma_.nrow(), l));
       const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_l));
       const auto gamma_dispersion(detail::compute_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_l));
-      if(alpha_dispersion + gamma_dispersion - dot_dispersion_maximum + exp_mark > 0) {
+      const auto log_alpha(alpha_dispersion + gamma_dispersion - dot_dispersion_maximum);
+      if(log_alpha > 0) {
+        Rcpp::stop("Bad upper-bound in the computation of alpha in the CFTP algorithm.");
+      }
+      if(log_alpha + exp_mark > 0) {
         const auto alpha_dispersion_u(compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l, l_complement));
         const auto gamma_dispersion_u(compute_dispersion(Model::medium_range_dispersion_, point, Model::gamma_.nrow(), l, l_complement));
         const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_u));
         const auto gamma_dispersion(detail::compute_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_u));
-        add_point(alpha_dispersion + gamma_dispersion - dot_dispersion_maximum + exp_mark > 0 ? l : l_complement, point);
+        const auto log_alpha(alpha_dispersion + gamma_dispersion - dot_dispersion_maximum);
+        if(log_alpha > 0) {
+          Rcpp::stop("Bad upper-bound in the computation of alpha in the CFTP algorithm.");
+        }
+        add_point(log_alpha + exp_mark > 0 ? l : l_complement, point);
       }
     } else {
       const auto alpha_dispersion_l(compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l));
@@ -305,12 +321,20 @@ public:
       const auto negative_alpha(detail::compute_negative_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_l));
       const auto positive_gamma(detail::compute_positive_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_u));
       const auto negative_gamma(detail::compute_negative_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_l));
+      const auto log_alpha(positive_alpha + negative_alpha + positive_gamma + negative_gamma - dot_dispersion_maximum);
+      if(log_alpha > 0) {
+        Rcpp::stop("Bad upper-bound in the computation of alpha in the CFTP algorithm.");
+      }
       if(positive_alpha + negative_alpha + positive_gamma + negative_gamma - dot_dispersion_maximum + exp_mark > 0) {
         const auto positive_alpha(detail::compute_positive_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_l));
         const auto negative_alpha(detail::compute_negative_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_u));
         const auto positive_gamma(detail::compute_positive_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_l));
         const auto negative_gamma(detail::compute_negative_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_u));
-        add_point(positive_alpha + negative_alpha + positive_gamma + negative_gamma - dot_dispersion_maximum + exp_mark > 0 ? l : l_complement, point);
+        const auto log_alpha(positive_alpha + negative_alpha + positive_gamma + negative_gamma - dot_dispersion_maximum);
+        if(log_alpha > 0) {
+          Rcpp::stop("Bad upper-bound in the computation of alpha in the CFTP algorithm.");
+        }
+        add_point(log_alpha + exp_mark > 0 ? l : l_complement, point);
       }
     }
   }
