@@ -8,13 +8,13 @@
 #include "../utility/im_wrapper.hpp"
 
 #include <cmath> // std::sqrt
-#include <string> // std::string
 
 namespace ppjsdm {
+namespace detail {
 
 class Rectangle_window {
 public:
-  Rectangle_window(Rcpp::NumericVector marked_range): x_0_(0), delta_x_(1), y_0_(0), delta_y_(1),
+  explicit Rectangle_window(Rcpp::NumericVector marked_range): x_0_(0), delta_x_(1), y_0_(0), delta_y_(1),
   mark_lower_(marked_range[0]),
   delta_mark_(marked_range[1] - marked_range[0]) {}
 
@@ -31,7 +31,6 @@ public:
   }
 
   Marked_point sample(int type = 0) const {
-    // TODO: Also sample mark?
     return Marked_point(x_0_ + unif_rand() * delta_x_,  y_0_ + unif_rand() * delta_y_, type, mark_lower_ + delta_mark_ * unif_rand());
   }
 
@@ -58,7 +57,7 @@ private:
 
 class Disk_window {
 public:
-  Disk_window(Rcpp::NumericVector marked_range): x_(0), y_(0), radius_(1),
+  explicit Disk_window(Rcpp::NumericVector marked_range): x_(0), y_(0), radius_(1),
   mark_lower_(marked_range[0]),
   delta_mark_(marked_range[1] - marked_range[0]) {}
 
@@ -143,6 +142,7 @@ private:
   double delta_mark_;
 };
 
+} // namespace detail
 } // namespace ppjsdm
 
 #endif // INCLUDE_PPJSDM_WINDOW_CONCRETE

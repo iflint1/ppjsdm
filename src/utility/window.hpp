@@ -1,10 +1,15 @@
 #ifndef INCLUDE_WINDOW
 #define INCLUDE_WINDOW
 
+#include <Rcpp.h>
+#include <Rinternals.h>
+
 #include "window_concrete.hpp"
 
+#include "../point/point_manipulation.hpp"
+
 #include <memory> // std::shared_ptr
-#include <type_traits> // std::remove_cv, std::remove_reference
+#include <string> // std::string
 #include <utility> // std::forward
 
 namespace ppjsdm {
@@ -67,16 +72,16 @@ private:
 
   static std::shared_ptr<const Concept> make_window(SEXP window, Rcpp::NumericVector marked_range) {
     if(Rf_isNull(window)) {
-      return std::make_shared<Concrete_window<Rectangle_window>>(marked_range);
+      return std::make_shared<Concrete_window<detail::Rectangle_window>>(marked_range);
     }
     else {
       const std::string window_class = Rcpp::as<Rcpp::RObject>(window).attr("class");
       if(window_class == "Rectangle_window") {
-        return std::make_shared<Concrete_window<Rectangle_window>>(window, marked_range);
+        return std::make_shared<Concrete_window<detail::Rectangle_window>>(window, marked_range);
       } else if(window_class == "Disk_window") {
-        return std::make_shared<Concrete_window<Disk_window>>(window, marked_range);
+        return std::make_shared<Concrete_window<detail::Disk_window>>(window, marked_range);
       } else if(window_class == "im") {
-        return std::make_shared<Concrete_window<Im_window>>(window, marked_range);
+        return std::make_shared<Concrete_window<detail::Im_window>>(window, marked_range);
       } else {
         Rcpp::stop("Unrecognised window type.");
       }
