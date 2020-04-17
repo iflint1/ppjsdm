@@ -78,6 +78,9 @@ gibbsm <- function(configuration_list, window = Rectangle_window(), covariates =
       },
       error = function(cond) {
         return(Inf)
+      },
+      warning = function(cond) {
+        return(Inf)
       })
       out
     }
