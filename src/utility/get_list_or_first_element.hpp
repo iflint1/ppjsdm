@@ -6,8 +6,8 @@
 
 namespace ppjsdm {
 
-inline SEXP get_list_or_first_element(Rcpp::List list, R_xlen_t nsim, bool drop) {
-  if(nsim == 1 && drop) {
+inline SEXP get_list_or_first_element(Rcpp::List list, bool condition) {
+  if(condition) {
     return Rcpp::wrap(list[0]);
   } else {
     return Rcpp::wrap(list);
