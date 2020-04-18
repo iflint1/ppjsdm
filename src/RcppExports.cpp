@@ -65,9 +65,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// rbinomialpp
-SEXP rbinomialpp(SEXP window, SEXP n, R_xlen_t nsim, SEXP types, bool drop, Rcpp::NumericVector mark_range);
-RcppExport SEXP _ppjsdm_rbinomialpp(SEXP windowSEXP, SEXP nSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP dropSEXP, SEXP mark_rangeSEXP) {
+// rbinomialpp_cpp
+SEXP rbinomialpp_cpp(SEXP window, SEXP n, R_xlen_t nsim, SEXP types, bool drop, Rcpp::NumericVector mark_range);
+RcppExport SEXP _ppjsdm_rbinomialpp_cpp(SEXP windowSEXP, SEXP nSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP dropSEXP, SEXP mark_rangeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -77,19 +77,19 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type types(typesSEXP);
     Rcpp::traits::input_parameter< bool >::type drop(dropSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type mark_range(mark_rangeSEXP);
-    rcpp_result_gen = Rcpp::wrap(rbinomialpp(window, n, nsim, types, drop, mark_range));
+    rcpp_result_gen = Rcpp::wrap(rbinomialpp_cpp(window, n, nsim, types, drop, mark_range));
     return rcpp_result_gen;
 END_RCPP
 }
 // rgibbs_cpp
-SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP beta, SEXP gamma, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, R_xlen_t max_points, R_xlen_t steps, R_xlen_t nsim, SEXP types, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, bool drop, Rcpp::NumericVector mark_range);
+SEXP rgibbs_cpp(SEXP window, SEXP alpha, Rcpp::NumericVector lambda, SEXP covariates, SEXP beta, SEXP gamma, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, R_xlen_t max_points, R_xlen_t steps, R_xlen_t nsim, SEXP types, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, bool drop, Rcpp::NumericVector mark_range);
 RcppExport SEXP _ppjsdm_rgibbs_cpp(SEXP windowSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP covariatesSEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP max_pointsSEXP, SEXP stepsSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP dropSEXP, SEXP mark_rangeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type window(windowSEXP);
     Rcpp::traits::input_parameter< SEXP >::type alpha(alphaSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type lambda(lambdaSEXP);
     Rcpp::traits::input_parameter< SEXP >::type covariates(covariatesSEXP);
     Rcpp::traits::input_parameter< SEXP >::type beta(betaSEXP);
     Rcpp::traits::input_parameter< SEXP >::type gamma(gammaSEXP);
@@ -109,9 +109,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// rppp
-SEXP rppp(SEXP window, SEXP lambda, R_xlen_t nsim, SEXP types, bool drop, Rcpp::NumericVector mark_range);
-RcppExport SEXP _ppjsdm_rppp(SEXP windowSEXP, SEXP lambdaSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP dropSEXP, SEXP mark_rangeSEXP) {
+// rppp_cpp
+SEXP rppp_cpp(SEXP window, SEXP lambda, R_xlen_t nsim, SEXP types, bool drop, Rcpp::NumericVector mark_range);
+RcppExport SEXP _ppjsdm_rppp_cpp(SEXP windowSEXP, SEXP lambdaSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP dropSEXP, SEXP mark_rangeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -121,7 +121,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type types(typesSEXP);
     Rcpp::traits::input_parameter< bool >::type drop(dropSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type mark_range(mark_rangeSEXP);
-    rcpp_result_gen = Rcpp::wrap(rppp(window, lambda, nsim, types, drop, mark_range));
+    rcpp_result_gen = Rcpp::wrap(rppp_cpp(window, lambda, nsim, types, drop, mark_range));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -148,9 +148,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ppjsdm_compute_papangelou", (DL_FUNC) &_ppjsdm_compute_papangelou, 17},
     {"_ppjsdm_has_duplicates", (DL_FUNC) &_ppjsdm_has_duplicates, 1},
     {"_ppjsdm_prepare_gibbsm_data", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data, 12},
-    {"_ppjsdm_rbinomialpp", (DL_FUNC) &_ppjsdm_rbinomialpp, 6},
+    {"_ppjsdm_rbinomialpp_cpp", (DL_FUNC) &_ppjsdm_rbinomialpp_cpp, 6},
     {"_ppjsdm_rgibbs_cpp", (DL_FUNC) &_ppjsdm_rgibbs_cpp, 18},
-    {"_ppjsdm_rppp", (DL_FUNC) &_ppjsdm_rppp, 6},
+    {"_ppjsdm_rppp_cpp", (DL_FUNC) &_ppjsdm_rppp_cpp, 6},
     {"_ppjsdm_show_short_range_models", (DL_FUNC) &_ppjsdm_show_short_range_models, 0},
     {"_ppjsdm_show_medium_range_models", (DL_FUNC) &_ppjsdm_show_medium_range_models, 0},
     {NULL, NULL, 0}

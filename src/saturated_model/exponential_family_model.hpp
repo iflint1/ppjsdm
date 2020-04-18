@@ -238,7 +238,7 @@ public:
   }
 
   auto sample_point_from_bounding_intensity() const {
-    // Sample type proportionally to the \  lambda_i.
+    // Sample type proportionally to the lambda_i.
     const auto random_type(Rcpp::sample(Model::lambda_.size(), 1, false, Rcpp::sugar::probs_t(Model::lambda_), false)[0]);
     while(true) {
       const auto sample(window_.sample(random_type));

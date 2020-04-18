@@ -41,42 +41,16 @@ prepare_gibbsm_data <- function(configuration_list, window, covariates, traits, 
     .Call('_ppjsdm_prepare_gibbsm_data', PACKAGE = 'ppjsdm', configuration_list, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, approximate)
 }
 
-#' Sample a binomial point processes
-#'
-#' @param window Simulation window. Default is a Rectangle window [0, 1]^2.
-#' @param n A vector representing the number of points of each types of the multipoint binomial point processes.
-#' Default is a vector of same size as types, filled with ones.
-#' @param nsim Number of samples to generate. Default is 1.
-#' @param types Types of the points. Default is a vector (type1, type2, ...) of same size as n.
-#' @param drop If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration.
-#' Default is TRUE.
-#' @param mark_range Range of additional marks to give to the points.
-#' @export
-#' @useDynLib ppjsdm
-#' @import Rcpp
-rbinomialpp <- function(window = NULL, n = NULL, nsim = 1L, types = NULL, drop = TRUE, mark_range = as.numeric( c(1., 1.))) {
-    .Call('_ppjsdm_rbinomialpp', PACKAGE = 'ppjsdm', window, n, nsim, types, drop, mark_range)
+rbinomialpp_cpp <- function(window, n, nsim, types, drop, mark_range) {
+    .Call('_ppjsdm_rbinomialpp_cpp', PACKAGE = 'ppjsdm', window, n, nsim, types, drop, mark_range)
 }
 
 rgibbs_cpp <- function(window, alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, saturation, max_points, steps, nsim, types, model, medium_range_model, drop, mark_range) {
     .Call('_ppjsdm_rgibbs_cpp', PACKAGE = 'ppjsdm', window, alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, saturation, max_points, steps, nsim, types, model, medium_range_model, drop, mark_range)
 }
 
-#' Sample a Poisson point processes
-#'
-#' @param window Simulation window. Default is a Rectangle window [0, 1]^2.
-#' @param lambda A vector representing the intensities of the multipoint Poisson point processes.
-#' Default is a vector of same size as types, filled with ones.
-#' @param nsim Number of samples to generate. Default is 1.
-#' @param types Types of the points. Default is a vector (type1, type2, ...) of same size as n.
-#' @param drop If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration.
-#' Default is TRUE.
-#' @param mark_range Range of additional marks to give to the points.
-#' @export
-#' @useDynLib ppjsdm
-#' @import Rcpp
-rppp <- function(window = NULL, lambda = NULL, nsim = 1L, types = NULL, drop = TRUE, mark_range = as.numeric( c(1., 1.))) {
-    .Call('_ppjsdm_rppp', PACKAGE = 'ppjsdm', window, lambda, nsim, types, drop, mark_range)
+rppp_cpp <- function(window, lambda, nsim, types, drop, mark_range) {
+    .Call('_ppjsdm_rppp_cpp', PACKAGE = 'ppjsdm', window, lambda, nsim, types, drop, mark_range)
 }
 
 #' Show the authorised short range models.

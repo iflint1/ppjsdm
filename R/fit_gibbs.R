@@ -5,7 +5,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic) {
     pfactor <- rep(1, nregressors)
     pfactor[startsWith(colnames(regressors), "shifted_log_lambda")] <- 0
 
-    # Avoid a bug in glmnet: if intercept = FALSE, and there's a column of one  s, it gets ignored by glmnet
+    # Avoid a bug in glmnet: if intercept = FALSE, and there's a column of ones, it gets ignored by glmnet
     # even though its penalty factor is zero.
     if(all(1 == regressors[, startsWith(colnames(regressors), "shifted_log_lambda")])) {
       regressors[1, startsWith(colnames(regressors), "shifted_log_lambda")] <- 1.001

@@ -10,7 +10,6 @@
 #include "simulation/coupling_from_the_past.hpp"
 #include "simulation/metropolis_hastings.hpp"
 
-#include "utility/call_on_list_or_vector.hpp"
 #include "utility/construct_if_missing.hpp"
 #include "utility/get_list_or_first_element.hpp"
 #include "utility/get_number_types.hpp"
@@ -29,7 +28,7 @@ inline SEXP rgibbs_helper(const Model& model, R_xlen_t nsim, Rcpp::CharacterVect
     samples[i] = ppjsdm::make_R_configuration(sample, types);
   }
 
-  return ppjsdm::get_list_or_first_element(samples, nsim, drop);
+  return ppjsdm::get_list_or_first_element(samples, nsim == 1 && drop);
 }
 
 template<typename Model>
@@ -41,11 +40,11 @@ inline SEXP rgibbs_helper(const Model& model, const ppjsdm::Window& window, R_xl
     samples[i] = ppjsdm::make_R_configuration(sample, types);
   }
 
-  return ppjsdm::get_list_or_first_element(samples, nsim, drop);
+  return ppjsdm::get_list_or_first_element(samples, nsim == 1 && drop);
 }
 
 // [[Rcpp::export]]
-SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP beta, SEXP gamma, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, R_xlen_t max_points, R_xlen_t steps, R_xlen_t nsim, SEXP types, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, bool drop, Rcpp::NumericVector mark_range) {
+SEXP rgibbs_cpp(SEXP window, SEXP alpha, Rcpp::NumericVector lambda, SEXP covariates, SEXP beta, SEXP gamma, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, R_xlen_t max_points, R_xlen_t steps, R_xlen_t nsim, SEXP types, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, bool drop, Rcpp::NumericVector mark_range) {
   if(Rf_isNull(covariates)) {
     covariates = Rcpp::wrap(Rcpp::List(0));
   }
@@ -68,20 +67,18 @@ SEXP rgibbs_cpp(SEXP window, SEXP alpha, SEXP lambda, SEXP covariates, SEXP beta
 
   types = ppjsdm::make_types(types, number_types, lambda);
   const auto cpp_window(ppjsdm::Window(window, mark_range));
-  return ppjsdm::call_on_list_or_vector(lambda, [alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, number_types, &cpp_window, max_points](const auto& l) {
-    const auto sh(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(short_range, 0.1 * cpp_window.diameter(), number_types));
-    const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0.1 * cpp_window.diameter(), number_types));
-    const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0.2 * cpp_window.diameter(), number_types));
-    if(!ppjsdm::is_symmetric_matrix(sh) || !ppjsdm::is_symmetric_matrix(me) || !ppjsdm::is_symmetric_matrix(lo)) {
-      Rcpp::stop("One of the interaction radii matrices is not symmetric.");
-    }
-    if(steps == 0) {
-      const ppjsdm::Truncated_exponential_family_model_over_window<std::remove_cv_t<std::remove_reference_t<decltype(l)>>> exponential_model(cpp_window, l, model, medium_range_model, alpha, beta, gamma, covariates, max_points, sh, me, lo, saturation);
-      return rgibbs_helper(exponential_model, nsim, types, drop, number_types);
+  const auto sh(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(short_range, 0.1 * cpp_window.diameter(), number_types));
+  const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0.1 * cpp_window.diameter(), number_types));
+  const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0.2 * cpp_window.diameter(), number_types));
+  if(!ppjsdm::is_symmetric_matrix(sh) || !ppjsdm::is_symmetric_matrix(me) || !ppjsdm::is_symmetric_matrix(lo)) {
+    Rcpp::stop("One of the interaction radii matrices is not symmetric.");
+  }
+  if(steps == 0) {
+    const ppjsdm::Truncated_exponential_family_model_over_window<Rcpp::NumericVector> exponential_model(cpp_window, lambda, model, medium_range_model, alpha, beta, gamma, covariates, max_points, sh, me, lo, saturation);
+    return rgibbs_helper(exponential_model, nsim, types, drop, number_types);
 
-    } else {
-      const ppjsdm::Truncated_exponential_family_model<std::remove_cv_t<std::remove_reference_t<decltype(l)>>> exponential_model(l, model, medium_range_model, alpha, beta, gamma, covariates, max_points, sh, me, lo, saturation);
-      return rgibbs_helper(exponential_model, cpp_window, nsim, types, drop, number_types, steps);
-    }
-  });
+  } else {
+    const ppjsdm::Truncated_exponential_family_model<Rcpp::NumericVector> exponential_model(lambda, model, medium_range_model, alpha, beta, gamma, covariates, max_points, sh, me, lo, saturation);
+    return rgibbs_helper(exponential_model, cpp_window, nsim, types, drop, number_types, steps);
+  }
 }
