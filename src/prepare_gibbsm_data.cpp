@@ -399,8 +399,8 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list, SEXP window, Rcpp:
     Rcpp::stop("Short range interaction radius matrix is not symmetric.");
   }
   const auto dispersion(ppjsdm::Saturated_model(model, sh, saturation));
-  const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0.1 * cpp_window.diameter(), number_types));
-  const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0.2 * cpp_window.diameter(), number_types));
+  const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0., number_types));
+  const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0., number_types));
   if(!ppjsdm::is_symmetric_matrix(me) || !ppjsdm::is_symmetric_matrix(lo)) {
     Rcpp::stop("Medium or long range interaction radius matrix is not symmetric.");
   }

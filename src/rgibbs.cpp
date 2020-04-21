@@ -68,8 +68,8 @@ SEXP rgibbs_cpp(SEXP window, SEXP alpha, Rcpp::NumericVector lambda, SEXP covari
   types = ppjsdm::make_types(types, number_types, lambda);
   const auto cpp_window(ppjsdm::Window(window, mark_range));
   const auto sh(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(short_range, 0.1 * cpp_window.diameter(), number_types));
-  const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0.1 * cpp_window.diameter(), number_types));
-  const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0.2 * cpp_window.diameter(), number_types));
+  const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0., number_types));
+  const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0., number_types));
   if(!ppjsdm::is_symmetric_matrix(sh) || !ppjsdm::is_symmetric_matrix(me) || !ppjsdm::is_symmetric_matrix(lo)) {
     Rcpp::stop("One of the interaction radii matrices is not symmetric.");
   }
