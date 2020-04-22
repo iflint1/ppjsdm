@@ -223,6 +223,16 @@ private:
       count.pop_back();
     }
   }
+
+  template<typename Vector, typename Point, typename Other>
+  static void add_delta(Vector& dispersion, const Saturated_model& varphi, typename CountType::value_type& count, const Point& point, const Other& other) {
+    const auto sq(normalized_square_distance(point, other));
+    if(count.size() < varphi.get_saturation()) {
+      dispersion[get_type(point)] += varphi.apply(sq, get_type(point), get_type(other));
+    } else if(sq < count[0]) {
+      dispersion[get_type(point)] += varphi.apply(sq, get_type(point), get_type(other)) - varphi.apply(count[0], get_type(point), get_type(other));
+    }
+  }
 public:
   compute_dispersion() {}
 
@@ -237,41 +247,25 @@ public:
       compute_dispersion::update_count(varphi, count_vector[get_type(current_point)], current_point, point);
     }, std::forward<Configurations>(configurations)...);
 
+    std::vector<double> dispersion(number_types);
+    using size_t = typename decltype(dispersion)::size_type;
+    for(size_t i(0); i < static_cast<size_t>(number_types); ++i) {
+      dispersion[i] = std::accumulate(count_vector[i].begin(), count_vector[i].end(), 0., [&varphi, i, &point](double count, const auto& val) {
+        return count + varphi.apply(val, i, get_type(point));
+      });
+    }
+
     // TODO: Ideally, use if constexpr
     if(!Approximate) {
-      for_each_container([&count_vector, &point, &varphi, configurations...](const auto& current_point) {
+      for_each_container([&dispersion, &point, &varphi, configurations...](const auto& current_point) {
         std::vector<double> count{};
         for_each_container([&point, &count, &current_point, &varphi](const auto& other_point) {
           if(!is_equal(other_point, current_point) && get_type(other_point) == get_type(point)) {
             compute_dispersion::update_count(varphi, count, current_point, other_point);
           }
         }, configurations...);
-        for(auto c: count) {
-          count_vector[get_type(current_point)].emplace_back(-c);
-        }
-        compute_dispersion::update_count(varphi, count, current_point, point);
-        // TODO: Might be able to simplify this and above--only one element of count changes in the computation above.
-        for(auto c: count) {
-          count_vector[get_type(current_point)].emplace_back(c);
-        }
+        compute_dispersion::add_delta(dispersion, varphi, count, current_point, point);
       }, std::forward<Configurations>(configurations)...);
-    }
-    std::vector<double> dispersion(number_types);
-    using size_t = typename decltype(dispersion)::size_type;
-    for(size_t i(0); i < static_cast<size_t>(number_types); ++i) {
-      double d(0.);
-      for(auto c: count_vector[i]) {
-        // TODO: Don't like this, change?
-        if(c < 0) {
-          d -= varphi.apply(-c, i, get_type(point));
-        } else {
-          d += varphi.apply(c, i, get_type(point));
-        }
-      }
-      dispersion[i] = d;
-      // dispersion[i] = std::accumulate(count_vector[i].begin(), count_vector[i].end(), 0., [&varphi, i, &point](double count, const auto& val) {
-      //   return count + varphi.apply(val, i, get_type(point));
-      // });
     }
     return dispersion;
   }
@@ -296,6 +290,18 @@ private:
       }
     }
   }
+
+  template<typename Vector, typename Point, typename Other>
+  static void add_delta(Vector& dispersion, const Saturated_model& varphi, typename CountType::value_type& count, const Point& point, const Other& other) {
+    const auto sq(normalized_square_distance(point, other));
+    if(sq >= varphi.get_square_lower_endpoint(get_type(point), get_type(other))) {
+      if(count.size() < varphi.get_saturation()) {
+        dispersion[get_type(point)] += varphi.apply(sq, get_type(point), get_type(other));
+      } else if(sq < count[0]) {
+        dispersion[get_type(point)] += varphi.apply(sq, get_type(point), get_type(other)) - varphi.apply(count[0], get_type(point), get_type(other));
+      }
+    }
+  }
 public:
   compute_dispersion() {}
 
@@ -310,41 +316,25 @@ public:
       compute_dispersion::update_count(varphi, count_vector[get_type(current_point)], current_point, point);
     }, std::forward<Configurations>(configurations)...);
 
+    std::vector<double> dispersion(number_types);
+    using size_t = typename decltype(dispersion)::size_type;
+    for(size_t i(0); i < static_cast<size_t>(number_types); ++i) {
+      dispersion[i] = std::accumulate(count_vector[i].begin(), count_vector[i].end(), 0., [&varphi, i, &point](double count, const auto& val) {
+        return count + varphi.apply(val, i, get_type(point));
+      });
+    }
+
     // TODO: Ideally, use if constexpr
     if(!Approximate) {
-      for_each_container([&count_vector, &point, &varphi, configurations...](const auto& current_point) {
+      for_each_container([&dispersion, &point, &varphi, configurations...](const auto& current_point) {
         std::vector<double> count{};
         for_each_container([&point, &count, &current_point, &varphi](const auto& other_point) {
           if(!is_equal(other_point, current_point) && get_type(other_point) == get_type(point)) {
             compute_dispersion::update_count(varphi, count, current_point, other_point);
           }
         }, configurations...);
-        for(const auto& c: count) {
-          count_vector[get_type(current_point)].emplace_back(-c);
-        }
-        compute_dispersion::update_count(varphi, count, current_point, point);
-        // TODO: Might be able to simplify this and above--only one element of count changes in the computation above.
-        for(const auto& c: count) {
-          count_vector[get_type(current_point)].emplace_back(c);
-        }
+        compute_dispersion::add_delta(dispersion, varphi, count, current_point, point);
       }, std::forward<Configurations>(configurations)...);
-    }
-    std::vector<double> dispersion(number_types);
-    using size_t = typename decltype(dispersion)::size_type;
-    for(size_t i(0); i < static_cast<size_t>(number_types); ++i) {
-      double d(0.);
-      for(auto c: count_vector[i]) {
-        // TODO: Don't like this, change?
-        if(c < 0) {
-          d -= varphi.apply(-c, i, get_type(point));
-        } else {
-          d += varphi.apply(c, i, get_type(point));
-        }
-      }
-      dispersion[i] = d;
-      // dispersion[i] = std::accumulate(count_vector[i].begin(), count_vector[i].end(), 0., [&varphi, i, &point](double count, const auto& val) {
-      //   return count + varphi.apply(val, i, get_type(point));
-      // });
     }
     return dispersion;
   }
@@ -367,6 +357,16 @@ private:
       count.pop_back();
     }
   }
+
+  template<typename Vector, typename Point, typename Other>
+  static void add_delta(Vector& dispersion, const Saturated_model& varphi, typename CountType::value_type& count, const Point& point, const Other& other) {
+    const auto disp(apply_potential(varphi, other, point));
+    if(count.size() < varphi.get_saturation()) {
+      dispersion[get_type(point)] += disp;
+    } else if(disp > count[0]) {
+      dispersion[get_type(point)] += disp - count[0];
+    }
+  }
 public:
   compute_dispersion() {}
 
@@ -381,25 +381,23 @@ public:
       compute_dispersion::update_count(varphi, count_vector[get_type(current_point)], point, current_point);
     }, std::forward<Configurations>(configurations)...);
 
+    std::vector<double> dispersion(number_types);
+    using size_t = typename decltype(dispersion)::size_type;
+    for(size_t i(0); i < static_cast<size_t>(number_types); ++i) {
+      dispersion[i] = std::accumulate(count_vector[i].begin(), count_vector[i].end(), 0.);
+    }
+
     // TODO: Ideally, use if constexpr
     if(!Approximate) {
-      for_each_container([&count_vector, &point, &varphi, configurations...](const auto& current_point) {
+      for_each_container([&dispersion, &point, &varphi, configurations...](const auto& current_point) {
         std::vector<double> count{};
         for_each_container([&point, &count, &current_point, &varphi](const auto& other_point) {
           if(!is_equal(other_point, current_point) && get_type(other_point) == get_type(point)) {
             compute_dispersion::update_count(varphi, count, other_point, current_point);
           }
         }, configurations...);
-        count_vector[get_type(current_point)].emplace_back(-std::accumulate(count.begin(), count.end(), 0.));
-        compute_dispersion::update_count(varphi, count, point, current_point);
-        count_vector[get_type(current_point)].emplace_back(std::accumulate(count.begin(), count.end(), 0.));
+        compute_dispersion::add_delta(dispersion, varphi, count, current_point, point);
       }, std::forward<Configurations>(configurations)...);
-    }
-
-    std::vector<double> dispersion(number_types);
-    using size_t = typename decltype(dispersion)::size_type;
-    for(size_t i(0); i < static_cast<size_t>(number_types); ++i) {
-      dispersion[i] = std::accumulate(count_vector[i].begin(), count_vector[i].end(), 0.);
     }
     return dispersion;
   }
