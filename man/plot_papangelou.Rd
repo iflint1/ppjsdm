@@ -19,7 +19,6 @@ plot_papangelou(
   medium_range,
   long_range,
   saturation,
-  max_points,
   grid_steps = 1000,
   mark = 1,
   steps = 0
@@ -53,8 +52,6 @@ plot_papangelou(
 \item{long_range}{Matrix of long range distances.}
 
 \item{saturation}{Saturation.}
-
-\item{max_points}{Maximum number of points.}
 
 \item{grid_steps}{Number of horizontal and vertical grid steps.}
 

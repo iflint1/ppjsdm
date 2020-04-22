@@ -20,7 +20,6 @@ compute_papangelou(
   medium_range,
   long_range,
   saturation,
-  max_points,
   mark = 1
 )
 }
@@ -54,8 +53,6 @@ compute_papangelou(
 \item{long_range}{Long range interaction radii.}
 
 \item{saturation}{Saturation parameter.}
-
-\item{max_points}{Maximum number of points.}
 
 \item{mark}{Mark of the point to add.}
 }

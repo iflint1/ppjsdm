@@ -13,7 +13,6 @@
 #' @param medium_range Symmetric matrix of medium range interaction radii. Filled with 0.1 times the window radius by default.
 #' @param long_range Symmetric matrix of long range interaction radii. Filled with 0.2 times the window radius by default.
 #' @param saturation Saturation parameter of the point process. Default is 2.
-#' @param max_points Maximum number of points. Default is Inf.
 #' @param steps Number of steps in the Metropolis algorithm. If `steps = 0`, uses the coupling from the past algorithm instead.
 #' Default is 0.
 #' @param nsim Number of samples to generate. Default is 1.
@@ -33,7 +32,6 @@ rgibbs <- function(window = NULL,
                    medium_range = NULL,
                    long_range = NULL,
                    saturation = 2,
-                   max_points = Inf,
                    steps = 0,
                    nsim = 1,
                    types = NULL,
@@ -50,5 +48,21 @@ rgibbs <- function(window = NULL,
   if(!missing(beta)) {
     beta <- as.matrix(beta)
   }
-  rgibbs_cpp(window, alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, saturation, max_points, steps, nsim, types, model, medium_range_model, drop, mark_range)
+  rgibbs_cpp(window = window,
+             alpha = alpha,
+             lambda = lambda,
+             covariates = covariates,
+             beta = beta,
+             gamma = gamma,
+             short_range = short_range,
+             medium_range = medium_range,
+             long_range = long_range,
+             saturation = saturation,
+             steps = steps,
+             nsim = nsim,
+             types = types,
+             model = model,
+             medium_range_model = medium_range_model,
+             drop = drop,
+             mark_range = mark_range)
 }

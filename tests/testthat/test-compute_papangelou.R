@@ -103,8 +103,7 @@ test_that("Correct Papangelou conditional intensity value", {
                                                      short_range = r_1,
                                                      medium_range = r_2,
                                                      long_range = r_3,
-                                                     saturation = N,
-                                                     max_points = Inf)
+                                                     saturation = N)
     expect_equal(papangelou_direct, papangelou_package)
   }
 })

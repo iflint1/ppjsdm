@@ -44,7 +44,7 @@ inline SEXP rgibbs_helper(const Model& model, const ppjsdm::Window& window, R_xl
 }
 
 // [[Rcpp::export]]
-SEXP rgibbs_cpp(SEXP window, SEXP alpha, Rcpp::NumericVector lambda, SEXP covariates, SEXP beta, SEXP gamma, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, R_xlen_t max_points, R_xlen_t steps, R_xlen_t nsim, SEXP types, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, bool drop, Rcpp::NumericVector mark_range) {
+SEXP rgibbs_cpp(SEXP window, SEXP alpha, Rcpp::NumericVector lambda, SEXP covariates, SEXP beta, SEXP gamma, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, R_xlen_t steps, R_xlen_t nsim, SEXP types, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, bool drop, Rcpp::NumericVector mark_range) {
   if(Rf_isNull(covariates)) {
     covariates = Rcpp::wrap(Rcpp::List(0));
   }
@@ -74,11 +74,11 @@ SEXP rgibbs_cpp(SEXP window, SEXP alpha, Rcpp::NumericVector lambda, SEXP covari
     Rcpp::stop("One of the interaction radii matrices is not symmetric.");
   }
   if(steps == 0) {
-    const ppjsdm::Truncated_exponential_family_model_over_window<Rcpp::NumericVector> exponential_model(cpp_window, lambda, model, medium_range_model, alpha, beta, gamma, covariates, max_points, sh, me, lo, saturation);
+    const ppjsdm::Truncated_exponential_family_model_over_window<Rcpp::NumericVector> exponential_model(cpp_window, lambda, model, medium_range_model, alpha, beta, gamma, covariates, sh, me, lo, saturation);
     return rgibbs_helper(exponential_model, nsim, types, drop, number_types);
 
   } else {
-    const ppjsdm::Truncated_exponential_family_model<Rcpp::NumericVector> exponential_model(lambda, model, medium_range_model, alpha, beta, gamma, covariates, max_points, sh, me, lo, saturation);
+    const ppjsdm::Truncated_exponential_family_model<Rcpp::NumericVector> exponential_model(lambda, model, medium_range_model, alpha, beta, gamma, covariates, sh, me, lo, saturation);
     return rgibbs_helper(exponential_model, cpp_window, nsim, types, drop, number_types, steps);
   }
 }

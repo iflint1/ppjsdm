@@ -18,13 +18,12 @@
 #' @param medium_range Medium range interaction radii.
 #' @param long_range Long range interaction radii.
 #' @param saturation Saturation parameter.
-#' @param max_points Maximum number of points.
 #' @param mark Mark of the point to add.
 #' @export
 #' @useDynLib ppjsdm
 #' @import Rcpp
-compute_papangelou <- function(configuration, x, y, type, model, medium_range_model, alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation, max_points, mark = 1.0) {
-    .Call('_ppjsdm_compute_papangelou', PACKAGE = 'ppjsdm', configuration, x, y, type, model, medium_range_model, alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation, max_points, mark)
+compute_papangelou <- function(configuration, x, y, type, model, medium_range_model, alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation, mark = 1.0) {
+    .Call('_ppjsdm_compute_papangelou', PACKAGE = 'ppjsdm', configuration, x, y, type, model, medium_range_model, alpha, lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation, mark)
 }
 
 #' Check if a configuration contains duplicates.
@@ -45,8 +44,8 @@ rbinomialpp_cpp <- function(window, n, nsim, types, drop, mark_range) {
     .Call('_ppjsdm_rbinomialpp_cpp', PACKAGE = 'ppjsdm', window, n, nsim, types, drop, mark_range)
 }
 
-rgibbs_cpp <- function(window, alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, saturation, max_points, steps, nsim, types, model, medium_range_model, drop, mark_range) {
-    .Call('_ppjsdm_rgibbs_cpp', PACKAGE = 'ppjsdm', window, alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, saturation, max_points, steps, nsim, types, model, medium_range_model, drop, mark_range)
+rgibbs_cpp <- function(window, alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, mark_range) {
+    .Call('_ppjsdm_rgibbs_cpp', PACKAGE = 'ppjsdm', window, alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, mark_range)
 }
 
 rppp_cpp <- function(window, lambda, nsim, types, drop, mark_range) {

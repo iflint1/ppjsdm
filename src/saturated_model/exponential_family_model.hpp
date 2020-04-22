@@ -152,7 +152,6 @@ public:
                                      Rcpp::NumericMatrix beta,
                                      Rcpp::NumericMatrix gamma,
                                      Rcpp::List covariates,
-                                     unsigned long long int max_points,
                                      Rcpp::NumericMatrix short_range,
                                      Rcpp::NumericMatrix medium_range,
                                      Rcpp::NumericMatrix long_range,
@@ -163,21 +162,16 @@ public:
     alpha_(alpha),
     beta_(beta),
     gamma_(gamma),
-    covariates_(covariates),
-    max_points_(max_points) {}
+    covariates_(covariates) {}
 
   template<typename Point, typename Configuration>
   double compute_papangelou(const Point& point, const Configuration& configuration) const {
-    if(static_cast<unsigned long long int>(size(configuration)) + 1u <= max_points_) {
-      const auto dalpha(compute_dispersion(dispersion_, point, alpha_.nrow(), configuration));
-      double alpha_dispersion(detail::compute_alpha_dot_dispersion(point, alpha_, dalpha));
-      const auto dgamma(compute_dispersion(medium_range_dispersion_, point, gamma_.nrow(), configuration));
-      double gamma_dispersion(detail::compute_alpha_dot_dispersion(point, gamma_, dgamma));
-      double beta_covariates(detail::compute_beta_dot_covariates(point, beta_, covariates_));
-      return lambda_[get_type(point)] * std::exp(beta_covariates + alpha_dispersion + gamma_dispersion);
-    } else {
-      return 0.;
-    }
+    const auto dalpha(compute_dispersion(dispersion_, point, alpha_.nrow(), configuration));
+    double alpha_dispersion(detail::compute_alpha_dot_dispersion(point, alpha_, dalpha));
+    const auto dgamma(compute_dispersion(medium_range_dispersion_, point, gamma_.nrow(), configuration));
+    double gamma_dispersion(detail::compute_alpha_dot_dispersion(point, gamma_, dgamma));
+    double beta_covariates(detail::compute_beta_dot_covariates(point, beta_, covariates_));
+    return lambda_[get_type(point)] * std::exp(beta_covariates + alpha_dispersion + gamma_dispersion);
   }
 
 protected:
@@ -188,7 +182,6 @@ protected:
   Rcpp::NumericMatrix beta_;
   Rcpp::NumericMatrix gamma_;
   Im_list_wrapper covariates_;
-  unsigned long long int max_points_;
 };
 
 template<typename Lambda>
@@ -213,12 +206,11 @@ public:
                                                  Rcpp::NumericMatrix beta,
                                                  Rcpp::NumericMatrix gamma,
                                                  Rcpp::List covariates,
-                                                 unsigned long long int max_points,
                                                  Rcpp::NumericMatrix short_range,
                                                  Rcpp::NumericMatrix medium_range,
                                                  Rcpp::NumericMatrix long_range,
                                                  unsigned long long int saturation):
-    Model(lambda, model, medium_range_model, alpha, beta, gamma, covariates, max_points, short_range, medium_range, long_range, saturation),
+    Model(lambda, model, medium_range_model, alpha, beta, gamma, covariates, short_range, medium_range, long_range, saturation),
     window_(window),
     beta_dot_covariates_maximum_(detail::compute_beta_dot_covariates_maximum(beta, Model::covariates_)),
     dot_dispersion_maximum_(detail::compute_alpha_dot_dispersion_maximum(alpha, get_dispersion_maximum(Model::dispersion_))) {
@@ -276,10 +268,7 @@ public:
   // TODO: The IPPP in the CFTP algorithm should be conditioned to have <= saturation points.
   template<typename Point, typename Configuration>
   void add_to_L_or_U(double exp_mark, const Point& point, Configuration& l, Configuration& l_complement) const {
-    // TODO: Continue thinking about whether or not this check is correct. Write properly what this function is doing.
-    if(size(l) + size(l_complement) >= Model::max_points_) {
-      return;
-    }
+    // TODO: Write properly what this function is doing.
     double dot_dispersion_maximum(dot_dispersion_maximum_[get_type(point)]);
     if(detail::is_alpha_non_negative(point, Model::alpha_) && detail::is_alpha_non_negative(point, Model::gamma_)) {
       const auto alpha_dispersion_u(compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l, l_complement));
