@@ -115,14 +115,19 @@ template<typename Alpha>
 inline auto compute_alpha_dot_dispersion_maximum(const Alpha& alpha,
                                                  double dispersion_maximum,
                                                  int type) {
-  double sum(0);
+  double sum(0.);
   for(R_xlen_t j(0); j < alpha.ncol(); ++j) {
     const auto a(alpha(type, j));
-    if(a > 0) {
+    if(a > 0.) {
       sum += a;
     }
   }
-  return sum * dispersion_maximum;
+  // The condition below ensures that 0 * Inf = 0.
+  if(sum > 0.) {
+    return sum * dispersion_maximum;
+  } else {
+    return 0.;
+  }
 }
 
 template<typename Alpha>
@@ -193,7 +198,11 @@ private:
 
   template<typename D>
   auto get_dispersion_maximum(const D& dispersion) const {
-    return 6 * dispersion.get_maximum();
+    if(dispersion.is_nonincreasing()) {
+      return 6 * dispersion.get_maximum();
+    } else {
+      return std::numeric_limits<double>::infinity();
+    }
   }
 public:
   Truncated_exponential_family_model_over_window(const Window& window,
