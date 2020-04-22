@@ -337,30 +337,27 @@ public:
     }
   }
 
-  // TODO: Obviously don't want to use this anymore since fixed version is not lower-bounded.
-  double compute_log_alpha_min_lower_bound(R_xlen_t) const {
-    return -std::numeric_limits<double>::infinity();
-    // double sum_alpha(0);
-    // for(R_xlen_t j(0); j < Model::alpha_.ncol(); ++j) {
-    //   const auto a(Model::alpha_(type, j));
-    //   if(a > 0) {
-    //     sum_alpha -= a;
-    //   } else {
-    //     sum_alpha += a;
-    //   }
-    // }
-    // double sum_gamma(0);
-    // for(R_xlen_t j(0); j < Model::gamma_.ncol(); ++j) {
-    //   const auto g(Model::gamma_(type, j));
-    //   if(g > 0) {
-    //     sum_gamma -= g;
-    //   } else {
-    //     sum_gamma += g;
-    //   }
-    // }
-    //
-    // return sum_alpha * Model::dispersion_.get_maximum()
-    //   + sum_gamma * Model::medium_range_dispersion_.get_maximum();
+  double compute_log_alpha_min_lower_bound(R_xlen_t type) const {
+    double sum_alpha(0);
+    for(R_xlen_t j(0); j < Model::alpha_.ncol(); ++j) {
+      const auto a(Model::alpha_(type, j));
+      if(a > 0) {
+        sum_alpha -= a;
+      } else {
+        sum_alpha += a;
+      }
+    }
+    double sum_gamma(0);
+    for(R_xlen_t j(0); j < Model::gamma_.ncol(); ++j) {
+      const auto g(Model::gamma_(type, j));
+      if(g > 0) {
+        sum_gamma -= g;
+      } else {
+        sum_gamma += g;
+      }
+    }
+
+    return sum_alpha * get_dispersion_maximum(Model::dispersion_) + sum_gamma * get_dispersion_maximum(Model::medium_range_dispersion_);
   }
 
   const auto& get_window() const {
