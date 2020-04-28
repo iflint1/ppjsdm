@@ -279,6 +279,9 @@ public:
     for(size_t i(0); i < number_types; ++i) {
       const auto value(Model::lambda_[i] * std::exp(dot_dispersion_maximum_[i] + beta_dot_covariates_maximum_[i]));
       if(std::isinf(value)) {
+        Rcpp::Rcout << Model::lambda_[i] << '\n';
+        Rcpp::Rcout << dot_dispersion_maximum_[i] << '\n';
+        Rcpp::Rcout << beta_dot_covariates_maximum_[i] << '\n';
         Rcpp::stop("Infinite value obtained as the bound to the Papangelou intensity.");
       }
       upper_bound[i] = value;

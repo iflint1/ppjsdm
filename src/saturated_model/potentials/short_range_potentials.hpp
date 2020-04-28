@@ -112,8 +112,8 @@ struct Linear_implementation {
 };
 
 struct Strauss_implementation {
-  static constexpr bool is_nonincreasing = false;
-  static constexpr bool is_nonincreasing_after_lower_endpoint = false;
+  static constexpr bool is_nonincreasing = true;
+  static constexpr bool is_nonincreasing_after_lower_endpoint = true;
   static constexpr bool is_two_valued = true;
 
   static double set(double radius) {
