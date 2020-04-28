@@ -59,6 +59,11 @@ inline auto size(const Configuration& configuration) {
   return traits::configuration_manipulation<Configuration>::size(configuration);
 }
 
+template<typename Configuration, typename... Configurations, std::enable_if_t<sizeof...(Configurations) != 0>* = nullptr>
+inline auto size(const Configuration& configuration, Configurations&... configurations) {
+  return traits::configuration_manipulation<Configuration>::size(configuration) + size(configurations...);
+}
+
 template<typename T>
 using size_t = decltype(size(std::declval<T>()));
 

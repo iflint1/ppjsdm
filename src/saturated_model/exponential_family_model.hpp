@@ -47,47 +47,16 @@ inline auto compute_beta_dot_covariates_maximum(const Beta& beta, const Covariat
   return result;
 }
 
-template<typename Point, typename Alpha, typename Dispersion>
-inline auto compute_alpha_dot_dispersion(const Point& point,
-                                         const Alpha& alpha,
-                                         const Dispersion& dispersion) {
-  double sum(0);
+template<typename Point, typename Alpha>
+inline bool is_alpha_zero(const Point& point,
+                          const Alpha& alpha) {
   for(R_xlen_t i(0); i < alpha.ncol(); ++i) {
-    if(dispersion[i] != 0) { // This ensures that \infty \times 0 = 0.
-      sum += alpha(get_type(point), i) * dispersion[i];
+    if(alpha(get_type(point), i) != 0) {
+      return false;
     }
   }
-  return sum;
+  return true;
 }
-
-template<typename Point, typename Alpha, typename Dispersion>
-inline auto compute_positive_alpha_dot_dispersion(const Point& point,
-                                                  const Alpha& alpha,
-                                                  const Dispersion& dispersion) {
-  double sum(0);
-  for(R_xlen_t i(0); i < alpha.ncol(); ++i) {
-    const auto a(alpha(get_type(point), i));
-    if(a > 0) {
-      sum += a * dispersion[i];
-    }
-  }
-  return sum;
-}
-
-template<typename Point, typename Alpha, typename Dispersion>
-inline auto compute_negative_alpha_dot_dispersion(const Point& point,
-                                                  const Alpha& alpha,
-                                                  const Dispersion& dispersion) {
-  double sum(0);
-  for(R_xlen_t i(0); i < alpha.ncol(); ++i) {
-    const auto a(alpha(get_type(point), i));
-    if(a < 0) {
-      sum += a * dispersion[i];
-    }
-  }
-  return sum;
-}
-
 
 template<typename Point, typename Alpha>
 inline bool is_alpha_non_negative(const Point& point,
@@ -109,6 +78,62 @@ inline bool is_alpha_non_positive(const Point& point,
     }
   }
   return true;
+}
+
+template<typename Point, typename Alpha, typename Dispersion, typename... Configurations>
+inline auto compute_alpha_dot_dispersion(const Point& point,
+                                         const Alpha& alpha,
+                                         const Dispersion& dispersion,
+                                         Configurations&... configurations) {
+  if(is_alpha_zero(point, alpha)) {
+    return 0.;
+  }
+  const auto dispersion_value(compute_dispersion(dispersion, point, alpha.nrow(), configurations...));
+  double sum(0);
+  for(R_xlen_t i(0); i < alpha.ncol(); ++i) {
+    if(dispersion_value[i] != 0) { // This ensures that \infty \times 0 = 0.
+      sum += alpha(get_type(point), i) * dispersion_value[i];
+    }
+  }
+  return sum;
+}
+
+template<typename Point, typename Alpha, typename Dispersion, typename... Configurations>
+inline auto compute_positive_alpha_dot_dispersion(const Point& point,
+                                                  const Alpha& alpha,
+                                                  const Dispersion& dispersion,
+                                                  Configurations&... configurations) {
+  if(is_alpha_zero(point, alpha)) {
+    return 0.;
+  }
+  const auto dispersion_value(compute_dispersion(dispersion, point, alpha.nrow(), configurations...));
+  double sum(0);
+  for(R_xlen_t i(0); i < alpha.ncol(); ++i) {
+    const auto a(alpha(get_type(point), i));
+    if(a > 0) {
+      sum += a * dispersion_value[i];
+    }
+  }
+  return sum;
+}
+
+template<typename Point, typename Alpha, typename Dispersion, typename... Configurations>
+inline auto compute_negative_alpha_dot_dispersion(const Point& point,
+                                                  const Alpha& alpha,
+                                                  const Dispersion& dispersion,
+                                                  Configurations&... configurations) {
+  if(is_alpha_zero(point, alpha)) {
+    return 0.;
+  }
+  const auto dispersion_value(compute_dispersion(dispersion, point, alpha.nrow(), configurations...));
+  double sum(0);
+  for(R_xlen_t i(0); i < alpha.ncol(); ++i) {
+    const auto a(alpha(get_type(point), i));
+    if(a < 0) {
+      sum += a * dispersion_value[i];
+    }
+  }
+  return sum;
 }
 
 template<typename Alpha>
@@ -166,10 +191,8 @@ public:
 
   template<typename Point, typename Configuration>
   double compute_papangelou(const Point& point, const Configuration& configuration) const {
-    const auto dalpha(compute_dispersion(dispersion_, point, alpha_.nrow(), configuration));
-    double alpha_dispersion(detail::compute_alpha_dot_dispersion(point, alpha_, dalpha));
-    const auto dgamma(compute_dispersion(medium_range_dispersion_, point, gamma_.nrow(), configuration));
-    double gamma_dispersion(detail::compute_alpha_dot_dispersion(point, gamma_, dgamma));
+    double alpha_dispersion(detail::compute_alpha_dot_dispersion(point, alpha_, dispersion_, configuration));
+    double gamma_dispersion(detail::compute_alpha_dot_dispersion(point, gamma_, medium_range_dispersion_, configuration));
     double beta_covariates(detail::compute_beta_dot_covariates(point, beta_, covariates_));
     return lambda_[get_type(point)] * std::exp(beta_covariates + alpha_dispersion + gamma_dispersion);
   }
@@ -271,19 +294,15 @@ public:
     // TODO: Write properly what this function is doing.
     double dot_dispersion_maximum(dot_dispersion_maximum_[get_type(point)]);
     if(detail::is_alpha_non_negative(point, Model::alpha_) && detail::is_alpha_non_negative(point, Model::gamma_)) {
-      const auto alpha_dispersion_u(compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l, l_complement));
-      const auto gamma_dispersion_u(compute_dispersion(Model::medium_range_dispersion_, point, Model::gamma_.nrow(), l, l_complement));
-      const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_u));
-      const auto gamma_dispersion(detail::compute_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_u));
+      const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l, l_complement));
+      const auto gamma_dispersion(detail::compute_alpha_dot_dispersion(point, Model::gamma_, Model::medium_range_dispersion_, l, l_complement));
       const auto log_alpha(alpha_dispersion + gamma_dispersion - dot_dispersion_maximum);
       if(log_alpha > 0) {
         Rcpp::stop("Bad upper-bound in the computation of alpha in the CFTP algorithm.");
       }
       if(log_alpha + exp_mark > 0) {
-        const auto alpha_dispersion_l(compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l));
-        const auto gamma_dispersion_l(compute_dispersion(Model::medium_range_dispersion_, point, Model::gamma_.nrow(), l));
-        const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_l));
-        const auto gamma_dispersion(detail::compute_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_l));
+        const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l));
+        const auto gamma_dispersion(detail::compute_alpha_dot_dispersion(point, Model::gamma_, Model::medium_range_dispersion_, l));
         const auto log_alpha(alpha_dispersion + gamma_dispersion - dot_dispersion_maximum);
         if(log_alpha > 0) {
           Rcpp::stop("Bad upper-bound in the computation of alpha in the CFTP algorithm.");
@@ -291,19 +310,15 @@ public:
         add_point(log_alpha + exp_mark > 0 ? l : l_complement, point);
       }
     } else if(detail::is_alpha_non_positive(point, Model::alpha_) && detail::is_alpha_non_positive(point, Model::gamma_)) {
-      const auto alpha_dispersion_l(compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l));
-      const auto gamma_dispersion_l(compute_dispersion(Model::medium_range_dispersion_, point, Model::gamma_.nrow(), l));
-      const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_l));
-      const auto gamma_dispersion(detail::compute_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_l));
+      const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l));
+      const auto gamma_dispersion(detail::compute_alpha_dot_dispersion(point, Model::gamma_, Model::medium_range_dispersion_, l));
       const auto log_alpha(alpha_dispersion + gamma_dispersion - dot_dispersion_maximum);
       if(log_alpha > 0) {
         Rcpp::stop("Bad upper-bound in the computation of alpha in the CFTP algorithm.");
       }
       if(log_alpha + exp_mark > 0) {
-        const auto alpha_dispersion_u(compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l, l_complement));
-        const auto gamma_dispersion_u(compute_dispersion(Model::medium_range_dispersion_, point, Model::gamma_.nrow(), l, l_complement));
-        const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_u));
-        const auto gamma_dispersion(detail::compute_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_u));
+        const auto alpha_dispersion(detail::compute_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l, l_complement));
+        const auto gamma_dispersion(detail::compute_alpha_dot_dispersion(point, Model::gamma_, Model::medium_range_dispersion_, l, l_complement));
         const auto log_alpha(alpha_dispersion + gamma_dispersion - dot_dispersion_maximum);
         if(log_alpha > 0) {
           Rcpp::stop("Bad upper-bound in the computation of alpha in the CFTP algorithm.");
@@ -311,23 +326,19 @@ public:
         add_point(log_alpha + exp_mark > 0 ? l : l_complement, point);
       }
     } else {
-      const auto alpha_dispersion_l(compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l));
-      const auto gamma_dispersion_l(compute_dispersion(Model::medium_range_dispersion_, point, Model::gamma_.nrow(), l));
-      const auto alpha_dispersion_u(compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l, l_complement));
-      const auto gamma_dispersion_u(compute_dispersion(Model::medium_range_dispersion_, point, Model::gamma_.nrow(), l, l_complement));
-      const auto positive_alpha(detail::compute_positive_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_u));
-      const auto negative_alpha(detail::compute_negative_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_l));
-      const auto positive_gamma(detail::compute_positive_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_u));
-      const auto negative_gamma(detail::compute_negative_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_l));
+      const auto positive_alpha(detail::compute_positive_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l, l_complement));
+      const auto negative_alpha(detail::compute_negative_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l));
+      const auto positive_gamma(detail::compute_positive_alpha_dot_dispersion(point, Model::gamma_, Model::medium_range_dispersion_, l, l_complement));
+      const auto negative_gamma(detail::compute_negative_alpha_dot_dispersion(point, Model::gamma_, Model::medium_range_dispersion_, l));
       const auto log_alpha(positive_alpha + negative_alpha + positive_gamma + negative_gamma - dot_dispersion_maximum);
       if(log_alpha > 0) {
         Rcpp::stop("Bad upper-bound in the computation of alpha in the CFTP algorithm.");
       }
       if(positive_alpha + negative_alpha + positive_gamma + negative_gamma - dot_dispersion_maximum + exp_mark > 0) {
-        const auto positive_alpha(detail::compute_positive_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_l));
-        const auto negative_alpha(detail::compute_negative_alpha_dot_dispersion(point, Model::alpha_, alpha_dispersion_u));
-        const auto positive_gamma(detail::compute_positive_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_l));
-        const auto negative_gamma(detail::compute_negative_alpha_dot_dispersion(point, Model::gamma_, gamma_dispersion_u));
+        const auto positive_alpha(detail::compute_positive_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l));
+        const auto negative_alpha(detail::compute_negative_alpha_dot_dispersion(point, Model::alpha_, Model::dispersion_, l, l_complement));
+        const auto positive_gamma(detail::compute_positive_alpha_dot_dispersion(point, Model::gamma_, Model::medium_range_dispersion_, l));
+        const auto negative_gamma(detail::compute_negative_alpha_dot_dispersion(point, Model::gamma_, Model::medium_range_dispersion_, l, l_complement));
         const auto log_alpha(positive_alpha + negative_alpha + positive_gamma + negative_gamma - dot_dispersion_maximum);
         if(log_alpha > 0) {
           Rcpp::stop("Bad upper-bound in the computation of alpha in the CFTP algorithm.");
