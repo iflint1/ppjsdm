@@ -3,7 +3,7 @@ library(ppjsdm)
 alpha <- matrix(-0.1)
 gamma <- matrix(0)
 lambda <- 30
-nsim <- 1000
+nsim <- 10000
 short_range <- matrix(0.1)
 medium_range <- matrix(0)
 long_range <- matrix(0)
