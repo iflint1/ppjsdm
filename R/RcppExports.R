@@ -36,6 +36,10 @@ has_duplicates <- function(configuration) {
     .Call('_ppjsdm_has_duplicates', PACKAGE = 'ppjsdm', configuration)
 }
 
+make_default_model_parameters <- function(alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, types) {
+    .Call('_ppjsdm_make_default_model_parameters', PACKAGE = 'ppjsdm', alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, types)
+}
+
 prepare_gibbsm_data <- function(configuration_list, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, approximate) {
     .Call('_ppjsdm_prepare_gibbsm_data', PACKAGE = 'ppjsdm', configuration_list, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, approximate)
 }

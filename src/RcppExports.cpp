@@ -42,6 +42,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// make_default_model_parameters
+SEXP make_default_model_parameters(SEXP alpha, SEXP lambda, SEXP covariates, SEXP beta, SEXP gamma, SEXP short_range, SEXP medium_range, SEXP long_range, SEXP types);
+RcppExport SEXP _ppjsdm_make_default_model_parameters(SEXP alphaSEXP, SEXP lambdaSEXP, SEXP covariatesSEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP typesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type covariates(covariatesSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type gamma(gammaSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type short_range(short_rangeSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type medium_range(medium_rangeSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type long_range(long_rangeSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type types(typesSEXP);
+    rcpp_result_gen = Rcpp::wrap(make_default_model_parameters(alpha, lambda, covariates, beta, gamma, short_range, medium_range, long_range, types));
+    return rcpp_result_gen;
+END_RCPP
+}
 // prepare_gibbsm_data
 Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list, SEXP window, Rcpp::List covariates, Rcpp::List traits, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, Rcpp::NumericVector mark_range, bool approximate);
 RcppExport SEXP _ppjsdm_prepare_gibbsm_data(SEXP configuration_listSEXP, SEXP windowSEXP, SEXP covariatesSEXP, SEXP traitsSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP mark_rangeSEXP, SEXP approximateSEXP) {
@@ -145,6 +164,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_ppjsdm_compute_papangelou", (DL_FUNC) &_ppjsdm_compute_papangelou, 16},
     {"_ppjsdm_has_duplicates", (DL_FUNC) &_ppjsdm_has_duplicates, 1},
+    {"_ppjsdm_make_default_model_parameters", (DL_FUNC) &_ppjsdm_make_default_model_parameters, 9},
     {"_ppjsdm_prepare_gibbsm_data", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data, 12},
     {"_ppjsdm_rbinomialpp_cpp", (DL_FUNC) &_ppjsdm_rbinomialpp_cpp, 6},
     {"_ppjsdm_rgibbs_cpp", (DL_FUNC) &_ppjsdm_rgibbs_cpp, 17},

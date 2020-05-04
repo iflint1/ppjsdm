@@ -18,9 +18,31 @@
 #' @importFrom spatstat as.im as.owin
 #' @importFrom GA ga
 #' @export
-gibbsm <- function(configuration_list, window = Rectangle_window(), covariates = list(), traits = list(), model = "square_bump", medium_range_model = "square_exponential", short_range = NULL, medium_range = NULL, long_range = NULL, saturation = 2, print = TRUE, use_glmnet = TRUE, use_aic = TRUE) {
-  # Make covariates im objects with proper names.
-  covariates <- coerce_to_named_im_objects(covariates, "unnamed_covariate", window)
+gibbsm <- function(configuration_list,
+                   window,
+                   covariates,
+                   traits = list(),
+                   model,
+                   medium_range_model,
+                   short_range = NULL,
+                   medium_range = NULL,
+                   long_range = NULL,
+                   saturation,
+                   print = TRUE,
+                   use_glmnet = TRUE,
+                   use_aic = TRUE) {
+  parameters <- model_parameters_defaults(window = window,
+                                          covariates = covariates,
+                                          saturation = saturation,
+                                          model = model,
+                                          medium_range_model = medium_range_model)
+
+  window <- parameters$window
+  covariates <- parameters$covariates
+  saturation <- parameters$saturation
+  model <- parameters$model
+  medium_range_model <- parameters$medium_range_model
+  print(covariates)
 
   # TODO: This is giving really unexpected results when sizeof(radius) > sizeof(one of the configurations).
   # See the traits part of the fitting vignette. Perhaps add size check for radius?

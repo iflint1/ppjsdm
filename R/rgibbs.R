@@ -22,47 +22,51 @@
 #' @param drop If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration. Default is TRUE.
 #' @param mark_range Range of additional marks to give to the points.
 #' @export
-rgibbs <- function(window = NULL,
-                   alpha = NULL,
-                   gamma = NULL,
-                   lambda = NULL,
-                   covariates = NULL,
-                   beta = NULL,
-                   short_range = NULL,
-                   medium_range = NULL,
-                   long_range = NULL,
-                   saturation = 2,
+rgibbs <- function(window,
+                   alpha,
+                   gamma,
+                   lambda,
+                   covariates,
+                   beta,
+                   short_range,
+                   medium_range,
+                   long_range,
+                   saturation,
+                   types,
+                   model,
+                   medium_range_model,
                    steps = 0,
                    nsim = 1,
-                   types = NULL,
-                   model = "square_bump",
-                   medium_range_model = "square_exponential",
                    drop = TRUE,
                    mark_range = c(1.0, 1.0)) {
-  if(is.null(window)) {
-    window <- Rectangle_window()
-  }
-  # Make covariates im objects with proper names.
-  covariates <- coerce_to_named_im_objects(covariates, "unnamed_covariate", window)
-
-  if(!missing(beta)) {
-    beta <- as.matrix(beta)
-  }
-  rgibbs_cpp(window = window,
-             alpha = alpha,
-             lambda = lambda,
-             covariates = covariates,
-             beta = beta,
-             gamma = gamma,
-             short_range = short_range,
-             medium_range = medium_range,
-             long_range = long_range,
-             saturation = saturation,
+  parameters <- model_parameters(window = window,
+                                 alpha = alpha,
+                                 gamma = gamma,
+                                 lambda = lambda,
+                                 covariates = covariates,
+                                 beta = beta,
+                                 short_range = short_range,
+                                 medium_range = medium_range,
+                                 long_range = long_range,
+                                 saturation = saturation,
+                                 types = types,
+                                 model = model,
+                                 medium_range_model = medium_range_model)
+  rgibbs_cpp(window = parameters$window,
+             alpha = parameters$alpha,
+             lambda = parameters$lambda,
+             covariates = parameters$covariates,
+             beta = parameters$beta,
+             gamma = parameters$gamma,
+             short_range = parameters$short_range,
+             medium_range = parameters$medium_range,
+             long_range = parameters$long_range,
+             saturation = parameters$saturation,
              steps = steps,
              nsim = nsim,
-             types = types,
-             model = model,
-             medium_range_model = medium_range_model,
+             types = parameters$types,
+             model = parameters$model,
+             medium_range_model = parameters$medium_range_model,
              drop = drop,
              mark_range = mark_range)
 }

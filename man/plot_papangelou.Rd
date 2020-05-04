@@ -6,7 +6,7 @@
 \usage{
 plot_papangelou(
   window,
-  type,
+  type = 1,
   configuration,
   model,
   medium_range_model,
@@ -18,6 +18,7 @@ plot_papangelou(
   short_range,
   medium_range,
   long_range,
+  types,
   saturation,
   grid_steps = 1000,
   mark = 1,
@@ -50,6 +51,8 @@ plot_papangelou(
 \item{medium_range}{Matrix of medium range distances.}
 
 \item{long_range}{Matrix of long range distances.}
+
+\item{types}{Types of the points. Default is a vector (type1, type2, ...) of same size as n.}
 
 \item{saturation}{Saturation.}
 

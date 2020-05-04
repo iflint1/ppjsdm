@@ -5,7 +5,7 @@
 \title{Sample a binomial point processes}
 \usage{
 rbinomialpp(
-  window = NULL,
+  window = Rectangle_window(),
   n = NULL,
   nsim = 1,
   types = NULL,

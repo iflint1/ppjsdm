@@ -5,7 +5,7 @@
 \title{Sample a Poisson point processes}
 \usage{
 rppp(
-  window = NULL,
+  window = Rectangle_window(),
   lambda = NULL,
   nsim = 1,
   types = NULL,

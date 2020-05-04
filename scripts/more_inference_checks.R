@@ -39,15 +39,15 @@ configurations <- ppjsdm::rgibbs(window = window,
 # medium_range <- c(0, 0.2)
 # long_range <- c(0, 0.2)
 fit <- ppjsdm::gibbsm(configurations,
-                       window = window,
-                       covariates = covariates,
-                       model = model,
-                       medium_range_model = medium_range_model,
-                       short_range = short_range,
-                       medium_range = medium_range,
-                       long_range = long_range,
-                       saturation = saturation,
-                       use_glmnet = FALSE,
-                       print = FALSE)
+                      window = window,
+                      covariates = covariates,
+                      model = model,
+                      medium_range_model = medium_range_model,
+                      short_range = short_range,
+                      medium_range = medium_range,
+                      long_range = long_range,
+                      saturation = saturation,
+                      use_glmnet = FALSE,
+                      print = FALSE)
 coef <- fit$coefficients
 print(coef)

@@ -10,15 +10,12 @@
 #' Default is TRUE.
 #' @param mark_range Range of additional marks to give to the points.
 #' @export
-rppp <- function(window = NULL,
+rppp <- function(window = Rectangle_window(),
                  lambda = NULL,
                  nsim = 1,
                  types = NULL,
                  drop = TRUE,
                  mark_range = c(1.0, 1.0)) {
-  if(is.null(window)) {
-    window <- Rectangle_window()
-  }
   if(is.list(lambda)) {
     lambda <- unlist(lambda)
   }

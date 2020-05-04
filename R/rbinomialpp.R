@@ -10,15 +10,12 @@
 #' Default is TRUE.
 #' @param mark_range Range of additional marks to give to the points.
 #' @export
-rbinomialpp <- function(window = NULL,
+rbinomialpp <- function(window = Rectangle_window(),
                  n = NULL,
                  nsim = 1,
                  types = NULL,
                  drop = TRUE,
                  mark_range = c(1.0, 1.0)) {
-  if(is.null(window)) {
-    window <- Rectangle_window()
-  }
   if(is.list(n)) {
     n <- unlist(n)
   }

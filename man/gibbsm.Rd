@@ -6,15 +6,15 @@
 \usage{
 gibbsm(
   configuration_list,
-  window = Rectangle_window(),
-  covariates = list(),
+  window,
+  covariates,
   traits = list(),
-  model = "square_bump",
-  medium_range_model = "square_exponential",
+  model,
+  medium_range_model,
   short_range = NULL,
   medium_range = NULL,
   long_range = NULL,
-  saturation = 2,
+  saturation,
   print = TRUE,
   use_glmnet = TRUE,
   use_aic = TRUE
