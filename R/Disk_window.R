@@ -38,6 +38,7 @@ radius <- function(window) {
   window$radius
 }
 
+#TODO: area and volume instead
 #' Return the volume of the window.
 #'
 #' @param window The window.

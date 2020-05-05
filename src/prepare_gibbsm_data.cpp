@@ -60,14 +60,17 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   struct Result_type {
     Result_type(): is_in_configuration(), type(), dispersion(), medium_dispersion(), covariates() {}
 
-    Result_type(bool i, int t, std::vector<double> v, std::vector<double> w, std::vector<double> x):
-      is_in_configuration(i), type(t), dispersion(std::move(v)), medium_dispersion(std::move(w)), covariates(std::move(x)) {}
+    Result_type(bool i, int t, std::vector<double> v, std::vector<double> w, std::vector<double> x, double new_x, double new_y, double m):
+      is_in_configuration(i), type(t), dispersion(std::move(v)), medium_dispersion(std::move(w)), covariates(std::move(x)), x(new_x), y(new_y), mark(m) {}
 
     bool is_in_configuration;
     int type;
     std::vector<double> dispersion;
     std::vector<double> medium_dispersion;
     std::vector<double> covariates;
+    double x;
+    double y;
+    double mark;
   };
   std::vector<Result_type> precomputed_results;
   unsigned long long int total_configuration_length(0);
@@ -104,7 +107,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
       }
       cov[k] = covariate;
     }
-    results_private.emplace_back(true, ppjsdm::get_type(configuration_list[configuration_index][point_index]), std::move(d), std::move(e), std::move(cov));
+    results_private.emplace_back(true, ppjsdm::get_type(configuration_list[configuration_index][point_index]), std::move(d), std::move(e), std::move(cov), ppjsdm::get_x(configuration_list[configuration_index][point_index]), ppjsdm::get_y(configuration_list[configuration_index][point_index]), ppjsdm::get_mark(configuration_list[configuration_index][point_index]));
   }
 #pragma omp for nowait
   for(size_t i = 0; i < length_D; ++i) {
@@ -125,7 +128,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     for(size_t j(0); j < configuration_list.size(); ++j) {
       const auto d(ppjsdm::compute_dispersion<Approximate>(dispersion_model, D[i], number_types, configuration_list[j]));
       const auto e(ppjsdm::compute_dispersion<Approximate>(medium_dispersion_model, D[i], number_types, configuration_list[j]));
-      results_private.emplace_back(false, ppjsdm::get_type(D[i]), std::move(d), std::move(e), cov);
+      results_private.emplace_back(false, ppjsdm::get_type(D[i]), std::move(d), std::move(e), cov, ppjsdm::get_x(D[i]), ppjsdm::get_y(D[i]), ppjsdm::get_mark(D[i]));
     }
   }
 #pragma omp critical
@@ -137,6 +140,10 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 
   // Default-initialise the data
   std::vector<int> response(total_points);
+  std::vector<double> x(total_points);
+  std::vector<double> y(total_points);
+  std::vector<double> mark(total_points);
+  std::vector<double> type(total_points);
   std::vector<double> rho_offset(total_points);
   ppjsdm::Lightweight_matrix<double> log_lambda(total_points, number_types);
   ppjsdm::Lightweight_matrix<double> alpha_input(total_points, number_types * (number_types + 1) / 2);
@@ -151,7 +158,12 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   // Fill the regressors, response, offset and shift with what we precomputed.
   for(size_t i(0); i < total_points; ++i) {
     response[i] = precomputed_results[i].is_in_configuration ? 1 : 0;
+    x[i] = precomputed_results[i].x;
+    y[i] = precomputed_results[i].y;
+    mark[i] = precomputed_results[i].mark;
+
     const size_t type_index(precomputed_results[i].type);
+    type[i] = type_index;
 
     rho_offset[i] = -std::log(static_cast<double>(rho_times_volume[type_index]) / volume);
 
@@ -226,9 +238,17 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 
   // Convert response and rho_offset to Rcpp objects.
   Rcpp::IntegerMatrix response_rcpp(Rcpp::no_init(response.size(), 1));
+  Rcpp::NumericMatrix x_rcpp(Rcpp::no_init(response.size(), 1));
+  Rcpp::NumericMatrix y_rcpp(Rcpp::no_init(response.size(), 1));
+  Rcpp::NumericMatrix mark_rcpp(Rcpp::no_init(response.size(), 1));
+  Rcpp::IntegerMatrix type_rcpp(Rcpp::no_init(response.size(), 1));
   Rcpp::NumericMatrix rho_offset_rcpp(Rcpp::no_init(response.size(), 1));
   for(R_xlen_t i(0); i < static_cast<R_xlen_t>(response.size()); ++i) {
     response_rcpp(i, 0) = response[i];
+    x_rcpp(i, 0) = x[i];
+    y_rcpp(i, 0) = y[i];
+    mark_rcpp(i, 0) = mark[i];
+    type_rcpp(i, 0) = type[i] + 1;
     rho_offset_rcpp(i, 0) = rho_offset[i];
   }
 
@@ -272,6 +292,10 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   }
   Rcpp::colnames(rho_offset_rcpp) = Rcpp::wrap("rho");
   Rcpp::colnames(response_rcpp) = Rcpp::wrap("response");
+  Rcpp::colnames(x_rcpp) = Rcpp::wrap("x");
+  Rcpp::colnames(y_rcpp) = Rcpp::wrap("y");
+  Rcpp::colnames(mark_rcpp) = Rcpp::wrap("mark");
+  Rcpp::colnames(type_rcpp) = Rcpp::wrap("type");
 
   // Put all the regressors into a unique matrix that will be sent to glm / glmnet.
   Rcpp::NumericMatrix regressors;
@@ -357,6 +381,10 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 
 
   return Rcpp::List::create(Rcpp::Named("response") = response_rcpp,
+                            Rcpp::Named("x") = x_rcpp,
+                            Rcpp::Named("y") = y_rcpp,
+                            Rcpp::Named("mark") = mark_rcpp,
+                            Rcpp::Named("type") = type_rcpp,
                             Rcpp::Named("offset") = rho_offset_rcpp,
                             Rcpp::Named("regressors") = regressors,
                             Rcpp::Named("shift") = shift

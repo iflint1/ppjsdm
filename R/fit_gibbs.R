@@ -58,7 +58,11 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic) {
   lambda <- vector(mode = "numeric", length = number_types)
   alpha <- matrix(0, number_types, number_types)
   gamma <- matrix(0, number_types, number_types)
+
   beta <- coef[!(startsWith(names(coef), "shifted_log_lambda") | startsWith(names(coef), "alpha") | startsWith(names(coef), "gamma") | ("(Intercept)" == names(coef)))]
+  if(is.empty(beta)) {
+    beta <- matrix(0, nrow = number_types, ncol = 0)
+  }
   for(i in seq_len(number_types)) {
     # Shift all columns with row name shifted_log_lambdai
     lambda[i] <- exp(coef[match(paste0("shifted_log_lambda", i), names(coef))] - shift[i])
