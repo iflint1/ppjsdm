@@ -256,6 +256,7 @@ remove_from_configuration_by_index <- function(configuration, index) {
   configuration$x <- configuration$x[-index]
   configuration$y <- configuration$y[-index]
   configuration$types <- droplevels(configuration$types[-index])
+  configuration$marks <- configuration$marks[-index]
   configuration
 }
 

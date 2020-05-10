@@ -9,7 +9,7 @@
 
 #include "saturated_model/saturated_model.hpp"
 
-#include "simulation/rbinomialpp_single.hpp"
+#include "simulation/rppp_single.hpp"
 
 #include "utility/construct_if_missing.hpp"
 #include "utility/im_wrapper.hpp"
@@ -48,6 +48,11 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   }
   const size_t number_types(max_points_by_type.size());
   auto D(ppjsdm::rbinomialpp_single<std::vector<ppjsdm::Marked_point>>(window, rho_times_volume, number_types, length_D));
+  // Vector rho(rho_times_volume);
+  // for(size_t j(0); j < number_types; ++j) {
+  //   rho[j] /= window.volume();
+  // }
+  // auto D(ppjsdm::rppp_single<std::vector<ppjsdm::Marked_point>>(window, rho, number_types));
 
   // Make shift vector
   Rcpp::NumericVector shift(Rcpp::no_init(number_types));
@@ -422,7 +427,8 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list, SEXP window, Rcpp:
   // TODO: Allow for cases in which all species are not present in all configurations, i.e. number_types = max_i(max_points_by_type[i].size())
   const auto number_types(max_points_by_type.size());
 
-  const auto sh(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(short_range, 0.1 * cpp_window.diameter(), number_types));
+  // TODO: This duplicates some of the defaults, and is probably not required.
+  const auto sh(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(short_range, 0.1, number_types));
   if(!ppjsdm::is_symmetric_matrix(sh)) {
     Rcpp::stop("Short range interaction radius matrix is not symmetric.");
   }

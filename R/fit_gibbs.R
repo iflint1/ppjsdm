@@ -1,6 +1,16 @@
-fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic) {
+fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate_gamma) {
+  regressors <- gibbsm_data$regressors
+  if(!estimate_alpha) {
+    regressors <- as.matrix(regressors[, -grep("alpha", colnames(regressors))])
+  }
+  if(!estimate_gamma) {
+    regressors <- as.matrix(regressors[, -grep("gamma", colnames(regressors))])
+  }
+  if(ncol(regressors) == 1) { # In this case, R deletes the column names...
+    colnames(regressors) <- "shifted_log_lambda1"
+  }
+
   if(use_glmnet) {
-    regressors <- gibbsm_data$regressors
     nregressors <- ncol(regressors)
     pfactor <- rep(1, nregressors)
     pfactor[startsWith(colnames(regressors), "shifted_log_lambda")] <- 0
@@ -38,7 +48,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic) {
       bic <- min(bic)
     }
   } else {
-    fit <- glm.fit(x = gibbsm_data$regressors,
+    fit <- glm.fit(x = regressors,
                    y = gibbsm_data$response,
                    offset = gibbsm_data$offset,
                    intercept = FALSE,
@@ -60,18 +70,26 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic) {
   gamma <- matrix(0, number_types, number_types)
 
   beta <- coef[!(startsWith(names(coef), "shifted_log_lambda") | startsWith(names(coef), "alpha") | startsWith(names(coef), "gamma") | ("(Intercept)" == names(coef)))]
-  if(is.empty(beta)) {
+  if(length(beta) == 0) {
     beta <- matrix(0, nrow = number_types, ncol = 0)
   }
   for(i in seq_len(number_types)) {
     # Shift all columns with row name shifted_log_lambdai
     lambda[i] <- exp(coef[match(paste0("shifted_log_lambda", i), names(coef))] - shift[i])
-    alpha[i, i] <- coef[match(paste0("alpha_", i, "_", i), names(coef))]
-    gamma[i, i] <- coef[match(paste0("gamma_", i, "_", i), names(coef))]
+    if(estimate_alpha) {
+      alpha[i, i] <- coef[match(paste0("alpha_", i, "_", i), names(coef))]
+    }
+    if(estimate_gamma) {
+      gamma[i, i] <- coef[match(paste0("gamma_", i, "_", i), names(coef))]
+    }
     if(i < number_types) {
       for(j in (i + 1):number_types) {
-        alpha[i, j] <- alpha[j, i] <- coef[match(paste0("alpha_", i, "_", j), names(coef))]
-        gamma[i, j] <- gamma[j, i] <- coef[match(paste0("gamma_", i, "_", j), names(coef))]
+        if(estimate_alpha) {
+          alpha[i, j] <- alpha[j, i] <- coef[match(paste0("alpha_", i, "_", j), names(coef))]
+        }
+        if(estimate_gamma) {
+          gamma[i, j] <- gamma[j, i] <- coef[match(paste0("gamma_", i, "_", j), names(coef))]
+        }
       }
     }
   }

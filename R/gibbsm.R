@@ -24,13 +24,14 @@ gibbsm <- function(configuration_list,
                    traits = list(),
                    model,
                    medium_range_model,
-                   short_range = NULL,
-                   medium_range = NULL,
-                   long_range = NULL,
+                   short_range = matrix(0.1),
+                   medium_range = matrix(0),
+                   long_range = matrix(0),
                    saturation,
                    print = TRUE,
                    use_glmnet = TRUE,
                    use_aic = TRUE) {
+  # TODO: At some point, synchronize defaults for ranges with the C++ code
   parameters <- model_parameters_defaults(window = window,
                                           covariates = covariates,
                                           saturation = saturation,
@@ -42,7 +43,6 @@ gibbsm <- function(configuration_list,
   saturation <- parameters$saturation
   model <- parameters$model
   medium_range_model <- parameters$medium_range_model
-  print(covariates)
 
   # TODO: This is giving really unexpected results when sizeof(radius) > sizeof(one of the configurations).
   # See the traits part of the fitting vignette. Perhaps add size check for radius?
@@ -56,9 +56,11 @@ gibbsm <- function(configuration_list,
   stopifnot(inherits(configuration_list[[1]], "Configuration"))
 
   number_configurations <- length(configuration_list)
+  number_types <- length(levels(types(configuration_list[[1]])))
   estimate_radii <- is.vector(short_range, mode = "numeric") && length(short_range) == 2
   if(estimate_radii) {
-    number_types <- length(levels(types(configuration_list[[1]])))
+    estimate_alpha <- !all(short_range[1] == short_range[2])
+    estimate_gamma <- !all(medium_range[1] == medium_range[2] & long_range[1] == long_range[2] & medium_range[1] == long_range[1])
 
     lower <- c(rep(short_range[1], number_types + 1), rep(medium_range[1], number_types + 1), rep(long_range[1], number_types + 1))
     upper <- c(rep(short_range[2], number_types + 1), rep(medium_range[2], number_types + 1), rep(long_range[2], number_types + 1))
@@ -83,7 +85,7 @@ gibbsm <- function(configuration_list,
 
       gibbsm_data_list <- prepare_gibbsm_data(configuration_list, window, covariates, traits, model, medium_range_model, sh, me, lo, saturation, mark_range, TRUE)
 
-      fit <- fit_gibbs(gibbsm_data_list, use_glmnet = FALSE, use_aic)
+      fit <- fit_gibbs(gibbsm_data_list, use_glmnet = FALSE, use_aic = use_aic, estimate_alpha = estimate_alpha, estimate_gamma = estimate_gamma)
       list(fit = fit, sh = sh, me = me, lo = lo)
     }
 
@@ -138,13 +140,20 @@ gibbsm <- function(configuration_list,
     mark_range <- c(min(get_marks(configuration_list[[1]])), max(get_marks(configuration_list[[1]])))
     gibbsm_data_list <- prepare_gibbsm_data(configuration_list, window, covariates, traits, model, medium_range_model, best_short, best_medium, best_long, saturation, mark_range, FALSE)
 
-    fitted <- fit_gibbs(gibbsm_data_list, use_glmnet, use_aic)
+    fitted <- fit_gibbs(gibbsm_data_list, use_glmnet = use_glmnet, use_aic = use_aic, estimate_alpha = estimate_alpha, estimate_gamma = estimate_gamma)
   } else {
+    short_range <- as.matrix(short_range)
+    medium_range <- as.matrix(medium_range)
+    long_range <- as.matrix(long_range)
+
+    estimate_alpha <- !all(short_range == 0)
+    estimate_gamma <- !all(medium_range == long_range)
+
     # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
     mark_range <- c(min(get_marks(configuration_list[[1]])), max(get_marks(configuration_list[[1]])))
     gibbsm_data_list <- prepare_gibbsm_data(configuration_list, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, FALSE)
 
-    fitted <- fit_gibbs(gibbsm_data_list, use_glmnet, use_aic)
+    fitted <- fit_gibbs(gibbsm_data_list, use_glmnet = use_glmnet, use_aic = use_aic, estimate_alpha = estimate_alpha, estimate_gamma = estimate_gamma)
   }
   fits <-  fitted$fit
   fits_coefficients <- fitted$coefficients
@@ -152,13 +161,30 @@ gibbsm <- function(configuration_list,
   bic <- fitted$bic
 
   if(print) {
-    print(fitted$coefficients)
+    print(fits_coefficients)
   }
 
+  ret <- list(complete = fits,
+              configuration_list = configuration_list,
+              estimate_alpha = estimate_alpha,
+              estimate_gamma = estimate_gamma,
+              data_list = gibbsm_data_list,
+              parameters = list(model = model,
+                                medium_range_model = medium_range_model,
+                                covariates = covariates,
+                                short_range = short_range,
+                                medium_range = medium_range,
+                                long_range = long_range,
+                                saturation = saturation),
+              aic = aic,
+              bic = bic)
+
+
   if(estimate_radii) {
-    ret <- list(complete = fits, coefficients = append(fits_coefficients, list(short_range = best_short, medium_range = best_medium, long_range = best_long)), aic = aic, bic = bic)
+    ret <- append(ret, list(coefficients = append(fits_coefficients, list(short_range = best_short, medium_range = best_medium, long_range = best_long))))
   } else {
-    ret <- list(complete = fits, coefficients = fits_coefficients, aic = aic, bic = bic)
+    ret <- append(ret, list(coefficients = fits_coefficients))
   }
+  class(ret) <- "gibbsm"
   ret
 }

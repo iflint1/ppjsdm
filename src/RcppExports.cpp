@@ -5,6 +5,31 @@
 
 using namespace Rcpp;
 
+// compute_A2_A3
+Rcpp::List compute_A2_A3(SEXP configuration, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericMatrix beta, Rcpp::NumericMatrix gamma, double rho, double area, Rcpp::List t_over_papangelou);
+RcppExport SEXP _ppjsdm_compute_A2_A3(SEXP configurationSEXP, SEXP covariatesSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP rhoSEXP, SEXP areaSEXP, SEXP t_over_papangelouSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type configuration(configurationSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type covariates(covariatesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type model(modelSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type medium_range_model(medium_range_modelSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type short_range(short_rangeSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type medium_range(medium_rangeSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type long_range(long_rangeSEXP);
+    Rcpp::traits::input_parameter< R_xlen_t >::type saturation(saturationSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type gamma(gammaSEXP);
+    Rcpp::traits::input_parameter< double >::type rho(rhoSEXP);
+    Rcpp::traits::input_parameter< double >::type area(areaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type t_over_papangelou(t_over_papangelouSEXP);
+    rcpp_result_gen = Rcpp::wrap(compute_A2_A3(configuration, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, alpha, lambda, beta, gamma, rho, area, t_over_papangelou));
+    return rcpp_result_gen;
+END_RCPP
+}
 // compute_papangelou
 Rcpp::NumericVector compute_papangelou(SEXP configuration, Rcpp::NumericVector x, Rcpp::NumericVector y, R_xlen_t type, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericMatrix beta, Rcpp::NumericMatrix gamma, Rcpp::List covariates, Rcpp::NumericMatrix short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, double mark);
 RcppExport SEXP _ppjsdm_compute_papangelou(SEXP configurationSEXP, SEXP xSEXP, SEXP ySEXP, SEXP typeSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP alphaSEXP, SEXP lambdaSEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP covariatesSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP markSEXP) {
@@ -162,6 +187,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_ppjsdm_compute_A2_A3", (DL_FUNC) &_ppjsdm_compute_A2_A3, 15},
     {"_ppjsdm_compute_papangelou", (DL_FUNC) &_ppjsdm_compute_papangelou, 16},
     {"_ppjsdm_has_duplicates", (DL_FUNC) &_ppjsdm_has_duplicates, 1},
     {"_ppjsdm_make_default_model_parameters", (DL_FUNC) &_ppjsdm_make_default_model_parameters, 9},
