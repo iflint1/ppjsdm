@@ -1,8 +1,9 @@
 #' Calculate Variance-Covariance Matrix for a Fitted Gibbs point process.
 #'
 #' @param object A fitted model object.
+#' @param ... Ignored.
 #' @export
-vcov.gibbsm <- function(object) {
+vcov.gibbsm <- function(object, ...) {
   configuration_list <- object$configuration_list
 
   regressors <- object$data_list$regressors
@@ -30,7 +31,7 @@ vcov.gibbsm <- function(object) {
   #TODO: Should enforce sizeof(configuration_list) == 1
   #TODO: Should enforce constant rho
   rho <- exp(-object$data_list$shift[1])
-  S <- rho / window_volume(window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
+  S <- rho / window_volume(object$window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
     type_string <- levels(types(configuration_list[[1]]))[object$data_list$type[row]]
     conf <- remove_from_configuration(configuration_list[[1]], c(object$data_list$x[row], object$data_list$y[row]), type_string)
     papangelou <- compute_papangelou(configuration = conf,
@@ -40,7 +41,7 @@ vcov.gibbsm <- function(object) {
                                      model = model,
                                      medium_range_model = medium_range_model,
                                      alpha = fits_coefficients$alpha,
-                                     lambda = fits_coefficients$lambda,
+                                     beta0 = fits_coefficients$beta0,
                                      beta = fits_coefficients$beta,
                                      gamma = fits_coefficients$gamma,
                                      covariates = covariates,
@@ -52,7 +53,7 @@ vcov.gibbsm <- function(object) {
     regressors[row, ] %*% t(regressors[row, ]) * papangelou / (papangelou + rho)^2
   }))
 
-  A1 <- rho^2 / window_volume(window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
+  A1 <- rho^2 / window_volume(object$window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
     type_string <- levels(types(configuration_list[[1]]))[object$data_list$type[row]]
     conf <- remove_from_configuration(configuration_list[[1]], c(object$data_list$x[row], object$data_list$y[row]), type_string)
     papangelou <- compute_papangelou(configuration = conf,
@@ -62,7 +63,7 @@ vcov.gibbsm <- function(object) {
                                      model = model,
                                      medium_range_model = medium_range_model,
                                      alpha = fits_coefficients$alpha,
-                                     lambda = fits_coefficients$lambda,
+                                     beta0 = fits_coefficients$beta0,
                                      beta = fits_coefficients$beta,
                                      gamma = fits_coefficients$gamma,
                                      covariates = covariates,
@@ -74,7 +75,7 @@ vcov.gibbsm <- function(object) {
    regressors[row, ] %*% t(regressors[row, ]) * papangelou / (papangelou + rho)^3
   }))
 
-  kappa <- 1 / window_volume(window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
+  kappa <- 1 / window_volume(object$window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
     type_string <- levels(types(configuration_list[[1]]))[object$data_list$type[row]]
     conf <- remove_from_configuration(configuration_list[[1]], c(object$data_list$x[row], object$data_list$y[row]), type_string)
     papangelou <- compute_papangelou(configuration = conf,
@@ -84,7 +85,7 @@ vcov.gibbsm <- function(object) {
                                      model = model,
                                      medium_range_model = medium_range_model,
                                      alpha = fits_coefficients$alpha,
-                                     lambda = fits_coefficients$lambda,
+                                     beta0 = fits_coefficients$beta0,
                                      beta = fits_coefficients$beta,
                                      gamma = fits_coefficients$gamma,
                                      covariates = covariates,
@@ -96,7 +97,7 @@ vcov.gibbsm <- function(object) {
     1. / (papangelou + rho)
   }))
 
-  temp_A1 <- rho^2 / window_volume(window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
+  temp_A1 <- rho^2 / window_volume(object$window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
     type_string <- levels(types(configuration_list[[1]]))[object$data_list$type[row]]
     conf <- remove_from_configuration(configuration_list[[1]], c(object$data_list$x[row], object$data_list$y[row]), type_string)
     papangelou <- compute_papangelou(configuration = conf,
@@ -106,7 +107,7 @@ vcov.gibbsm <- function(object) {
                                      model = model,
                                      medium_range_model = medium_range_model,
                                      alpha = fits_coefficients$alpha,
-                                     lambda = fits_coefficients$lambda,
+                                     beta0 = fits_coefficients$beta0,
                                      beta = fits_coefficients$beta,
                                      gamma = fits_coefficients$gamma,
                                      covariates = covariates,
@@ -118,7 +119,7 @@ vcov.gibbsm <- function(object) {
     regressors[row, ] %*% t(regressors[row, ]) * papangelou^2 / (papangelou + rho)^3
   }))
 
-  other_temp_A1 <- rho / window_volume(window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
+  other_temp_A1 <- rho / window_volume(object$window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
     type_string <- levels(types(configuration_list[[1]]))[object$data_list$type[row]]
     conf <- remove_from_configuration(configuration_list[[1]], c(object$data_list$x[row], object$data_list$y[row]), type_string)
     papangelou <- compute_papangelou(configuration = conf,
@@ -128,7 +129,7 @@ vcov.gibbsm <- function(object) {
                                      model = model,
                                      medium_range_model = medium_range_model,
                                      alpha = fits_coefficients$alpha,
-                                     lambda = fits_coefficients$lambda,
+                                     beta0 = fits_coefficients$beta0,
                                      beta = fits_coefficients$beta,
                                      gamma = fits_coefficients$gamma,
                                      covariates = covariates,
@@ -150,7 +151,7 @@ vcov.gibbsm <- function(object) {
                                      model = model,
                                      medium_range_model = medium_range_model,
                                      alpha = fits_coefficients$alpha,
-                                     lambda = fits_coefficients$lambda,
+                                     beta0 = fits_coefficients$beta0,
                                      beta = fits_coefficients$beta,
                                      gamma = fits_coefficients$gamma,
                                      covariates = covariates,
@@ -175,11 +176,11 @@ vcov.gibbsm <- function(object) {
                          long_range = long_range,
                          saturation = saturation,
                          alpha = fits_coefficients$alpha,
-                         lambda = fits_coefficients$lambda,
+                         beta0 = fits_coefficients$beta0,
                          beta = fits_coefficients$beta,
                          gamma = fits_coefficients$gamma,
                          rho = rho,
-                         area = window_volume(window),
+                         area = window_volume(object$window),
                          t_over_papangelou = t_over_papangelou)
   A2 <- A2_A3$A2
   A3 <- A2_A3$A3

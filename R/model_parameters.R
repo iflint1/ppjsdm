@@ -36,7 +36,7 @@ model_parameters_defaults <- function(window,
 #' @param window Simulation window.
 #' @param alpha Repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.
 #' @param gamma Medium range repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.
-#' @param lambda A vector representing the intensities of the point processes.
+#' @param beta0 A vector representing the log-intensities of the point processes.
 #' Default is a vector of same size as types, filled with ones.
 #' @param covariates Covariates, with an empty list as a default.
 #' @param beta Fitted coefficients related to covariates. Default is square matrix of zeroes of the same
@@ -52,7 +52,7 @@ model_parameters_defaults <- function(window,
 model_parameters <- function(window,
                              alpha,
                              gamma,
-                             lambda,
+                             beta0,
                              covariates,
                              beta,
                              short_range,
@@ -72,8 +72,8 @@ model_parameters <- function(window,
     gamma <- NULL
   }
 
-  if(missing(lambda)) {
-    lambda <- NULL
+  if(missing(beta0)) {
+    beta0 <- NULL
   }
 
   if(missing(beta)) {
@@ -105,7 +105,7 @@ model_parameters <- function(window,
                                         medium_range_model = medium_range_model)
 
   parameters <- make_default_model_parameters(alpha = alpha,
-                                              lambda = lambda,
+                                              beta0 = beta0,
                                               covariates = defaults$covariates,
                                               beta = beta,
                                               gamma = gamma,

@@ -38,7 +38,7 @@ We begin by considering a single species, with no repulsion, no covariates, and 
 ```{r}
 nspecies <- 1
 ncovariates <- 0
-lambda <- 50
+beta0 <- 4
 alpha <- matrix(0, nspecies, nspecies)
 beta <- matrix(0, nspecies, ncovariates)
 gamma <- matrix(0, nspecies, nspecies)
@@ -58,7 +58,7 @@ Take a single sample from the corresponding point process,
 ```{r}
 configuration <- rgibbs(window = window,
                         alpha = alpha,
-                        lambda = lambda,
+                        beta0 = beta0,
                         beta = beta,
                         covariates = covariates,
                         model = model,
@@ -84,18 +84,18 @@ x_axis <- seq(from = 0, to = 1, by = 0.001)
 y_axis <- x_axis
 z <- outer(x_axis, y_axis, function(x, y) {
   compute_papangelou(configuration, x, y, 1, model, medium_range_model, alpha,
-                     lambda, beta, gamma, covariates, short_range, medium_range, long_range, saturation)
+                     beta0, beta, gamma, covariates, short_range, medium_range, long_range, saturation)
 })
 ```
 
 In this case, the Papangelou conditional intensity is equal to the intensity over the whole region:
 
 ```{r}
-all(z == lambda)
+all(z == exp(beta0))
 ```
 
 This means that the probability of finding a point anywhere on the region conditional on the given locations is independent of the locations, and proportional to the intensity everywhere.
-In other words, the associated point process is a Poisson point process of intensity `lambda`.
+In other words, the associated point process is a Poisson point process of intensity `exp(beta0)`.
 
 # Adding interactions
 
@@ -116,7 +116,7 @@ plot_papangelou(window = window,
                 model = model,
                 medium_range_model = medium_range_model,
                 alpha = alpha,
-                lambda = lambda,
+                beta0 = beta0,
                 beta = beta,
                 gamma = gamma,
                 covariates = covariates,
@@ -126,7 +126,7 @@ plot_papangelou(window = window,
                 saturation = saturation)
 ```
 
-The plot indicates repulsion within a given interaction radius: at locations far from existing individuals in the configuration, the Papangelou conditional intensity is equal to `lambda`, and it decreases within the interaction radius.
+The plot indicates repulsion within a given interaction radius: at locations far from existing individuals in the configuration, the Papangelou conditional intensity is equal to `exp(beta0)`, and it decreases within the interaction radius.
 The parameter `alpha` controls the strength of the repulsion, and when it is increased (in absolute value) the point process becomes more repulsive.
 
 ```{r}
@@ -136,7 +136,7 @@ plot_papangelou(window = window,
                 model = model,
                 medium_range_model = medium_range_model,
                 alpha = alpha,
-                lambda = lambda,
+                beta0 = beta0,
                 beta = beta,
                 gamma = gamma,
                 covariates = covariates,
@@ -155,7 +155,7 @@ plot_papangelou(window = window,
                 model = model,
                 medium_range_model = medium_range_model,
                 alpha = alpha,
-                lambda = lambda,
+                beta0 = beta0,
                 beta = beta,
                 gamma = gamma,
                 covariates = covariates,
@@ -181,7 +181,7 @@ Thus, our model is either attractive or repulsive depending on the sign of `alph
 <!--                 model = model, -->
 <!--                 medium_range_model = medium_range_model, -->
 <!--                 alpha = alpha, -->
-<!--                 lambda = lambda, -->
+<!--                 beta0 = beta0, -->
 <!--                 beta = beta, -->
 <!--                 gamma = gamma, -->
 <!--                 covariates = covariates, -->
@@ -202,7 +202,7 @@ Thus, our model is either attractive or repulsive depending on the sign of `alph
 <!--                 model = model, -->
 <!--                 medium_range_model = medium_range_model, -->
 <!--                 alpha = alpha, -->
-<!--                 lambda = lambda, -->
+<!--                 beta0 = beta0, -->
 <!--                 beta = beta, -->
 <!--                 gamma = gamma, -->
 <!--                 covariates = covariates, -->
@@ -223,7 +223,7 @@ Thus, our model is either attractive or repulsive depending on the sign of `alph
 <!--                 model = model, -->
 <!--                 medium_range_model = medium_range_model, -->
 <!--                 alpha = alpha, -->
-<!--                 lambda = lambda, -->
+<!--                 beta0 = beta0, -->
 <!--                 beta = beta, -->
 <!--                 gamma = gamma, -->
 <!--                 covariates = covariates, -->
@@ -242,7 +242,7 @@ Thus, our model is either attractive or repulsive depending on the sign of `alph
 <!-- ```{r} -->
 <!-- extreme_configuration <- rgibbs(window = window, -->
 <!--                                 alpha = matrix(-Inf), -->
-<!--                                 lambda = 100, -->
+<!--                                 beta0 = log(100), -->
 <!--                                 model = "Geyer", -->
 <!--                                 short_range = short_range) -->
 <!-- par(mar = c(5, 4, 4, 13) + 0.1) -->
@@ -255,7 +255,7 @@ Thus, our model is either attractive or repulsive depending on the sign of `alph
 <!-- ```{r} -->
 <!-- extreme_configuration <- rgibbs(window = window, -->
 <!--                                 alpha = 2.5, -->
-<!--                                 lambda = 1, -->
+<!--                                 beta0 = 0, -->
 <!--                                 model = "square_exponential", -->
 <!--                                 short_range = short_range, -->
 <!--                                 steps = 1000000) -->
@@ -277,7 +277,7 @@ Thus, our model is either attractive or repulsive depending on the sign of `alph
 <!--                 model = model, -->
 <!--                 medium_range_model = medium_range_model, -->
 <!--                 alpha = alpha, -->
-<!--                 lambda = lambda, -->
+<!--                 beta0 = beta0, -->
 <!--                 beta = beta, -->
 <!--                 gamma = gamma, -->
 <!--                 covariates = covariates, -->
@@ -294,7 +294,7 @@ Thus, our model is either attractive or repulsive depending on the sign of `alph
 <!-- ```{r} -->
 <!-- nspecies <- 2 -->
 <!-- ncovariates <- 0 -->
-<!-- lambda <- c(50, 50) -->
+<!-- beta0 <- c(4, 4) -->
 <!-- alpha <- cbind(c(-1, 0.1), c(0.1, -0.5)) -->
 <!-- gamma <- cbind(c(-0.5, 0), c(0, -0.5)) -->
 <!-- beta <- matrix(0, nspecies, ncovariates) -->
@@ -317,7 +317,7 @@ Thus, our model is either attractive or repulsive depending on the sign of `alph
 <!--                 model = model, -->
 <!--                 medium_range_model = medium_range_model, -->
 <!--                 alpha = alpha, -->
-<!--                 lambda = lambda, -->
+<!--                 beta0 = beta0, -->
 <!--                 beta = beta, -->
 <!--                 gamma = gamma, -->
 <!--                 covariates = covariates, -->

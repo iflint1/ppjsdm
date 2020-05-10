@@ -6,7 +6,7 @@
 #' @param model Model for short range interaction.
 #' @param medium_range_model Model for medium range interaction.
 #' @param alpha Short range repulsion parameter.
-#' @param lambda Intensity.
+#' @param beta0 Log-intensity.
 #' @param beta Covariates coefficients.
 #' @param gamma Medium range repulsion parameter.
 #' @param covariates Covariates.
@@ -26,7 +26,7 @@ plot_papangelou <- function(window,
                             model,
                             medium_range_model,
                             alpha,
-                            lambda,
+                            beta0,
                             beta,
                             gamma,
                             covariates,
@@ -42,7 +42,7 @@ plot_papangelou <- function(window,
   parameters <- model_parameters(window = window,
                                  alpha = alpha,
                                  gamma = gamma,
-                                 lambda = lambda,
+                                 beta0 = beta0,
                                  covariates = covariates,
                                  beta = beta,
                                  short_range = short_range,
@@ -56,7 +56,7 @@ plot_papangelou <- function(window,
   if(missing(configuration)) {
     configuration <- rgibbs(window = parameters$window,
                             alpha = parameters$alpha,
-                            lambda = parameters$lambda,
+                            beta0 = parameters$beta0,
                             beta = parameters$beta,
                             covariates = parameters$covariates,
                             short_range = parameters$short_range,
@@ -82,7 +82,7 @@ plot_papangelou <- function(window,
                        parameters$model,
                        parameters$medium_range_model,
                        parameters$alpha,
-                       parameters$lambda,
+                       parameters$beta0,
                        parameters$beta,
                        parameters$gamma,
                        parameters$covariates,

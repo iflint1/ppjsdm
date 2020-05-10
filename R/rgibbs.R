@@ -4,8 +4,8 @@
 #' @param window Simulation window.
 #' @param alpha Repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.
 #' @param gamma Medium range repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.
-#' @param lambda A vector representing the intensities of the point processes.
-#' Default is a vector of same size as types, filled with ones.
+#' @param beta0 A vector representing the log_intensities of the point processes.
+#' Default is a vector of same size as types, filled with zeros
 #' @param covariates Covariates, with an empty list as a default.
 #' @param beta Fitted coefficients related to covariates. Default is square matrix of zeroes of the same
 #' number of rows/columns as the covariates.
@@ -25,7 +25,7 @@
 rgibbs <- function(window,
                    alpha,
                    gamma,
-                   lambda,
+                   beta0,
                    covariates,
                    beta,
                    short_range,
@@ -42,7 +42,7 @@ rgibbs <- function(window,
   parameters <- model_parameters(window = window,
                                  alpha = alpha,
                                  gamma = gamma,
-                                 lambda = lambda,
+                                 beta0 = beta0,
                                  covariates = covariates,
                                  beta = beta,
                                  short_range = short_range,
@@ -54,7 +54,7 @@ rgibbs <- function(window,
                                  medium_range_model = medium_range_model)
   rgibbs_cpp(window = parameters$window,
              alpha = parameters$alpha,
-             lambda = parameters$lambda,
+             beta0 = parameters$beta0,
              covariates = parameters$covariates,
              beta = parameters$beta,
              gamma = parameters$gamma,

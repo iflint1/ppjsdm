@@ -1,3 +1,4 @@
+remove(list = ls())
 library(ppjsdm)
 library(spatstat)
 
@@ -9,7 +10,7 @@ spatstat_window <- owin(c(0, 2), c(-1, 1))
 temperature <- function(x, y) x
 covariates <- list(temperature = temperature)
 
-lambda <- c(5, 5)
+beta0 <- c(log(5), log(5))
 short_range <- cbind(c(0.1, 0.1), c(0.1, 0.1))
 medium_range <- cbind(c(0.15, 0.15), c(0.15, 0.15))
 long_range <- cbind(c(0.2, 0.2), c(0.2, 0.2))
@@ -23,7 +24,7 @@ medium_range_model <- "square_exponential"
 
 configurations <- ppjsdm::rgibbs(window = window,
                                  alpha = alpha,
-                                 lambda = lambda,
+                                 beta0 = beta0,
                                  saturation = saturation,
                                  gamma = gamma,
                                  beta = beta,

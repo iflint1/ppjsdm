@@ -177,7 +177,8 @@ gibbsm <- function(configuration_list,
                                 long_range = long_range,
                                 saturation = saturation),
               aic = aic,
-              bic = bic)
+              bic = bic,
+              window = window)
 
 
   if(estimate_radii) {

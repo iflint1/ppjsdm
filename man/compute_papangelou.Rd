@@ -12,7 +12,7 @@ compute_papangelou(
   model,
   medium_range_model,
   alpha,
-  lambda,
+  beta0,
   beta,
   gamma,
   covariates,
@@ -38,7 +38,7 @@ compute_papangelou(
 
 \item{alpha}{Short range repulsion matrix.}
 
-\item{lambda}{A vector representing the intensities of the point processes.}
+\item{beta0}{A vector representing the log-intensities of the point processes.}
 
 \item{beta}{Coefficients related to covariates.}
 

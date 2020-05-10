@@ -4,10 +4,12 @@
 \alias{vcov.gibbsm}
 \title{Calculate Variance-Covariance Matrix for a Fitted Gibbs point process.}
 \usage{
-\method{vcov}{gibbsm}(object)
+\method{vcov}{gibbsm}(object, ...)
 }
 \arguments{
 \item{object}{A fitted model object.}
+
+\item{...}{Ignored.}
 }
 \description{
 Calculate Variance-Covariance Matrix for a Fitted Gibbs point process.

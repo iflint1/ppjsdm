@@ -251,7 +251,7 @@ Rcpp::List compute_A2_A3_helper(const Configuration& configuration, const ppjsdm
 }
 
 // [[Rcpp::export]]
-Rcpp::List compute_A2_A3(SEXP configuration, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericMatrix beta, Rcpp::NumericMatrix gamma, double rho, double area, Rcpp::List t_over_papangelou) {
+Rcpp::List compute_A2_A3(SEXP configuration, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, Rcpp::NumericMatrix alpha, Rcpp::NumericVector beta0, Rcpp::NumericMatrix beta, Rcpp::NumericMatrix gamma, double rho, double area, Rcpp::List t_over_papangelou) {
   // Construct std::vector of configurations.
   const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::wrap(configuration));
   const auto length_configuration(ppjsdm::size(wrapped_configuration));
@@ -269,7 +269,7 @@ Rcpp::List compute_A2_A3(SEXP configuration, Rcpp::List covariates, Rcpp::Charac
   const auto dispersion(ppjsdm::Saturated_model(model, short_range, saturation));
   const auto medium_range_dispersion(ppjsdm::Saturated_model(medium_range_model, medium_range, long_range, saturation));
 
-  const ppjsdm::Truncated_exponential_family_model<Rcpp::NumericVector> exponential_model(lambda,
+  const ppjsdm::Truncated_exponential_family_model<Rcpp::NumericVector> exponential_model(beta0,
                                                                                           model,
                                                                                           medium_range_model,
                                                                                           alpha,

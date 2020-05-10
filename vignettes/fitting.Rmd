@@ -52,9 +52,9 @@ gamma <- matrix(cbind(c(0.2, 0.4, -0.7), c(0.4, 0.5, -0.9), c(-0.7, -0.9, -0.9))
 short_range <- matrix(0.005, nspecies, nspecies)
 medium_range <- matrix(0.01, nspecies, nspecies)
 long_range <- matrix(0.015, nspecies, nspecies)
-log_lambda <- rep(6, nspecies)
+beta0 <- rep(6, nspecies)
 
-configuration <- ppjsdm::rgibbs(lambda = exp(log_lambda), 
+configuration <- ppjsdm::rgibbs(beta0 = beta0, 
                                 alpha = alpha,
                                 gamma = gamma,
                                 model = model,
@@ -87,7 +87,7 @@ fit <- ppjsdm::gibbsm(configuration,
 For reference, the actual values used are given below.
 
 ```{r}
-print(log_lambda)
+print(beta0)
 print(alpha)
 print(gamma)
 ```

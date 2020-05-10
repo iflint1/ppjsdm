@@ -8,7 +8,7 @@ model_parameters(
   window,
   alpha,
   gamma,
-  lambda,
+  beta0,
   covariates,
   beta,
   short_range,
@@ -27,7 +27,7 @@ model_parameters(
 
 \item{gamma}{Medium range repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.}
 
-\item{lambda}{A vector representing the intensities of the point processes.
+\item{beta0}{A vector representing the log-intensities of the point processes.
 Default is a vector of same size as types, filled with ones.}
 
 \item{covariates}{Covariates, with an empty list as a default.}

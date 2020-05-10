@@ -29,7 +29,7 @@ test_that("Correct Papangelou conditional intensity value", {
     configuration <- Configuration(x = runif(20, 0, 1), y = runif(20, 0, 1), types = c(rep("a", 9), rep("b", 11)))
     configuration_a <- Configuration(x = x_coordinates(configuration)[types(configuration) == "a"], y = y_coordinates(configuration)[types(configuration) == "a"], types = types(configuration)[types(configuration) == "a"])
     configuration_b <- Configuration(x = x_coordinates(configuration)[types(configuration) == "b"], y = y_coordinates(configuration)[types(configuration) == "b"], types = types(configuration)[types(configuration) == "b"])
-    lambda <- c(1, 2)
+    beta0 <- c(log(1), log(2))
     alpha <- cbind(c(0.5, 1), c(1, -0.5))
     gamma <- cbind(c(2, 0), c(0, -2))
     r_1 <- matrix(runif(4, 0, 1), 2, 2)
@@ -88,7 +88,7 @@ test_that("Correct Papangelou conditional intensity value", {
     }))
     v_term <- c(v_term1, v_term2)
 
-    papangelou_direct <- as.double(lambda[type] * exp(beta[type] * covariate(x[1], x[2]) + alpha[type, ] %*% u_term + gamma[type, ] %*% v_term))
+    papangelou_direct <- as.double(exp(beta0[type] + beta[type] * covariate(x[1], x[2]) + alpha[type, ] %*% u_term + gamma[type, ] %*% v_term))
     papangelou_package <- ppjsdm::compute_papangelou(configuration = configuration,
                                                      x = x[1],
                                                      y = x[2],
@@ -96,7 +96,7 @@ test_that("Correct Papangelou conditional intensity value", {
                                                      model = model,
                                                      medium_range_model = medium_range_model,
                                                      alpha = alpha,
-                                                     lambda = lambda,
+                                                     beta0 = beta0,
                                                      beta = beta,
                                                      gamma = gamma,
                                                      covariates = list(cov = as.im(covariate, W = window)),

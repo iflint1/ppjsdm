@@ -1,8 +1,9 @@
+remove(list = ls())
 library(ppjsdm)
 
 alpha <- matrix(-0.1)
 gamma <- matrix(0)
-lambda <- 30
+beta0 <- log(30)
 nsim <- 10000
 short_range <- matrix(0.1)
 medium_range <- matrix(0)
@@ -19,7 +20,7 @@ if(use_rgibbs) {
   Z <- ppjsdm::rgibbs(window = window,
                       alpha = alpha,
                       gamma = gamma,
-                      lambda = lambda,
+                      beta0 = beta0,
                       nsim = nsim,
                       short_range = short_range,
                       medium_range = medium_range,
@@ -30,7 +31,7 @@ if(use_rgibbs) {
                       drop = FALSE)
 } else {
   Z <- ppjsdm::rppp(window = window,
-                    lambda = lambda,
+                    lambda = exp(lambda),
                     nsim = nsim,
                     drop = FALSE)
 }
@@ -64,4 +65,4 @@ if(use_joint_pdf) {
   }
 }
 cat("Estimated values are: ", paste0(estimate, collapse = ", "), ".\n", sep = "")
-cat("True values are: lambda = ", lambda, " and alpha = ", alpha, ".\n", sep = "")
+cat("True values are: beta0 = ", beta0, " and alpha = ", alpha, ".\n", sep = "")

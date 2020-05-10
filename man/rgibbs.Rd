@@ -8,7 +8,7 @@ rgibbs(
   window,
   alpha,
   gamma,
-  lambda,
+  beta0,
   covariates,
   beta,
   short_range,
@@ -31,8 +31,8 @@ rgibbs(
 
 \item{gamma}{Medium range repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.}
 
-\item{lambda}{A vector representing the intensities of the point processes.
-Default is a vector of same size as types, filled with ones.}
+\item{beta0}{A vector representing the log_intensities of the point processes.
+Default is a vector of same size as types, filled with zeros}
 
 \item{covariates}{Covariates, with an empty list as a default.}
 

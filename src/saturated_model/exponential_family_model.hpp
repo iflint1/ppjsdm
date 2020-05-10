@@ -170,7 +170,7 @@ inline auto compute_alpha_dot_dispersion_maximum(const Alpha& alpha, double disp
 template<typename Lambda>
 class Truncated_exponential_family_model {
 public:
-  Truncated_exponential_family_model(const Lambda& lambda,
+  Truncated_exponential_family_model(const Lambda& beta0,
                                      Rcpp::CharacterVector model,
                                      Rcpp::CharacterVector medium_range_model,
                                      Rcpp::NumericMatrix alpha,
@@ -183,7 +183,7 @@ public:
                                      unsigned long long int saturation):
     dispersion_(Saturated_model(model, short_range, saturation)),
     medium_range_dispersion_(Saturated_model(medium_range_model, medium_range, long_range, saturation)),
-    lambda_(lambda),
+    beta0_(beta0),
     alpha_(alpha),
     beta_(beta),
     gamma_(gamma),
@@ -194,13 +194,14 @@ public:
     double alpha_dispersion(detail::compute_alpha_dot_dispersion(point, alpha_, dispersion_, configuration));
     double gamma_dispersion(detail::compute_alpha_dot_dispersion(point, gamma_, medium_range_dispersion_, configuration));
     double beta_covariates(detail::compute_beta_dot_covariates(point, beta_, covariates_));
-    return lambda_[get_type(point)] * std::exp(beta_covariates + alpha_dispersion + gamma_dispersion);
+    return std::exp(beta0_[get_type(point)]
+                      + beta_covariates + alpha_dispersion + gamma_dispersion);
   }
 
 protected:
   Saturated_model dispersion_;
   Saturated_model medium_range_dispersion_;
-  Lambda lambda_;
+  Lambda beta0_;
   Rcpp::NumericMatrix alpha_;
   Rcpp::NumericMatrix beta_;
   Rcpp::NumericMatrix gamma_;
@@ -222,7 +223,7 @@ private:
   }
 public:
   Truncated_exponential_family_model_over_window(const Window& window,
-                                                 const Lambda& lambda,
+                                                 const Lambda& beta0,
                                                  Rcpp::CharacterVector model,
                                                  Rcpp::CharacterVector medium_range_model,
                                                  Rcpp::NumericMatrix alpha,
@@ -233,7 +234,7 @@ public:
                                                  Rcpp::NumericMatrix medium_range,
                                                  Rcpp::NumericMatrix long_range,
                                                  unsigned long long int saturation):
-    Model(lambda, model, medium_range_model, alpha, beta, gamma, covariates, short_range, medium_range, long_range, saturation),
+    Model(beta0, model, medium_range_model, alpha, beta, gamma, covariates, short_range, medium_range, long_range, saturation),
     window_(window),
     beta_dot_covariates_maximum_(detail::compute_beta_dot_covariates_maximum(beta, Model::covariates_)),
     dot_dispersion_maximum_(detail::compute_alpha_dot_dispersion_maximum(alpha, get_dispersion_maximum(Model::dispersion_))) {
@@ -254,16 +255,16 @@ public:
     double integral(0);
     const auto number_types(Model::beta_.nrow());
     for(R_xlen_t i(0); i < number_types; ++i) {
-      integral += Model::lambda_[i] * Model::covariates_.get_integral_of_dot(window_, [i, this](double x) {
-        return std::exp(x + dot_dispersion_maximum_[i]);
+      integral += Model::covariates_.get_integral_of_dot(window_, [i, this](double x) {
+        return std::exp(x + Model::beta0_[i] + dot_dispersion_maximum_[i]);
       }, Model::beta_(i, Rcpp::_));
     }
     return integral;
   }
 
   auto sample_point_from_bounding_intensity() const {
-    // Sample type proportionally to the lambda_i.
-    const auto random_type(Rcpp::sample(Model::lambda_.size(), 1, false, Rcpp::sugar::probs_t(Model::lambda_), false)[0]);
+    // Sample type proportionally to the exp(beta0_i).
+    const auto random_type(Rcpp::sample(Model::beta0_.size(), 1, false, Rcpp::sugar::probs_t(Rcpp::exp(Model::beta0_)), false)[0]);
     while(true) {
       const auto sample(window_.sample(random_type));
       if(exp_rand() + get_log_normalized_bounding_intensity(sample) >= 0) {
@@ -273,13 +274,13 @@ public:
   }
 
   auto get_upper_bound() const {
-    const auto number_types(Model::lambda_.size());
+    const auto number_types(Model::beta0_.size());
     std::vector<double> upper_bound(number_types);
-    using size_t = decltype(Model::lambda_.size());
+    using size_t = decltype(Model::beta0_.size());
     for(size_t i(0); i < number_types; ++i) {
-      const auto value(Model::lambda_[i] * std::exp(dot_dispersion_maximum_[i] + beta_dot_covariates_maximum_[i]));
+      const auto value(std::exp(Model::beta0_[i] + dot_dispersion_maximum_[i] + beta_dot_covariates_maximum_[i]));
       if(std::isinf(value)) {
-        Rcpp::Rcout << Model::lambda_[i] << '\n';
+        Rcpp::Rcout << Model::beta0_[i] << '\n';
         Rcpp::Rcout << dot_dispersion_maximum_[i] << '\n';
         Rcpp::Rcout << beta_dot_covariates_maximum_[i] << '\n';
         Rcpp::stop("Infinite value obtained as the bound to the Papangelou intensity.");

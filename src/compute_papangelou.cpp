@@ -17,7 +17,7 @@
 //' @param model String representing the model to use. You can check the currently authorised models with a call to `show_models()`.
 //' @param medium_range_model String representing the medium range model to use. You can check the currently authorised models with a call to `show_medium_range_models()`.
 //' @param alpha Short range repulsion matrix.
-//' @param lambda A vector representing the intensities of the point processes.
+//' @param beta0 A vector representing the log-intensities of the point processes.
 //' @param beta Coefficients related to covariates.
 //' @param gamma Medium range repulsion matrix.
 //' @param covariates Covariates.
@@ -30,9 +30,9 @@
 //' @useDynLib ppjsdm
 //' @import Rcpp
 // [[Rcpp::export]]
-Rcpp::NumericVector compute_papangelou(SEXP configuration, Rcpp::NumericVector x, Rcpp::NumericVector y, R_xlen_t type, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::NumericMatrix alpha, Rcpp::NumericVector lambda, Rcpp::NumericMatrix beta, Rcpp::NumericMatrix gamma, Rcpp::List covariates, Rcpp::NumericMatrix short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, double mark = 1.0) {
+Rcpp::NumericVector compute_papangelou(SEXP configuration, Rcpp::NumericVector x, Rcpp::NumericVector y, R_xlen_t type, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::NumericMatrix alpha, Rcpp::NumericVector beta0, Rcpp::NumericMatrix beta, Rcpp::NumericMatrix gamma, Rcpp::List covariates, Rcpp::NumericMatrix short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, double mark = 1.0) {
   const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
-  const ppjsdm::Truncated_exponential_family_model<Rcpp::NumericVector> exponential_model(lambda, model, medium_range_model, alpha, beta, gamma, covariates, short_range, medium_range, long_range, saturation);
+  const ppjsdm::Truncated_exponential_family_model<Rcpp::NumericVector> exponential_model(beta0, model, medium_range_model, alpha, beta, gamma, covariates, short_range, medium_range, long_range, saturation);
   const auto length_x(x.size());
   Rcpp::NumericVector result(Rcpp::no_init(length_x));
   for(R_xlen_t i(0); i < length_x; ++i) {

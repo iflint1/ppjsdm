@@ -11,7 +11,7 @@ plot_papangelou(
   model,
   medium_range_model,
   alpha,
-  lambda,
+  beta0,
   beta,
   gamma,
   covariates,
@@ -38,7 +38,7 @@ plot_papangelou(
 
 \item{alpha}{Short range repulsion parameter.}
 
-\item{lambda}{Intensity.}
+\item{beta0}{Log-intensity.}
 
 \item{beta}{Covariates coefficients.}
 

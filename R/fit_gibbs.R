@@ -65,7 +65,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
   }
 
   number_types <- length(shift)
-  lambda <- vector(mode = "numeric", length = number_types)
+  beta0 <- vector(mode = "numeric", length = number_types)
   alpha <- matrix(0, number_types, number_types)
   gamma <- matrix(0, number_types, number_types)
 
@@ -75,7 +75,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
   }
   for(i in seq_len(number_types)) {
     # Shift all columns with row name shifted_log_lambdai
-    lambda[i] <- exp(coef[match(paste0("shifted_log_lambda", i), names(coef))] - shift[i])
+    beta0[i] <- coef[match(paste0("shifted_log_lambda", i), names(coef))] - shift[i]
     if(estimate_alpha) {
       alpha[i, i] <- coef[match(paste0("alpha_", i, "_", i), names(coef))]
     }
@@ -93,5 +93,5 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
       }
     }
   }
-  list(fit = fit, coefficients = list(lambda = lambda, alpha = alpha, gamma = gamma, beta = beta), aic = aic, bic = bic)
+  list(fit = fit, coefficients = list(beta0 = beta0, alpha = alpha, gamma = gamma, beta = beta), aic = aic, bic = bic)
 }
