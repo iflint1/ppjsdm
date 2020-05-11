@@ -1,29 +1,61 @@
 remove(list = ls())
 library(ppjsdm)
+library(spatstat)
 
 window <- Rectangle_window(c(0, 1), c(0, 1))
 nreplications <- 1000
-beta0 <- 3
-alpha <- 0
+beta0 <- 4
+alpha <- -0.3
+ndummy <- 500
 estimate_alpha <- TRUE
+model <- "square_bump"
+saturation <- 2
 beta0_CI <- matrix(NA, nrow = nreplications, ncol = 2)
 beta0_estimate <- vector(mode = "numeric", length = nreplications)
-samples <- vector(mode = "list", length = nreplications)
 if(estimate_alpha) {
   is_in <- matrix(NA, nrow = nreplications, ncol = 2)
   alpha_CI <- matrix(NA, nrow = nreplications, ncol = 2)
   alpha_estimate <- vector(mode = "numeric", length = nreplications)
-  short_range <- 0.2
+  short_range <- 0.1
 } else {
   is_in <- matrix(NA, nrow = nreplications, ncol = 1)
   short_range <- 0.
 }
 
+# samples <- ppjsdm::rppp(window = window,
+#                         lambda = exp(beta0),
+#                         nsim = nreplications,
+#                         drop = FALSE)
+
+samples <- ppjsdm::rgibbs(window = window,
+                          beta0 = beta0,
+                          alpha = alpha,
+                          short_range = short_range,
+                          nsim = nreplications,
+                          model = model,
+                          drop = FALSE,
+                          saturation = saturation)
+
+# samples <- spatstat::rStrauss(beta = exp(beta0),
+#                               gamma = exp(2 * alpha),
+#                               R = short_range, W = as.owin(window),
+#                               nsim = nreplications,
+#                               drop = FALSE)
+samples <- lapply(samples, function(s) ppjsdm::Configuration(x = s$x, y = s$y))
+
+
 for(i in seq_len(nreplications)) {
-  samples[[i]] <- ppjsdm::rgibbs(window = window, beta0 = beta0, alpha = alpha, short_range = short_range)
-  fit <- gibbsm(samples[[i]], window = window, print = FALSE, short_range = short_range, use_glmnet = FALSE)
+  fit <- gibbsm(samples[[i]],
+                window = window,
+                print = FALSE,
+                short_range = short_range,
+                use_glmnet = FALSE,
+                ndummy = ndummy,
+                model = model,
+                saturation = saturation)
 
   vc <- vcov(fit)
+
   se <- sqrt(diag(vc))
   estimate <- fit$coefficients
 

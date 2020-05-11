@@ -159,7 +159,6 @@ Rcpp::List compute_A2_A3_helper(const Configuration& configuration, const ppjsdm
             }
           }
         }
-
         for(size_t k1(0); k1 < total_parameters; ++k1) {
           for(size_t k2(0); k2 < total_parameters; ++k2) {
             const auto result(t_i[k1] * t_j[k2] / ((papangelou_i_minus_two + rho) * (papangelou_j_minus_two + rho)) * (papangelou_j_minus_two / papangelou_j_minus_j - 1.));
@@ -168,46 +167,6 @@ Rcpp::List compute_A2_A3_helper(const Configuration& configuration, const ppjsdm
           }
         }
       }
-
-      // TODO: index or formula here and in other vectors?
-      /*size_t index(0);
-      for(size_t j(0); j < number_types; ++j) {
-        if(j == type_index) {
-          // fill log_lambda
-          log_lambda(i, j) = 1;
-
-          // fill covariates
-          for(size_t k(0); k < covariates_length; ++k) {
-            covariates_input(i, k * number_types + j) = precomputed_results[i].covariates[k];
-          }
-
-          // fill alpha
-          for(size_t k(j); k < number_types; ++k) {
-            alpha_input(i, index) = precomputed_results[i].dispersion[k];
-            gamma_input(i, index++) = precomputed_results[i].medium_dispersion[k];
-          }
-        } else {
-          // fill log_lambda
-          log_lambda(i, j) = 0;
-
-          // fill covariates
-          for(size_t k(0); k < covariates_length; ++k) {
-            covariates_input(i, k * number_types + j) = 0;
-          }
-
-          // fill alpha
-          for(size_t k(j); k < number_types; ++k) {
-            if(k == type_index) {
-              alpha_input(i, index) = precomputed_results[i].dispersion[j];
-              gamma_input(i, index++) = precomputed_results[i].medium_dispersion[j];
-            } else {
-              // TODO: Not necessary since zero-initialized.
-              alpha_input(i, index) = 0;
-              gamma_input(i, index++) = 0;
-            }
-          }
-        }
-      }*/
     }
   }
 

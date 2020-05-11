@@ -34,25 +34,35 @@ inline void add_to_formula(std::string& formula, Rcpp::CharacterVector names) {
 }
 
 template<bool Approximate, typename Configuration, typename Vector>
-Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configuration_list, const ppjsdm::Window& window, const ppjsdm::Im_list_wrapper& covariates, Rcpp::List traits, const ppjsdm::Saturated_model& dispersion_model, const ppjsdm::Saturated_model& medium_dispersion_model, const Vector& max_points_by_type) {
+Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configuration_list, const ppjsdm::Window& window, const ppjsdm::Im_list_wrapper& covariates, Rcpp::List traits, const ppjsdm::Saturated_model& dispersion_model, const ppjsdm::Saturated_model& medium_dispersion_model, const Vector& max_points_by_type, R_xlen_t ndummy) {
   using size_t = ppjsdm::size_t<Configuration>;
+  const size_t number_types(max_points_by_type.size());
 
   // Sample the dummy points D.
   // This choice of rho is the guideline from the Baddeley et al. paper, see p. 8 therein.
-  Vector rho_times_volume(max_points_by_type);
+  Vector rho_times_volume;
   size_t length_D(0);
-  for(auto& n: rho_times_volume) {
-    const auto mult_by_four(n * 4);
-    n = mult_by_four < 500 ? 500 : mult_by_four;
-    length_D += n;
+  if(ndummy == 0) {
+    rho_times_volume = max_points_by_type;
+    for(auto& n: rho_times_volume) {
+      const auto mult_by_four(n * 4);
+      n = mult_by_four < 500 ? 500 : mult_by_four;
+      length_D += n;
+    }
+  } else {
+    rho_times_volume = Vector(number_types);
+    length_D = number_types * ndummy;
+    for(auto& n: rho_times_volume) {
+      n = ndummy;
+    }
   }
-  const size_t number_types(max_points_by_type.size());
-  auto D(ppjsdm::rbinomialpp_single<std::vector<ppjsdm::Marked_point>>(window, rho_times_volume, number_types, length_D));
+  const auto D(ppjsdm::rbinomialpp_single<std::vector<ppjsdm::Marked_point>>(window, rho_times_volume, number_types, length_D));
   // Vector rho(rho_times_volume);
-  // for(size_t j(0); j < number_types; ++j) {
-  //   rho[j] /= window.volume();
+  // for(auto& n: rho) {
+  //   n /= window.volume();
   // }
-  // auto D(ppjsdm::rppp_single<std::vector<ppjsdm::Marked_point>>(window, rho, number_types));
+  // const auto D(ppjsdm::rppp_single<std::vector<ppjsdm::Marked_point>>(window, rho, number_types));
+  // length_D = D.size();
 
   // Make shift vector
   Rcpp::NumericVector shift(Rcpp::no_init(number_types));
@@ -397,7 +407,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 }
 
 // [[Rcpp::export]]
-Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list, SEXP window, Rcpp::List covariates, Rcpp::List traits, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, Rcpp::NumericVector mark_range, bool approximate) {
+Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list, SEXP window, Rcpp::List covariates, Rcpp::List traits, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, Rcpp::NumericVector mark_range, bool approximate, R_xlen_t ndummy) {
   // Construct std::vector of configurations.
   std::vector<std::vector<ppjsdm::Marked_point>> vector_configurations(configuration_list.size());
   for(R_xlen_t i(0); i < configuration_list.size(); ++i) {
@@ -440,8 +450,8 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list, SEXP window, Rcpp:
   }
   const auto medium_range_dispersion(ppjsdm::Saturated_model(medium_range_model, me, lo, saturation));
   if(approximate) {
-    return prepare_gibbsm_data_helper<true>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, dispersion, medium_range_dispersion, max_points_by_type);
+    return prepare_gibbsm_data_helper<true>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, dispersion, medium_range_dispersion, max_points_by_type, ndummy);
   } else {
-    return prepare_gibbsm_data_helper<false>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, dispersion, medium_range_dispersion, max_points_by_type);
+    return prepare_gibbsm_data_helper<false>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, dispersion, medium_range_dispersion, max_points_by_type, ndummy);
   }
 }

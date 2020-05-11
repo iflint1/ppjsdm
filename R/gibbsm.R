@@ -13,6 +13,7 @@
 #' @param print Print the fitted coefficients?
 #' @param use_glmnet Use `glmnet` instead of `glm`?
 #' @param use_aic Use AIC instead of BIC for model fitting?
+#' @param ndummy Number of dummy points for each type. By default, follows the recommendation of Baddeley et al.
 #' @importFrom glmnet glmnet cv.glmnet
 #' @importFrom stats AIC BIC binomial coefficients deviance glm.fit lm
 #' @importFrom spatstat as.im as.owin
@@ -30,7 +31,8 @@ gibbsm <- function(configuration_list,
                    saturation,
                    print = TRUE,
                    use_glmnet = TRUE,
-                   use_aic = TRUE) {
+                   use_aic = TRUE,
+                   ndummy = 0) {
   # TODO: At some point, synchronize defaults for ranges with the C++ code
   parameters <- model_parameters_defaults(window = window,
                                           covariates = covariates,
@@ -83,7 +85,19 @@ gibbsm <- function(configuration_list,
       # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
       mark_range <- c(min(get_marks(configuration_list[[1]])), max(get_marks(configuration_list[[1]])))
 
-      gibbsm_data_list <- prepare_gibbsm_data(configuration_list, window, covariates, traits, model, medium_range_model, sh, me, lo, saturation, mark_range, TRUE)
+      gibbsm_data_list <- prepare_gibbsm_data(configuration_list,
+                                              window,
+                                              covariates,
+                                              traits,
+                                              model,
+                                              medium_range_model,
+                                              sh,
+                                              me,
+                                              lo,
+                                              saturation,
+                                              mark_range,
+                                              TRUE,
+                                              ndummy = ndummy)
 
       fit <- fit_gibbs(gibbsm_data_list, use_glmnet = FALSE, use_aic = use_aic, estimate_alpha = estimate_alpha, estimate_gamma = estimate_gamma)
       list(fit = fit, sh = sh, me = me, lo = lo)
@@ -138,7 +152,19 @@ gibbsm <- function(configuration_list,
     # Refit with best radii and non-approximation
     # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
     mark_range <- c(min(get_marks(configuration_list[[1]])), max(get_marks(configuration_list[[1]])))
-    gibbsm_data_list <- prepare_gibbsm_data(configuration_list, window, covariates, traits, model, medium_range_model, best_short, best_medium, best_long, saturation, mark_range, FALSE)
+    gibbsm_data_list <- prepare_gibbsm_data(configuration_list,
+                                            window,
+                                            covariates,
+                                            traits,
+                                            model,
+                                            medium_range_model,
+                                            best_short,
+                                            best_medium,
+                                            best_long,
+                                            saturation,
+                                            mark_range,
+                                            FALSE,
+                                            ndummy = ndummy)
 
     fitted <- fit_gibbs(gibbsm_data_list, use_glmnet = use_glmnet, use_aic = use_aic, estimate_alpha = estimate_alpha, estimate_gamma = estimate_gamma)
   } else {
@@ -151,7 +177,18 @@ gibbsm <- function(configuration_list,
 
     # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
     mark_range <- c(min(get_marks(configuration_list[[1]])), max(get_marks(configuration_list[[1]])))
-    gibbsm_data_list <- prepare_gibbsm_data(configuration_list, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, FALSE)
+    gibbsm_data_list <- prepare_gibbsm_data(configuration_list,
+                                            window,
+                                            covariates,
+                                            traits, model,
+                                            medium_range_model,
+                                            short_range,
+                                            medium_range,
+                                            long_range,
+                                            saturation,
+                                            mark_range,
+                                            FALSE,
+                                            ndummy = ndummy)
 
     fitted <- fit_gibbs(gibbsm_data_list, use_glmnet = use_glmnet, use_aic = use_aic, estimate_alpha = estimate_alpha, estimate_gamma = estimate_gamma)
   }

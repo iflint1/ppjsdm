@@ -17,7 +17,8 @@ gibbsm(
   saturation,
   print = TRUE,
   use_glmnet = TRUE,
-  use_aic = TRUE
+  use_aic = TRUE,
+  ndummy = 0
 )
 }
 \arguments{
@@ -46,6 +47,8 @@ gibbsm(
 \item{use_glmnet}{Use `glmnet` instead of `glm`?}
 
 \item{use_aic}{Use AIC instead of BIC for model fitting?}
+
+\item{ndummy}{Number of dummy points for each type. By default, follows the recommendation of Baddeley et al.}
 }
 \description{
 Fit a multivariate Gibbs model to a dataset.

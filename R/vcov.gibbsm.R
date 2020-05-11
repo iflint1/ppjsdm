@@ -31,140 +31,44 @@ vcov.gibbsm <- function(object, ...) {
   #TODO: Should enforce sizeof(configuration_list) == 1
   #TODO: Should enforce constant rho
   rho <- exp(-object$data_list$shift[1])
-  S <- rho / window_volume(object$window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
-    type_string <- levels(types(configuration_list[[1]]))[object$data_list$type[row]]
-    conf <- remove_from_configuration(configuration_list[[1]], c(object$data_list$x[row], object$data_list$y[row]), type_string)
-    papangelou <- compute_papangelou(configuration = conf,
-                                     x = object$data_list$x[row],
-                                     y = object$data_list$y[row],
-                                     type = object$data_list$type[row],
-                                     model = model,
-                                     medium_range_model = medium_range_model,
-                                     alpha = fits_coefficients$alpha,
-                                     beta0 = fits_coefficients$beta0,
-                                     beta = fits_coefficients$beta,
-                                     gamma = fits_coefficients$gamma,
-                                     covariates = covariates,
-                                     short_range = short_range,
-                                     medium_range = medium_range,
-                                     long_range = long_range,
-                                     saturation = saturation,
-                                     mark = object$data_list$mark[row])
-    regressors[row, ] %*% t(regressors[row, ]) * papangelou / (papangelou + rho)^2
-  }))
 
-  A1 <- rho^2 / window_volume(object$window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
+  papangelou <- vector(mode = "numeric", length = nrow(regressors))
+  for(row in seq_len(length(papangelou))) {
     type_string <- levels(types(configuration_list[[1]]))[object$data_list$type[row]]
     conf <- remove_from_configuration(configuration_list[[1]], c(object$data_list$x[row], object$data_list$y[row]), type_string)
-    papangelou <- compute_papangelou(configuration = conf,
-                                     x = object$data_list$x[row],
-                                     y = object$data_list$y[row],
-                                     type = object$data_list$type[row],
-                                     model = model,
-                                     medium_range_model = medium_range_model,
-                                     alpha = fits_coefficients$alpha,
-                                     beta0 = fits_coefficients$beta0,
-                                     beta = fits_coefficients$beta,
-                                     gamma = fits_coefficients$gamma,
-                                     covariates = covariates,
-                                     short_range = short_range,
-                                     medium_range = medium_range,
-                                     long_range = long_range,
-                                     saturation = saturation,
-                                     mark = object$data_list$mark[row])
-   regressors[row, ] %*% t(regressors[row, ]) * papangelou / (papangelou + rho)^3
-  }))
+    papangelou[row] <- compute_papangelou(configuration = conf,
+                                          x = object$data_list$x[row],
+                                          y = object$data_list$y[row],
+                                          type = object$data_list$type[row],
+                                          model = model,
+                                          medium_range_model = medium_range_model,
+                                          alpha = fits_coefficients$alpha,
+                                          beta0 = fits_coefficients$beta0,
+                                          beta = fits_coefficients$beta,
+                                          gamma = fits_coefficients$gamma,
+                                          covariates = covariates,
+                                          short_range = short_range,
+                                          medium_range = medium_range,
+                                          long_range = long_range,
+                                          saturation = saturation,
+                                          mark = object$data_list$mark[row])
+  }
 
-  kappa <- 1 / window_volume(object$window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
-    type_string <- levels(types(configuration_list[[1]]))[object$data_list$type[row]]
-    conf <- remove_from_configuration(configuration_list[[1]], c(object$data_list$x[row], object$data_list$y[row]), type_string)
-    papangelou <- compute_papangelou(configuration = conf,
-                                     x = object$data_list$x[row],
-                                     y = object$data_list$y[row],
-                                     type = object$data_list$type[row],
-                                     model = model,
-                                     medium_range_model = medium_range_model,
-                                     alpha = fits_coefficients$alpha,
-                                     beta0 = fits_coefficients$beta0,
-                                     beta = fits_coefficients$beta,
-                                     gamma = fits_coefficients$gamma,
-                                     covariates = covariates,
-                                     short_range = short_range,
-                                     medium_range = medium_range,
-                                     long_range = long_range,
-                                     saturation = saturation,
-                                     mark = object$data_list$mark[row])
-    1. / (papangelou + rho)
-  }))
-
-  temp_A1 <- rho^2 / window_volume(object$window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
-    type_string <- levels(types(configuration_list[[1]]))[object$data_list$type[row]]
-    conf <- remove_from_configuration(configuration_list[[1]], c(object$data_list$x[row], object$data_list$y[row]), type_string)
-    papangelou <- compute_papangelou(configuration = conf,
-                                     x = object$data_list$x[row],
-                                     y = object$data_list$y[row],
-                                     type = object$data_list$type[row],
-                                     model = model,
-                                     medium_range_model = medium_range_model,
-                                     alpha = fits_coefficients$alpha,
-                                     beta0 = fits_coefficients$beta0,
-                                     beta = fits_coefficients$beta,
-                                     gamma = fits_coefficients$gamma,
-                                     covariates = covariates,
-                                     short_range = short_range,
-                                     medium_range = medium_range,
-                                     long_range = long_range,
-                                     saturation = saturation,
-                                     mark = object$data_list$mark[row])
-    regressors[row, ] %*% t(regressors[row, ]) * papangelou^2 / (papangelou + rho)^3
-  }))
+  S <- rho / window_volume(object$window) * sumouter(regressors, w = papangelou / (papangelou + rho)^2)
+  A1 <- rho * rho / window_volume(object$window) * sumouter(regressors, w = papangelou / (papangelou + rho)^3)
+  kappa <- 1 / window_volume(object$window) * sum(1. / (papangelou + rho))
+  temp_A1 <- rho * rho / window_volume(object$window) * sumouter(regressors, w = papangelou^2 / (papangelou + rho)^3)
 
   other_temp_A1 <- rho / window_volume(object$window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
-    type_string <- levels(types(configuration_list[[1]]))[object$data_list$type[row]]
-    conf <- remove_from_configuration(configuration_list[[1]], c(object$data_list$x[row], object$data_list$y[row]), type_string)
-    papangelou <- compute_papangelou(configuration = conf,
-                                     x = object$data_list$x[row],
-                                     y = object$data_list$y[row],
-                                     type = object$data_list$type[row],
-                                     model = model,
-                                     medium_range_model = medium_range_model,
-                                     alpha = fits_coefficients$alpha,
-                                     beta0 = fits_coefficients$beta0,
-                                     beta = fits_coefficients$beta,
-                                     gamma = fits_coefficients$gamma,
-                                     covariates = covariates,
-                                     short_range = short_range,
-                                     medium_range = medium_range,
-                                     long_range = long_range,
-                                     saturation = saturation,
-                                     mark = object$data_list$mark[row])
-    regressors[row, ] %*% t(rep.int(1, ncol(regressors))) * papangelou / (papangelou + rho)^2
+    regressors[row, ] %*% t(rep.int(1, ncol(regressors))) * papangelou[row] / (papangelou[row] + rho)^2
   }))
 
   t_over_papangelou <- lapply(1:nrow(regressors), function(row) {
-    type_string <- levels(types(configuration_list[[1]]))[object$data_list$type[row]]
-    conf <- remove_from_configuration(configuration_list[[1]], c(object$data_list$x[row], object$data_list$y[row]), type_string)
-    papangelou <- compute_papangelou(configuration = conf,
-                                     x = object$data_list$x[row],
-                                     y = object$data_list$y[row],
-                                     type = object$data_list$type[row],
-                                     model = model,
-                                     medium_range_model = medium_range_model,
-                                     alpha = fits_coefficients$alpha,
-                                     beta0 = fits_coefficients$beta0,
-                                     beta = fits_coefficients$beta,
-                                     gamma = fits_coefficients$gamma,
-                                     covariates = covariates,
-                                     short_range = short_range,
-                                     medium_range = medium_range,
-                                     long_range = long_range,
-                                     saturation = saturation,
-                                     mark = object$data_list$mark[row])
     list(x = object$data_list$x[row],
          y = object$data_list$y[row],
          type = object$data_list$type[row],
          mark = object$data_list$mark[row],
-         value = regressors[row, ] / (papangelou + rho))
+         value = regressors[row, ] / (papangelou[row] + rho))
   })
 
   A2_A3 <- compute_A2_A3(configuration = configuration_list[[1]],
@@ -196,8 +100,8 @@ vcov.gibbsm <- function(object, ...) {
   }
 
   G2 <- (temp_A1 - other_temp_A1 * t(other_temp_A1) / kappa) / rho
-  #G2 <- temp_A1 / rho
+  # G2 <- temp_A1 / rho
 
-  vc <- solve(S) * (A1 + A2 + A3 + G2) * solve(S)
+  vc <- solve(S) %*% (A1 + A2 + A3 + G2) %*% solve(S) / window_volume(object$window)
   vc
 }
