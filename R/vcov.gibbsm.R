@@ -54,10 +54,16 @@ vcov.gibbsm <- function(object, ...) {
                                           mark = object$data_list$mark[row])
   }
 
-  S <- rho / window_volume(object$window) * sumouter(regressors, w = papangelou / (papangelou + rho)^2)
-  A1 <- rho * rho / window_volume(object$window) * sumouter(regressors, w = papangelou / (papangelou + rho)^3)
+  S <- rho / window_volume(object$window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
+    regressors[row, ] %*% t(regressors[row, ]) * papangelou[row] / (papangelou[row] + rho)^2
+  }))
+  A1 <- rho * rho / window_volume(object$window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
+    regressors[row, ] %*% t(regressors[row, ]) * papangelou[row] / (papangelou[row] + rho)^3
+  }))
   kappa <- 1 / window_volume(object$window) * sum(1. / (papangelou + rho))
-  temp_A1 <- rho * rho / window_volume(object$window) * sumouter(regressors, w = papangelou^2 / (papangelou + rho)^3)
+  temp_A1 <- rho * rho / window_volume(object$window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
+    regressors[row, ] %*% t(regressors[row, ]) * papangelou[row]^2 / (papangelou[row] + rho)^3
+  }))
 
   other_temp_A1 <- rho / window_volume(object$window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
     regressors[row, ] %*% t(rep.int(1, ncol(regressors))) * papangelou[row] / (papangelou[row] + rho)^2
@@ -102,6 +108,7 @@ vcov.gibbsm <- function(object, ...) {
   G2 <- (temp_A1 - other_temp_A1 * t(other_temp_A1) / kappa) / rho
   # G2 <- temp_A1 / rho
 
-  vc <- solve(S) %*% (A1 + A2 + A3 + G2) %*% solve(S) / window_volume(object$window)
+  Sinv <- solve(S)
+  vc <- Sinv %*% (A1 + A2 + A3 + G2) %*% Sinv / window_volume(object$window)
   vc
 }
