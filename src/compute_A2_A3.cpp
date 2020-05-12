@@ -64,7 +64,7 @@ Rcpp::List compute_A2_A3_helper(const Configuration& configuration, const ppjsdm
       if(j != i) {
         const int type_j(ppjsdm::get_type(configuration[j]));
 
-        Rcpp::NumericVector t_over_papangelou_j(0);
+        Rcpp::NumericVector t_over_papangelou_j;
         for(R_xlen_t l(0); l < t_over_papangelou.size(); ++l) {
           const auto current(Rcpp::as<Rcpp::List>(t_over_papangelou[l]));
           if(ppjsdm::is_equal(configuration[j], ppjsdm::Marked_point(current["x"], current["y"], Rcpp::as<int>(current["type"]) - 1, current["mark"]))) {

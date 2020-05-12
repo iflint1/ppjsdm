@@ -71,11 +71,26 @@ vcov.gibbsm <- function(object, ...) {
   }))
 
   t_over_papangelou <- lapply(1:nrow(regressors), function(row) {
+    val <- regressors[row, ] / (papangelou[row] + rho)
+    beta0 <- val[startsWith(names(val), "shifted_log_lambda")]
+    if(!object$estimate_alpha) {
+      alpha <- rep(0., ntypes * (ntypes + 1) / 2)
+    } else {
+      alpha <- val[startsWith(names(val), "alpha_")]
+    }
+    if(!object$estimate_gamma) {
+      gamma <- rep(0., ntypes * (ntypes + 1) / 2)
+    } else {
+      gamma <- val[startsWith(names(val), "gamma_")]
+    }
+    beta <- val[!(startsWith(names(val), "shifted_log_lambda") | startsWith(names(val), "alpha_") | startsWith(names(val), "gamma_"))]
+    val <- c(beta0, alpha, gamma, beta)
+
     list(x = object$data_list$x[row],
          y = object$data_list$y[row],
          type = object$data_list$type[row],
          mark = object$data_list$mark[row],
-         value = regressors[row, ] / (papangelou[row] + rho))
+         value = val)
   })
 
   A2_A3 <- compute_A2_A3(configuration = configuration_list[[1]],
