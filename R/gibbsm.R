@@ -213,6 +213,7 @@ gibbsm <- function(configuration_list,
                                 medium_range = medium_range,
                                 long_range = long_range,
                                 saturation = saturation),
+              coefficients_vector = fitted$coefficients_vector,
               aic = aic,
               bic = bic,
               window = window)

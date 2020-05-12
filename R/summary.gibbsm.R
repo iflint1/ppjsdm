@@ -11,9 +11,7 @@ summary.gibbsm <- function(object, ...) {
   vc <- vcov.gibbsm(object, ...)
   se <- sqrt(diag(vc))
 
-  coefficients <- object$coefficients
-  # TODO: Don't want to be doing the line below
-  coefficients <- c(beta0 = coefficients$beta0, alpha = coefficients$alpha)
+  coefficients <- object$coefficients_vector
   one_ninetysix <- qnorm(0.975)
   lo <- coefficients - one_ninetysix * se
   hi <- coefficients + one_ninetysix * se

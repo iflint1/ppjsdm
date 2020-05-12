@@ -72,9 +72,6 @@ Rcpp::List compute_A2_A3_helper(const Configuration& configuration, const ppjsdm
             break;
           }
         }
-        if(t_over_papangelou_j.size() == 0) {
-          Rcpp::stop("Did not find the current point in t_over_papangelou");
-        }
 
         Configuration configuration_copy(configuration);
         ppjsdm::remove_point(configuration_copy, configuration[j]);
@@ -97,34 +94,29 @@ Rcpp::List compute_A2_A3_helper(const Configuration& configuration, const ppjsdm
         std::vector<double> t_i(total_parameters);
         std::vector<double> t_j(total_parameters);
 
-        size_t index(number_types);
+        size_t current_index(number_types);
         for(int k1(0); k1 < number_types; ++k1) {
           if(k1 == type_i) {
             t_i[k1] = 1.;
 
             for(int k2(0); k2 < covariates.size(); ++k2) {
-              t_i[number_types * (2 + number_types) + k2 * number_types + k1] = cov_i[k2];
+              t_i.at(number_types * (2 + number_types) + k2 * number_types + k1) = cov_i[k2];
             }
 
+            size_t filling(current_index);
             for(int k2(k1); k2 < number_types; ++k2) {
-              t_i[index] = short_i[k2];
-              t_i[index + number_types * (number_types + 1) / 2] = medium_i[k2];
+              t_i[filling] = short_i[k2];
+              t_i[filling + number_types * (number_types + 1) / 2] = medium_i[k2];
+              ++filling;
             }
           } else {
-            t_i[k1] = 0.;
-
-            for(int k2(0); k2 < covariates.size(); ++k2) {
-              t_i[number_types * (2 + number_types) + k2 * number_types + k1] = 0.;
-            }
-
+            size_t filling(current_index);
             for(int k2(k1); k2 < number_types; ++k2) {
               if(k2 == type_i) {
-                t_i[index] = short_i[k1];
-                t_i[index + number_types * (number_types + 1) / 2] = medium_i[k1];
-              } else {
-                t_i[index] = 0.;
-                t_i[index + number_types * (number_types + 1) / 2] = 0.;
+                t_i[filling] = short_i[k1];
+                t_i[filling + number_types * (number_types + 1) / 2] = medium_i[k1];
               }
+              ++filling;
             }
           }
 
@@ -132,33 +124,25 @@ Rcpp::List compute_A2_A3_helper(const Configuration& configuration, const ppjsdm
             t_j[k1] = 1.;
 
             for(int k2(0); k2 < covariates.size(); ++k2) {
-              t_j[number_types * (2 + number_types) + k2 * number_types + k1] = cov_j[k2];
+              t_j.at(number_types * (2 + number_types) + k2 * number_types + k1) = cov_j[k2];
             }
 
             for(int k2(k1); k2 < number_types; ++k2) {
-              t_j[index] = short_j[k2];
-              t_j[index + number_types * (number_types + 1) / 2] = medium_j[k2];
-              ++index;
+              t_j[current_index] = short_j[k2];
+              t_j[current_index + number_types * (number_types + 1) / 2] = medium_j[k2];
+              ++current_index;
             }
           } else {
-            t_j[k1] = 0.;
-
-            for(int k2(0); k2 < covariates.size(); ++k2) {
-              t_j[number_types * (2 + number_types) + k2 * number_types + k1] = 0.;
-            }
-
             for(int k2(k1); k2 < number_types; ++k2) {
               if(k2 == type_j) {
-                t_j[index] = short_j[k1];
-                t_j[index + number_types * (number_types + 1) / 2] = medium_j[k1];
-              } else {
-                t_j[index] = 0.;
-                t_j[index + number_types * (number_types + 1) / 2] = 0.;
+                t_j[current_index] = short_j[k1];
+                t_j[current_index + number_types * (number_types + 1) / 2] = medium_j[k1];
               }
-              ++index;
+              ++current_index;
             }
           }
         }
+
         for(size_t k1(0); k1 < total_parameters; ++k1) {
           for(size_t k2(0); k2 < total_parameters; ++k2) {
             const auto result(t_i[k1] * t_j[k2] / ((papangelou_i_minus_two + rho) * (papangelou_j_minus_two + rho)) * (papangelou_j_minus_two / papangelou_j_minus_j - 1.));
@@ -196,8 +180,10 @@ Rcpp::List compute_A2_A3_helper(const Configuration& configuration, const ppjsdm
     }
   }
   for(R_xlen_t j(0); j < static_cast<R_xlen_t>(covariates.size()); ++j) {
-    col_names[index_shift] = covariates.names()[j];
-    ++index_shift;
+    for(R_xlen_t k(0); k < number_types; ++k) {
+      col_names[index_shift] = covariates.names()[j] + std::string("_") + std::to_string(k + 1);
+      ++index_shift;
+    }
   }
   Rcpp::colnames(A2) = col_names;
   Rcpp::rownames(A2) = col_names;

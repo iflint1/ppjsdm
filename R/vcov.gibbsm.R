@@ -18,10 +18,10 @@ vcov.gibbsm <- function(object, ...) {
   fits_coefficients <- object$coefficients
 
   if(!object$estimate_alpha) {
-    regressors <- as.matrix(regressors[, -grep("alpha", colnames(regressors))])
+    regressors <- as.matrix(regressors[, -grep("alpha_", colnames(regressors))])
   }
   if(!object$estimate_gamma) {
-    regressors <- as.matrix(regressors[, -grep("gamma", colnames(regressors))])
+    regressors <- as.matrix(regressors[, -grep("gamma_", colnames(regressors))])
   }
   if(ncol(regressors) == 1) { # In this case, R deletes the column names...
     colnames(regressors) <- "shifted_log_lambda1"
@@ -30,6 +30,7 @@ vcov.gibbsm <- function(object, ...) {
   #TODO: Should be different when estimating radii
   #TODO: Should enforce sizeof(configuration_list) == 1
   #TODO: Should enforce constant rho
+  #TODO: Is this the correct rho or should we multiply by ntypes?
   rho <- exp(-object$data_list$shift[1])
 
   papangelou <- vector(mode = "numeric", length = nrow(regressors))
@@ -94,6 +95,7 @@ vcov.gibbsm <- function(object, ...) {
                          t_over_papangelou = t_over_papangelou)
   A2 <- A2_A3$A2
   A3 <- A2_A3$A3
+
   if(!object$estimate_alpha) {
     keep <- -grep("alpha", colnames(A2))
     A2 <- A2[keep, keep]
@@ -110,5 +112,10 @@ vcov.gibbsm <- function(object, ...) {
 
   Sinv <- solve(S)
   vc <- Sinv %*% (A1 + A2 + A3 + G2) %*% Sinv / window_volume(object$window)
+  # print(S)
+  # print(A1)
+  # print(A2)
+  # print(A3)
+  # print(G2)
   vc
 }

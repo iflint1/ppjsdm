@@ -69,13 +69,17 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
   alpha <- matrix(0, number_types, number_types)
   gamma <- matrix(0, number_types, number_types)
 
-  beta <- coef[!(startsWith(names(coef), "shifted_log_lambda") | startsWith(names(coef), "alpha") | startsWith(names(coef), "gamma") | ("(Intercept)" == names(coef)))]
-  if(length(beta) == 0) {
-    beta <- matrix(0, nrow = number_types, ncol = 0)
+  beta_vector <- coef[!(startsWith(names(coef), "shifted_log_lambda") | startsWith(names(coef), "alpha") | startsWith(names(coef), "gamma") | ("(Intercept)" == names(coef)))]
+  if(length(beta_vector) == 0) {
+    beta_vector <- matrix(NA, nrow = number_types, ncol = 0)
   }
+  beta <- matrix(NA, nrow = number_types, ncol = length(beta_vector) / number_types)
   for(i in seq_len(number_types)) {
     # Shift all columns with row name shifted_log_lambdai
     beta0[i] <- coef[match(paste0("shifted_log_lambda", i), names(coef))] - shift[i]
+    if(length(beta_vector) != 0) {
+      beta[i, ] <- beta_vector[endsWith(names(beta_vector), paste0("_", i))]
+    }
     if(estimate_alpha) {
       alpha[i, i] <- coef[match(paste0("alpha_", i, "_", i), names(coef))]
     }
@@ -93,5 +97,12 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
       }
     }
   }
-  list(fit = fit, coefficients = list(beta0 = beta0, alpha = alpha, gamma = gamma, beta = beta), aic = aic, bic = bic)
+  list(fit = fit,
+       coefficients = list(beta0 = beta0,
+                           alpha = alpha,
+                           gamma = gamma,
+                           beta = beta),
+       coefficients_vector = coef,
+       aic = aic,
+       bic = bic)
 }
