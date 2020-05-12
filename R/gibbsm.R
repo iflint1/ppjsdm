@@ -209,9 +209,6 @@ gibbsm <- function(configuration_list,
               parameters = list(model = model,
                                 medium_range_model = medium_range_model,
                                 covariates = covariates,
-                                short_range = short_range,
-                                medium_range = medium_range,
-                                long_range = long_range,
                                 saturation = saturation),
               coefficients_vector = fitted$coefficients_vector,
               aic = aic,
@@ -222,7 +219,7 @@ gibbsm <- function(configuration_list,
   if(estimate_radii) {
     ret <- append(ret, list(coefficients = append(fits_coefficients, list(short_range = best_short, medium_range = best_medium, long_range = best_long))))
   } else {
-    ret <- append(ret, list(coefficients = fits_coefficients))
+    ret <- append(ret, list(coefficients = append(fits_coefficients, list(short_range = short_range, medium_range = medium_range, long_range = long_range))))
   }
   class(ret) <- "gibbsm"
   ret

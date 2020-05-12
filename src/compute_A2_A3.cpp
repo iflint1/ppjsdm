@@ -30,7 +30,7 @@
 
 // TODO: I suspect max_points_by_type isn't needed, only need number_types
 template<typename Configuration, typename Vector, typename Model>
-Rcpp::List compute_A2_A3_helper(const Configuration& configuration, const ppjsdm::Im_list_wrapper& covariates, const ppjsdm::Saturated_model& dispersion_model, const ppjsdm::Saturated_model& medium_dispersion_model, const Model& model, const Vector& max_points_by_type, double rho, double area, Rcpp::List t_over_papangelou) {
+Rcpp::List compute_A2_A3_helper(const Configuration& configuration, const ppjsdm::Im_list_wrapper& covariates, const ppjsdm::Saturated_model& dispersion_model, const ppjsdm::Saturated_model& medium_dispersion_model, const Model& model, const Vector& max_points_by_type, double rho, Rcpp::List t_over_papangelou) {
   using size_t = ppjsdm::size_t<Configuration>;
   const int number_types(max_points_by_type.size());
 
@@ -154,13 +154,6 @@ Rcpp::List compute_A2_A3_helper(const Configuration& configuration, const ppjsdm
     }
   }
 
-  for(size_t k1(0); k1 < total_parameters; ++k1) {
-    for(size_t k2(0); k2 < total_parameters; ++k2) {
-      A2(k1, k2) *= rho * rho / area;
-      A3(k1, k2) *= rho * rho / area;
-    }
-  }
-
   // Set names
   Rcpp::CharacterVector col_names(Rcpp::no_init(A2.ncol()));
   for(R_xlen_t j(0); j < number_types; ++j) {
@@ -196,7 +189,7 @@ Rcpp::List compute_A2_A3_helper(const Configuration& configuration, const ppjsdm
 }
 
 // [[Rcpp::export]]
-Rcpp::List compute_A2_A3(SEXP configuration, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, Rcpp::NumericMatrix alpha, Rcpp::NumericVector beta0, Rcpp::NumericMatrix beta, Rcpp::NumericMatrix gamma, double rho, double area, Rcpp::List t_over_papangelou) {
+Rcpp::List compute_A2_A3(SEXP configuration, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, Rcpp::NumericMatrix alpha, Rcpp::NumericVector beta0, Rcpp::NumericMatrix beta, Rcpp::NumericMatrix gamma, double rho, Rcpp::List t_over_papangelou) {
   // Construct std::vector of configurations.
   const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::wrap(configuration));
   const auto length_configuration(ppjsdm::size(wrapped_configuration));
@@ -226,5 +219,5 @@ Rcpp::List compute_A2_A3(SEXP configuration, Rcpp::List covariates, Rcpp::Charac
                                                                                           long_range,
                                                                                           saturation);
 
-  return compute_A2_A3_helper(vector_configuration, ppjsdm::Im_list_wrapper(covariates), dispersion, medium_range_dispersion, exponential_model, points_by_type, rho, area, t_over_papangelou);
+  return compute_A2_A3_helper(vector_configuration, ppjsdm::Im_list_wrapper(covariates), dispersion, medium_range_dispersion, exponential_model, points_by_type, rho, t_over_papangelou);
 }

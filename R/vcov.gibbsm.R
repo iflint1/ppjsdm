@@ -10,9 +10,6 @@ vcov.gibbsm <- function(object, ...) {
   model <- object$parameters$model
   medium_range_model <- object$parameters$medium_range_model
   covariates <- object$parameters$covariates
-  short_range <- object$parameters$short_range
-  medium_range <- object$parameters$medium_range
-  long_range <- object$parameters$long_range
   saturation <- object$parameters$saturation
 
   fits_coefficients <- object$coefficients
@@ -48,25 +45,25 @@ vcov.gibbsm <- function(object, ...) {
                                           beta = fits_coefficients$beta,
                                           gamma = fits_coefficients$gamma,
                                           covariates = covariates,
-                                          short_range = short_range,
-                                          medium_range = medium_range,
-                                          long_range = long_range,
+                                          short_range = fits_coefficients$short_range,
+                                          medium_range = fits_coefficients$medium_range,
+                                          long_range = fits_coefficients$long_range,
                                           saturation = saturation,
                                           mark = object$data_list$mark[row])
   }
 
-  S <- rho / window_volume(object$window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
+  S <- Reduce('+', lapply(1:nrow(regressors), function(row) {
     regressors[row, ] %*% t(regressors[row, ]) * papangelou[row] / (papangelou[row] + rho)^2
   }))
-  A1 <- rho * rho / window_volume(object$window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
+  A1 <- Reduce('+', lapply(1:nrow(regressors), function(row) {
     regressors[row, ] %*% t(regressors[row, ]) * papangelou[row] / (papangelou[row] + rho)^3
   }))
-  kappa <- 1 / window_volume(object$window) * sum(1. / (papangelou + rho))
-  temp_A1 <- rho * rho / window_volume(object$window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
+  kappa <- sum(1. / (papangelou + rho))
+  temp_A1 <- Reduce('+', lapply(1:nrow(regressors), function(row) {
     regressors[row, ] %*% t(regressors[row, ]) * papangelou[row]^2 / (papangelou[row] + rho)^3
   }))
 
-  other_temp_A1 <- rho / window_volume(object$window) * Reduce('+', lapply(1:nrow(regressors), function(row) {
+  other_temp_A1 <- Reduce('+', lapply(1:nrow(regressors), function(row) {
     regressors[row, ] %*% t(rep.int(1, ncol(regressors))) * papangelou[row] / (papangelou[row] + rho)^2
   }))
 
@@ -97,16 +94,15 @@ vcov.gibbsm <- function(object, ...) {
                          covariates = covariates,
                          model = model,
                          medium_range_model = medium_range_model,
-                         short_range = short_range,
-                         medium_range = medium_range,
-                         long_range = long_range,
+                         short_range = fits_coefficients$short_range,
+                         medium_range = fits_coefficients$medium_range,
+                         long_range = fits_coefficients$long_range,
                          saturation = saturation,
                          alpha = fits_coefficients$alpha,
                          beta0 = fits_coefficients$beta0,
                          beta = fits_coefficients$beta,
                          gamma = fits_coefficients$gamma,
                          rho = rho,
-                         area = window_volume(object$window),
                          t_over_papangelou = t_over_papangelou)
   A2 <- A2_A3$A2
   A3 <- A2_A3$A3
@@ -126,7 +122,7 @@ vcov.gibbsm <- function(object, ...) {
   # G2 <- temp_A1 / rho
 
   Sinv <- solve(S)
-  vc <- Sinv %*% (A1 + A2 + A3 + G2) %*% Sinv / window_volume(object$window)
+  vc <- Sinv %*% (A1 + A2 + A3 + G2) %*% Sinv
   # print(S)
   # print(A1)
   # print(A2)
