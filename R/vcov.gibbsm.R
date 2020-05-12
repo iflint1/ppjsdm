@@ -21,7 +21,7 @@ vcov.gibbsm <- function(object, ...) {
     regressors <- as.matrix(regressors[, -grep("gamma_", colnames(regressors))])
   }
   if(ncol(regressors) == 1) { # In this case, R deletes the column names...
-    colnames(regressors) <- "shifted_log_lambda1"
+    colnames(regressors) <- "log_lambda1"
   }
 
   #TODO: Should be different when estimating radii
@@ -69,7 +69,7 @@ vcov.gibbsm <- function(object, ...) {
 
   t_over_papangelou <- lapply(1:nrow(regressors), function(row) {
     val <- regressors[row, ] / (papangelou[row] + rho)
-    beta0 <- val[startsWith(names(val), "shifted_log_lambda")]
+    beta0 <- val[startsWith(names(val), "log_lambda")]
     if(!object$estimate_alpha) {
       alpha <- rep(0., ntypes * (ntypes + 1) / 2)
     } else {
@@ -80,7 +80,7 @@ vcov.gibbsm <- function(object, ...) {
     } else {
       gamma <- val[startsWith(names(val), "gamma_")]
     }
-    beta <- val[!(startsWith(names(val), "shifted_log_lambda") | startsWith(names(val), "alpha_") | startsWith(names(val), "gamma_"))]
+    beta <- val[!(startsWith(names(val), "log_lambda") | startsWith(names(val), "alpha_") | startsWith(names(val), "gamma_"))]
     val <- c(beta0, alpha, gamma, beta)
 
     list(x = object$data_list$x[row],

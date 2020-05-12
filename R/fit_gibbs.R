@@ -7,18 +7,18 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
     regressors <- as.matrix(regressors[, -grep("gamma", colnames(regressors))])
   }
   if(ncol(regressors) == 1) { # In this case, R deletes the column names...
-    colnames(regressors) <- "shifted_log_lambda1"
+    colnames(regressors) <- "log_lambda1"
   }
 
   if(use_glmnet) {
     nregressors <- ncol(regressors)
     pfactor <- rep(1, nregressors)
-    pfactor[startsWith(colnames(regressors), "shifted_log_lambda")] <- 0
+    pfactor[startsWith(colnames(regressors), "log_lambda")] <- 0
 
     # Avoid a bug in glmnet: if intercept = FALSE, and there's a column of ones, it gets ignored by glmnet
     # even though its penalty factor is zero.
-    if(all(1 == regressors[, startsWith(colnames(regressors), "shifted_log_lambda")])) {
-      regressors[1, startsWith(colnames(regressors), "shifted_log_lambda")] <- 1.001
+    if(all(1 == regressors[, startsWith(colnames(regressors), "log_lambda")])) {
+      regressors[1, startsWith(colnames(regressors), "log_lambda")] <- 1.001
     }
 
     # We don't use an offset explicitely because the call to glmnet above returns nonsensical results or hangs.
@@ -69,14 +69,14 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
   alpha <- matrix(0, number_types, number_types)
   gamma <- matrix(0, number_types, number_types)
 
-  beta_vector <- coef[!(startsWith(names(coef), "shifted_log_lambda") | startsWith(names(coef), "alpha") | startsWith(names(coef), "gamma") | ("(Intercept)" == names(coef)))]
+  beta_vector <- coef[!(startsWith(names(coef), "log_lambda") | startsWith(names(coef), "alpha") | startsWith(names(coef), "gamma") | ("(Intercept)" == names(coef)))]
   if(length(beta_vector) == 0) {
     beta_vector <- matrix(NA, nrow = number_types, ncol = 0)
   }
   beta <- matrix(NA, nrow = number_types, ncol = length(beta_vector) / number_types)
   for(i in seq_len(number_types)) {
-    # Shift all columns with row name shifted_log_lambdai
-    beta0[i] <- coef[match(paste0("shifted_log_lambda", i), names(coef))] - shift[i]
+    # Shift all columns with row name log_lambdai
+    beta0[i] <- coef[match(paste0("log_lambda", i), names(coef))] - shift[i]
     if(length(beta_vector) != 0) {
       beta[i, ] <- beta_vector[endsWith(names(beta_vector), paste0("_", i))]
     }
