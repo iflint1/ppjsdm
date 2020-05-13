@@ -92,22 +92,22 @@ nreplications <- 100
 ntypes <- 2
 beta0 <- rep(2, ntypes)
 alpha <- cbind(c(-0.3, 0.1), c(0.1, -0.2))
+gamma <- cbind(c(-0.5, -0.2), c(-0.2, -0.3))
 covariates <- list(temperature = function(x, y) x, elevation = function(x, y) y)
 beta <- cbind(rep(2, ntypes), rep(1, ntypes))
 ndummy <- 500
-estimate_alpha <- TRUE
+
 model <- "square_bump"
+medium_range_model <- "Geyer"
 saturation <- 2
-if(estimate_alpha) {
-  short_range <- matrix(0.1, ntypes, ntypes)
-  is_in <- matrix(NA, nrow = nreplications, ncol = ntypes + ntypes * (ntypes + 1) / 2 + length(covariates) * ntypes)
-  estimates <- matrix(NA, nrow = nreplications, ncol = ncol(is_in))
-  true <- c(beta0, alpha[1, 1], alpha[1, 2], alpha[2, 2])
-} else {
-  is_in <- matrix(NA, nrow = nreplications, ncol = ntypes + length(covariates) * ntypes)
-  short_range <- matrix(0., ntypes, ntypes)
-  true <- beta0
-}
+
+short_range <- matrix(0.1, ntypes, ntypes)
+medium_range <- matrix(0.1, ntypes, ntypes)
+long_range <- matrix(0.15, ntypes, ntypes)
+is_in <- matrix(NA, nrow = nreplications, ncol = ntypes + ntypes * (ntypes + 1) + length(covariates) * ntypes)
+estimates <- matrix(NA, nrow = nreplications, ncol = ncol(is_in))
+true <- c(beta0, alpha[1, 1], alpha[1, 2], alpha[2, 2], gamma[1, 1], gamma[1, 2], gamma[2, 2])
+
 if(length(covariates) > 0) {
   true <- c(true, beta[1, 1], beta[2, 1], beta[1, 2], beta[2, 2])
 }
@@ -120,9 +120,13 @@ if(length(covariates) > 0) {
 samples <- ppjsdm::rgibbs(window = window,
                           beta0 = beta0,
                           alpha = alpha,
+                          gamma = gamma,
                           short_range = short_range,
+                          medium_range = medium_range,
+                          long_range = long_range,
                           nsim = nreplications,
                           model = model,
+                          medium_range_model = medium_range_model,
                           drop = FALSE,
                           saturation = saturation,
                           covariates = covariates,
@@ -141,9 +145,12 @@ for(i in seq_len(nreplications)) {
                 window = window,
                 print = FALSE,
                 short_range = short_range,
+                medium_range = medium_range,
+                long_range = long_range,
                 use_glmnet = FALSE,
                 ndummy = ndummy,
                 model = model,
+                medium_range_model = medium_range_model,
                 covariates = covariates,
                 saturation = saturation)
 

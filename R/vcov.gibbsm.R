@@ -24,6 +24,7 @@ vcov.gibbsm <- function(object, ...) {
     colnames(regressors) <- "log_lambda1"
   }
 
+  ntypes <- length(object$data_list$shift)
   #TODO: Should be different when estimating radii
   #TODO: Should enforce sizeof(configuration_list) == 1
   #TODO: Should enforce constant rho

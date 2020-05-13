@@ -6,7 +6,7 @@
 #' @export
 summary.gibbsm <- function(object, ...) {
   y <- list()
-  class(y) <- "summary.gibbsm"
+  class(y) <- "summary_gibbsm"
 
   vc <- vcov.gibbsm(object, ...)
   se <- sqrt(diag(vc))
@@ -36,6 +36,6 @@ summary.gibbsm <- function(object, ...) {
 #' @param x A summary of a fitted model object.
 #' @param ... Ignored.
 #' @export
-print.summary.gibbsm <- function(x, ...) {
+print.summary_gibbsm <- function(x, ...) {
   print(x$coefficients)
 }

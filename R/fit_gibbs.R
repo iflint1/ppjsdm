@@ -47,6 +47,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
       aic <- aic[which.min(bic)]
       bic <- min(bic)
     }
+    coef <- coef[-which(names(coef) == "(Intercept)")]
   } else {
     fit <- glm.fit(x = regressors,
                    y = gibbsm_data$response,
