@@ -31,27 +31,30 @@ vcov.gibbsm <- function(object, ...) {
   #TODO: Is this the correct rho or should we multiply by ntypes?
   rho <- exp(-object$data_list$shift[1])
 
-  papangelou <- vector(mode = "numeric", length = nrow(regressors))
-  for(row in seq_len(length(papangelou))) {
-    type_string <- levels(types(configuration_list[[1]]))[object$data_list$type[row]]
-    conf <- remove_from_configuration(configuration_list[[1]], c(object$data_list$x[row], object$data_list$y[row]), type_string)
-    papangelou[row] <- compute_papangelou(configuration = conf,
-                                          x = object$data_list$x[row],
-                                          y = object$data_list$y[row],
-                                          type = object$data_list$type[row],
-                                          model = model,
-                                          medium_range_model = medium_range_model,
-                                          alpha = fits_coefficients$alpha,
-                                          beta0 = fits_coefficients$beta0,
-                                          beta = fits_coefficients$beta,
-                                          gamma = fits_coefficients$gamma,
-                                          covariates = covariates,
-                                          short_range = fits_coefficients$short_range,
-                                          medium_range = fits_coefficients$medium_range,
-                                          long_range = fits_coefficients$long_range,
-                                          saturation = saturation,
-                                          mark = object$data_list$mark[row])
-  }
+  fits_coefficients_vector <- object$coefficients_vector
+  papangelou <- apply(regressors, 1, function(row) exp(fits_coefficients_vector %*% row))
+  #papangelou <- vector(mode = "numeric", length = nrow(regressors))
+  #for(row in seq_len(length(papangelou))) {
+  #  papangelou[row] <- exp(fits_coefficients_vector %*% regressors[row, ])
+    # type_string <- levels(types(configuration_list[[1]]))[object$data_list$type[row]]
+    # conf <- remove_from_configuration(configuration_list[[1]], c(object$data_list$x[row], object$data_list$y[row]), type_string)
+    # papangelou[row] <- compute_papangelou(configuration = conf,
+    #                                       x = object$data_list$x[row],
+    #                                       y = object$data_list$y[row],
+    #                                       type = object$data_list$type[row],
+    #                                       model = model,
+    #                                       medium_range_model = medium_range_model,
+    #                                       alpha = fits_coefficients$alpha,
+    #                                       beta0 = fits_coefficients$beta0,
+    #                                       beta = fits_coefficients$beta,
+    #                                       gamma = fits_coefficients$gamma,
+    #                                       covariates = covariates,
+    #                                       short_range = fits_coefficients$short_range,
+    #                                       medium_range = fits_coefficients$medium_range,
+    #                                       long_range = fits_coefficients$long_range,
+    #                                       saturation = saturation,
+    #                                       mark = object$data_list$mark[row])
+  #}
 
   S <- Reduce('+', lapply(1:nrow(regressors), function(row) {
     regressors[row, ] %*% t(regressors[row, ]) * papangelou[row] / (papangelou[row] + rho)^2
