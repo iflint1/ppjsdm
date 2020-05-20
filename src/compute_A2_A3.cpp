@@ -1,4 +1,4 @@
-#include <Rcpp.h>
+#include <RcppArmadillo.h>
 #include <Rinternals.h>
 
 #include "configuration/configuration_manipulation.hpp"
@@ -30,16 +30,68 @@
 
 // TODO: I suspect max_points_by_type isn't needed, only need number_types
 template<typename Configuration, typename Vector, typename Model>
-Rcpp::List compute_A2_A3_helper(const Configuration& configuration, const ppjsdm::Im_list_wrapper& covariates, const ppjsdm::Saturated_model& dispersion_model, const ppjsdm::Saturated_model& medium_dispersion_model, const Model& model, const Vector& max_points_by_type, double rho, Rcpp::List t_over_papangelou) {
+Rcpp::NumericMatrix compute_A2_A3_helper(const Configuration& configuration, const ppjsdm::Im_list_wrapper& covariates, const ppjsdm::Saturated_model& dispersion_model, const ppjsdm::Saturated_model& medium_dispersion_model, const Model& model, const Vector& max_points_by_type, double rho, Rcpp::List t_over_papangelou, Rcpp::NumericVector coefficients_vector, Rcpp::NumericMatrix regressors) {
   using size_t = ppjsdm::size_t<Configuration>;
   const int number_types(max_points_by_type.size());
 
   const size_t total_points(ppjsdm::size(configuration));
   const size_t total_parameters(number_types * (2 + covariates.size() + number_types));
 
-  Rcpp::NumericMatrix A2(total_parameters, total_parameters);
-  Rcpp::NumericMatrix A3(total_parameters, total_parameters);
+  arma::mat A(total_parameters, total_parameters);
+  arma::mat S(total_parameters, total_parameters);
+  for(size_t k1(0); k1 < total_parameters; ++k1) {
+    for(size_t k2(0); k2 < total_parameters; ++k2) {
+      A(k1, k2) = 0.;
+      S(k1, k2) = 0.;
+    }
+  }
 
+  std::vector<double> papangelou(regressors.nrow());
+  double kappa(0);
+
+  // The lines below set A to G2 from Baddeley et al
+  for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+    double inner_product(0);
+    for(R_xlen_t j(0); j < coefficients_vector.size(); ++j) {
+      inner_product += coefficients_vector[j] * regressors(i, j);
+    }
+    const auto papangelou_value(std::exp(inner_product));
+    papangelou[i] = papangelou_value;
+    kappa += 1. / (papangelou_value + rho);
+
+    const auto constant(papangelou_value / ((papangelou_value + rho) * (papangelou_value + rho)));
+    for(size_t k1(0); k1 < total_parameters; ++k1) {
+      const auto value(regressors(i, k1) * constant);
+      for(size_t k2(0); k2 < total_parameters; ++k2) {
+        A(k1, k2) += value;
+        S(k1, k2) += regressors(i, k1) * regressors(i, k2) * constant;
+      }
+    }
+  }
+  A *= A.t();
+  A *= -1. / kappa;
+  for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+    const auto constant(papangelou[i] * papangelou[i] / ((papangelou[i] + rho) * (papangelou[i] + rho) * (papangelou[i] + rho)));
+    for(size_t k1(0); k1 < total_parameters; ++k1) {
+      for(size_t k2(0); k2 < total_parameters; ++k2) {
+        A(k1, k2) += regressors(i, k1) * regressors(i, k2) * constant;
+      }
+    }
+  }
+  A /= rho;
+
+  // At this point, A is equal to G2. Next, add A1.
+  for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+    const auto constant(papangelou[i] / ((papangelou[i] + rho) * (papangelou[i] + rho) * (papangelou[i] + rho)));
+    for(size_t k1(0); k1 < total_parameters; ++k1) {
+      for(size_t k2(0); k2 < total_parameters; ++k2) {
+        const auto A1_summand(regressors(i, k1) * regressors(i, k2) * constant);
+        A(k1, k2) += A1_summand;
+      }
+    }
+  }
+
+  // Finally, add A2 and A3.
   for(size_t i(0); i < total_points; ++i) {
     const int type_i(ppjsdm::get_type(configuration[i]));
 
@@ -143,19 +195,23 @@ Rcpp::List compute_A2_A3_helper(const Configuration& configuration, const ppjsdm
           }
         }
 
+        const auto constant1((papangelou_j_minus_two / papangelou_j_minus_j - 1.) / ((papangelou_i_minus_two + rho) * (papangelou_j_minus_two + rho)));
         for(size_t k1(0); k1 < total_parameters; ++k1) {
           for(size_t k2(0); k2 < total_parameters; ++k2) {
-            const auto result(t_i[k1] * t_j[k2] / ((papangelou_i_minus_two + rho) * (papangelou_j_minus_two + rho)) * (papangelou_j_minus_two / papangelou_j_minus_j - 1.));
-            A2(k1, k2) += result;
-            A3(k1, k2) += (t_over_papangelou_i[k1] - t_i[k1] / (papangelou_i_minus_two + rho)) * (t_over_papangelou_j[k2] - t_j[k2] / (papangelou_j_minus_two + rho));
+            const auto A2_summand(t_i[k1] * t_j[k2] * constant1);
+            const auto A3_summand((t_over_papangelou_i[k1] - t_i[k1] / (papangelou_i_minus_two + rho)) * (t_over_papangelou_j[k2] - t_j[k2] / (papangelou_j_minus_two + rho)));
+            A(k1, k2) += A2_summand + A3_summand;
           }
         }
       }
     }
   }
 
+  const arma::mat S_inv(arma::inv(S));
+  A = S_inv * A * S_inv;
+
   // Set names
-  Rcpp::CharacterVector col_names(Rcpp::no_init(A2.ncol()));
+  Rcpp::CharacterVector col_names(Rcpp::no_init(A.n_cols));
   for(R_xlen_t j(0); j < number_types; ++j) {
     col_names[j] = std::string("log_lambda") + std::to_string(j + 1);
   }
@@ -178,18 +234,16 @@ Rcpp::List compute_A2_A3_helper(const Configuration& configuration, const ppjsdm
       ++index_shift;
     }
   }
-  Rcpp::colnames(A2) = col_names;
-  Rcpp::rownames(A2) = col_names;
 
-  Rcpp::colnames(A3) = col_names;
-  Rcpp::rownames(A3) = col_names;
+  Rcpp::NumericMatrix A_return(Rcpp::wrap(A));
+  Rcpp::colnames(A_return) = col_names;
+  Rcpp::rownames(A_return) = col_names;
 
-  return Rcpp::List::create(Rcpp::Named("A2") = A2,
-                            Rcpp::Named("A3") = A3);
+  return A_return;
 }
 
 // [[Rcpp::export]]
-Rcpp::List compute_A2_A3(SEXP configuration, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, Rcpp::NumericMatrix alpha, Rcpp::NumericVector beta0, Rcpp::NumericMatrix beta, Rcpp::NumericMatrix gamma, double rho, Rcpp::List t_over_papangelou) {
+Rcpp::NumericMatrix compute_A2_A3(SEXP configuration, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, Rcpp::NumericMatrix alpha, Rcpp::NumericVector beta0, Rcpp::NumericMatrix beta, Rcpp::NumericMatrix gamma, double rho, Rcpp::List t_over_papangelou, Rcpp::NumericVector coefficients_vector, Rcpp::NumericMatrix regressors) {
   // Construct std::vector of configurations.
   const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::wrap(configuration));
   const auto length_configuration(ppjsdm::size(wrapped_configuration));
@@ -219,5 +273,5 @@ Rcpp::List compute_A2_A3(SEXP configuration, Rcpp::List covariates, Rcpp::Charac
                                                                                           long_range,
                                                                                           saturation);
 
-  return compute_A2_A3_helper(vector_configuration, ppjsdm::Im_list_wrapper(covariates), dispersion, medium_range_dispersion, exponential_model, points_by_type, rho, t_over_papangelou);
+  return compute_A2_A3_helper(vector_configuration, ppjsdm::Im_list_wrapper(covariates), dispersion, medium_range_dispersion, exponential_model, points_by_type, rho, t_over_papangelou, coefficients_vector, regressors);
 }

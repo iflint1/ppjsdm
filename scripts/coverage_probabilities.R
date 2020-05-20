@@ -88,7 +88,7 @@ library(spatstat)
 set.seed(1)
 
 window <- Rectangle_window(c(-1, 1), c(-1, 1))
-nreplications <- 100
+nreplications <- 1
 ntypes <- 2
 beta0 <- rep(2, ntypes)
 alpha <- cbind(c(-0.3, 0.1), c(0.1, -0.2))
