@@ -4,23 +4,9 @@
 #' @param ... Ignored.
 #' @export
 vcov.gibbsm <- function(object, ...) {
-  shortened_regressors <- object$data_list$regressors
-
-  if(!object$estimate_alpha) {
-    shortened_regressors <- as.matrix(shortened_regressors[, -grep("alpha_", colnames(shortened_regressors))])
-  }
-  if(!object$estimate_gamma) {
-    shortened_regressors <- as.matrix(shortened_regressors[, -grep("gamma_", colnames(shortened_regressors))])
-  }
-  if(ncol(shortened_regressors) == 1) { # In this case, R deletes the column names...
-    colnames(shortened_regressors) <- "log_lambda1"
-  }
-
   #TODO: Should enforce sizeof(configuration_list) == 1
   #TODO: Should enforce !glmnet
   #TODO: Should enforce constant rho
-  rho <- exp(-object$data_list$shift[1])
-  fits_coefficients_vector <- object$coefficients_vector
   fits_coefficients <- object$coefficients
 
   vc <- compute_vcov(configuration = object$configuration_list[[1]],
@@ -35,9 +21,9 @@ vcov.gibbsm <- function(object, ...) {
                        beta0 = fits_coefficients$beta0,
                        beta = fits_coefficients$beta,
                        gamma = fits_coefficients$gamma,
-                       rho = rho,
-                       coefficients_vector = fits_coefficients_vector,
-                       shortened_regressors = shortened_regressors,
+                       rho = exp(-object$data_list$shift[1]),
+                       coefficients_vector = object$coefficients_vector,
+                       regressors = object$data_list$regressors,
                        data_list = object$data_list,
                        estimate_alpha = object$estimate_alpha,
                        estimate_gamma = object$estimate_gamma)

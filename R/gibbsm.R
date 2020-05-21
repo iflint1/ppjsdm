@@ -97,7 +97,9 @@ gibbsm <- function(configuration_list,
                                               saturation,
                                               mark_range,
                                               TRUE,
-                                              ndummy = ndummy)
+                                              ndummy = ndummy,
+                                              estimate_alpha = estimate_alpha,
+                                              estimate_gamma = estimate_gamma)
 
       fit <- fit_gibbs(gibbsm_data_list, use_glmnet = FALSE, use_aic = use_aic, estimate_alpha = estimate_alpha, estimate_gamma = estimate_gamma)
       list(fit = fit, sh = sh, me = me, lo = lo)
@@ -164,7 +166,9 @@ gibbsm <- function(configuration_list,
                                             saturation,
                                             mark_range,
                                             FALSE,
-                                            ndummy = ndummy)
+                                            ndummy = ndummy,
+                                            estimate_alpha = estimate_alpha,
+                                            estimate_gamma = estimate_gamma)
 
     fitted <- fit_gibbs(gibbsm_data_list, use_glmnet = use_glmnet, use_aic = use_aic, estimate_alpha = estimate_alpha, estimate_gamma = estimate_gamma)
   } else {
@@ -188,7 +192,9 @@ gibbsm <- function(configuration_list,
                                             saturation,
                                             mark_range,
                                             FALSE,
-                                            ndummy = ndummy)
+                                            ndummy = ndummy,
+                                            estimate_alpha = estimate_alpha,
+                                            estimate_gamma = estimate_gamma)
 
     fitted <- fit_gibbs(gibbsm_data_list, use_glmnet = use_glmnet, use_aic = use_aic, estimate_alpha = estimate_alpha, estimate_gamma = estimate_gamma)
   }

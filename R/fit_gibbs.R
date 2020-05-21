@@ -1,14 +1,5 @@
 fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate_gamma) {
   regressors <- gibbsm_data$regressors
-  if(!estimate_alpha) {
-    regressors <- as.matrix(regressors[, -grep("alpha", colnames(regressors))])
-  }
-  if(!estimate_gamma) {
-    regressors <- as.matrix(regressors[, -grep("gamma", colnames(regressors))])
-  }
-  if(ncol(regressors) == 1) { # In this case, R deletes the column names...
-    colnames(regressors) <- "log_lambda1"
-  }
 
   if(use_glmnet) {
     nregressors <- ncol(regressors)

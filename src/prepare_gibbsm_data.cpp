@@ -34,7 +34,16 @@ inline void add_to_formula(std::string& formula, Rcpp::CharacterVector names) {
 }
 
 template<bool Approximate, typename Configuration, typename Vector>
-Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configuration_list, const ppjsdm::Window& window, const ppjsdm::Im_list_wrapper& covariates, Rcpp::List traits, const ppjsdm::Saturated_model& dispersion_model, const ppjsdm::Saturated_model& medium_dispersion_model, const Vector& max_points_by_type, R_xlen_t ndummy) {
+Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configuration_list,
+                                      const ppjsdm::Window& window,
+                                      const ppjsdm::Im_list_wrapper& covariates,
+                                      Rcpp::List traits,
+                                      const ppjsdm::Saturated_model& dispersion_model,
+                                      const ppjsdm::Saturated_model& medium_dispersion_model,
+                                      const Vector& max_points_by_type,
+                                      R_xlen_t ndummy,
+                                      bool estimate_alpha,
+                                      bool estimate_gamma) {
   using size_t = ppjsdm::size_t<Configuration>;
   const size_t number_types(max_points_by_type.size());
 
@@ -361,8 +370,23 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     }
     Rcpp::colnames(regressors) = col_names;
   } else {
-    regressors = Rcpp::no_init(log_lambda.nrow(),
+    if(estimate_alpha) {
+      if(estimate_gamma) {
+        regressors = Rcpp::no_init(log_lambda.nrow(),
                                log_lambda.ncol() + alpha_input.ncol() + gamma_input.ncol() + covariates_input.ncol());
+      } else {
+        regressors = Rcpp::no_init(log_lambda.nrow(),
+                               log_lambda.ncol() + alpha_input.ncol() + covariates_input.ncol());
+      }
+    } else {
+      if(estimate_gamma) {
+        regressors = Rcpp::no_init(log_lambda.nrow(),
+                               log_lambda.ncol() + gamma_input.ncol() + covariates_input.ncol());
+      } else {
+        regressors = Rcpp::no_init(log_lambda.nrow(),
+                               log_lambda.ncol() + covariates_input.ncol());
+      }
+    }
     Rcpp::CharacterVector col_names(Rcpp::no_init(regressors.ncol()));
     for(R_xlen_t j(0); j < static_cast<R_xlen_t>(log_lambda.ncol()); ++j) {
       col_names[j] = log_lambda_names[j];
@@ -371,20 +395,24 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
       }
     }
     R_xlen_t index_shift(log_lambda.ncol());
-    for(R_xlen_t j(0); j < static_cast<R_xlen_t>(alpha_input.ncol()); ++j) {
-      col_names[j + index_shift] = alpha_names[j];
-      for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-        regressors(i, j + index_shift) = alpha_input(i, j);
+    if(estimate_alpha) {
+      for(R_xlen_t j(0); j < static_cast<R_xlen_t>(alpha_input.ncol()); ++j) {
+        col_names[j + index_shift] = alpha_names[j];
+        for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+          regressors(i, j + index_shift) = alpha_input(i, j);
+        }
       }
+      index_shift += alpha_input.ncol();
     }
-    index_shift = log_lambda.ncol() + alpha_input.ncol();
-    for(R_xlen_t j(0); j < static_cast<R_xlen_t>(gamma_input.ncol()); ++j) {
-      col_names[j + index_shift] = gamma_names[j];
-      for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-        regressors(i, j + index_shift) = gamma_input(i, j);
+    if(estimate_gamma) {
+      for(R_xlen_t j(0); j < static_cast<R_xlen_t>(gamma_input.ncol()); ++j) {
+        col_names[j + index_shift] = gamma_names[j];
+        for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+          regressors(i, j + index_shift) = gamma_input(i, j);
+        }
       }
+      index_shift += gamma_input.ncol();
     }
-    index_shift = log_lambda.ncol() + alpha_input.ncol() + gamma_input.ncol();
     for(R_xlen_t j(0); j < static_cast<R_xlen_t>(covariates_input.ncol()); ++j) {
       col_names[j + index_shift] = covariates_input_names[j];
       for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
@@ -407,7 +435,20 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 }
 
 // [[Rcpp::export]]
-Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list, SEXP window, Rcpp::List covariates, Rcpp::List traits, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, Rcpp::NumericVector mark_range, bool approximate, R_xlen_t ndummy) {
+Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
+                               SEXP window, Rcpp::List covariates,
+                               Rcpp::List traits,
+                               Rcpp::CharacterVector model,
+                               Rcpp::CharacterVector medium_range_model,
+                               SEXP short_range,
+                               SEXP medium_range,
+                               SEXP long_range,
+                               R_xlen_t saturation,
+                               Rcpp::NumericVector mark_range,
+                               bool approximate,
+                               R_xlen_t ndummy,
+                               bool estimate_alpha,
+                               bool estimate_gamma) {
   // Construct std::vector of configurations.
   std::vector<std::vector<ppjsdm::Marked_point>> vector_configurations(configuration_list.size());
   for(R_xlen_t i(0); i < configuration_list.size(); ++i) {
@@ -450,8 +491,8 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list, SEXP window, Rcpp:
   }
   const auto medium_range_dispersion(ppjsdm::Saturated_model(medium_range_model, me, lo, saturation));
   if(approximate) {
-    return prepare_gibbsm_data_helper<true>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, dispersion, medium_range_dispersion, max_points_by_type, ndummy);
+    return prepare_gibbsm_data_helper<true>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, dispersion, medium_range_dispersion, max_points_by_type, ndummy, estimate_alpha, estimate_gamma);
   } else {
-    return prepare_gibbsm_data_helper<false>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, dispersion, medium_range_dispersion, max_points_by_type, ndummy);
+    return prepare_gibbsm_data_helper<false>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, dispersion, medium_range_dispersion, max_points_by_type, ndummy, estimate_alpha, estimate_gamma);
   }
 }

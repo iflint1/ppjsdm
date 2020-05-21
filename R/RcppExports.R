@@ -26,8 +26,8 @@ compute_papangelou <- function(configuration, x, y, type, model, medium_range_mo
     .Call('_ppjsdm_compute_papangelou', PACKAGE = 'ppjsdm', configuration, x, y, type, model, medium_range_model, alpha, beta0, beta, gamma, covariates, short_range, medium_range, long_range, saturation, mark)
 }
 
-compute_vcov <- function(configuration, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, alpha, beta0, beta, gamma, rho, coefficients_vector, shortened_regressors, data_list, estimate_alpha, estimate_gamma) {
-    .Call('_ppjsdm_compute_vcov', PACKAGE = 'ppjsdm', configuration, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, alpha, beta0, beta, gamma, rho, coefficients_vector, shortened_regressors, data_list, estimate_alpha, estimate_gamma)
+compute_vcov <- function(configuration, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, alpha, beta0, beta, gamma, rho, coefficients_vector, regressors, data_list, estimate_alpha, estimate_gamma) {
+    .Call('_ppjsdm_compute_vcov', PACKAGE = 'ppjsdm', configuration, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, alpha, beta0, beta, gamma, rho, coefficients_vector, regressors, data_list, estimate_alpha, estimate_gamma)
 }
 
 #' Check if a configuration contains duplicates.
@@ -44,8 +44,8 @@ make_default_model_parameters <- function(alpha, beta0, covariates, beta, gamma,
     .Call('_ppjsdm_make_default_model_parameters', PACKAGE = 'ppjsdm', alpha, beta0, covariates, beta, gamma, short_range, medium_range, long_range, types)
 }
 
-prepare_gibbsm_data <- function(configuration_list, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, approximate, ndummy) {
-    .Call('_ppjsdm_prepare_gibbsm_data', PACKAGE = 'ppjsdm', configuration_list, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, approximate, ndummy)
+prepare_gibbsm_data <- function(configuration_list, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, approximate, ndummy, estimate_alpha, estimate_gamma) {
+    .Call('_ppjsdm_prepare_gibbsm_data', PACKAGE = 'ppjsdm', configuration_list, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, approximate, ndummy, estimate_alpha, estimate_gamma)
 }
 
 rbinomialpp_cpp <- function(window, n, nsim, types, drop, mark_range) {

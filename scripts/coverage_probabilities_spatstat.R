@@ -2,7 +2,7 @@ remove(list = ls())
 library(spatstat)
 
 window <- owin()
-nreplications <- 10
+nreplications <- 1000
 log_beta <- 4
 log_gamma <- -0.3
 R = 0.1
