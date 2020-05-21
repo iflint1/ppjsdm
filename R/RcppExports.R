@@ -26,8 +26,8 @@ compute_papangelou <- function(configuration, x, y, type, model, medium_range_mo
     .Call('_ppjsdm_compute_papangelou', PACKAGE = 'ppjsdm', configuration, x, y, type, model, medium_range_model, alpha, beta0, beta, gamma, covariates, short_range, medium_range, long_range, saturation, mark)
 }
 
-compute_vcov <- function(configuration, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, alpha, beta0, beta, gamma, rho, coefficients_vector, shortened_regressors, estimate_alpha, estimate_gamma) {
-    .Call('_ppjsdm_compute_vcov', PACKAGE = 'ppjsdm', configuration, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, alpha, beta0, beta, gamma, rho, coefficients_vector, shortened_regressors, estimate_alpha, estimate_gamma)
+compute_vcov <- function(configuration, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, alpha, beta0, beta, gamma, rho, coefficients_vector, shortened_regressors, data_list, estimate_alpha, estimate_gamma) {
+    .Call('_ppjsdm_compute_vcov', PACKAGE = 'ppjsdm', configuration, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, alpha, beta0, beta, gamma, rho, coefficients_vector, shortened_regressors, data_list, estimate_alpha, estimate_gamma)
 }
 
 #' Check if a configuration contains duplicates.

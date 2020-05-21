@@ -104,7 +104,8 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
   for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
     const auto constant(papangelou[i] * papangelou[i] / ((papangelou[i] + rho) * (papangelou[i] + rho) * (papangelou[i] + rho)));
     for(size_t k1(0); k1 < total_parameters; ++k1) {
-      for(size_t k2(0); k2 < total_parameters; ++k2) {
+      A(k1, k1) += regressors(i, k1) * regressors(i, k1) * constant;
+      for(size_t k2(k1 + 1); k2 < total_parameters; ++k2) {
         A(k1, k2) += regressors(i, k1) * regressors(i, k2) * constant;
       }
     }
@@ -115,9 +116,10 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
   for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
     const auto constant(papangelou[i] / ((papangelou[i] + rho) * (papangelou[i] + rho) * (papangelou[i] + rho)));
     for(size_t k1(0); k1 < total_parameters; ++k1) {
-      for(size_t k2(0); k2 < total_parameters; ++k2) {
-        const auto A1_summand(regressors(i, k1) * regressors(i, k2) * constant);
-        A(k1, k2) += A1_summand;
+      A(k1, k1) += regressors(i, k1) * regressors(i, k1) * constant;
+      for(size_t k2(k1 + 1); k2 < total_parameters; ++k2) {
+        A(k1, k2) += regressors(i, k1) * regressors(i, k2) * constant;
+        A(k2, k1) = A(k1, k2);
       }
     }
   }
@@ -145,8 +147,7 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
     //   Rcpp::stop("Did not find the current point in t_over_papangelou");
     // }
 
-    for(size_t j(0); j < total_points; ++j) {
-      if(i != j) {
+    for(size_t j(i + 1); j < total_points; ++j) {
       const int type_j(ppjsdm::get_type(configuration[j]));
       // TODO: Fix align
       std::vector<double> t_over_papangelou_j(total_parameters);
@@ -248,16 +249,15 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
           }
         }
 
-        const auto constant((papangelou_j_minus_two / papangelou_j_minus_j - 1.) / ((papangelou_i_minus_two + rho) * (papangelou_j_minus_two + rho)));
+        const auto constant(2. * (papangelou_j_minus_two / papangelou_j_minus_j - 1.) / ((papangelou_i_minus_two + rho) * (papangelou_j_minus_two + rho)));
         for(size_t k1(0); k1 < total_parameters; ++k1) {
           for(size_t k2(0); k2 < total_parameters; ++k2) {
             const auto A2_summand(t_i[k1] * t_j[k2] * constant);
-            const auto A3_summand((t_over_papangelou_i[k1] - t_i[k1] / (papangelou_i_minus_two + rho)) * (t_over_papangelou_j[k2] - t_j[k2] / (papangelou_j_minus_two + rho)));
+            const auto A3_summand(2. * (t_over_papangelou_i[k1] - t_i[k1] / (papangelou_i_minus_two + rho)) * (t_over_papangelou_j[k2] - t_j[k2] / (papangelou_j_minus_two + rho)));
             A(k1, k2) += A2_summand + A3_summand;
           }
         }
       }
-    }
   }
 
   const arma::mat S_inv(arma::inv(S));
@@ -315,6 +315,7 @@ Rcpp::NumericMatrix compute_vcov(SEXP configuration,
                                   double rho,
                                   Rcpp::NumericVector coefficients_vector,
                                   Rcpp::NumericMatrix shortened_regressors,
+                                  Rcpp::List data_list,
                                   bool estimate_alpha,
                                   bool estimate_gamma) {
   // Construct std::vector of configurations.
