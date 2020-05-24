@@ -219,7 +219,8 @@ gibbsm <- function(configuration_list,
               coefficients_vector = fitted$coefficients_vector,
               aic = aic,
               bic = bic,
-              window = window)
+              window = window,
+              fit_algorithm = fitted$fit_algorithm)
 
 
   if(estimate_radii) {

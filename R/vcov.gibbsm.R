@@ -4,11 +4,17 @@
 #' @param ... Ignored.
 #' @export
 vcov.gibbsm <- function(object, ...) {
-  #TODO: Should enforce sizeof(configuration_list) == 1
-  #TODO: Should enforce !glmnet
-  #TODO: Should enforce constant rho
-  fits_coefficients <- object$coefficients
+  if(object$fit_algorithm != "glm") {
+    stop("Can only compute VCOV matrix when GLM has been used.")
+  }
+  if(!all(object$data_list$shift[1] == object$data_list$shift)) {
+    stop("Need uniform rho to compute VCOV matrix.")
+  }
+  if(length(object$configuration_list) != 1) {
+    stop("Cannot compute VCOV matrix for a fit obtained on a list of configurations.")
+  }
 
+  fits_coefficients <- object$coefficients
   vc <- compute_vcov(configuration = object$configuration_list[[1]],
                        covariates = object$parameters$covariates,
                        model = object$parameters$model,

@@ -39,6 +39,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
       bic <- min(bic)
     }
     coef <- coef[-which(names(coef) == "(Intercept)")]
+    fit_algorithm <- "glmnet"
   } else {
     fit <- glm.fit(x = regressors,
                    y = gibbsm_data$response,
@@ -54,6 +55,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
     bic <- BIC(fit)
 
     coef <- coefficients(fit)
+    fit_algorithm <- "glm"
   }
 
   number_types <- length(shift)
@@ -96,5 +98,6 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
                            beta = beta),
        coefficients_vector = coef,
        aic = aic,
-       bic = bic)
+       bic = bic,
+       fit_algorithm = fit_algorithm)
 }
