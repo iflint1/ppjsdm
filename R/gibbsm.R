@@ -25,29 +25,30 @@ gibbsm <- function(configuration_list,
                    traits = list(),
                    model,
                    medium_range_model,
-                   short_range = matrix(0.1),
-                   medium_range = matrix(0),
-                   long_range = matrix(0),
+                   short_range,
+                   medium_range,
+                   long_range,
                    saturation,
-                   print = TRUE,
+                   print = FALSE,
                    use_glmnet = TRUE,
                    use_aic = TRUE,
                    ndummy = 0) {
-  # TODO: At some point, synchronize defaults for ranges with the C++ code
-  parameters <- model_parameters_defaults(window = window,
-                                          covariates = covariates,
-                                          saturation = saturation,
-                                          model = model,
-                                          medium_range_model = medium_range_model)
-
+  parameters <- model_parameters(window = window,
+                                 covariates = covariates,
+                                 saturation = saturation,
+                                 model = model,
+                                 medium_range_model = medium_range_model,
+                                 short_range = short_range,
+                                 medium_range = medium_range,
+                                 long_range = long_range)
+  short_range <- parameters$short_range
+  medium_range <- parameters$medium_range
+  long_range <- parameters$long_range
   window <- parameters$window
   covariates <- parameters$covariates
   saturation <- parameters$saturation
   model <- parameters$model
   medium_range_model <- parameters$medium_range_model
-
-  # TODO: This is giving really unexpected results when sizeof(radius) > sizeof(one of the configurations).
-  # See the traits part of the fitting vignette. Perhaps add size check for radius?
 
   # If we're given a single configuration, convert it to a list.
   if(inherits(configuration_list, "Configuration")) {
