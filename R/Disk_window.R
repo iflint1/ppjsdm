@@ -38,20 +38,21 @@ radius <- function(window) {
   window$radius
 }
 
-#TODO: area and volume instead
-#' Return the volume of the window.
+#' Return the area of a disk window.
 #'
 #' @param window The window.
 #' @export
-window_volume <- function(window) UseMethod("window_volume", window)
-
-#' Return the volume of the window.
-#'
-#' @param window The window.
-#' @export
-window_volume.Disk_window <- function(window) {
+area.Disk_window <- function(window) {
   r <- window$radius
   pi * r * r
+}
+
+#' Return the volume of a disk window.
+#'
+#' @param window The window.
+#' @export
+volume.Disk_window <- function(window) {
+  area.Disk_window(window)
 }
 
 #' Convert a disk window to an owin from the SpatStat package.
