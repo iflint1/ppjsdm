@@ -6,6 +6,7 @@
 #include <Rmath.h>
 
 #include "../configuration/configuration_manipulation.hpp"
+#include "../utility/approximate_draw.hpp"
 
 namespace ppjsdm {
 
@@ -14,11 +15,10 @@ inline auto simulate_metropolis_hastings(const Model& model, const Window& windo
   constexpr double prob(0.5);
   const double precomputed_constant((1 - prob) * window.volume() * static_cast<double>(number_types) / prob);
 
-  // TODO: Preallocate with a rough estimate of final size?
-  // TODO: Start from non-empty configuration?
-  Configuration points{};
+  // Start from a rough approximate draw and go from there.
+  Configuration points(approximate_draw<Configuration>(model));
 
-  while(steps-- != 0) {
+  for(decltype(steps) k(0); k < steps; ++k) {
     if(unif_rand() <= prob) {
       const R_xlen_t random_type(Rcpp::sample(number_types, 1, false, R_NilValue, false)[0]);
       const auto point(window.sample(random_type));

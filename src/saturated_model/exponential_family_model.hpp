@@ -6,7 +6,9 @@
 #include "saturated_model.hpp"
 #include "../configuration/configuration_manipulation.hpp"
 #include "../point/point_manipulation.hpp"
+#include "../simulation/inhomogeneous_ppp.hpp"
 #include "../utility/im_wrapper.hpp"
+#include "../utility/approximate_draw.hpp"
 
 #include <algorithm> // std::transform
 #include <cmath> // std::exp, std::isinf
@@ -195,6 +197,10 @@ public:
                       + beta_covariates + alpha_dispersion + gamma_dispersion);
   }
 
+  auto get_number_types() const {
+    return beta0_.size();
+  }
+
 protected:
   Saturated_model dispersion_;
   Saturated_model medium_range_dispersion_;
@@ -247,6 +253,11 @@ public:
     return beta_covariates - beta_covariates_maximum;
   }
 
+  template<typename Point>
+  auto get_log_approximate_ppp_intensity(const Point& point) const {
+    return get_log_normalized_bounding_intensity(point);
+  }
+
   // TODO: This should somehow be restricted to window.
   auto get_integral() const {
     double integral(0);
@@ -268,6 +279,21 @@ public:
         return sample;
       }
     }
+  }
+
+  template<typename Point>
+  auto get_upper_bound_approximate_ppp_intensity(const Point& point) const {
+    const auto number_types(Model::beta0_.size());
+    std::vector<double> upper_bound(number_types);
+    using size_t = decltype(Model::beta0_.size());
+    for(size_t i(0); i < number_types; ++i) {
+      const auto value(std::exp(Model::beta0_[i] + beta_dot_covariates_maximum_[i]));
+      if(std::isinf(value)) {
+        Rcpp::stop("Infinite value obtained as the bound to the approximate PPP intensity.");
+      }
+      upper_bound[i] = value;
+    }
+    return upper_bound;
   }
 
   auto get_upper_bound() const {
@@ -379,6 +405,23 @@ private:
   std::vector<double> beta_dot_covariates_maximum_;
   std::vector<double> dot_dispersion_maximum_;
 };
+
+namespace detail {
+
+template<typename Configuration, typename Lambda>
+struct approximate_draw_helper<Configuration, Truncated_exponential_family_model_over_window<Lambda>> {
+  static auto get(const Truncated_exponential_family_model_over_window<Lambda>& model) {
+    const auto configuration(simulate_inhomogeneous_ppp<Configuration>(model.get_window(),
+                                                                       [&model](const auto& point) {
+                                                                         return model.get_log_approximate_ppp_intensity(point);
+                                                                       },
+                                                                       model.get_upper_bound_approximate_ppp_intensity(),
+                                                                       model.get_number_types()));
+    return configuration;
+  }
+};
+
+} // namespace detail
 
 } // namespace ppjsdm
 
