@@ -3,20 +3,24 @@
 
 #include <Rinternals.h>
 
+#include <type_traits> // std::remove_cv_t, std::remove_reference_t
+
 #include "../configuration/configuration_manipulation.hpp"
 #include "../utility/window.hpp"
 
 namespace ppjsdm {
 
 template<typename Configuration, typename Vector>
-inline auto rbinomialpp_single(const Window& window, const Vector& n, R_xlen_t number_types, size_t<Configuration> total_number) {
+inline auto rbinomialpp_single(const Window& window,
+                               const Vector& n,
+                               R_xlen_t number_types,
+                               size_t<Configuration> total_number) {
   Configuration configuration(total_number);
 
   auto iterator(configuration.begin());
+  using filling_t = std::remove_cv_t<std::remove_reference_t<decltype(n[0])>>;
   for(R_xlen_t j(0); j < number_types; ++j) {
-    // TODO: Why doesn't this work with auto? Type seems to be const-something for some reason.
-    R_xlen_t points_to_add(n[j]);
-    while(points_to_add-- != 0) {
+    for(filling_t filling(0); filling < n[j]; ++filling) {
       *iterator++ = window.sample(j);
     }
   }

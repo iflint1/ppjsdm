@@ -291,8 +291,6 @@ public:
   }
 
   // TODO: Factorise and make this function more readable.
-  // TODO: Doesn't work for truncated version--fix.
-  // TODO: The IPPP in the CFTP algorithm should be conditioned to have <= saturation points.
   template<typename Point, typename Configuration>
   void add_to_L_or_U(double exp_mark, const Point& point, Configuration& l, Configuration& l_complement) const {
     // TODO: Write properly what this function is doing.
