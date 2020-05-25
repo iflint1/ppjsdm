@@ -181,7 +181,9 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 
   // Fill the regressors, response, offset and shift with what we precomputed.
   for(size_t i(0); i < total_points; ++i) {
-    response[i] = precomputed_results[i].is_in_configuration ? 1 : 0;
+    if(precomputed_results[i].is_in_configuration) {
+      response[i] = 1;
+    }
     x[i] = precomputed_results[i].x;
     y[i] = precomputed_results[i].y;
     mark[i] = precomputed_results[i].mark;
@@ -194,9 +196,6 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     // fill traits
     short_range_traits_input(i, 0) = precomputed_results[i].dispersion[type_index];
     medium_range_traits_input(i, 0) = precomputed_results[i].medium_dispersion[type_index];
-    // TODO: Initialisation probably not needed, just testing some things out.
-    short_range_joint_traits_input(i, 0) = 0;
-    medium_range_joint_traits_input(i, 0) = 0;
     for(size_t j(0); j < number_types; ++j) {
       if(j != type_index) {
         short_range_joint_traits_input(i, 0) += precomputed_results[i].dispersion[j];
@@ -207,9 +206,6 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     for(size_t k(0); k < number_traits; ++k) {
       short_range_traits_input(i, k + 1) = Rcpp::as<Rcpp::NumericVector>(traits[k])[type_index] * precomputed_results[i].dispersion[type_index];
       medium_range_traits_input(i, k + 1) = Rcpp::as<Rcpp::NumericVector>(traits[k])[type_index] * precomputed_results[i].medium_dispersion[type_index];
-      // TODO: Initialisation probably not needed, just testing some things out.
-      short_range_joint_traits_input(i, k + 1) = 0;
-      medium_range_joint_traits_input(i, k + 1) = 0;
       for(size_t j(0); j < number_types; ++j) {
         if(j != type_index) {
           const auto delta(std::abs(Rcpp::as<Rcpp::NumericVector>(traits[k])[j] - Rcpp::as<Rcpp::NumericVector>(traits[k])[type_index]));
@@ -237,23 +233,11 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
           gamma_input(i, index++) = precomputed_results[i].medium_dispersion[k];
         }
       } else {
-        // fill log_lambda
-        log_lambda(i, j) = 0;
-
-        // fill covariates
-        for(size_t k(0); k < covariates_length; ++k) {
-          covariates_input(i, k * number_types + j) = 0;
-        }
-
         // fill alpha
         for(size_t k(j); k < number_types; ++k) {
           if(k == type_index) {
             alpha_input(i, index) = precomputed_results[i].dispersion[j];
             gamma_input(i, index++) = precomputed_results[i].medium_dispersion[j];
-          } else {
-            // TODO: Not necessary since zero-initialized.
-            alpha_input(i, index) = 0;
-            gamma_input(i, index++) = 0;
           }
         }
       }
@@ -476,20 +460,8 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
     }
   }
   // TODO: Allow for cases in which all species are not present in all configurations, i.e. number_types = max_i(max_points_by_type[i].size())
-  const auto number_types(max_points_by_type.size());
-
-  // TODO: This duplicates some of the defaults, and is probably not required.
-  const auto sh(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(short_range, 0.1, number_types));
-  if(!ppjsdm::is_symmetric_matrix(sh)) {
-    Rcpp::stop("Short range interaction radius matrix is not symmetric.");
-  }
-  const auto dispersion(ppjsdm::Saturated_model(model, sh, saturation));
-  const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0., number_types));
-  const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0., number_types));
-  if(!ppjsdm::is_symmetric_matrix(me) || !ppjsdm::is_symmetric_matrix(lo)) {
-    Rcpp::stop("Medium or long range interaction radius matrix is not symmetric.");
-  }
-  const auto medium_range_dispersion(ppjsdm::Saturated_model(medium_range_model, me, lo, saturation));
+  const auto dispersion(ppjsdm::Saturated_model(model, short_range, saturation));
+  const auto medium_range_dispersion(ppjsdm::Saturated_model(medium_range_model, medium_range, long_range, saturation));
   if(approximate) {
     return prepare_gibbsm_data_helper<true>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, dispersion, medium_range_dispersion, max_points_by_type, ndummy, estimate_alpha, estimate_gamma);
   } else {
