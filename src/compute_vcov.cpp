@@ -300,38 +300,34 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
 
 // [[Rcpp::export]]
 Rcpp::NumericMatrix compute_vcov(SEXP configuration,
-                                  Rcpp::List covariates,
-                                  Rcpp::CharacterVector model,
-                                  Rcpp::CharacterVector medium_range_model,
-                                  SEXP short_range,
-                                  SEXP medium_range,
-                                  SEXP long_range,
-                                  R_xlen_t saturation,
-                                  Rcpp::NumericMatrix alpha,
-                                  Rcpp::NumericVector beta0,
-                                  Rcpp::NumericMatrix beta,
-                                  Rcpp::NumericMatrix gamma,
-                                  double rho,
-                                  Rcpp::NumericVector coefficients_vector,
-                                  Rcpp::NumericMatrix regressors,
-                                  Rcpp::List data_list,
-                                  bool estimate_alpha,
-                                  bool estimate_gamma) {
+                                 Rcpp::List covariates,
+                                 Rcpp::CharacterVector model,
+                                 Rcpp::CharacterVector medium_range_model,
+                                 SEXP short_range,
+                                 SEXP medium_range,
+                                 SEXP long_range,
+                                 R_xlen_t saturation,
+                                 Rcpp::NumericMatrix alpha,
+                                 Rcpp::NumericVector beta0,
+                                 Rcpp::NumericMatrix beta,
+                                 Rcpp::NumericMatrix gamma,
+                                 double rho,
+                                 Rcpp::NumericVector coefficients_vector,
+                                 Rcpp::NumericMatrix regressors,
+                                 Rcpp::List data_list,
+                                 bool estimate_alpha,
+                                 bool estimate_gamma) {
   // Construct std::vector of configurations.
   const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::wrap(configuration));
   const auto length_configuration(ppjsdm::size(wrapped_configuration));
 
-  // Convert configurations to std::vector in order for parallelised version to work.
+  // Convert configuration to std::vector in order for parallelised version to work.
   std::vector<ppjsdm::Marked_point> vector_configuration(length_configuration);
   for(decltype(ppjsdm::size(wrapped_configuration)) j(0); j < length_configuration; ++j) {
     vector_configuration[j] = wrapped_configuration[j];
   }
 
-  // The trick below allows us to find the number of different types in the configuration.
-  // That number is then used to default construct `short_range`.
-  const auto points_by_type(ppjsdm::get_number_points(vector_configuration));
-  const int number_types(points_by_type.size());
-
+  const auto number_types(beta0.size());
   const auto dispersion(ppjsdm::Saturated_model(model, short_range, saturation));
   const auto medium_range_dispersion(ppjsdm::Saturated_model(medium_range_model, medium_range, long_range, saturation));
 

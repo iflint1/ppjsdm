@@ -34,6 +34,18 @@ inline auto get_number_points(const Configuration& configuration) {
   return result;
 }
 
+template<typename Configuration>
+inline auto get_number_types(const Configuration& configuration) {
+  int max_type(-1);
+  for(const auto& point: configuration) {
+    const auto type(get_type(point));
+    if(type > max_type) {
+      max_type = type;
+    }
+  }
+  return max_type + 1;
+}
+
 } // namespace ppjsdm
 
 #endif // INCLUDE_PPJSDM_GET_NUMBER_POINTS
