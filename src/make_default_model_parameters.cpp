@@ -36,6 +36,9 @@ SEXP make_default_model_parameters(SEXP alpha,
   const auto sh(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(short_range, 0.1, number_types));
   const auto me(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(medium_range, 0., number_types));
   const auto lo(ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(long_range, 0., number_types));
+  if(!ppjsdm::is_symmetric_matrix(sh) || !ppjsdm::is_symmetric_matrix(me) || !ppjsdm::is_symmetric_matrix(lo)) {
+    Rcpp::stop("One of the interaction radii matrices is not symmetric.");
+  }
 
   return Rcpp::List::create(Rcpp::Named("alpha") = alpha,
                             Rcpp::Named("beta0") = beta0,

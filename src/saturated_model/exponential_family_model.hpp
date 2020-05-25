@@ -9,11 +9,8 @@
 #include "../utility/im_wrapper.hpp"
 
 #include <algorithm> // std::transform
-#include <cmath> // std::exp, std::log, std::fabs, std::isinf
+#include <cmath> // std::exp, std::isinf
 #include <functional> // std::plus
-#include <memory> // std::shared_ptr
-#include <type_traits> // std::remove_cv, std::remove_reference, std::is_same, std::enable_if
-#include <utility> // std::forward, std::move
 #include <vector> // std::vector
 
 namespace ppjsdm {
