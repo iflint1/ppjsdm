@@ -237,8 +237,9 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
         for(size_t k(j); k < number_types; ++k) {
           if(k == type_index) {
             alpha_input(i, index) = precomputed_results[i].dispersion[j];
-            gamma_input(i, index++) = precomputed_results[i].medium_dispersion[j];
+            gamma_input(i, index) = precomputed_results[i].medium_dispersion[j];
           }
+          ++index;
         }
       }
     }
