@@ -4,7 +4,7 @@
 \alias{remove_from_configuration}
 \title{Remove a point from a configuration (if it is in the configuration).}
 \usage{
-remove_from_configuration(configuration, x, type)
+remove_from_configuration(configuration, x, type = "default", mark = 1)
 }
 \arguments{
 \item{configuration}{Configuration.}
@@ -12,6 +12,8 @@ remove_from_configuration(configuration, x, type)
 \item{x}{Point.}
 
 \item{type}{Point type.}
+
+\item{mark}{Point mark.}
 }
 \description{
 Remove a point from a configuration (if it is in the configuration).

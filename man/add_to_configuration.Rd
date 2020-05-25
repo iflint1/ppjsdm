@@ -4,7 +4,7 @@
 \alias{add_to_configuration}
 \title{Add a point to a configuration.}
 \usage{
-add_to_configuration(configuration, x, type)
+add_to_configuration(configuration, x, type = "default", mark = 1)
 }
 \arguments{
 \item{configuration}{Configuration.}
@@ -12,6 +12,8 @@ add_to_configuration(configuration, x, type)
 \item{x}{Point.}
 
 \item{type}{Point type.}
+
+\item{mark}{Point mark}
 }
 \description{
 Add a point to a configuration.

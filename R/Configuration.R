@@ -179,7 +179,6 @@ get_marks <- function(configuration) {
   configuration$marks
 }
 
-# TODO: Check code below and make it work with marks.
 #' Convert a configuration class to a ppp from the SpatStat package.
 #'
 #' @param X Configuration.
@@ -242,11 +241,16 @@ as.Configuration.default <- function(configuration) {
 #' @param configuration Configuration.
 #' @param x Point.
 #' @param type Point type.
+#' @param mark Point mark
 #' @export
-add_to_configuration <- function(configuration, x, type) {
+add_to_configuration <- function(configuration, x, type = "default", mark = 1) {
+  if(!is.vector(x) | !is.numeric(x) | length(x) != 2) {
+    stop("Wrong format for x.")
+  }
   configuration$x <- c(configuration$x, x[1])
   configuration$y <- c(configuration$y, x[2])
   configuration$types <- unlist(list(configuration$types, factor(type)))
+  configuration$marks <- mark
   configuration
 }
 
@@ -269,13 +273,23 @@ remove_from_configuration_by_index <- function(configuration, index) {
 #' @param configuration Configuration.
 #' @param x Point.
 #' @param type Point type.
+#' @param mark Point mark.
 #' @export
-remove_from_configuration <- function(configuration, x, type) {
+remove_from_configuration <- function(configuration, x, type = "default", mark = 1) {
   index <- match(x[1], configuration$x)
-  if(!is.na(index) && configuration$y[index] == x[2] && configuration$types[index] == type) {
-    return(remove_from_configuration_by_index(configuration, index))
+  if(!is.na(index) & configuration$y[index] == x[2] & configuration$types[index] == type & configuration$marks[index] == mark) {
+    remove_from_configuration_by_index(configuration, index)
+  } else {
+    configuration
   }
-  configuration
+}
+
+#' Number of points in a configuration
+#'
+#' @param x Configuration.
+#' @export
+length.Configuration <- function(x) {
+  length(x$x)
 }
 
 #' Check whether a configuration is empty.
@@ -283,7 +297,7 @@ remove_from_configuration <- function(configuration, x, type) {
 #' @param configuration Configuration.
 #' @export
 is_empty <- function(configuration) {
-  length(configuration$x) == 0
+  length(configuration) == 0
 }
 
 #' Remove random point from the configuration.
@@ -294,8 +308,10 @@ remove_random_point <- function(configuration) {
   index <- sample(length(configuration$x), 1)
   location <- c(configuration$x[index], configuration@y[index])
   type <- configuration$types[index]
+  mark <- configuration$marks[index]
   configuration$x <- configuration$x[-index]
   configuration$y <- configuration$y[-index]
   configuration$types <- droplevels(configuration$types[-index])
-  list(configuration = configuration, location = location, type = type)
+  configuration$marks <- droplevels(configuration$marks[-index])
+  list(configuration = configuration, location = location, type = type, mark = mark)
 }
