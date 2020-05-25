@@ -147,6 +147,10 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
     //   Rcpp::stop("Did not find the current point in t_over_papangelou");
     // }
 
+    Configuration configuration_without_i(configuration);
+    ppjsdm::remove_point(configuration_without_i, configuration[i]);
+    const auto papangelou_i_minus_i(model.compute_papangelou(configuration[i], configuration_without_i));
+
     for(size_t j(i + 1); j < total_points; ++j) {
       const int type_j(ppjsdm::get_type(configuration[j]));
       std::vector<double> t_over_papangelou_j(total_parameters);
@@ -160,19 +164,18 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
         }
       }
 
-      Configuration configuration_copy(configuration);
-      ppjsdm::remove_point(configuration_copy, configuration[j]);
-      const auto papangelou_j_minus_j(model.compute_papangelou(configuration[j], configuration_copy));
-      ppjsdm::remove_point(configuration_copy, configuration[i]);
-      const auto papangelou_i_minus_two(model.compute_papangelou(configuration[i], configuration_copy));
-      const auto papangelou_j_minus_two(model.compute_papangelou(configuration[j], configuration_copy));
+      Configuration configuration_without_ij(configuration_without_i);
+      ppjsdm::remove_point(configuration_without_ij, configuration[j]);
+
+      const auto papangelou_i_minus_two(model.compute_papangelou(configuration[i], configuration_without_ij));
+      const auto papangelou_j_minus_two(model.compute_papangelou(configuration[j], configuration_without_ij));
 
       // TODO: Don't need to compute all of these depending on estimate_alpha / estimate_gamma
-      const auto short_i(ppjsdm::compute_dispersion(dispersion_model, configuration[i], number_types, configuration_copy));
-      const auto medium_i(ppjsdm::compute_dispersion(medium_dispersion_model, configuration[i], number_types, configuration_copy));
+      const auto short_i(ppjsdm::compute_dispersion(dispersion_model, configuration[i], number_types, configuration_without_ij));
+      const auto medium_i(ppjsdm::compute_dispersion(medium_dispersion_model, configuration[i], number_types, configuration_without_ij));
 
-      const auto short_j(ppjsdm::compute_dispersion(dispersion_model, configuration[j], number_types, configuration_copy));
-      const auto medium_j(ppjsdm::compute_dispersion(medium_dispersion_model, configuration[j], number_types, configuration_copy));
+      const auto short_j(ppjsdm::compute_dispersion(dispersion_model, configuration[j], number_types, configuration_without_ij));
+      const auto medium_j(ppjsdm::compute_dispersion(medium_dispersion_model, configuration[j], number_types, configuration_without_ij));
 
       // TODO: Reuse regressors?
       std::vector<double> cov_j(covariates.size());
@@ -248,7 +251,7 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
         }
       }
 
-      const auto constant(2. * (papangelou_j_minus_two / papangelou_j_minus_j - 1.) / ((papangelou_i_minus_two + rho) * (papangelou_j_minus_two + rho)));
+      const auto constant(2. * (papangelou_i_minus_two / papangelou_i_minus_i - 1.) / ((papangelou_i_minus_two + rho) * (papangelou_j_minus_two + rho)));
       for(size_t k1(0); k1 < total_parameters; ++k1) {
         for(size_t k2(0); k2 < total_parameters; ++k2) {
           const auto A2_summand(t_i[k1] * t_j[k2] * constant);
