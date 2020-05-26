@@ -3,7 +3,6 @@
 #' @param configuration_list A single configuration or a list of configurations assumed to be drawn from the multivariate Gibbs.
 #' @param window Observation window.
 #' @param covariates Environmental covariates driving the intensity.
-#' @param traits Species' traits.
 #' @param model String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_short_range_models()`.
 #' @param medium_range_model String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_medium_range_models()`.
 #' @param short_range Short range interaction radius.
@@ -22,7 +21,6 @@
 gibbsm <- function(configuration_list,
                    window,
                    covariates,
-                   traits = list(),
                    model,
                    medium_range_model,
                    short_range,
@@ -89,7 +87,6 @@ gibbsm <- function(configuration_list,
       gibbsm_data_list <- prepare_gibbsm_data(configuration_list,
                                               window,
                                               covariates,
-                                              traits,
                                               model,
                                               medium_range_model,
                                               sh,
@@ -158,7 +155,6 @@ gibbsm <- function(configuration_list,
     gibbsm_data_list <- prepare_gibbsm_data(configuration_list,
                                             window,
                                             covariates,
-                                            traits,
                                             model,
                                             medium_range_model,
                                             best_short,
@@ -185,7 +181,7 @@ gibbsm <- function(configuration_list,
     gibbsm_data_list <- prepare_gibbsm_data(configuration_list,
                                             window,
                                             covariates,
-                                            traits, model,
+                                            model,
                                             medium_range_model,
                                             short_range,
                                             medium_range,

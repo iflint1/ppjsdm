@@ -44,8 +44,8 @@ make_default_model_parameters <- function(alpha, beta0, covariates, beta, gamma,
     .Call('_ppjsdm_make_default_model_parameters', PACKAGE = 'ppjsdm', alpha, beta0, covariates, beta, gamma, short_range, medium_range, long_range, types)
 }
 
-prepare_gibbsm_data <- function(configuration_list, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, approximate, ndummy, estimate_alpha, estimate_gamma) {
-    .Call('_ppjsdm_prepare_gibbsm_data', PACKAGE = 'ppjsdm', configuration_list, window, covariates, traits, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, approximate, ndummy, estimate_alpha, estimate_gamma)
+prepare_gibbsm_data <- function(configuration_list, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, approximate, ndummy, estimate_alpha, estimate_gamma) {
+    .Call('_ppjsdm_prepare_gibbsm_data', PACKAGE = 'ppjsdm', configuration_list, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, approximate, ndummy, estimate_alpha, estimate_gamma)
 }
 
 rbinomialpp_cpp <- function(window, n, nsim, types, drop, mark_range) {

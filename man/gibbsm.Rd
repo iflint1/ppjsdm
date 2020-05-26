@@ -8,7 +8,6 @@ gibbsm(
   configuration_list,
   window,
   covariates,
-  traits = list(),
   model,
   medium_range_model,
   short_range,
@@ -27,8 +26,6 @@ gibbsm(
 \item{window}{Observation window.}
 
 \item{covariates}{Environmental covariates driving the intensity.}
-
-\item{traits}{Species' traits.}
 
 \item{model}{String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_short_range_models()`.}
 

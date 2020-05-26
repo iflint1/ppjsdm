@@ -38,7 +38,6 @@ template<bool Approximate, typename Configuration>
 Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configuration_list,
                                       const ppjsdm::Window& window,
                                       const ppjsdm::Im_list_wrapper& covariates,
-                                      Rcpp::List traits,
                                       const ppjsdm::Saturated_model& dispersion_model,
                                       const ppjsdm::Saturated_model& medium_dispersion_model,
                                       unsigned long long int max_points_in_any_type,
@@ -153,31 +152,29 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   precomputed_results.insert(precomputed_results.end(), results_private.begin(), results_private.end());
   }
 
-  const auto total_points(precomputed_results.size());
   //const size_t number_traits(traits.size());
-
+  const auto total_points(precomputed_results.size());
   const auto number_parameters_struct(ppjsdm::get_number_parameters(number_types, covariates.size(), estimate_alpha, estimate_gamma));
   const auto index_start_gamma(number_parameters_struct.index_start_gamma);
   const auto index_start_covariates(number_parameters_struct.index_start_covariates);
   const auto total_parameters(number_parameters_struct.total_parameters);
 
-  // Default-initialise the data
-  std::vector<int> response(total_points);
-  std::vector<double> x(total_points);
-  std::vector<double> y(total_points);
-  std::vector<double> mark(total_points);
-  std::vector<double> type(total_points);
-  std::vector<double> rho_offset(total_points);
+  // Default-initialise everything
+  Rcpp::IntegerVector response(total_points);
+  Rcpp::NumericVector x(total_points);
+  Rcpp::NumericVector y(total_points);
+  Rcpp::NumericVector mark(total_points);
+  Rcpp::IntegerVector type(total_points);
+  Rcpp::NumericVector rho_offset(total_points);
   Rcpp::NumericMatrix regressors(total_points, total_parameters);
-  //ppjsdm::Lightweight_matrix<double> log_lambda(total_points, number_types);
-  //ppjsdm::Lightweight_matrix<double> alpha_input(total_points, number_types * (number_types + 1) / 2);
-  //ppjsdm::Lightweight_matrix<double> gamma_input(total_points, number_types * (number_types + 1) / 2);
-  //ppjsdm::Lightweight_matrix<double> covariates_input(total_points, covariates_length * number_types);
-  //ppjsdm::Lightweight_matrix<double> short_range_traits_input(total_points, 1 + number_traits);
-  //ppjsdm::Lightweight_matrix<double> short_range_joint_traits_input(total_points, 1 + number_traits);
-  //ppjsdm::Lightweight_matrix<double> medium_range_traits_input(total_points, 1 + number_traits);
-  //ppjsdm::Lightweight_matrix<double> medium_range_joint_traits_input(total_points, 1 + number_traits);
 
+  // Set names
+  rho_offset.names() = Rcpp::wrap("rho");
+  response.names() = Rcpp::wrap("response");
+  x.names() = Rcpp::wrap("x");
+  y.names() = Rcpp::wrap("y");
+  mark.names() = Rcpp::wrap("mark");
+  type.names() = Rcpp::wrap("type");
 
   // Fill the regressors, response, offset and shift with what we precomputed.
   for(size_t i(0); i < total_points; ++i) {
@@ -189,7 +186,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     mark[i] = precomputed_results[i].mark;
 
     const int type_index(precomputed_results[i].type);
-    type[i] = type_index;
+    type[i] = type_index + 1;
 
     rho_offset[i] = -std::log(static_cast<double>(rho_times_volume[type_index]) / volume);
 
@@ -253,144 +250,16 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     }
   }
 
-  // Convert response and rho_offset to Rcpp objects.
-  Rcpp::IntegerMatrix response_rcpp(Rcpp::no_init(response.size(), 1));
-  Rcpp::NumericMatrix x_rcpp(Rcpp::no_init(response.size(), 1));
-  Rcpp::NumericMatrix y_rcpp(Rcpp::no_init(response.size(), 1));
-  Rcpp::NumericMatrix mark_rcpp(Rcpp::no_init(response.size(), 1));
-  Rcpp::IntegerMatrix type_rcpp(Rcpp::no_init(response.size(), 1));
-  Rcpp::NumericMatrix rho_offset_rcpp(Rcpp::no_init(response.size(), 1));
-  for(R_xlen_t i(0); i < static_cast<R_xlen_t>(response.size()); ++i) {
-    response_rcpp(i, 0) = response[i];
-    x_rcpp(i, 0) = x[i];
-    y_rcpp(i, 0) = y[i];
-    mark_rcpp(i, 0) = mark[i];
-    type_rcpp(i, 0) = type[i] + 1;
-    rho_offset_rcpp(i, 0) = rho_offset[i];
-  }
-
-  // Set names.
-  // Rcpp::CharacterVector alpha_names(Rcpp::no_init(alpha_input.ncol()));
-  // Rcpp::CharacterVector gamma_names(Rcpp::no_init(alpha_input.ncol()));
-  //
-  // size_t index(0);
-  // for(int j(0); j < number_types; ++j) {
-  //   for(int k(j); k < number_types; ++k) {
-  //     alpha_names[index] = std::string("alpha_") + std::to_string(j + 1) + std::string("_") + std::to_string(k + 1);
-  //     gamma_names[index++] = std::string("gamma_") + std::to_string(j + 1) + std::string("_") + std::to_string(k + 1);
-  //   }
-  // }
-
-  // Rcpp::CharacterVector short_range_direct_names(Rcpp::no_init(short_range_traits_input.ncol()));
-  // Rcpp::CharacterVector medium_range_direct_names(Rcpp::no_init(medium_range_traits_input.ncol()));
-  // Rcpp::CharacterVector short_range_joint_names(Rcpp::no_init(short_range_joint_traits_input.ncol()));
-  // Rcpp::CharacterVector medium_range_joint_names(Rcpp::no_init(medium_range_joint_traits_input.ncol()));
-  // for(size_t i(0); i < short_range_traits_input.ncol(); ++i) {
-  //   short_range_direct_names[i] = std::string("short_range_direct_") + (i == 0 ? std::string("intercept") : std::to_string(i));
-  //   medium_range_direct_names[i] = std::string("medium_range_direct_") + (i == 0 ? std::string("intercept") : std::to_string(i));
-  //   short_range_joint_names[i] = std::string("short_range_joint_") + (i == 0 ? std::string("intercept") : std::to_string(i));
-  //   medium_range_joint_names[i] = std::string("medium_range_joint_") + (i == 0 ? std::string("intercept") : std::to_string(i));
-  // }
-
-  // Rcpp::CharacterVector covariates_input_names(Rcpp::no_init(covariates_length * number_types));
-  // if(covariates_length > 0) {
-  //   const auto covariates_names(covariates.names());
-  //   for(size_t i(0); i < covariates_length; ++i) {
-  //     for(int j(0); j < number_types; ++j) {
-  //       covariates_input_names[i * number_types + j] = covariates_names[i] + std::string("_") + std::to_string(j + 1);
-  //     }
-  //   }
-  // }
-  //
-  // Rcpp::CharacterVector log_lambda_names(Rcpp::no_init(number_types));
-  // for(int i(0); i < number_types; ++i) {
-  //   log_lambda_names[i] = std::string("log_lambda") + std::to_string(i + 1);
-  // }
-  Rcpp::colnames(rho_offset_rcpp) = Rcpp::wrap("rho");
-  Rcpp::colnames(response_rcpp) = Rcpp::wrap("response");
-  Rcpp::colnames(x_rcpp) = Rcpp::wrap("x");
-  Rcpp::colnames(y_rcpp) = Rcpp::wrap("y");
-  Rcpp::colnames(mark_rcpp) = Rcpp::wrap("mark");
-  Rcpp::colnames(type_rcpp) = Rcpp::wrap("type");
-
-  // if(number_traits > 0) {
-  //   regressors = Rcpp::no_init(log_lambda.nrow(),
-  //                              log_lambda.ncol() + short_range_traits_input.ncol() + medium_range_traits_input.ncol() + short_range_joint_traits_input.ncol() + medium_range_joint_traits_input.ncol() + covariates_input.ncol());
-  //   Rcpp::CharacterVector col_names(Rcpp::no_init(regressors.ncol()));
-  //   for(R_xlen_t j(0); j < static_cast<R_xlen_t>(log_lambda.ncol()); ++j) {
-  //     col_names[j] = log_lambda_names[j];
-  //     for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-  //       regressors(i, j) = log_lambda(i, j);
-  //     }
-  //   }
-  //   R_xlen_t index_shift(log_lambda.ncol());
-  //   for(R_xlen_t j(0); j < static_cast<R_xlen_t>(short_range_traits_input.ncol()); ++j) {
-  //     col_names[j + index_shift] = short_range_direct_names[j];
-  //     for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-  //       regressors(i, j + index_shift) = short_range_traits_input(i, j);
-  //     }
-  //   }
-  //   index_shift = log_lambda.ncol() + short_range_traits_input.ncol();
-  //   for(R_xlen_t j(0); j < static_cast<R_xlen_t>(medium_range_traits_input.ncol()); ++j) {
-  //     col_names[j + index_shift] = medium_range_direct_names[j];
-  //     for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-  //       regressors(i, j + index_shift) = medium_range_traits_input(i, j);
-  //     }
-  //   }
-  //   index_shift = log_lambda.ncol() + short_range_traits_input.ncol() + medium_range_traits_input.ncol();
-  //   for(R_xlen_t j(0); j < static_cast<R_xlen_t>(short_range_joint_traits_input.ncol()); ++j) {
-  //     col_names[j + index_shift] = short_range_joint_names[j];
-  //     for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-  //       regressors(i, j + index_shift) = short_range_joint_traits_input(i, j);
-  //     }
-  //   }
-  //   index_shift = log_lambda.ncol() + short_range_traits_input.ncol() + medium_range_traits_input.ncol() + short_range_joint_traits_input.ncol();
-  //   for(R_xlen_t j(0); j < static_cast<R_xlen_t>(medium_range_joint_traits_input.ncol()); ++j) {
-  //     col_names[j + index_shift] = medium_range_joint_names[j];
-  //     for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-  //       regressors(i, j + index_shift) = medium_range_joint_traits_input(i, j);
-  //     }
-  //   }
-  //   index_shift = log_lambda.ncol() + short_range_traits_input.ncol() + medium_range_traits_input.ncol() + short_range_joint_traits_input.ncol() + medium_range_joint_traits_input.ncol();
-  //   for(R_xlen_t j(0); j < static_cast<R_xlen_t>(covariates_input.ncol()); ++j) {
-  //     col_names[j + index_shift] = covariates_input_names[j];
-  //     for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-  //       regressors(i, j + index_shift) = covariates_input(i, j);
-  //     }
-  //   }
-  //   Rcpp::colnames(regressors) = col_names;
-  // } else {
-    // Rcpp::CharacterVector col_names(Rcpp::no_init(regressors.ncol()));
-    // for(R_xlen_t j(0); j < static_cast<R_xlen_t>(log_lambda.ncol()); ++j) {
-    //   col_names[j] = log_lambda_names[j];
-    // }
-    // R_xlen_t index_shift(log_lambda.ncol());
-    // if(estimate_alpha) {
-    //   for(R_xlen_t j(0); j < static_cast<R_xlen_t>(alpha_input.ncol()); ++j) {
-    //     col_names[j + index_shift] = alpha_names[j];
-    //   }
-    //   index_shift += alpha_input.ncol();
-    // }
-    // if(estimate_gamma) {
-    //   for(R_xlen_t j(0); j < static_cast<R_xlen_t>(gamma_input.ncol()); ++j) {
-    //     col_names[j + index_shift] = gamma_names[j];
-    //   }
-    //   index_shift += gamma_input.ncol();
-    // }
-    // for(R_xlen_t j(0); j < static_cast<R_xlen_t>(covariates_input.ncol()); ++j) {
-    //   col_names[j + index_shift] = covariates_input_names[j];
-    // }
-    const auto col_names(make_model_coloumn_names(covariates, number_types, estimate_alpha, estimate_gamma));
-    Rcpp::colnames(regressors) = col_names;
- // }
+  const auto col_names(make_model_coloumn_names(covariates, number_types, estimate_alpha, estimate_gamma));
+  Rcpp::colnames(regressors) = col_names;
 
 
-  return Rcpp::List::create(Rcpp::Named("response") = response_rcpp,
-                            Rcpp::Named("x") = x_rcpp,
-                            Rcpp::Named("y") = y_rcpp,
-                            Rcpp::Named("mark") = mark_rcpp,
-                            Rcpp::Named("type") = type_rcpp,
-                            Rcpp::Named("offset") = rho_offset_rcpp,
+  return Rcpp::List::create(Rcpp::Named("response") = response,
+                            Rcpp::Named("x") = x,
+                            Rcpp::Named("y") = y,
+                            Rcpp::Named("mark") = mark,
+                            Rcpp::Named("type") = type,
+                            Rcpp::Named("offset") = rho_offset,
                             Rcpp::Named("regressors") = regressors,
                             Rcpp::Named("shift") = shift
                             );
@@ -400,7 +269,6 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
                                SEXP window,
                                Rcpp::List covariates,
-                               Rcpp::List traits,
                                Rcpp::CharacterVector model,
                                Rcpp::CharacterVector medium_range_model,
                                SEXP short_range,
@@ -426,8 +294,7 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
   }
 
   const auto cpp_window(ppjsdm::Window(window, mark_range));
-  // The trick below allows us to find the number of different types in the configuration.
-  // That number is then used to default construct `short_range`.
+
   const auto max_points_by_type(ppjsdm::get_number_points(vector_configurations[0]));
   const auto number_types(max_points_by_type.size());
   auto max_points_in_any_type(*std::max_element(max_points_by_type.begin(), max_points_by_type.end()));
@@ -444,8 +311,8 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
   const auto dispersion(ppjsdm::Saturated_model(model, short_range, saturation));
   const auto medium_range_dispersion(ppjsdm::Saturated_model(medium_range_model, medium_range, long_range, saturation));
   if(approximate) {
-    return prepare_gibbsm_data_helper<true>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, dispersion, medium_range_dispersion, max_points_in_any_type, ndummy, estimate_alpha, estimate_gamma, number_types);
+    return prepare_gibbsm_data_helper<true>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), dispersion, medium_range_dispersion, max_points_in_any_type, ndummy, estimate_alpha, estimate_gamma, number_types);
   } else {
-    return prepare_gibbsm_data_helper<false>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, dispersion, medium_range_dispersion, max_points_in_any_type, ndummy, estimate_alpha, estimate_gamma, number_types);
+    return prepare_gibbsm_data_helper<false>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), dispersion, medium_range_dispersion, max_points_in_any_type, ndummy, estimate_alpha, estimate_gamma, number_types);
   }
 }
