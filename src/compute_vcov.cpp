@@ -133,9 +133,8 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
       const ppjsdm::Marked_point point_i(x[i], y[i], type[i] - 1, mark[i]);
 
       std::vector<double> cov(covariates.size());
-      // TODO: Reuse regressors?
       for(R_xlen_t k(0); k < covariates.size(); ++k) {
-        cov[k] = covariates[k](point_i);
+        cov[k] = regressors(i, index_start_covariates + k * number_types + ppjsdm::get_type(point_i));
       }
       covariates_on_configuration[i] = cov;
 
@@ -176,12 +175,6 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
           if(estimate_gamma) {
             medium_i = ppjsdm::compute_dispersion(medium_dispersion_model, point_i, number_types, configuration_without_ij);
             medium_j = ppjsdm::compute_dispersion(medium_dispersion_model, point_j, number_types, configuration_without_ij);
-          }
-
-          // TODO: Reuse regressors?
-          std::vector<double> cov_j(covariates.size());
-          for(R_xlen_t k(0); k < covariates.size(); ++k) {
-            cov_j[k] = covariates[k](point_j);
           }
 
           std::vector<double> t_i(total_parameters);
