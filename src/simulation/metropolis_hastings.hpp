@@ -32,14 +32,12 @@ inline auto simulate_metropolis_hastings(const Model& model, const Window& windo
         add_point(points, point);
       }
     } else if(!empty(points)) {
+      const double current_size(size(points));
       const auto saved_point(remove_random_point(points));
 
       const double papangelou(model.compute_papangelou(saved_point, points));
-      double death_ratio(1.0 / (precomputed_constant * papangelou));
-      const auto current_size(size(points));
-      if(current_size > 0) {
-        death_ratio *= current_size;
-      }
+      double death_ratio(current_size / (precomputed_constant * papangelou));
+
       // Use C++ short-circuiting
       if(death_ratio < 1. && unif_rand() > death_ratio) {
         add_point(points, saved_point);
