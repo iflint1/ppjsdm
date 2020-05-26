@@ -125,22 +125,33 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
     }
   }
 
+  // Fill linear values
+  std::vector<std::vector<double>> covariates_on_configuration(regressors.nrow());
+  std::vector<std::vector<double>> t_over_papangelou_on_configuration(regressors.nrow());
+  for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+    if(response[i] == 1) {
+      const ppjsdm::Marked_point point_i(x[i], y[i], type[i] - 1, mark[i]);
+
+      std::vector<double> cov(covariates.size());
+      // TODO: Reuse regressors?
+      for(R_xlen_t k(0); k < covariates.size(); ++k) {
+        cov[k] = covariates[k](point_i);
+      }
+      covariates_on_configuration[i] = cov;
+
+      std::vector<double> t_over_papangelou(total_parameters);
+      const auto one_over_papangelou_plus_rho(1. / (papangelou[i] + rho));
+      for(decltype(t_over_papangelou.size()) fill(0); fill < t_over_papangelou.size(); ++fill) {
+        t_over_papangelou[fill] = regressors(i, fill) * one_over_papangelou_plus_rho;
+      }
+      t_over_papangelou_on_configuration[i] = t_over_papangelou;
+    }
+  }
+
   // Finally, add A2 and A3.
   for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
     if(response[i] == 1) {
       const ppjsdm::Marked_point point_i(x[i], y[i], type[i] - 1, mark[i]);
-      const int type_i(ppjsdm::get_type(point_i));
-
-      std::vector<double> cov_i(covariates.size());
-      for(R_xlen_t k(0); k < covariates.size(); ++k) {
-        cov_i[k] = covariates[k](point_i);
-      }
-
-      std::vector<double> t_over_papangelou_i(total_parameters);
-      const auto one_over_papangelou_plus_rho(1. / (papangelou[i] + rho));
-      for(decltype(t_over_papangelou_i.size()) fill(0); fill < t_over_papangelou_i.size(); ++fill) {
-        t_over_papangelou_i[fill] = regressors(i, fill) * one_over_papangelou_plus_rho;
-      }
 
       Configuration configuration_without_i(configuration);
       ppjsdm::remove_point(configuration_without_i, point_i);
@@ -149,14 +160,6 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
       for(R_xlen_t j(i + 1); j < regressors.nrow(); ++j) {
         if(response[j] == 1) {
           const ppjsdm::Marked_point point_j(x[j], y[j], type[j] - 1, mark[j]);
-          const int type_j(ppjsdm::get_type(point_j));
-
-          std::vector<double> t_over_papangelou_j(total_parameters);
-          const auto one_over_papangelou_plus_rho_j(1. / (papangelou[j] + rho));
-          // TODO: Precompute t_over_papangelou_i for any i, then just access here.
-          for(decltype(t_over_papangelou_j.size()) fill(0); fill < t_over_papangelou_j.size(); ++fill) {
-            t_over_papangelou_j[fill] = regressors(j, fill) * one_over_papangelou_plus_rho_j;
-          }
 
           Configuration configuration_without_ij(configuration_without_i);
           ppjsdm::remove_point(configuration_without_ij, point_j);
@@ -186,11 +189,11 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
 
           size_t current_index(0);
           for(int k1(0); k1 < number_types; ++k1) {
-            if(k1 == type_i) {
+            if(k1 == ppjsdm::get_type(point_i)) {
               t_i[k1] = 1.;
 
               for(int k2(0); k2 < covariates.size(); ++k2) {
-                t_i[index_start_covariates + k2 * number_types + k1] = cov_i[k2];
+                t_i[index_start_covariates + k2 * number_types + k1] = covariates_on_configuration[i][k2];
               }
 
               size_t filling(current_index);
@@ -206,7 +209,7 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
             } else {
               size_t filling(current_index);
               for(int k2(k1); k2 < number_types; ++k2) {
-                if(k2 == type_i) {
+                if(k2 == ppjsdm::get_type(point_i)) {
                   if(estimate_alpha) {
                     t_i[number_types + filling] = short_i[k1];
                   }
@@ -218,11 +221,11 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
               }
             }
 
-            if(k1 == type_j) {
+            if(k1 == ppjsdm::get_type(point_j)) {
               t_j[k1] = 1.;
 
               for(int k2(0); k2 < covariates.size(); ++k2) {
-                t_j[index_start_covariates + k2 * number_types + k1] = cov_j[k2];
+                t_j[index_start_covariates + k2 * number_types + k1] = covariates_on_configuration[j][k2];
               }
 
               for(int k2(k1); k2 < number_types; ++k2) {
@@ -236,7 +239,7 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
               }
             } else {
               for(int k2(k1); k2 < number_types; ++k2) {
-                if(k2 == type_j) {
+                if(k2 == ppjsdm::get_type(point_j)) {
                   if(estimate_alpha) {
                     t_j[number_types + current_index] = short_j[k1];
                   }
@@ -253,7 +256,7 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
           for(size_t k1(0); k1 < total_parameters; ++k1) {
             for(size_t k2(0); k2 < total_parameters; ++k2) {
               const auto A2_summand(t_i[k1] * t_j[k2] * constant);
-              const auto A3_summand(2. * (t_over_papangelou_i[k1] - t_i[k1] / (papangelou_i_minus_two + rho)) * (t_over_papangelou_j[k2] - t_j[k2] / (papangelou_j_minus_two + rho)));
+              const auto A3_summand(2. * (t_over_papangelou_on_configuration[i][k1] - t_i[k1] / (papangelou_i_minus_two + rho)) * (t_over_papangelou_on_configuration[j][k2] - t_j[k2] / (papangelou_j_minus_two + rho)));
               A(k1, k2) += A2_summand + A3_summand;
             }
           }
