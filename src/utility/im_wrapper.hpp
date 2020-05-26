@@ -182,7 +182,7 @@ public:
   // Instead, emplace_back when size is known.
   explicit Im_list_wrapper(Rcpp::List im_list) {
     const auto n(im_list.size());
-    using size_t = size_t<Rcpp::List>;
+    using size_t = decltype(im_list.size());
     if(n > 0) {
       const auto names = Rcpp::as<Rcpp::CharacterVector>(im_list.names());
       for(size_t i(0); i < n; ++i) {

@@ -57,7 +57,7 @@ public:
   class Configuration_iterator : public std::iterator<std::random_access_iterator_tag, Point> {
   private:
     friend class Configuration_wrapper;
-    using size_t = decltype(size(std::declval<N>()));
+    using size_t = decltype(std::declval<N>().size());
   protected:
     using Base = std::iterator<std::random_access_iterator_tag, Point>;
     N* px_;
@@ -162,6 +162,7 @@ public:
     }
   };
 
+  using size_type = decltype(std::declval<Rcpp::NumericVector>().size());
   using iterator = Configuration_iterator<Rcpp::NumericVector, Rcpp::IntegerVector, Marked_point>;
   using const_iterator = Configuration_iterator<const Rcpp::NumericVector, const Rcpp::IntegerVector, const Marked_point>;
 

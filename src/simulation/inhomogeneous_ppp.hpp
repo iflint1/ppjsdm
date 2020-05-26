@@ -5,6 +5,7 @@
 #include <Rinternals.h>
 
 #include "../configuration/configuration_manipulation.hpp"
+#include "../utility/window.hpp"
 
 #include <utility> // std::move
 
@@ -15,14 +16,15 @@ inline auto simulate_inhomogeneous_ppp(const Window& window, const Intensity& lo
   const auto volume(window.volume());
 
   Configuration configuration{};
-  // TODO: Might want to .reserve() if Configuration has the member function.
+
   for(R_xlen_t i(0); i < number_types; ++i) {
-    const auto max_points_to_add(R::rpois(volume * static_cast<double>(upper_bound[i])));
+    const R_xlen_t max_points_to_add(R::rpois(volume * static_cast<double>(upper_bound[i])));
+    reserve_if_possible(configuration, configuration.size() + max_points_to_add);
     for(R_xlen_t j(0); j < max_points_to_add; ++j) {
       const auto sample(window.sample(i));
       const auto log_normalized_lambda_sample(log_normalised_intensity(sample));
       if(log_normalized_lambda_sample > 0) {
-        Rcpp::stop("Did not correctly normalise lambda");
+        Rcpp::stop("Did not correctly normalise the intensity.");
       }
       if(exp_rand() + log_normalized_lambda_sample > 0) {
         add_point(configuration, std::move(sample));

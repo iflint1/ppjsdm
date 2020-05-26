@@ -37,6 +37,10 @@ struct configuration_manipulation_defaults {
     configuration.erase(iterator);
     return point;
   }
+
+  static inline void reserve_if_possible(Configuration& configuration, typename Configuration::size_type n) {
+    configuration.reserve(n);
+  }
 };
 
 template<typename Configuration>
@@ -92,6 +96,11 @@ inline bool remove_point(Configuration& configuration, const Point& point) {
     return true;
   }
   return false;
+}
+
+template <typename Configuration>
+inline void reserve_if_possible(Configuration& configuration, typename Configuration::size_type n) {
+  traits::configuration_manipulation<Configuration>::reserve_if_possible(configuration, n);
 }
 
 } // namespace ppjsdm
