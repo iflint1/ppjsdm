@@ -24,9 +24,45 @@
 #include <string> // std::string, std::to_string
 #include <vector> // std::vector
 
-#ifdef _OPENMP
-#include <omp.h>
-#endif
+inline auto arma_matrix_to_rcpp_matrix(const arma::mat& A,
+                                       const ppjsdm::Im_list_wrapper& covariates,
+                                       int number_types,
+                                       bool estimate_alpha,
+                                       bool estimate_gamma) {
+  Rcpp::CharacterVector col_names(Rcpp::no_init(A.n_cols));
+  for(R_xlen_t j(0); j < number_types; ++j) {
+    col_names[j] = std::string("log_lambda") + std::to_string(j + 1);
+  }
+  R_xlen_t index_shift(number_types);
+  if(estimate_alpha) {
+    for(R_xlen_t k1(0); k1 < number_types; ++k1) {
+      for(R_xlen_t k2(k1); k2 < number_types; ++k2) {
+        col_names[index_shift] = std::string("alpha_") + std::to_string(k1 + 1) + std::string("_") + std::to_string(k2 + 1);
+        ++index_shift;
+      }
+    }
+  }
+  if(estimate_gamma) {
+    for(R_xlen_t k1(0); k1 < number_types; ++k1) {
+      for(R_xlen_t k2(k1); k2 < number_types; ++k2) {
+        col_names[index_shift] = std::string("gamma_") + std::to_string(k1 + 1) + std::string("_") + std::to_string(k2 + 1);
+        ++index_shift;
+      }
+    }
+  }
+  for(R_xlen_t j(0); j < static_cast<R_xlen_t>(covariates.size()); ++j) {
+    for(R_xlen_t k(0); k < number_types; ++k) {
+      col_names[index_shift] = covariates.names()[j] + std::string("_") + std::to_string(k + 1);
+      ++index_shift;
+    }
+  }
+
+  Rcpp::NumericMatrix rcpp_matrix(Rcpp::wrap(A));
+  Rcpp::colnames(rcpp_matrix) = col_names;
+  Rcpp::rownames(rcpp_matrix) = col_names;
+
+  return rcpp_matrix;
+}
 
 template<typename Configuration, typename Model>
 Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
@@ -261,40 +297,7 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
   const arma::mat S_inv(arma::inv(S));
   A = S_inv * A * S_inv;
 
-  // Set names
-  Rcpp::CharacterVector col_names(Rcpp::no_init(A.n_cols));
-  for(R_xlen_t j(0); j < number_types; ++j) {
-    col_names[j] = std::string("log_lambda") + std::to_string(j + 1);
-  }
-  R_xlen_t index_shift(number_types);
-  if(estimate_alpha) {
-    for(R_xlen_t k1(0); k1 < number_types; ++k1) {
-      for(R_xlen_t k2(k1); k2 < number_types; ++k2) {
-        col_names[index_shift] = std::string("alpha_") + std::to_string(k1 + 1) + std::string("_") + std::to_string(k2 + 1);
-        ++index_shift;
-      }
-    }
-  }
-  if(estimate_gamma) {
-    for(R_xlen_t k1(0); k1 < number_types; ++k1) {
-      for(R_xlen_t k2(k1); k2 < number_types; ++k2) {
-        col_names[index_shift] = std::string("gamma_") + std::to_string(k1 + 1) + std::string("_") + std::to_string(k2 + 1);
-        ++index_shift;
-      }
-    }
-  }
-  for(R_xlen_t j(0); j < static_cast<R_xlen_t>(covariates.size()); ++j) {
-    for(R_xlen_t k(0); k < number_types; ++k) {
-      col_names[index_shift] = covariates.names()[j] + std::string("_") + std::to_string(k + 1);
-      ++index_shift;
-    }
-  }
-
-  Rcpp::NumericMatrix vcov(Rcpp::wrap(A));
-  Rcpp::colnames(vcov) = col_names;
-  Rcpp::rownames(vcov) = col_names;
-
-  return vcov;
+  return arma_matrix_to_rcpp_matrix(A, covariates, number_types, estimate_alpha, estimate_gamma);
 }
 
 // [[Rcpp::export]]
