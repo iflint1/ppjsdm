@@ -55,7 +55,7 @@ cftp_number_points <- sapply(cftp_configurations, function(a) length(a$x))
 cftp_result <- t.test(cftp_number_points, conf.interval = confidence)
 
 N <- 1000
-steps <- 100000
+steps <- 10000
 mh_configurations <- rgibbs(window = window, saturation = saturation, alpha = alpha, beta0 = beta0, gamma = gamma, model = model, medium_range_model = medium_range_model, short_range = short_range, medium_range = medium_range, long_range = long_range, nsim = N, steps = steps)
 mh_number_points <- sapply(mh_configurations, function(a) length(a$x))
 mh_result <- t.test(mh_number_points, conf.interval = confidence)
@@ -81,7 +81,7 @@ cftp_number_points <- sapply(cftp_configurations, function(a) length(a$x))
 cftp_result <- t.test(cftp_number_points, conf.interval = confidence)
 
 N <- 1000
-steps <- 100000
+steps <- 10000
 mh_configurations <- rgibbs(window = window, saturation = saturation, alpha = alpha, beta0 = beta0, gamma = gamma, model = model, medium_range_model = medium_range_model, short_range = short_range, medium_range = medium_range, long_range = long_range, nsim = N, steps = steps)
 mh_number_points <- sapply(mh_configurations, function(a) length(a$x))
 mh_result <- t.test(mh_number_points, conf.interval = confidence)
@@ -107,7 +107,7 @@ cftp_number_points <- sapply(cftp_configurations, function(a) length(a$x))
 cftp_result <- t.test(cftp_number_points, conf.interval = confidence)
 
 N <- 1000
-steps <- 100000
+steps <- 10000
 mh_configurations <- rgibbs(window = window, saturation = saturation, alpha = alpha, beta0 = beta0, gamma = gamma, model = model, medium_range_model = medium_range_model, short_range = short_range, medium_range = medium_range, long_range = long_range, nsim = N, steps = steps)
 mh_number_points <- sapply(mh_configurations, function(a) length(a$x))
 mh_result <- t.test(mh_number_points, conf.interval = confidence)
@@ -133,7 +133,7 @@ cftp_number_points <- sapply(cftp_configurations, function(a) length(a$x))
 cftp_result <- t.test(cftp_number_points, conf.interval = confidence)
 
 N <- 1000
-steps <- 100000
+steps <- 10000
 mh_configurations <- rgibbs(window = window, saturation = saturation, alpha = alpha, beta0 = beta0, gamma = gamma, model = model, medium_range_model = medium_range_model, short_range = short_range, medium_range = medium_range, long_range = long_range, nsim = N, steps = steps)
 mh_number_points <- sapply(mh_configurations, function(a) length(a$x))
 mh_result <- t.test(mh_number_points, conf.interval = confidence)
