@@ -40,11 +40,11 @@ public:
   void extend_until_T0() {
     const auto initial_last_size(ppjsdm::size(last_configuration_));
     if(initial_last_size != 0) {
-      // TODO: Try to reserve for points_not_in_last.
       Configuration points_not_in_last{};
       while(true) {
         // Do the computations by blocks of size `initial_last_size`, reserving space each time
-        chain_.reserve(initial_last_size);
+        chain_.reserve(chain_.size() + initial_last_size);
+        ppjsdm::reserve_if_possible(points_not_in_last, points_not_in_last.size() + initial_last_size);
         using size_t = decltype(ppjsdm::size(last_configuration_));
         for(size_t i(0); i < initial_last_size; ++i) {
           const double sum_sizes(ppjsdm::size(points_not_in_last) + ppjsdm::size(last_configuration_));
@@ -68,7 +68,7 @@ public:
 
   template<typename IntegerType>
   void extend_backwards(IntegerType number_extensions) {
-    chain_.reserve(number_extensions);
+    chain_.reserve(chain_.size() + number_extensions);
     for(IntegerType i(0); i < number_extensions; ++i) {
       if(unif_rand() * (intensity_integral_ + static_cast<double>(ppjsdm::size(last_configuration_))) < intensity_integral_) {
         insert_uniform_point_in_configuration_and_update_chain(last_configuration_);
@@ -84,9 +84,11 @@ public:
   // point processes using dominated coupling from the past with application to a multiscale area-interaction point process''
   // by Ambler and Silverman for a similar (but less general) idea.
   auto compute_LU_and_check_coalescence() const {
-    auto L_complement(last_configuration_); // U starts with the end value of the chain.
-    // TODO: Try to reserve enough space in L (and L complement?).
+    Configuration L_complement(last_configuration_); // U starts with the end value of the chain.
     Configuration L{}; // L is an empty configuration.
+    // Reserve a bit extra space for each of the configurations
+    ppjsdm::reserve_if_possible(L, 2 * ppjsdm::size(last_configuration_));
+    ppjsdm::reserve_if_possible(L_complement, 2 * ppjsdm::size(last_configuration_));
     const auto chain_size(chain_.size());
     if(chain_size != 0) {
       for(auto n(static_cast<long long int>(chain_size) - 1); n >= 0; --n) {

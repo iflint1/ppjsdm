@@ -17,7 +17,7 @@
 #include "utility/lightweight_matrix.hpp"
 #include "utility/window.hpp"
 
-#include <algorithm> // std::remove_if
+#include <algorithm> // std::remove_if, std::max_element, std::fill
 #include <cmath> // std::log
 #include <iterator> // std::next
 #include <string> // std::string, std::to_string
@@ -33,50 +33,45 @@ inline void add_to_formula(std::string& formula, Rcpp::CharacterVector names) {
   }
 }
 
-template<bool Approximate, typename Configuration, typename Vector>
+template<bool Approximate, typename Configuration>
 Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configuration_list,
                                       const ppjsdm::Window& window,
                                       const ppjsdm::Im_list_wrapper& covariates,
                                       Rcpp::List traits,
                                       const ppjsdm::Saturated_model& dispersion_model,
                                       const ppjsdm::Saturated_model& medium_dispersion_model,
-                                      const Vector& max_points_by_type,
+                                      unsigned long long int max_points_in_any_type,
                                       R_xlen_t ndummy,
                                       bool estimate_alpha,
-                                      bool estimate_gamma) {
+                                      bool estimate_gamma,
+                                      int number_types) {
   using size_t = ppjsdm::size_t<Configuration>;
-  const size_t number_types(max_points_by_type.size());
 
   // Sample the dummy points D.
   // This choice of rho is the guideline from the Baddeley et al. paper, see p. 8 therein.
-  Vector rho_times_volume;
+  std::vector<double> rho_times_volume;
   size_t length_D(0);
   if(ndummy == 0) {
-    rho_times_volume = max_points_by_type;
-    for(auto& n: rho_times_volume) {
-      const auto mult_by_four(n * 4);
-      n = mult_by_four < 500 ? 500 : mult_by_four;
-      length_D += n;
+    rho_times_volume = std::vector<double>(number_types);
+    const auto four_times_max_points_in_any_type(4 * max_points_in_any_type);
+    if(four_times_max_points_in_any_type < 500) {
+      std::fill(rho_times_volume.begin(), rho_times_volume.end(), four_times_max_points_in_any_type);
+      length_D = number_types * four_times_max_points_in_any_type;
+    } else {
+      std::fill(rho_times_volume.begin(), rho_times_volume.end(), 500);
+      length_D = number_types * 500;
     }
   } else {
-    rho_times_volume = Vector(number_types);
+    rho_times_volume = std::vector<double>(number_types);
+    std::fill(rho_times_volume.begin(), rho_times_volume.end(), ndummy);
     length_D = number_types * ndummy;
-    for(auto& n: rho_times_volume) {
-      n = ndummy;
-    }
   }
   const auto D(ppjsdm::rbinomialpp_single<std::vector<ppjsdm::Marked_point>>(window, rho_times_volume, number_types, length_D));
-  // Vector rho(rho_times_volume);
-  // for(auto& n: rho) {
-  //   n /= window.volume();
-  // }
-  // const auto D(ppjsdm::rppp_single<std::vector<ppjsdm::Marked_point>>(window, rho, number_types));
-  // length_D = D.size();
 
   // Make shift vector
   Rcpp::NumericVector shift(Rcpp::no_init(number_types));
   const auto volume(window.volume());
-  for(size_t j(0); j < number_types; ++j) {
+  for(int j(0); j < number_types; ++j) {
     shift[j] = -std::log(static_cast<double>(rho_times_volume[j]) / volume);
   }
 
@@ -188,7 +183,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     y[i] = precomputed_results[i].y;
     mark[i] = precomputed_results[i].mark;
 
-    const size_t type_index(precomputed_results[i].type);
+    const int type_index(precomputed_results[i].type);
     type[i] = type_index;
 
     rho_offset[i] = -std::log(static_cast<double>(rho_times_volume[type_index]) / volume);
@@ -196,7 +191,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     // fill traits
     short_range_traits_input(i, 0) = precomputed_results[i].dispersion[type_index];
     medium_range_traits_input(i, 0) = precomputed_results[i].medium_dispersion[type_index];
-    for(size_t j(0); j < number_types; ++j) {
+    for(int j(0); j < number_types; ++j) {
       if(j != type_index) {
         short_range_joint_traits_input(i, 0) += precomputed_results[i].dispersion[j];
         medium_range_joint_traits_input(i, 0) += precomputed_results[i].medium_dispersion[j];
@@ -206,7 +201,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     for(size_t k(0); k < number_traits; ++k) {
       short_range_traits_input(i, k + 1) = Rcpp::as<Rcpp::NumericVector>(traits[k])[type_index] * precomputed_results[i].dispersion[type_index];
       medium_range_traits_input(i, k + 1) = Rcpp::as<Rcpp::NumericVector>(traits[k])[type_index] * precomputed_results[i].medium_dispersion[type_index];
-      for(size_t j(0); j < number_types; ++j) {
+      for(int j(0); j < number_types; ++j) {
         if(j != type_index) {
           const auto delta(std::abs(Rcpp::as<Rcpp::NumericVector>(traits[k])[j] - Rcpp::as<Rcpp::NumericVector>(traits[k])[type_index]));
           short_range_joint_traits_input(i, k + 1) += delta * precomputed_results[i].dispersion[j];
@@ -217,7 +212,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 
     // TODO: index or formula here and in other vectors?
     size_t index(0);
-    for(size_t j(0); j < number_types; ++j) {
+    for(int j(0); j < number_types; ++j) {
       if(j == type_index) {
         // fill log_lambda
         log_lambda(i, j) = 1;
@@ -228,13 +223,13 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
         }
 
         // fill alpha
-        for(size_t k(j); k < number_types; ++k) {
+        for(int k(j); k < number_types; ++k) {
           alpha_input(i, index) = precomputed_results[i].dispersion[k];
           gamma_input(i, index++) = precomputed_results[i].medium_dispersion[k];
         }
       } else {
         // fill alpha
-        for(size_t k(j); k < number_types; ++k) {
+        for(int k(j); k < number_types; ++k) {
           if(k == type_index) {
             alpha_input(i, index) = precomputed_results[i].dispersion[j];
             gamma_input(i, index) = precomputed_results[i].medium_dispersion[j];
@@ -266,8 +261,8 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   Rcpp::CharacterVector gamma_names(Rcpp::no_init(alpha_input.ncol()));
 
   size_t index(0);
-  for(size_t j(0); j < number_types; ++j) {
-    for(size_t k(j); k < number_types; ++k) {
+  for(int j(0); j < number_types; ++j) {
+    for(int k(j); k < number_types; ++k) {
       alpha_names[index] = std::string("alpha_") + std::to_string(j + 1) + std::string("_") + std::to_string(k + 1);
       gamma_names[index++] = std::string("gamma_") + std::to_string(j + 1) + std::string("_") + std::to_string(k + 1);
     }
@@ -289,14 +284,14 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   if(covariates_length > 0) {
     const auto covariates_names(covariates.names());
     for(size_t i(0); i < covariates_length; ++i) {
-      for(size_t j(0); j < number_types; ++j) {
+      for(int j(0); j < number_types; ++j) {
         covariates_input_names[i * number_types + j] = covariates_names[i] + std::string("_") + std::to_string(j + 1);
       }
     }
   }
 
   Rcpp::CharacterVector log_lambda_names(Rcpp::no_init(number_types));
-  for(size_t i(0); i < number_types; ++i) {
+  for(int i(0); i < number_types; ++i) {
     log_lambda_names[i] = std::string("log_lambda") + std::to_string(i + 1);
   }
   Rcpp::colnames(rho_offset_rcpp) = Rcpp::wrap("rho");
@@ -421,7 +416,8 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 
 // [[Rcpp::export]]
 Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
-                               SEXP window, Rcpp::List covariates,
+                               SEXP window,
+                               Rcpp::List covariates,
                                Rcpp::List traits,
                                Rcpp::CharacterVector model,
                                Rcpp::CharacterVector medium_range_model,
@@ -450,22 +446,24 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
   const auto cpp_window(ppjsdm::Window(window, mark_range));
   // The trick below allows us to find the number of different types in the configuration.
   // That number is then used to default construct `short_range`.
-  std::vector<size_t> max_points_by_type(ppjsdm::get_number_points(vector_configurations[0]));
+  const auto max_points_by_type(ppjsdm::get_number_points(vector_configurations[0]));
+  const auto number_types(max_points_by_type.size());
+  auto max_points_in_any_type(*std::max_element(max_points_by_type.begin(), max_points_by_type.end()));
+
   using size_t = typename decltype(vector_configurations)::size_type;
   for(size_t i(0); i < vector_configurations.size(); ++i) {
     const auto new_points_by_type(ppjsdm::get_number_points(vector_configurations[i]));
     for(size_t j(0); j < max_points_by_type.size(); ++j) {
-      if(max_points_by_type[j] < new_points_by_type[j]) {
-        max_points_by_type[j] = new_points_by_type[j];
+      if(max_points_in_any_type < new_points_by_type[j]) {
+        max_points_in_any_type = new_points_by_type[j];
       }
     }
   }
-  // TODO: Allow for cases in which all species are not present in all configurations, i.e. number_types = max_i(max_points_by_type[i].size())
   const auto dispersion(ppjsdm::Saturated_model(model, short_range, saturation));
   const auto medium_range_dispersion(ppjsdm::Saturated_model(medium_range_model, medium_range, long_range, saturation));
   if(approximate) {
-    return prepare_gibbsm_data_helper<true>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, dispersion, medium_range_dispersion, max_points_by_type, ndummy, estimate_alpha, estimate_gamma);
+    return prepare_gibbsm_data_helper<true>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, dispersion, medium_range_dispersion, max_points_in_any_type, ndummy, estimate_alpha, estimate_gamma, number_types);
   } else {
-    return prepare_gibbsm_data_helper<false>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, dispersion, medium_range_dispersion, max_points_by_type, ndummy, estimate_alpha, estimate_gamma);
+    return prepare_gibbsm_data_helper<false>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), traits, dispersion, medium_range_dispersion, max_points_in_any_type, ndummy, estimate_alpha, estimate_gamma, number_types);
   }
 }
