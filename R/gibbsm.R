@@ -31,6 +31,7 @@ gibbsm <- function(configuration_list,
                    use_glmnet = TRUE,
                    use_aic = TRUE,
                    ndummy = 0) {
+  estimate_radii <- is.vector(short_range, mode = "numeric") && length(short_range) == 2
   parameters <- model_parameters(window = window,
                                  covariates = covariates,
                                  saturation = saturation,
@@ -39,9 +40,11 @@ gibbsm <- function(configuration_list,
                                  short_range = short_range,
                                  medium_range = medium_range,
                                  long_range = long_range)
-  short_range <- parameters$short_range
-  medium_range <- parameters$medium_range
-  long_range <- parameters$long_range
+  if(!estimate_radii) {
+    short_range <- parameters$short_range
+    medium_range <- parameters$medium_range
+    long_range <- parameters$long_range
+  }
   window <- parameters$window
   covariates <- parameters$covariates
   saturation <- parameters$saturation
@@ -58,10 +61,9 @@ gibbsm <- function(configuration_list,
 
   number_configurations <- length(configuration_list)
   number_types <- length(levels(types(configuration_list[[1]])))
-  estimate_radii <- is.vector(short_range, mode = "numeric") && length(short_range) == 2
   if(estimate_radii) {
-    estimate_alpha <- !all(short_range[1] == short_range[2])
-    estimate_gamma <- !all(medium_range[1] == medium_range[2] & long_range[1] == long_range[2] & medium_range[1] == long_range[1])
+    estimate_alpha <- short_range[1] != short_range[2]
+    estimate_gamma <- long_range[1] != long_range[2]
 
     lower <- c(rep(short_range[1], number_types + 1), rep(medium_range[1], number_types + 1), rep(long_range[1], number_types + 1))
     upper <- c(rep(short_range[2], number_types + 1), rep(medium_range[2], number_types + 1), rep(long_range[2], number_types + 1))

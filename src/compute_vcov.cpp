@@ -159,6 +159,8 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
             medium_j = ppjsdm::compute_dispersion(medium_dispersion_model, point_j, number_types, configuration_without_ij);
           }
 
+          // TODO: Might want to write a function synchronized with prepare_gibbsm_data
+          // that constructs the two vectors below.
           std::vector<double> t_i(total_parameters);
           std::vector<double> t_j(total_parameters);
 
