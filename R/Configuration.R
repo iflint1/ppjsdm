@@ -83,30 +83,10 @@ print.Configuration <- function(x, ...) {
   cat(str)
 }
 
-#' Number of points in a configuration
-#'
-#' @param configuration Configuration.
-#' @param total If set to `FALSE`, returns a list containing the number of points of the different types;
-#' else returns the total number of points.
-#' @export
-get_number_points <- function(configuration, total = FALSE) {
-  types <- configuration$types
-  ltypes <- levels(types)
-  result <- lapply(ltypes, function(l) length(configuration$x[types == l]))
-  names(result) <- ltypes
-
-  if(total) {
-    Reduce("+", result)
-  } else {
-    result
-  }
-}
-
-
 #' @importFrom graphics legend par plot
 #' @method plot Configuration
 plot.Configuration <- function(x, window = NULL, ...) {
-  if(get_number_points(x, total = TRUE) > 0) {
+  if(length(x$x) > 0) {
     if(missing(window)) {
       x_range <- c(min(x_coordinates(x)), max(x_coordinates(x)))
       y_range <- c(min(y_coordinates(x)), max(y_coordinates(x)))
@@ -213,11 +193,15 @@ as.Configuration.ppp <- function(configuration) {
 
 #' @method as.Configuration vector
 as.Configuration.numeric <- function(configuration) {
-  x <- configuration
-  Configuration(x = x,
-                y = rep(1, length(x)),
-                types = factor(rep("default", length(x))),
-                marks = rep(1, length(x)))
+  if(is.vector(configuration)) {
+    x <- configuration
+    Configuration(x = x,
+                  y = rep(1, length(x)),
+                  types = factor(rep("default", length(x))),
+                  marks = rep(1, length(x)))
+  } else {
+    as.Configuration.default(configuration)
+  }
 }
 
 #' @method as.Configuration default

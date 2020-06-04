@@ -122,9 +122,11 @@ test_that("Configuration number of points", {
   types <- factor(c(rep("a", n1), rep("b", n2), rep("c", n3)))
   configuration <- Configuration(x = x_coordinates, y = y_coordinates, types = types)
 
-  expect_equal(get_number_points(configuration), list(a = n1, b = n2, c = n3))
-  expect_equal(get_number_points(configuration, total = FALSE), list(a = n1, b = n2, c = n3))
-  expect_equal(get_number_points(configuration, total = TRUE), n)
+  ltypes <- levels(types(configuration))
+  result <- sapply(ltypes, function(l) length(x_coordinates(configuration)[types(configuration) == l]))
+
+  expect_equal(result, c(a = n1, b = n2, c = n3))
+  expect_equal(length(configuration), n)
 })
 
 test_that("Configuration vectorised subscript operator", {
