@@ -75,22 +75,22 @@ plot_papangelou <- function(window,
   x_axis <- seq(from = x_range[1], to = x_range[2], length.out = grid_steps)
   y_axis <- seq(from = y_range[1], to = y_range[2], length.out = grid_steps)
   z <- outer(x_axis, y_axis, function(x, y) {
-    compute_papangelou(configuration,
-                       x,
-                       y,
-                       type,
-                       parameters$model,
-                       parameters$medium_range_model,
-                       parameters$alpha,
-                       parameters$beta0,
-                       parameters$beta,
-                       parameters$gamma,
-                       parameters$covariates,
-                       parameters$short_range,
-                       parameters$medium_range,
-                       parameters$long_range,
-                       parameters$saturation,
-                       mark)
+    compute_papangelou(configuration = configuration,
+                       x = x,
+                       y = y,
+                       type = type,
+                       mark = mark,
+                       model = parameters$model,
+                       medium_range_model = parameters$medium_range_model,
+                       alpha = parameters$alpha,
+                       beta0 = parameters$beta0,
+                       beta = parameters$beta,
+                       gamma = parameters$gamma,
+                       covariates = parameters$covariates,
+                       short_range = parameters$short_range,
+                       medium_range = parameters$medium_range,
+                       long_range = parameters$long_range,
+                       saturation = parameters$saturation)
   })
   plot(as.im(t(z), W = window))
   plot(as.ppp(configuration, window), add = TRUE)

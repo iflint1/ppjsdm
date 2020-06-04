@@ -6,9 +6,9 @@
 
 using namespace Rcpp;
 
-// compute_papangelou
-Rcpp::NumericVector compute_papangelou(SEXP configuration, Rcpp::NumericVector x, Rcpp::NumericVector y, R_xlen_t type, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::NumericMatrix alpha, Rcpp::NumericVector beta0, Rcpp::NumericMatrix beta, Rcpp::NumericMatrix gamma, Rcpp::List covariates, Rcpp::NumericMatrix short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, double mark);
-RcppExport SEXP _ppjsdm_compute_papangelou(SEXP configurationSEXP, SEXP xSEXP, SEXP ySEXP, SEXP typeSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP alphaSEXP, SEXP beta0SEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP covariatesSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP markSEXP) {
+// compute_papangelou_cpp
+Rcpp::NumericVector compute_papangelou_cpp(SEXP configuration, Rcpp::NumericVector x, Rcpp::NumericVector y, R_xlen_t type, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::NumericMatrix alpha, Rcpp::NumericVector beta0, Rcpp::NumericMatrix beta, Rcpp::NumericMatrix gamma, Rcpp::List covariates, Rcpp::NumericMatrix short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, double mark);
+RcppExport SEXP _ppjsdm_compute_papangelou_cpp(SEXP configurationSEXP, SEXP xSEXP, SEXP ySEXP, SEXP typeSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP alphaSEXP, SEXP beta0SEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP covariatesSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP markSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -28,7 +28,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type long_range(long_rangeSEXP);
     Rcpp::traits::input_parameter< R_xlen_t >::type saturation(saturationSEXP);
     Rcpp::traits::input_parameter< double >::type mark(markSEXP);
-    rcpp_result_gen = Rcpp::wrap(compute_papangelou(configuration, x, y, type, model, medium_range_model, alpha, beta0, beta, gamma, covariates, short_range, medium_range, long_range, saturation, mark));
+    rcpp_result_gen = Rcpp::wrap(compute_papangelou_cpp(configuration, x, y, type, model, medium_range_model, alpha, beta0, beta, gamma, covariates, short_range, medium_range, long_range, saturation, mark));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -193,7 +193,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_ppjsdm_compute_papangelou", (DL_FUNC) &_ppjsdm_compute_papangelou, 16},
+    {"_ppjsdm_compute_papangelou_cpp", (DL_FUNC) &_ppjsdm_compute_papangelou_cpp, 16},
     {"_ppjsdm_compute_vcov", (DL_FUNC) &_ppjsdm_compute_vcov, 18},
     {"_ppjsdm_has_duplicates", (DL_FUNC) &_ppjsdm_has_duplicates, 1},
     {"_ppjsdm_make_default_model_parameters", (DL_FUNC) &_ppjsdm_make_default_model_parameters, 9},

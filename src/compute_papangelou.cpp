@@ -8,29 +8,8 @@
 
 #include "saturated_model/exponential_family_model.hpp"
 
-//' Compute Papangelou conditional intensity of the model.
-//'
-//' @param configuration Configuration.
-//' @param x Coordinates along the x-axis of the points at which to evaluate the Papangelou conditional intensity.
-//' @param y Coordinates along the x-axis of the points at which to evaluate the Papangelou conditional intensity.
-//' @param type Type of the point (as an integer >= 1).
-//' @param model String representing the model to use. You can check the currently authorised models with a call to `show_models()`.
-//' @param medium_range_model String representing the medium range model to use. You can check the currently authorised models with a call to `show_medium_range_models()`.
-//' @param alpha Short range repulsion matrix.
-//' @param beta0 A vector representing the log-intensities of the point processes.
-//' @param beta Coefficients related to covariates.
-//' @param gamma Medium range repulsion matrix.
-//' @param covariates Covariates.
-//' @param short_range Short range interaction radii.
-//' @param medium_range Medium range interaction radii.
-//' @param long_range Long range interaction radii.
-//' @param saturation Saturation parameter.
-//' @param mark Mark of the point to add.
-//' @export
-//' @useDynLib ppjsdm
-//' @import Rcpp
 // [[Rcpp::export]]
-Rcpp::NumericVector compute_papangelou(SEXP configuration, Rcpp::NumericVector x, Rcpp::NumericVector y, R_xlen_t type, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::NumericMatrix alpha, Rcpp::NumericVector beta0, Rcpp::NumericMatrix beta, Rcpp::NumericMatrix gamma, Rcpp::List covariates, Rcpp::NumericMatrix short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, double mark = 1.0) {
+Rcpp::NumericVector compute_papangelou_cpp(SEXP configuration, Rcpp::NumericVector x, Rcpp::NumericVector y, R_xlen_t type, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::NumericMatrix alpha, Rcpp::NumericVector beta0, Rcpp::NumericMatrix beta, Rcpp::NumericMatrix gamma, Rcpp::List covariates, Rcpp::NumericMatrix short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, double mark) {
   const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
   const ppjsdm::Truncated_exponential_family_model<Rcpp::NumericVector> exponential_model(beta0, model, medium_range_model, alpha, beta, gamma, covariates, short_range, medium_range, long_range, saturation);
   const auto length_x(x.size());
