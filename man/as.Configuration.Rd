@@ -2,22 +2,13 @@
 % Please edit documentation in R/Configuration.R
 \name{as.Configuration}
 \alias{as.Configuration}
-\alias{as.Configuration.Configuration}
-\alias{as.Configuration.ppp}
-\alias{as.Configuration.default}
-\title{Convert a configuration to our configuration class.}
+\title{Convert to our configuration class.}
 \usage{
 as.Configuration(configuration)
-
-\method{as.Configuration}{Configuration}(configuration)
-
-\method{as.Configuration}{ppp}(configuration)
-
-\method{as.Configuration}{default}(configuration)
 }
 \arguments{
 \item{configuration}{Configuration.}
 }
 \description{
-Convert a configuration to our configuration class.
+Convert to our configuration class.
 }

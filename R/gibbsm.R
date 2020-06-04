@@ -84,7 +84,7 @@ gibbsm <- function(configuration_list,
       lo[upper] <- t(lo)[upper]
 
       # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
-      mark_range <- c(min(get_marks(configuration_list[[1]])), max(get_marks(configuration_list[[1]])))
+      mark_range <- c(min(marks(configuration_list[[1]])), max(marks(configuration_list[[1]])))
 
       gibbsm_data_list <- prepare_gibbsm_data(configuration_list,
                                               window,
@@ -153,7 +153,7 @@ gibbsm <- function(configuration_list,
 
     # Refit with best radii and non-approximation
     # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
-    mark_range <- c(min(get_marks(configuration_list[[1]])), max(get_marks(configuration_list[[1]])))
+    mark_range <- c(min(marks(configuration_list[[1]])), max(marks(configuration_list[[1]])))
     gibbsm_data_list <- prepare_gibbsm_data(configuration_list,
                                             window,
                                             covariates,
@@ -179,7 +179,7 @@ gibbsm <- function(configuration_list,
     estimate_gamma <- !all(medium_range == long_range)
 
     # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
-    mark_range <- c(min(get_marks(configuration_list[[1]])), max(get_marks(configuration_list[[1]])))
+    mark_range <- c(min(marks(configuration_list[[1]])), max(marks(configuration_list[[1]])))
     gibbsm_data_list <- prepare_gibbsm_data(configuration_list,
                                             window,
                                             covariates,

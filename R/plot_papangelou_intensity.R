@@ -19,6 +19,7 @@
 #' @param mark Mark of the point.
 #' @param steps Nunber of steps in the Metropolis-Hastings simulation algorithm.
 #' @importFrom spatstat as.im as.owin as.ppp
+#' @importFrom graphics plot
 #' @export
 plot_papangelou <- function(window,
                             type = 1,

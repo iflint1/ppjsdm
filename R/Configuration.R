@@ -77,11 +77,7 @@ format <- function(configuration) {
   str
 }
 
-#' Print a configuration class.
-#'
-#' @param x Configuration to print.
-#' @param ... Other arguments not yet used.
-#' @export
+#' @method print Configuration
 print.Configuration <- function(x, ...) {
   str <- format(x)
   cat(str)
@@ -107,13 +103,8 @@ get_number_points <- function(configuration, total = FALSE) {
 }
 
 
-#' Plot a configuration class.
-#'
-#' @param x Configuration to plot.
-#' @param window Window the configuration belongs to.
-#' @param ... Other arguments sent to `graphics::plot`.
-#' @importFrom graphics plot par legend
-#' @export
+#' @importFrom graphics legend par plot
+#' @method plot Configuration
 plot.Configuration <- function(x, window = NULL, ...) {
   if(get_number_points(x, total = TRUE) > 0) {
     if(missing(window)) {
@@ -175,7 +166,7 @@ types <- function(configuration) {
 #'
 #' @param configuration The configuration.
 #' @export
-get_marks <- function(configuration) {
+marks <- function(configuration) {
   configuration$marks
 }
 
@@ -191,7 +182,7 @@ as.ppp.Configuration <- function(X, W, ..., fatal = TRUE) {
   ppp(X$x, X$y, window = as.owin(W), marks = X$types)
 }
 
-#' Convert a configuration to our configuration class.
+#' Convert to our configuration class.
 #'
 #' @param configuration Configuration.
 #' @export
@@ -199,40 +190,42 @@ as.Configuration <- function(configuration) {
   UseMethod("as.Configuration", configuration)
 }
 
-#' @rdname as.Configuration
-#' @export
+#' @method as.Configuration Configuration
 as.Configuration.Configuration <- function(configuration) {
   configuration
 }
 
-#' @rdname as.Configuration
-#' @export
+#' @method as.Configuration ppp
 as.Configuration.ppp <- function(configuration) {
   marks <- configuration$marks
   if(is.null(marks)) {
-    structure(list(x = configuration$x,
-                   y = configuration$y,
-                   types = factor(rep("default", length(configuration$x))),
-                   marks = rep(1, length(configuration$x))),
-              class = "Configuration")
+    Configuration(x = configuration$x,
+                  y = configuration$y,
+                  types = factor(rep("default", length(configuration$x))),
+                  marks = rep(1, length(configuration$x)))
   } else {
-    structure(list(x = configuration$x,
-                   y = configuration$y,
-                   types = marks,
-                   marks = rep(1, length(configuration$x))),
-              class = "Configuration")
+    Configuration(x = configuration$x,
+                  y = configuration$y,
+                  types = marks,
+                  marks = rep(1, length(configuration$x)))
   }
-
 }
 
-#' @rdname as.Configuration
-#' @export
+#' @method as.Configuration vector
+as.Configuration.numeric <- function(configuration) {
+  x <- configuration
+  Configuration(x = x,
+                y = rep(1, length(x)),
+                types = factor(rep("default", length(x))),
+                marks = rep(1, length(x)))
+}
+
+#' @method as.Configuration default
 as.Configuration.default <- function(configuration) {
-  structure(list(x = configuration[, 1],
-                 y = configuration[, 2],
-                 types = factor(rep("default", length(configuration[, 1]))),
-                 marks = rep(1, length(configuration[, 1]))),
-            class = "Configuration")
+  Configuration(x = configuration[, 1],
+                y = configuration[, 2],
+                types = factor(rep("default", length(configuration[, 1]))),
+                marks = rep(1, length(configuration[, 1])))
 }
 
 
