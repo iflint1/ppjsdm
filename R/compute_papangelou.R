@@ -21,7 +21,7 @@
 compute_papangelou <- function(configuration,
                                x,
                                y,
-                               type,
+                               type = 1,
                                mark = 1.0,
                                model,
                                medium_range_model,

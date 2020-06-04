@@ -42,7 +42,7 @@ test_that("Correct Papangelou conditional intensity value", {
     beta <- matrix(4, 2, 1)
     covariate <- function(x, y) x + y
     x <- runif(2, 0, 1)
-    window <- owin(c(x[1], x[1]), c(x[2], x[2]))
+    window <- owin(c(0, 1), c(0, 1))
     # IMPORTANT NOTE: I'm assuming in places below that type = 1, so you can't change type below and expect everything to work.
     type <- 1
 
@@ -99,7 +99,7 @@ test_that("Correct Papangelou conditional intensity value", {
                                                      beta0 = beta0,
                                                      beta = beta,
                                                      gamma = gamma,
-                                                     covariates = list(cov = as.im(covariate, W = window)),
+                                                     covariates = list(cov = spatstat::as.im(covariate(x[1], x[2]), W = window)),
                                                      short_range = r_1,
                                                      medium_range = r_2,
                                                      long_range = r_3,
