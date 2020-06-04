@@ -27,8 +27,7 @@ remove(list = ls())
 set.seed(1)
 ```
 
-In this vignette, we give some details on the model we are using.
-We will spend the of this vignette illustrating the model with some examples.
+In this vignette, we illustrate the model with some examples.
 The package includes a function to compute the Papangelou conditional intensity above, which will make things easier!
 
 # No interaction: Poisson point process
@@ -44,7 +43,7 @@ beta <- matrix(0, nspecies, ncovariates)
 gamma <- matrix(0, nspecies, nspecies)
 covariates <- vector(mode = "list", length = ncovariates)
 model <- "Geyer"
-medium_range_model <- "square_exponential"
+medium_range_model <- "Geyer"
 short_range <- matrix(0.1, nspecies, nspecies)
 medium_range <- matrix(0.1, nspecies, nspecies)
 long_range <- matrix(0.2, nspecies, nspecies)
@@ -99,7 +98,7 @@ In other words, the associated point process is a Poisson point process of inten
 
 # Adding interactions
 
-We now add interactions between individuals, as controlled by the parameter `alpha`.
+We now add short-range interactions between individuals, as controlled by the parameter `alpha`.
 
 ```{r}
 alpha <- matrix(-0.1)
@@ -168,6 +167,25 @@ plot_papangelou(window = window,
 The Papangelou conditional intensity is now larger at locations closer to existing individuals, indicating that the point process is attractive.
 Thus, our model is either attractive or repulsive depending on the sign of `alpha`.
 
+The model also incorporates medium-ranges interaction via the parameter $\gamma$.
+```{r}
+alpha <- matrix(0.1)
+gamma <- matrix(-0.1)
+plot_papangelou(window = window,
+                type = 1,
+                model = model,
+                medium_range_model = medium_range_model,
+                alpha = alpha,
+                beta0 = beta0,
+                beta = beta,
+                gamma = gamma,
+                covariates = covariates,
+                short_range = short_range,
+                medium_range = medium_range,
+                long_range = long_range,
+                saturation = saturation)
+```
+
 <!-- # Changing features of the interaction -->
 
 <!-- Different features of the interaction can be customised. -->
@@ -175,6 +193,7 @@ Thus, our model is either attractive or repulsive depending on the sign of `alph
 
 <!-- ```{r} -->
 <!-- alpha <- matrix(-0.1) -->
+<!-- gamma <- matrix(0) -->
 <!-- short_range <- matrix(0.05, nspecies, nspecies) -->
 <!-- plot_papangelou(window = window, -->
 <!--                 type = 1, -->
@@ -289,7 +308,7 @@ Thus, our model is either attractive or repulsive depending on the sign of `alph
 
 <!-- # Multiple species setting -->
 
-<!-- The package also works with multiple species. -->
+<!-- The package is in fact meant to work in a multiple species setting, so let us give an example in that case. -->
 
 <!-- ```{r} -->
 <!-- nspecies <- 2 -->
