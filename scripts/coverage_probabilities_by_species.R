@@ -6,13 +6,13 @@ set.seed(1)
 window <- Rectangle_window(c(-1, 1), c(-1, 1))
 nreplications <- 100
 ntypes <- 2
-beta0 <- rep(2.5, ntypes)
+beta0 <- c(3.5, 3)
 steps <- 0
 estimate_gamma <- TRUE
-alpha <- cbind(c(-0.2, 0.1), c(0.1, -0.6))
+alpha <- cbind(c(-0.2, 0), c(0, -0.4))
 
-covariates <- list(temperature = function(x, y) x, elevation = function(x, y) y)
-beta <- cbind(rep(2, ntypes), rep(1, ntypes))
+covariates <- list(temperature = function(x, y) x)
+beta <- cbind(c(1.5, 2))
 ndummy <- 1000
 
 model <- "square_bump"
@@ -23,22 +23,24 @@ short_range <- matrix(0.05, ntypes, ntypes)
 medium_range <- matrix(0.05, ntypes, ntypes)
 if(estimate_gamma) {
   long_range <- matrix(0.1, ntypes, ntypes)
-  is_in <- matrix(NA, nrow = nreplications, ncol = ntypes + ntypes * (ntypes + 1) + length(covariates) * ntypes)
-  gamma <- cbind(c(-0.6, -0.3), c(-0.3, 0.))
+  is_in <- matrix(NA, nrow = nreplications, ncol = ntypes + 2 * ntypes + length(covariates) * ntypes)
+  gamma <- cbind(c(-0.6, 0), c(0, -0.1))
 } else {
   long_range <- matrix(0.05, ntypes, ntypes)
-  is_in <- matrix(NA, nrow = nreplications, ncol = ntypes + ntypes * (ntypes + 1) / 2 + length(covariates) * ntypes)
+  is_in <- matrix(NA, nrow = nreplications, ncol = ntypes + ntypes + length(covariates) * ntypes)
   gamma <- matrix(0., ntypes, ntypes)
 }
 estimates <- matrix(NA, nrow = nreplications, ncol = ncol(is_in))
-true <- c(beta0, alpha[1, 1], alpha[1, 2], alpha[2, 2])
+true <- c(beta0, alpha[1, 1], alpha[2, 2])
 if(estimate_gamma) {
-  true <- c(true, gamma[1, 1], gamma[1, 2], gamma[2, 2])
+  true <- c(true, gamma[1, 1], gamma[2, 2])
 }
 
 if(length(covariates) > 0) {
-  true <- c(true, beta[1, 1], beta[2, 1], beta[1, 2], beta[2, 2])
+  true <- c(true, beta[1, 1], beta[2, 1])
 }
+
+tm <- Sys.time()
 
 samples <- ppjsdm::rgibbs(window = window,
                           beta0 = beta0,
@@ -56,29 +58,57 @@ samples <- ppjsdm::rgibbs(window = window,
                           beta = beta,
                           steps = steps)
 
+Sys.time() - tm
+
+tm <- Sys.time()
 
 for(i in seq_len(nreplications)) {
-  fit <- gibbsm(samples[[i]],
-                window = window,
-                print = FALSE,
-                short_range = short_range,
-                medium_range = medium_range,
-                long_range = long_range,
-                use_glmnet = FALSE,
-                ndummy = ndummy,
-                model = model,
-                medium_range_model = medium_range_model,
-                covariates = covariates,
-                saturation = saturation)
+  fit1 <- gibbsm(samples[[i]][1],
+                 window = window,
+                 print = FALSE,
+                 short_range = short_range,
+                 medium_range = medium_range,
+                 long_range = long_range,
+                 use_glmnet = FALSE,
+                 ndummy = ndummy,
+                 model = model,
+                 medium_range_model = medium_range_model,
+                 covariates = covariates,
+                 saturation = saturation)
+  fit2 <- gibbsm(samples[[i]][2],
+                 window = window,
+                 print = FALSE,
+                 short_range = short_range,
+                 medium_range = medium_range,
+                 long_range = long_range,
+                 use_glmnet = FALSE,
+                 ndummy = ndummy,
+                 model = model,
+                 medium_range_model = medium_range_model,
+                 covariates = covariates,
+                 saturation = saturation)
 
-  s <- summary(fit)$coefficients
-  estimate <- s$coefficients
+  s1 <- summary(fit1)$coefficients
+  estimate1 <- s1$coefficients
 
-  lower <- s$CI95_lo
-  upper <- s$CI95_hi
+  s2 <- summary(fit2)$coefficients
+  estimate2 <- s2$coefficients
+
+  lower1 <- s1$CI95_lo
+  upper1 <- s1$CI95_hi
+
+  lower2 <- s2$CI95_lo
+  upper2 <- s2$CI95_hi
+
+  lower <- c(lower1[1], lower2[1], lower1[2], lower2[2], lower1[3], lower2[3], lower1[4], lower2[4])
+  upper <- c(upper1[1], upper2[1], upper1[2], upper2[2], upper1[3], upper2[3], upper1[4], upper2[4])
+  estimate <- c(estimate1[1], estimate2[1], estimate1[2], estimate2[2], estimate1[3], estimate2[3], estimate1[4], estimate2[4])
+
   is_in[i, ] <- true >= lower & true <= upper
   estimates[i, ] <- estimate
 }
+
+Sys.time() - tm
 
 coverage_probabilities <- colMeans(is_in, na.rm = TRUE)
 mean_estimates <- colMeans(estimates, na.rm = TRUE)
