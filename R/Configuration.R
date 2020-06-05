@@ -44,6 +44,7 @@ Configuration <- local({
       if(missing(marks)) {
         marks <- rep(1.0, n)
       } else if(length(marks) != n || !is.vector(marks) || !is.numeric(marks)) {
+        print(marks)
         stop("The marks argument should be a numeric vector with the same length as that of the other parameters.")
       }
       configuration <- structure(list(x = x, y = y, types = types, marks = marks), class = "Configuration")
@@ -117,6 +118,7 @@ as.Configuration.matrix <- function(configuration) {
 
 #' @method as.Configuration default
 as.Configuration.default <- function(configuration) {
+  configuration <- as.data.frame(configuration)
   x_indices <- which(names(configuration) == "x")
   y_indices <- which(names(configuration) == "y")
   if(length(x_indices) == 0) {
@@ -142,7 +144,7 @@ as.Configuration.default <- function(configuration) {
     types <- configuration[, types_indices]
   }
   if(length(marks_indices) == 0) {
-    marks <- factor(rep(1, length(x)))
+    marks <- rep(1, length(x))
   } else {
     marks <- configuration[, marks_indices]
   }
@@ -265,7 +267,13 @@ marks <- function(configuration) {
 #' @importFrom spatstat as.owin owin ppp
 #' @export
 as.ppp.Configuration <- function(X, W, ..., fatal = TRUE) {
-  ppp(X$x, X$y, window = as.owin(W), marks = X$types)
+  types <- X$types
+  # The lines below "unfactor" types
+  types <- as.character(types)
+  if(all(sapply(types, function(t) suppressWarnings(!is.na(as.numeric(t)))))) {
+    types <- as.numeric(types)
+  }
+  ppp(X$x, X$y, window = as.owin(W), marks = types)
 }
 
 #' Number of points in a configuration
