@@ -11,28 +11,40 @@ Configuration <- local({
     if(nargs() == 1 && !missing(x)) {
       configuration <- as.Configuration(x)
     } else {
+      if(!missing(x)) {
+        n <- length(x)
+      } else if(!missing(y)) {
+        n <- length(y)
+      } else if(!missing(types)) {
+        n <- length(types)
+      } else if(!missing(marks)) {
+        n <- length(marks)
+      }
+      if(missing(x)) {
+        x <- rep(1, n)
+      }
+      if(missing(y)) {
+        y <- rep(1, n)
+      }
       if(length(x) != length(y) || !is.vector(x) || !is.vector(y) || !is.numeric(x) || !is.numeric(y)) {
         stop("x and y should be numeric vectors with the same length.")
       }
       if(missing(types)) {
-        types <- factor(rep("default", length(x)))
+        types <- factor(rep("default", n))
       } else if(!is.factor(types)) {
-        if(length(types) == length(x)) {
+        if(length(types) == n) {
           types <- factor(types)
         } else {
-          types <- factor(rep(types, length(x)))
+          types <- factor(rep(types, n))
         }
-      }
-      if(length(types) != length(x)) {
-        stop("The types argument should be a factor with the same length as that of x.")
+      } else if(length(types) != n) {
+        stop("The types argument should be a factor with the same length as that of the other parameters.")
       }
 
       if(missing(marks)) {
-        marks <- rep(1.0, length(x))
-      } else {
-        if(length(marks) != length(x) || !is.vector(marks) || !is.numeric(marks)) {
-          stop("The marks argument should be a numeric vector with the same length as that of x.")
-        }
+        marks <- rep(1.0, n)
+      } else if(length(marks) != n || !is.vector(marks) || !is.numeric(marks)) {
+        stop("The marks argument should be a numeric vector with the same length as that of the other parameters.")
       }
       configuration <- structure(list(x = x, y = y, types = types, marks = marks), class = "Configuration")
     }
@@ -43,6 +55,102 @@ Configuration <- local({
   }
 })
 
+#' Convert to our configuration class.
+#'
+#' @param configuration Configuration.
+#' @export
+as.Configuration <- function(configuration) {
+  UseMethod("as.Configuration", configuration)
+}
+
+#' @method as.Configuration Configuration
+as.Configuration.Configuration <- function(configuration) {
+  configuration
+}
+
+#' @method as.Configuration ppp
+as.Configuration.ppp <- function(configuration) {
+  x <- configuration$x
+  y <- configuration$y
+  marks <- configuration$marks
+  if(is.null(marks)) {
+    types <- factor(rep("default", length(configuration$x)))
+  } else {
+    types <- marks
+  }
+  Configuration(x = x,
+                y = y,
+                types = types,
+                marks = rep(1.0, length(x)))
+}
+
+#' @method as.Configuration numeric
+as.Configuration.numeric <- function(configuration) {
+  if(is.vector(configuration)) {
+    x <- configuration
+    Configuration(x = x,
+                  y = rep(1, length(x)),
+                  types = factor(rep("default", length(x))),
+                  marks = rep(1, length(x)))
+  } else {
+    as.Configuration.default(configuration)
+  }
+}
+
+#' @method as.Configuration matrix
+as.Configuration.matrix <- function(configuration) {
+  if(ncol(configuration) < 2) {
+    stop("Matrix cannot be converted to a configuration.")
+  }
+  x <- configuration[, 1]
+  y <- configuration[, 2]
+  if(ncol(configuration) == 2) {
+    marks <- rep(1, length(x))
+  } else {
+    marks <- configuration[, 3]
+  }
+  Configuration(x = x,
+                y = y,
+                types = factor(rep("default", length(x))),
+                marks = marks)
+}
+
+#' @method as.Configuration default
+as.Configuration.default <- function(configuration) {
+  x_indices <- which(names(configuration) == "x")
+  y_indices <- which(names(configuration) == "y")
+  if(length(x_indices) == 0) {
+    if(length(y_indices) == 0) {
+      stop("Cannot convert to configuration.")
+    } else {
+      y <- configuration[, y_indices]
+      x <- rep(1, length(y))
+    }
+  } else {
+    x <- configuration[, x_indices]
+    if(length(y_indices) == 0) {
+      y <- rep(1, length(x))
+    } else {
+      y <- configuration[, y_indices]
+    }
+  }
+  types_indices <- which(names(configuration) == "types")
+  marks_indices <- which(names(configuration) == "marks")
+  if(length(types_indices) == 0) {
+    types <- factor(rep("default", length(x)))
+  } else {
+    types <- configuration[, types_indices]
+  }
+  if(length(marks_indices) == 0) {
+    marks <- factor(rep(1, length(x)))
+  } else {
+    marks <- configuration[, marks_indices]
+  }
+  Configuration(x = x,
+                y = y,
+                types = types,
+                marks = marks)
+}
 
 #' Subset of the configuration consisting only of points of the i-th type.
 #'
@@ -57,39 +165,37 @@ Configuration <- local({
 
 format <- function(configuration) {
   number_points <- length(configuration$x)
-  str <- paste0("An S3 object representing a configuration.\n\n")
-  str <- paste0(str, "Number of points: ")
-  str <- paste0(str, paste0(number_points, collapse = ", "))
-  str <- paste0(str, ".\n")
+  str <- paste0("An S3 object representing a configuration.\n\nNumber of points: ",
+                paste0(number_points, collapse = ", "),
+                ".\n")
   if(number_points > 0 && number_points < 50) {
-    str <- paste0(str, "\nPoints in the format (x-coordinate, y-coordinate, type): ")
-    str <- paste0(str, paste0("(", configuration$x, ", ", configuration$y, ", ", configuration$types, ")", collapse = ", "))
-    str <- paste0(str, ".\n\nCoordinate(s) along the x-axis: ")
-    str <- paste0(str, paste0(configuration$x, collapse = ", "))
-    str <- paste0(str, ".\n\nCoordinate(s) along the y-axis: ")
-    str <- paste0(str, paste0(configuration$y, collapse = ", "))
-    str <- paste0(str, ".\n\nType(s) of the point(s): ")
-    str <- paste0(str, paste0(configuration$types, collapse = ", "))
-    str <- paste0(str, ".\n\nMarks(s) of the point(s): ")
-    str <- paste0(str, paste0(configuration$marks, collapse = ", "))
-    str <- paste0(str, ".\n")
+    str <- paste0(str, "\nPoints in the format (x-coordinate, y-coordinate, type): ",
+                  paste0("(", configuration$x, ", ", configuration$y, ", ", configuration$types, ")", collapse = ", "),
+                  ".\n\nCoordinate(s) along the x-axis: ",
+                  paste0(configuration$x, collapse = ", "),
+                  ".\n\nCoordinate(s) along the y-axis: ",
+                  paste0(configuration$y, collapse = ", "),
+                  ".\n\nType(s) of the point(s): ",
+                  paste0(configuration$types, collapse = ", "),
+                  ".\n\nMarks(s) of the point(s): ",
+                  paste0(configuration$marks, collapse = ", "),
+                  ".\n")
   }
   str
 }
 
 #' @method print Configuration
 print.Configuration <- function(x, ...) {
-  str <- format(x)
-  cat(str)
+  cat(format(x))
 }
 
 #' @importFrom graphics legend par plot
 #' @method plot Configuration
-plot.Configuration <- function(x, window = NULL, ...) {
+plot.Configuration <- function(x, window, ...) {
   if(length(x$x) > 0) {
     if(missing(window)) {
-      x_range <- c(min(x_coordinates(x)), max(x_coordinates(x)))
-      y_range <- c(min(y_coordinates(x)), max(y_coordinates(x)))
+      x_range <- c(min(x$x), max(x$x))
+      y_range <- c(min(x$y), max(x$y))
     } else {
       x_range <- x_range(window)
       y_range <- y_range(window)
@@ -162,133 +268,10 @@ as.ppp.Configuration <- function(X, W, ..., fatal = TRUE) {
   ppp(X$x, X$y, window = as.owin(W), marks = X$types)
 }
 
-#' Convert to our configuration class.
-#'
-#' @param configuration Configuration.
-#' @export
-as.Configuration <- function(configuration) {
-  UseMethod("as.Configuration", configuration)
-}
-
-#' @method as.Configuration Configuration
-as.Configuration.Configuration <- function(configuration) {
-  configuration
-}
-
-#' @method as.Configuration ppp
-as.Configuration.ppp <- function(configuration) {
-  marks <- configuration$marks
-  if(is.null(marks)) {
-    Configuration(x = configuration$x,
-                  y = configuration$y,
-                  types = factor(rep("default", length(configuration$x))),
-                  marks = rep(1, length(configuration$x)))
-  } else {
-    Configuration(x = configuration$x,
-                  y = configuration$y,
-                  types = marks,
-                  marks = rep(1, length(configuration$x)))
-  }
-}
-
-#' @method as.Configuration vector
-as.Configuration.numeric <- function(configuration) {
-  if(is.vector(configuration)) {
-    x <- configuration
-    Configuration(x = x,
-                  y = rep(1, length(x)),
-                  types = factor(rep("default", length(x))),
-                  marks = rep(1, length(x)))
-  } else {
-    as.Configuration.default(configuration)
-  }
-}
-
-#' @method as.Configuration default
-as.Configuration.default <- function(configuration) {
-  Configuration(x = configuration[, 1],
-                y = configuration[, 2],
-                types = factor(rep("default", length(configuration[, 1]))),
-                marks = rep(1, length(configuration[, 1])))
-}
-
-
-#' Add a point to a configuration.
-#'
-#' @param configuration Configuration.
-#' @param x Point.
-#' @param type Point type.
-#' @param mark Point mark
-#' @export
-add_to_configuration <- function(configuration, x, type = "default", mark = 1) {
-  if(!is.vector(x) | !is.numeric(x) | length(x) != 2) {
-    stop("Wrong format for x.")
-  }
-  configuration$x <- c(configuration$x, x[1])
-  configuration$y <- c(configuration$y, x[2])
-  configuration$types <- unlist(list(configuration$types, factor(type)))
-  configuration$marks <- mark
-  configuration
-}
-
-#' Remove a point from a configuration by index.
-#'
-#' @param configuration Configuration.
-#' @param index Index.
-#' @export
-remove_from_configuration_by_index <- function(configuration, index) {
-  configuration$x <- configuration$x[-index]
-  configuration$y <- configuration$y[-index]
-  configuration$types <- droplevels(configuration$types[-index])
-  configuration$marks <- configuration$marks[-index]
-  configuration
-}
-
-
-#' Remove a point from a configuration (if it is in the configuration).
-#'
-#' @param configuration Configuration.
-#' @param x Point.
-#' @param type Point type.
-#' @param mark Point mark.
-#' @export
-remove_from_configuration <- function(configuration, x, type = "default", mark = 1) {
-  index <- match(x[1], configuration$x)
-  if(!is.na(index) & configuration$y[index] == x[2] & configuration$types[index] == type & configuration$marks[index] == mark) {
-    remove_from_configuration_by_index(configuration, index)
-  } else {
-    configuration
-  }
-}
-
 #' Number of points in a configuration
 #'
 #' @param x Configuration.
 #' @export
 length.Configuration <- function(x) {
   length(x$x)
-}
-
-#' Check whether a configuration is empty.
-#'
-#' @param configuration Configuration.
-#' @export
-is_empty <- function(configuration) {
-  length(configuration) == 0
-}
-
-#' Remove random point from the configuration.
-#'
-#' @param configuration Configuration.
-#' @export
-remove_random_point <- function(configuration) {
-  index <- sample(length(configuration$x), 1)
-  location <- c(configuration$x[index], configuration@y[index])
-  type <- configuration$types[index]
-  mark <- configuration$marks[index]
-  configuration$x <- configuration$x[-index]
-  configuration$y <- configuration$y[-index]
-  configuration$types <- droplevels(configuration$types[-index])
-  configuration$marks <- droplevels(configuration$marks[-index])
-  list(configuration = configuration, location = location, type = type, mark = mark)
 }
