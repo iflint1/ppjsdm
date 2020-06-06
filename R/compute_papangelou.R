@@ -45,7 +45,7 @@ compute_papangelou <- function(configuration,
                                  saturation = saturation,
                                  model = model,
                                  medium_range_model = medium_range_model)
-  compute_papangelou_cpp(configuration = configuration,
+  compute_papangelou_cpp(configuration = as.Configuration(configuration),
                          x = x,
                          y = y,
                          type = type,

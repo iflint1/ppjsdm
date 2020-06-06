@@ -56,6 +56,9 @@ gibbsm <- function(configuration_list,
     configuration_list <- list(configuration_list)
   }
 
+  # Try to force conversion to Configuration class.
+  lapply(configuration_list, function(configuration) as.Configuration(configuration))
+
   # Make sure we're given a list of configurations.
   stopifnot(inherits(configuration_list[[1]], "Configuration"))
 
