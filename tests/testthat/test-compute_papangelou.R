@@ -3,6 +3,40 @@ library(spatstat)
 
 context("compute_papangelou")
 
+test_that("Default values", {
+  set.seed(1)
+  x <- stats::runif(n = 1)
+  y <- stats::runif(n = 1)
+  type <- sample(x = 1:2, size = 1)
+  mark <- stats::runif(n = 1)
+  xs <- stats::runif(n = 2)
+  ys <- stats::runif(n = 2)
+  marks <- stats::runif(n = 2)
+  configuration <- ppjsdm::Configuration(x = xs, y = ys, types = c("a", "b"), marks = marks)
+  papangelou <- ppjsdm::compute_papangelou(configuration = configuration,
+                                           x = x,
+                                           y = y,
+                                           type = type,
+                                           mark = mark)
+  papangelou_explicit <- ppjsdm::compute_papangelou(configuration = configuration,
+                                                    x = x,
+                                                    y = y,
+                                                    type = type,
+                                                    mark = mark,
+                                                    model = "square_bump",
+                                                    medium_range_model = "square_exponential",
+                                                    alpha = matrix(0, ncol = 2, nrow = 2),
+                                                    beta0 = c(0, 0),
+                                                    beta = matrix(0, ncol = 2, nrow = 0),
+                                                    gamma = matrix(0, ncol = 2, nrow = 2),
+                                                    covariates = list(),
+                                                    short_range = matrix(0, ncol = 2, nrow = 2),
+                                                    medium_range = matrix(0, ncol = 2, nrow = 2),
+                                                    long_range = matrix(0, ncol = 2, nrow = 2),
+                                                    saturation = 2)
+  expect_equal(papangelou, papangelou_explicit)
+})
+
 test_that("Correct Papangelou conditional intensity value", {
   set.seed(42)
   Ntests <- 100
@@ -26,9 +60,9 @@ test_that("Correct Papangelou conditional intensity value", {
       medium_range_model <- "square_exponential"
     }
 
-    configuration <- Configuration(x = runif(20, 0, 1), y = runif(20, 0, 1), types = c(rep("a", 9), rep("b", 11)))
-    configuration_a <- Configuration(x = x_coordinates(configuration)[types(configuration) == "a"], y = y_coordinates(configuration)[types(configuration) == "a"], types = types(configuration)[types(configuration) == "a"])
-    configuration_b <- Configuration(x = x_coordinates(configuration)[types(configuration) == "b"], y = y_coordinates(configuration)[types(configuration) == "b"], types = types(configuration)[types(configuration) == "b"])
+    configuration <- ppjsdm::Configuration(x = runif(20, 0, 1), y = runif(20, 0, 1), types = c(rep("a", 9), rep("b", 11)))
+    configuration_a <- ppjsdm::Configuration(x = x_coordinates(configuration)[types(configuration) == "a"], y = y_coordinates(configuration)[types(configuration) == "a"], types = types(configuration)[types(configuration) == "a"])
+    configuration_b <- ppjsdm::Configuration(x = x_coordinates(configuration)[types(configuration) == "b"], y = y_coordinates(configuration)[types(configuration) == "b"], types = types(configuration)[types(configuration) == "b"])
     beta0 <- c(log(1), log(2))
     alpha <- cbind(c(0.5, 1), c(1, -0.5))
     gamma <- cbind(c(2, 0), c(0, -2))
@@ -57,15 +91,15 @@ test_that("Correct Papangelou conditional intensity value", {
     }
 
     u_term1 <- u_term_fun(x, configuration_a, type, 1) + sum(sapply(seq_len(length(configuration_a$x)), function(i) {
-      configuration_minus <- Configuration(x = configuration_a$x[-i], y = configuration_a$y[-i], types = configuration_a$types[-i])
-      configuration_minus_plus_x <- Configuration(x = c(configuration_a$x[-i], x[1]), y = c(configuration_a$y[-i], x[2]), types = configuration_a$types)
+      configuration_minus <- ppjsdm::Configuration(x = configuration_a$x[-i], y = configuration_a$y[-i], types = configuration_a$types[-i])
+      configuration_minus_plus_x <- ppjsdm::Configuration(x = c(configuration_a$x[-i], x[1]), y = c(configuration_a$y[-i], x[2]), types = configuration_a$types)
       p <- c(configuration_a$x[i], configuration_a$y[i])
       z <- u_term_fun(p, configuration_minus_plus_x, 1, type) - u_term_fun(p, configuration_minus, 1, type)
       z
     }))
     u_term2 <- u_term_fun(x, configuration_b, type, 2) + sum(sapply(seq_len(length(configuration_b$x)), function(i) {
       configuration_minus <- configuration_a
-      configuration_minus_plus_x <- Configuration(x = c(configuration_a$x, x[1]), y = c(configuration_a$y, x[2]), types = factor(c(configuration_a$types, 1), labels = "a"))
+      configuration_minus_plus_x <- ppjsdm::Configuration(x = c(configuration_a$x, x[1]), y = c(configuration_a$y, x[2]), types = factor(c(configuration_a$types, 1), labels = "a"))
       p <- c(configuration_b$x[i], configuration_b$y[i])
       z <- u_term_fun(p, configuration_minus_plus_x, 2, type) - u_term_fun(p, configuration_minus, 2, type)
       z
@@ -73,15 +107,15 @@ test_that("Correct Papangelou conditional intensity value", {
     u_term <- c(u_term1, u_term2)
 
     v_term1 <- v_term_fun(x, configuration_a, type, 1) + sum(sapply(seq_len(length(configuration_a$x)), function(i) {
-      configuration_minus <- Configuration(x = configuration_a$x[-i], y = configuration_a$y[-i], types = configuration_a$types[-i])
-      configuration_minus_plus_x <- Configuration(x = c(configuration_a$x[-i], x[1]), y = c(configuration_a$y[-i], x[2]), types = configuration_a$types)
+      configuration_minus <- ppjsdm::Configuration(x = configuration_a$x[-i], y = configuration_a$y[-i], types = configuration_a$types[-i])
+      configuration_minus_plus_x <- ppjsdm::Configuration(x = c(configuration_a$x[-i], x[1]), y = c(configuration_a$y[-i], x[2]), types = configuration_a$types)
       p <- c(configuration_a$x[i], configuration_a$y[i])
       z <- v_term_fun(p, configuration_minus_plus_x, 1, type) - v_term_fun(p, configuration_minus, 1, type)
       z
     }))
     v_term2 <- v_term_fun(x, configuration_b, type, 2) + sum(sapply(seq_len(length(configuration_b$x)), function(i) {
       configuration_minus <- configuration_a
-      configuration_minus_plus_x <- Configuration(x = c(configuration_a$x, x[1]), y = c(configuration_a$y, x[2]), types = factor(c(configuration_a$types, 1), labels = "a"))
+      configuration_minus_plus_x <- ppjsdm::Configuration(x = c(configuration_a$x, x[1]), y = c(configuration_a$y, x[2]), types = factor(c(configuration_a$types, 1), labels = "a"))
       p <- c(configuration_b$x[i], configuration_b$y[i])
       z <- v_term_fun(p, configuration_minus_plus_x, 2, type) - v_term_fun(p, configuration_minus, 2, type)
       z
