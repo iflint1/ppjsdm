@@ -169,10 +169,10 @@ test_that("Convert to spatstat::ppp", {
   y_coordinates <- stats::runif(n = 3)
   types <- c("a", "b", "a")
   marks <- stats::runif(n = 3)
-  expect_equal(ppjsdm::as.ppp.Configuration(ppjsdm::Configuration(x = x_coordinates, y = y_coordinates, types = types, marks = marks), W = Rectangle_window(c(0, 2), c(0, 4))),
+  expect_equal(as.ppp(ppjsdm::Configuration(x = x_coordinates, y = y_coordinates, types = types, marks = marks), W = Rectangle_window(c(0, 2), c(0, 4))),
                spatstat::ppp(x = x_coordinates, y = y_coordinates, window = owin(c(0, 2), c(0, 4)), marks = types))
   types <- c(1, 2, 1)
-  expect_equal(ppjsdm::as.ppp.Configuration(ppjsdm::Configuration(x = x_coordinates, y = y_coordinates, types = types, marks = marks), W = Rectangle_window(c(0, 2), c(0, 4))),
+  expect_equal(as.ppp(ppjsdm::Configuration(x = x_coordinates, y = y_coordinates, types = types, marks = marks), W = Rectangle_window(c(0, 2), c(0, 4))),
                spatstat::ppp(x = x_coordinates, y = y_coordinates, window = owin(c(0, 2), c(0, 4)), marks = types))
 
 })
