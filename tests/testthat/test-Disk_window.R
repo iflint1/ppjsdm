@@ -8,53 +8,23 @@ test_that("Disk_window is an S4 class", {
   expect_is(window, "Disk_window")
 })
 
-test_that("Disk_window accessors", {
-  centre <- c(-1, 2)
-  radius <- 0.5
-  window <- Disk_window(centre, radius)
-
-  expect_true(is.vector(centre(window)))
-  expect_true(all.equal(centre(window), centre))
-
-  expect_true(is.numeric(radius(window)))
-  expect_true(all.equal(radius(window), radius))
-})
-
 
 test_that("Disk_window default constructor", {
   default_centre <- c(0, 0)
   default_radius <- 1
   default_window <- Disk_window()
+  window <- Disk_window(centre = default_centre, radius = default_radius)
 
-  expect_identical(centre(default_window), default_centre)
-  expect_identical(radius(default_window), default_radius)
-})
-
-test_that("Disk_window specified arguments constructor", {
-  centre <- c(-1, 2)
-  radius <- 0.5
-  window_specified_arguments <- Disk_window(radius = radius, centre = centre)
-
-  expect_identical(centre(window_specified_arguments), centre)
-  expect_identical(radius(window_specified_arguments), radius)
-})
-
-test_that("Disk_window unspecified arguments constructors", {
-  centre <- c(-1, 2)
-  radius <- 1.5
-  window_unspecified_arguments <- Disk_window(centre, radius)
-
-  expect_identical(centre(window_unspecified_arguments), centre)
-  expect_identical(radius(window_unspecified_arguments), radius)
+  expect_identical(default_window, window)
 })
 
 test_that("Disk_window one argument constructor", {
   default_radius <- 1
   centre <- c(-1, 2)
   window_one_argument <- Disk_window(centre)
+  window <- Disk_window(centre = centre, radius = default_radius)
 
-  expect_identical(centre(window_one_argument), centre)
-  expect_identical(radius(window_one_argument), default_radius)
+  expect_identical(window_one_argument, window)
 })
 
 test_that("Disk_window copy constructor", {
@@ -63,8 +33,7 @@ test_that("Disk_window copy constructor", {
   window_specified_arguments <- Disk_window(centre = centre, radius = radius)
   copied_window <- Disk_window(window_specified_arguments)
 
-  expect_identical(centre(window_specified_arguments), centre(copied_window))
-  expect_identical(radius(window_specified_arguments), radius(copied_window))
+  expect_identical(window_specified_arguments, copied_window)
 })
 
 test_that("Disk_window unsupported constructors", {

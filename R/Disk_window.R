@@ -22,20 +22,18 @@ Disk_window <- local({
   }
 })
 
-#' Access centre of a disk window
-#'
-#' @param window The window
-#' @export
-centre <- function(window) {
-  window$centre
+#' @method x_range Disk_window
+x_range.Disk_window <- function(window) {
+  r <- window$radius
+  x <- window$centre[1]
+  c(x - r, x + r)
 }
 
-#' Access radius of a disk window
-#'
-#' @param window The window
-#' @export
-radius <- function(window) {
-  window$radius
+#' @method y_range Disk_window
+y_range.Disk_window <- function(window) {
+  r <- window$radius
+  y <- window$centre[2]
+  c(y - r, y + r)
 }
 
 #' Return the area of a disk window.

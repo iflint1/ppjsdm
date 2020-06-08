@@ -5,7 +5,7 @@ library(spatstat)
 N <- 10000
 confidence <- 0.95
 window <- Rectangle_window(c(0, 2), c(-1, 1))
-spatstat_window <- owin(window$x_range, window$y_range)
+spatstat_window <- as.owin(window)
 
 beta0 <- log(30)
 radius <- 0.1

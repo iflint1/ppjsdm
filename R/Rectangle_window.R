@@ -23,19 +23,13 @@ Rectangle_window <- local({
   }
 })
 
-#' Access range along the x-axis of a rectangle window
-#'
-#' @param window The window.
-#' @export
-x_range <- function(window) {
+#' @method x_range Rectangle_window
+x_range.Rectangle_window <- function(window) {
   window$x_range
 }
 
-#' Access range along the y-axis of a rectangle window
-#'
-#' @param window The window.
-#' @export
-y_range <- function(window) {
+#' @method y_range Rectangle_window
+y_range.Rectangle_window <- function(window) {
   window$y_range
 }
 
