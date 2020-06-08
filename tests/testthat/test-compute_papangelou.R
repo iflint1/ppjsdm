@@ -7,22 +7,18 @@ test_that("Default values", {
   set.seed(1)
   x <- stats::runif(n = 1)
   y <- stats::runif(n = 1)
-  type <- sample(x = 1:2, size = 1)
-  mark <- stats::runif(n = 1)
   xs <- stats::runif(n = 2)
   ys <- stats::runif(n = 2)
   marks <- stats::runif(n = 2)
   configuration <- ppjsdm::Configuration(x = xs, y = ys, types = c("a", "b"), marks = marks)
   papangelou <- ppjsdm::compute_papangelou(configuration = configuration,
                                            x = x,
-                                           y = y,
-                                           type = type,
-                                           mark = mark)
+                                           y = y)
   papangelou_explicit <- ppjsdm::compute_papangelou(configuration = configuration,
                                                     x = x,
                                                     y = y,
-                                                    type = type,
-                                                    mark = mark,
+                                                    type = 1,
+                                                    mark = 1.0,
                                                     model = "square_bump",
                                                     medium_range_model = "square_exponential",
                                                     alpha = matrix(0, ncol = 2, nrow = 2),
