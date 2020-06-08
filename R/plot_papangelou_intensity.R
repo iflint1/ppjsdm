@@ -19,10 +19,11 @@
 #' @param mark Mark of the point.
 #' @param steps Nunber of steps in the Metropolis-Hastings simulation algorithm.
 #' @importFrom spatstat as.im as.owin as.ppp
+#' @importFrom stats na.omit
 #' @importFrom graphics plot
 #' @export
 plot_papangelou <- function(window,
-                            type = 1,
+                            type,
                             configuration,
                             model,
                             medium_range_model,
@@ -37,7 +38,7 @@ plot_papangelou <- function(window,
                             types,
                             saturation,
                             grid_steps = 1000,
-                            mark = 1.0,
+                            mark,
                             steps = 0) {
 
   parameters <- model_parameters(window = window,
@@ -75,23 +76,32 @@ plot_papangelou <- function(window,
   y_range <- window$yrange
   x_axis <- seq(from = x_range[1], to = x_range[2], length.out = grid_steps)
   y_axis <- seq(from = y_range[1], to = y_range[2], length.out = grid_steps)
+
+  # Arguments we want to forward
+  fwd_args <- c("type", "mark")
+  # Obtain the list of arguments provided
+  other_args <- as.list(match.call())
+  # Remove first list element, it's the function call
+  other_args[[1]] <- NULL
+  # Remove the arguments that are not listed in fwd_args
+  other_args <- other_args[na.omit(match(fwd_args, names(other_args)))]
+
   z <- outer(x_axis, y_axis, function(x, y) {
-    compute_papangelou_cpp(configuration = as.Configuration(configuration),
-                           x = x,
-                           y = y,
-                           type = type,
-                           model = parameters$model,
-                           medium_range_model = parameters$medium_range_model,
-                           alpha = parameters$alpha,
-                           beta0 = parameters$beta0,
-                           beta = parameters$beta,
-                           gamma = parameters$gamma,
-                           covariates = parameters$covariates,
-                           short_range = parameters$short_range,
-                           medium_range = parameters$medium_range,
-                           long_range = parameters$long_range,
-                           saturation = parameters$saturation,
-                           mark = mark)
+    args <- c(other_args, list(x = x,
+                               y = y,
+                               configuration = as.Configuration(configuration),
+                               model = parameters$model,
+                               medium_range_model = parameters$medium_range_model,
+                               alpha = parameters$alpha,
+                               beta0 = parameters$beta0,
+                               beta = parameters$beta,
+                               gamma = parameters$gamma,
+                               covariates = parameters$covariates,
+                               short_range = parameters$short_range,
+                               medium_range = parameters$medium_range,
+                               long_range = parameters$long_range,
+                               saturation = parameters$saturation))
+    do.call(compute_papangelou_cpp, args, envir = parent.frame())
   })
   plot(as.im(t(z), W = window))
   plot(as.ppp(configuration, window), add = TRUE)

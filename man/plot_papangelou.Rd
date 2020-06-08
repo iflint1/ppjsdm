@@ -6,7 +6,7 @@
 \usage{
 plot_papangelou(
   window,
-  type = 1,
+  type,
   configuration,
   model,
   medium_range_model,
@@ -21,7 +21,7 @@ plot_papangelou(
   types,
   saturation,
   grid_steps = 1000,
-  mark = 1,
+  mark,
   steps = 0
 )
 }
