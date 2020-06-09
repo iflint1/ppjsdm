@@ -196,36 +196,37 @@ print.Configuration <- function(x, ...) {
 #' @method plot Configuration
 #' @export
 plot.Configuration <- function(x, window, ...) {
-  if(length(x$x) > 0) {
-    if(missing(window)) {
-      x_range <- c(min(x$x), max(x$x))
-      y_range <- c(min(x$y), max(x$y))
-    } else {
-      x_range <- x_range(window)
-      y_range <- y_range(window)
+    if(length(x$x) > 0) {
+      if(missing(window)) {
+        x_range <- c(min(x$x), max(x$x))
+        y_range <- c(min(x$y), max(x$y))
+      } else {
+        x_range <- x_range(window)
+        y_range <- y_range(window)
+      }
+      args <- list(col = droplevels(x$types),
+                   xlab = "x",
+                   ylab = "y",
+                   main = "Points in the configuration")
+      input_nargs <- list(...)
+      args[names(input_nargs)] <- input_nargs
+      do.call(plot, c(list(x$x,
+                           x$y,
+                           xlim = x_range,
+                           ylim = y_range), args))
+
+      par(mar = c(5, 4, 4, 20) + 0.1)
+
+      legend("topleft",
+             xpd = TRUE,
+             inset = c(1.03, 0),
+             legend = levels(droplevels(x$types)),
+             col = args$col,
+             pch = 1,
+             pt.cex = 1,
+             cex = 0.8,
+             title = "Types of the points")
     }
-    plot(x$x,
-         x$y,
-         xlim = x_range,
-         ylim = y_range,
-         col = droplevels(x$types),
-         xlab = "x",
-         ylab = "y",
-         main = "Points in the configuration",
-         ... )
-
-    par(mar = c(5, 4, 4, 20) + 0.1)
-
-    legend("topleft",
-           xpd = TRUE,
-           inset = c(1.03, 0),
-           legend = levels(droplevels(x$types)),
-           col = 1:length(levels(x$types)),
-           pch = 1,
-           pt.cex = 1,
-           cex = 0.8,
-           title = "Types of the points")
-  }
 }
 
 #' Access x-coordinates of a configuration
