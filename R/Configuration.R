@@ -187,12 +187,14 @@ format <- function(configuration) {
 }
 
 #' @method print Configuration
+#' @export
 print.Configuration <- function(x, ...) {
   cat(format(x))
 }
 
 #' @importFrom graphics legend par plot
 #' @method plot Configuration
+#' @export
 plot.Configuration <- function(x, window, ...) {
   if(length(x$x) > 0) {
     if(missing(window)) {
