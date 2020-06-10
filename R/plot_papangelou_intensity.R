@@ -103,6 +103,6 @@ plot_papangelou <- function(window,
                                saturation = parameters$saturation))
     do.call(compute_papangelou_cpp, args, envir = parent.frame())
   })
-  plot(as.im(t(z), W = window))
+  plot(as.im(t(z), W = window), main = "Papangelou conditional intensity")
   plot(as.ppp(configuration, window), add = TRUE)
 }
