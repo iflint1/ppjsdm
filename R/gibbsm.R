@@ -136,7 +136,11 @@ gibbsm <- function(configuration_list,
                    use_glmnet = TRUE,
                    use_aic = TRUE,
                    ndummy = 0) {
-  estimate_radii <- is.vector(short_range, mode = "numeric") && length(short_range) == 2
+  if(!missing(short_range)) {
+    estimate_radii <- is.vector(short_range, mode = "numeric") && length(short_range) == 2
+  } else {
+    estimate_radii <- FALSE
+  }
   parameters <- model_parameters(window = window,
                                  covariates = covariates,
                                  saturation = saturation,
