@@ -102,6 +102,18 @@ test_that("Configuration constructor from data frame or list", {
   expect_identical(ppjsdm::types(configuration), factor(c(6, 7)))
 })
 
+test_that("Configuration constructor from spatstat::ppp", {
+  x <- stats::runif(n = 2)
+  y <- stats::runif(n = 2)
+  types <- factor(c("a", "b"))
+  configuration_spatstat <- ppjsdm::as.Configuration(spatstat::ppp(x = x,
+                                                                   y = y,
+                                                                   marks = types,
+                                                                   W = spatstat::owin(c(0, 1), c(0, 3))))
+  configuration <- ppjsdm::Configuration(x = x, y = y, types = types)
+  expect_identical(configuration, configuration_spatstat)
+})
+
 test_that("Configuration unsupported constructors", {
   expect_error(ppjsdm::Configuration())
   expect_error(ppjsdm::Configuration(c(0), c(1, 2)))
