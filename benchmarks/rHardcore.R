@@ -1,6 +1,7 @@
 library(microbenchmark)
 library(ppjsdm)
 library(spatstat)
+remove(list = ls())
 
 window <-Rectangle_window()
 window_spatstat <- owin()

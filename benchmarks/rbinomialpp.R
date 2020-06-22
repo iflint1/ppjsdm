@@ -1,5 +1,6 @@
 library(microbenchmark)
 library(ppjsdm)
+remove(list = ls())
 
 window <- Rectangle_window()
 
