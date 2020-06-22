@@ -70,6 +70,7 @@ as.Configuration.Configuration <- function(configuration) {
 }
 
 #' @method as.Configuration ppp
+#' @export
 as.Configuration.ppp <- function(configuration) {
   x <- configuration$x
   y <- configuration$y
