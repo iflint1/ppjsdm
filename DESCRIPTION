@@ -22,7 +22,10 @@ RoxygenNote: 7.1.0
 Encoding: UTF-8
 LazyData: true
 Suggests: 
-    testthat (>= 2.1.0),
     knitr,
-    rmarkdown
-VignetteBuilder: knitr
+    rmarkdown,
+    R.rsp,
+    testthat (>= 2.1.0)
+VignetteBuilder: 
+    knitr,
+    R.rsp
