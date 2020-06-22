@@ -2,7 +2,7 @@
 #'
 #' @param x_range Range along the x-axis.
 #' @param y_range Range along the y-axis.
-#' @importFrom methods is new
+#' @importFrom methods is
 #' @export
 Rectangle_window <- local({
   function(x_range = c(0, 1), y_range = c(0, 1)) {
