@@ -10,6 +10,8 @@ The accompanying package `ppjsdm_on_packages` demonstrates the package on a few 
 
 **Note**: The `ppjsdm` package is still in active development, so please do not expect any kind of stability of the user interface.
 
+**Note**: The technical details of the point process model will be presented in a forthcoming paper, which will be linked to here.
+
 <!-- badges: start -->
   [![R build status](https://github.com/iflint1/ppjsdm/workflows/R-CMD-check/badge.svg)](https://github.com/iflint1/ppjsdm/actions)
 <!-- badges: end -->
