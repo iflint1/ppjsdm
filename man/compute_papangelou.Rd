@@ -28,7 +28,7 @@ compute_papangelou(
 
 \item{x}{Coordinates along the x-axis of the points at which to evaluate the Papangelou conditional intensity.}
 
-\item{y}{Coordinates along the x-axis of the points at which to evaluate the Papangelou conditional intensity.}
+\item{y}{Coordinates along the y-axis of the points at which to evaluate the Papangelou conditional intensity.}
 
 \item{type}{Type of the point (as an integer >= 1).}
 

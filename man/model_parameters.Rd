@@ -35,11 +35,11 @@ Default is a vector of same size as types, filled with ones.}
 \item{beta}{Fitted coefficients related to covariates. Default is square matrix of zeroes of the same
 number of rows/columns as the covariates.}
 
-\item{short_range}{Symmetric matrix of short range interaction radii. Filled with 0.1 times the window radius by default.}
+\item{short_range}{Symmetric matrix of short range interaction radii. Filled with 0.1 by default.}
 
-\item{medium_range}{Symmetric matrix of medium range interaction radii. Filled with 0.1 times the window radius by default.}
+\item{medium_range}{Symmetric matrix of medium range interaction radii. Filled with 0 by default.}
 
-\item{long_range}{Symmetric matrix of long range interaction radii. Filled with 0.2 times the window radius by default.}
+\item{long_range}{Symmetric matrix of long range interaction radii. Filled with 0 by default.}
 
 \item{saturation}{Saturation parameter of the point process. Default is 2.}
 

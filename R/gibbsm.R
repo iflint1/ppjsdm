@@ -110,9 +110,9 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
 #' @param covariates Environmental covariates driving the intensity.
 #' @param model String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_short_range_models()`.
 #' @param medium_range_model String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_medium_range_models()`.
-#' @param short_range Short range interaction radius.
-#' @param medium_range Medium range interaction radius.
-#' @param long_range Long range interaction radius.
+#' @param short_range Short range interaction radius. Filled with 0.1 by default.
+#' @param medium_range Medium range interaction radius. Filled with 0 by default.
+#' @param long_range Long range interaction radius. Filled with 0 by default.
 #' @param saturation Saturation parameter of the point process.
 #' @param print Print the fitted coefficients?
 #' @param use_glmnet Use `glmnet` instead of `glm`?

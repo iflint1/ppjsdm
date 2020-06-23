@@ -31,11 +31,11 @@ gibbsm(
 
 \item{medium_range_model}{String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_medium_range_models()`.}
 
-\item{short_range}{Short range interaction radius.}
+\item{short_range}{Short range interaction radius. Filled with 0.1 by default.}
 
-\item{medium_range}{Medium range interaction radius.}
+\item{medium_range}{Medium range interaction radius. Filled with 0 by default.}
 
-\item{long_range}{Long range interaction radius.}
+\item{long_range}{Long range interaction radius. Filled with 0 by default.}
 
 \item{saturation}{Saturation parameter of the point process.}
 

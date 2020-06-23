@@ -55,9 +55,9 @@ model_parameters_defaults <- function(window,
 #' @param covariates Covariates, with an empty list as a default.
 #' @param beta Fitted coefficients related to covariates. Default is square matrix of zeroes of the same
 #' number of rows/columns as the covariates.
-#' @param short_range Symmetric matrix of short range interaction radii. Filled with 0.1 times the window radius by default.
-#' @param medium_range Symmetric matrix of medium range interaction radii. Filled with 0.1 times the window radius by default.
-#' @param long_range Symmetric matrix of long range interaction radii. Filled with 0.2 times the window radius by default.
+#' @param short_range Symmetric matrix of short range interaction radii. Filled with 0.1 by default.
+#' @param medium_range Symmetric matrix of medium range interaction radii. Filled with 0 by default.
+#' @param long_range Symmetric matrix of long range interaction radii. Filled with 0 by default.
 #' @param saturation Saturation parameter of the point process. Default is 2.
 #' @param types Types of the points. Default is a vector (type1, type2, ...) of same size as n.
 #' @param model String representing the model to use You can check the currently authorised models with a call to `show_short_range_models()`.

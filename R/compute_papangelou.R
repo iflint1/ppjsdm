@@ -3,7 +3,7 @@
 #'
 #' @param configuration Configuration.
 #' @param x Coordinates along the x-axis of the points at which to evaluate the Papangelou conditional intensity.
-#' @param y Coordinates along the x-axis of the points at which to evaluate the Papangelou conditional intensity.
+#' @param y Coordinates along the y-axis of the points at which to evaluate the Papangelou conditional intensity.
 #' @param type Type of the point (as an integer >= 1).
 #' @param model String representing the model to use. You can check the currently authorised models with a call to `show_models()`.
 #' @param medium_range_model String representing the medium range model to use. You can check the currently authorised models with a call to `show_medium_range_models()`.
