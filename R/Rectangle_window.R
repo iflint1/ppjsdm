@@ -24,11 +24,13 @@ Rectangle_window <- local({
 })
 
 #' @method x_range Rectangle_window
+#' @export
 x_range.Rectangle_window <- function(window) {
   window$x_range
 }
 
 #' @method y_range Rectangle_window
+#' @export
 y_range.Rectangle_window <- function(window) {
   window$y_range
 }
