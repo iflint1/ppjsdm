@@ -1,5 +1,8 @@
 fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate_gamma) {
   regressors <- gibbsm_data$regressors
+  if(any(is.na(regressors))) {
+    warning(paste0("Some NA values detected in regression matrix; indices: "), which(is.na(regressors), arr.ind = TRUE), " and colnames: ", colnames(regressors))
+  }
 
   if(use_glmnet) {
     nregressors <- ncol(regressors)
