@@ -180,23 +180,34 @@ gibbsm <- function(configuration_list,
     estimate_alpha <- short_range[1] != short_range[2]
     estimate_gamma <- long_range[1] != long_range[2]
 
-    lower <- c(rep(short_range[1], number_types + 1), rep(medium_range[1], number_types + 1), rep(long_range[1], number_types + 1))
-    upper <- c(rep(short_range[2], number_types + 1), rep(medium_range[2], number_types + 1), rep(long_range[2], number_types + 1))
+    lower <- c(rep(short_range[1], number_types * (number_types + 1) / 2), rep(medium_range[1], number_types * (number_types + 1) / 2), rep(long_range[1], number_types * (number_types + 1) / 2))
+    upper <- c(rep(short_range[2], number_types * (number_types + 1) / 2), rep(medium_range[2], number_types * (number_types + 1) / 2), rep(long_range[2], number_types * (number_types + 1) / 2))
     initial <- (lower + upper) / 2
     get_fit <- function(v) {
-      sh <- diag(v[1:number_types], number_types)
-      lower <- lower.tri(sh, diag = FALSE)
-      upper <- upper.tri(sh, diag = FALSE)
-      sh[lower] <- v[number_types + 1]
-      sh[upper] <- t(sh)[upper]
+      sh <- matrix(NA, number_types, number_types)
+      index <- 1
+      for(i in seq_len(number_types)) {
+        for(j in i:number_types) {
+          sh[i, j] <- sh[j, i] <- v[index]
+          index <- index + 1
+        }
+      }
 
-      me <- sh + diag(v[(2 + number_types):(1 + 2 * number_types)], number_types)
-      me[lower] <- sh[lower] + v[2 * (1 + number_types)]
-      me[upper] <- t(me)[upper]
+      me <- matrix(NA, number_types, number_types)
+      for(i in seq_len(number_types)) {
+        for(j in i:number_types) {
+          me[i, j] <- me[j, i] <- sh[i, j] + v[index]
+          index <- index + 1
+        }
+      }
 
-      lo <- me + diag(v[(3 + 2 * number_types):(2 + 3 * number_types)], number_types)
-      lo[lower] <- me[lower] + v[3 * (1 + number_types)]
-      lo[upper] <- t(lo)[upper]
+      lo <- matrix(NA, number_types, number_types)
+      for(i in seq_len(number_types)) {
+        for(j in i:number_types) {
+          lo[i, j] <- lo[j, i] <- me[i, j] + v[index]
+          index <- index + 1
+        }
+      }
 
       # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
       mark_range <- c(min(marks(configuration_list[[1]])), max(marks(configuration_list[[1]])))
