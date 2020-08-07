@@ -77,18 +77,18 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
     if(length(beta_vector) != 0) {
       beta[i, ] <- beta_vector[endsWith(names(beta_vector), paste0("_", i))]
     }
-    if(estimate_alpha) {
+    if(estimate_alpha[i, i]) {
       alpha[i, i] <- coef[match(paste0("alpha_", i, "_", i), names(coef))]
     }
-    if(estimate_gamma) {
+    if(estimate_gamma[i, i]) {
       gamma[i, i] <- coef[match(paste0("gamma_", i, "_", i), names(coef))]
     }
     if(i < number_types) {
       for(j in (i + 1):number_types) {
-        if(estimate_alpha) {
+        if(estimate_alpha[i, j]) {
           alpha[i, j] <- alpha[j, i] <- coef[match(paste0("alpha_", i, "_", j), names(coef))]
         }
-        if(estimate_gamma) {
+        if(estimate_gamma[i, j]) {
           gamma[i, j] <- gamma[j, i] <- coef[match(paste0("gamma_", i, "_", j), names(coef))]
         }
       }
@@ -177,8 +177,8 @@ gibbsm <- function(configuration_list,
   number_configurations <- length(configuration_list)
   number_types <- length(levels(types(configuration_list[[1]])))
   if(estimate_radii) {
-    estimate_alpha <- short_range[1] != short_range[2]
-    estimate_gamma <- long_range[1] != long_range[2]
+    estimate_alpha <- matrix(short_range[1] != short_range[2], nrow = number_types, ncol = number_types)
+    estimate_gamma <- matrix(long_range[1] != long_range[2], nrow = number_types, ncol = number_types)
 
     lower <- c(rep(short_range[1], number_types * (number_types + 1) / 2), rep(medium_range[1], number_types * (number_types + 1) / 2), rep(long_range[1], number_types * (number_types + 1) / 2))
     upper <- c(rep(short_range[2], number_types * (number_types + 1) / 2), rep(medium_range[2], number_types * (number_types + 1) / 2), rep(long_range[2], number_types * (number_types + 1) / 2))
@@ -295,14 +295,18 @@ gibbsm <- function(configuration_list,
                                             estimate_alpha = estimate_alpha,
                                             estimate_gamma = estimate_gamma)
 
-    fitted <- fit_gibbs(gibbsm_data_list, use_glmnet = use_glmnet, use_aic = use_aic, estimate_alpha = estimate_alpha, estimate_gamma = estimate_gamma)
+    fitted <- fit_gibbs(gibbsm_data_list,
+                        use_glmnet = use_glmnet,
+                        use_aic = use_aic,
+                        estimate_alpha = estimate_alpha,
+                        estimate_gamma = estimate_gamma)
   } else {
     short_range <- as.matrix(short_range)
     medium_range <- as.matrix(medium_range)
     long_range <- as.matrix(long_range)
 
-    estimate_alpha <- !all(short_range == 0)
-    estimate_gamma <- !all(medium_range == long_range)
+    estimate_alpha <- short_range != 0
+    estimate_gamma <- medium_range != long_range
 
     # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
     mark_range <- c(min(marks(configuration_list[[1]])), max(marks(configuration_list[[1]])))
@@ -321,7 +325,11 @@ gibbsm <- function(configuration_list,
                                             estimate_alpha = estimate_alpha,
                                             estimate_gamma = estimate_gamma)
 
-    fitted <- fit_gibbs(gibbsm_data_list, use_glmnet = use_glmnet, use_aic = use_aic, estimate_alpha = estimate_alpha, estimate_gamma = estimate_gamma)
+    fitted <- fit_gibbs(gibbsm_data_list,
+                        use_glmnet = use_glmnet,
+                        use_aic = use_aic,
+                        estimate_alpha = estimate_alpha,
+                        estimate_gamma = estimate_gamma)
   }
   fits <-  fitted$fit
   fits_coefficients <- fitted$coefficients

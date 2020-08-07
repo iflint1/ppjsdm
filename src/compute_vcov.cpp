@@ -36,8 +36,8 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
                                          Rcpp::NumericVector coefficients_vector,
                                          Rcpp::NumericMatrix regressors,
                                          Rcpp::List data_list,
-                                         bool estimate_alpha,
-                                         bool estimate_gamma) {
+                                         Rcpp::LogicalMatrix estimate_alpha,
+                                         Rcpp::LogicalMatrix estimate_gamma) {
   using size_t = ppjsdm::size_t<Configuration>;
 
   const auto number_parameters_struct(ppjsdm::get_number_parameters(number_types, covariates.size(), estimate_alpha, estimate_gamma));
@@ -129,6 +129,20 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
     }
   }
 
+  // Do you need to compute some of the alphas/gammas?
+  bool compute_some_alphas(false);
+  bool compute_some_gammas(false);
+  for(int i(0); i < number_types; ++i) {
+    for(int j(i); j < number_types; ++j) {
+      if(estimate_alpha(i, j)) {
+        compute_some_alphas = true;
+      }
+      if(estimate_gamma(i, j)) {
+        compute_some_gammas = true;
+      }
+    }
+  }
+
   // Finally, add A2 and A3.
   for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
     if(response[i] == 1) {
@@ -150,11 +164,19 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
 
           using dispersion_t = decltype(ppjsdm::compute_dispersion(dispersion_model, point_i, number_types, configuration_without_ij));
           dispersion_t short_i, short_j, medium_i, medium_j;
-          if(estimate_alpha) {
+          // if(estimate_alpha(ppjsdm::get_type(point_i), ppjsdm::get_type(point_j))) {
+          //   short_i = ppjsdm::compute_dispersion(dispersion_model, point_i, number_types, configuration_without_ij);
+          //   short_j = ppjsdm::compute_dispersion(dispersion_model, point_j, number_types, configuration_without_ij);
+          // }
+          // if(estimate_gamma(ppjsdm::get_type(point_i), ppjsdm::get_type(point_j))) {
+          //   medium_i = ppjsdm::compute_dispersion(medium_dispersion_model, point_i, number_types, configuration_without_ij);
+          //   medium_j = ppjsdm::compute_dispersion(medium_dispersion_model, point_j, number_types, configuration_without_ij);
+          // }
+          if(compute_some_alphas) {
             short_i = ppjsdm::compute_dispersion(dispersion_model, point_i, number_types, configuration_without_ij);
             short_j = ppjsdm::compute_dispersion(dispersion_model, point_j, number_types, configuration_without_ij);
           }
-          if(estimate_gamma) {
+          if(compute_some_gammas) {
             medium_i = ppjsdm::compute_dispersion(medium_dispersion_model, point_i, number_types, configuration_without_ij);
             medium_j = ppjsdm::compute_dispersion(medium_dispersion_model, point_j, number_types, configuration_without_ij);
           }
@@ -175,26 +197,34 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
 
               size_t filling(current_index);
               for(int k2(k1); k2 < number_types; ++k2) {
-                if(estimate_alpha) {
+                if(estimate_alpha(k1, k2)) {
                   t_i[number_types + filling] = short_i[k2];
+                  ++filling;
                 }
-                if(estimate_gamma) {
-                  t_i[index_start_gamma + filling] = medium_i[k2];
+              }
+              for(int k2(k1); k2 < number_types; ++k2) {
+                if(estimate_gamma(k1, k2)) {
+                  t_i[number_types + filling] = medium_i[k2];
+                  ++filling;
                 }
-                ++filling;
               }
             } else {
               size_t filling(current_index);
               for(int k2(k1); k2 < number_types; ++k2) {
-                if(k2 == ppjsdm::get_type(point_i)) {
-                  if(estimate_alpha) {
+                if(estimate_alpha(k1, k2)) {
+                  if(k2 == ppjsdm::get_type(point_i)) {
                     t_i[number_types + filling] = short_i[k1];
                   }
-                  if(estimate_gamma) {
-                    t_i[index_start_gamma + filling] = medium_i[k1];
-                  }
+                  ++filling;
                 }
-                ++filling;
+              }
+              for(int k2(k1); k2 < number_types; ++k2) {
+                if(estimate_gamma(k1, k2)) {
+                  if(k2 == ppjsdm::get_type(point_i)) {
+                    t_i[number_types + filling] = medium_i[k1];
+                  }
+                  ++filling;
+                }
               }
             }
 
@@ -206,25 +236,33 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
               }
 
               for(int k2(k1); k2 < number_types; ++k2) {
-                if(estimate_alpha) {
+                if(estimate_alpha(k1, k2)) {
                   t_j[number_types + current_index] = short_j[k2];
+                  ++current_index;
                 }
-                if(estimate_gamma) {
-                  t_j[index_start_gamma + current_index] = medium_j[k2];
+              }
+              for(int k2(k1); k2 < number_types; ++k2) {
+                if(estimate_gamma(k1, k2)) {
+                  t_j[number_types + current_index] = medium_j[k2];
+                  ++current_index;
                 }
-                ++current_index;
               }
             } else {
               for(int k2(k1); k2 < number_types; ++k2) {
-                if(k2 == ppjsdm::get_type(point_j)) {
-                  if(estimate_alpha) {
+                if(estimate_alpha(k1, k2)) {
+                  if(k2 == ppjsdm::get_type(point_j)) {
                     t_j[number_types + current_index] = short_j[k1];
                   }
-                  if(estimate_gamma) {
+                  ++current_index;
+                }
+              }
+              for(int k2(k1); k2 < number_types; ++k2) {
+                if(estimate_gamma(k1, k2)) {
+                  if(k2 == ppjsdm::get_type(point_j)) {
                     t_j[index_start_gamma + current_index] = medium_j[k1];
                   }
+                  ++current_index;
                 }
-                ++current_index;
               }
             }
           }
@@ -271,8 +309,8 @@ Rcpp::NumericMatrix compute_vcov(SEXP configuration,
                                  Rcpp::NumericVector coefficients_vector,
                                  Rcpp::NumericMatrix regressors,
                                  Rcpp::List data_list,
-                                 bool estimate_alpha,
-                                 bool estimate_gamma) {
+                                 Rcpp::LogicalMatrix estimate_alpha,
+                                 Rcpp::LogicalMatrix estimate_gamma) {
   // Construct std::vector of configurations.
   const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::wrap(configuration));
   const auto length_configuration(ppjsdm::size(wrapped_configuration));

@@ -42,8 +42,8 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
                                       const ppjsdm::Saturated_model& medium_dispersion_model,
                                       unsigned long long int max_points_in_any_type,
                                       R_xlen_t ndummy,
-                                      bool estimate_alpha,
-                                      bool estimate_gamma,
+                                      Rcpp::LogicalMatrix estimate_alpha,
+                                      Rcpp::LogicalMatrix estimate_gamma,
                                       int number_types) {
   using size_t = ppjsdm::size_t<Configuration>;
 
@@ -154,8 +154,10 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 
   //const size_t number_traits(traits.size());
   const auto total_points(precomputed_results.size());
-  const auto number_parameters_struct(ppjsdm::get_number_parameters(number_types, covariates.size(), estimate_alpha, estimate_gamma));
-  const auto index_start_gamma(number_parameters_struct.index_start_gamma);
+  const auto number_parameters_struct(ppjsdm::get_number_parameters(number_types,
+                                                                    covariates.size(),
+                                                                    estimate_alpha,
+                                                                    estimate_gamma));
   const auto index_start_covariates(number_parameters_struct.index_start_covariates);
   const auto total_parameters(number_parameters_struct.total_parameters);
 
@@ -225,26 +227,34 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 
         // fill alpha & gamma
         for(int k(j); k < number_types; ++k) {
-          if(estimate_alpha) {
+          if(estimate_alpha(j, k)) {
             regressors(i, number_types + index) = precomputed_results[i].dispersion[k];
+            ++index;
           }
-          if(estimate_gamma) {
-            regressors(i, index_start_gamma + index) = precomputed_results[i].medium_dispersion[k];
+        }
+        for(int k(j); k < number_types; ++k) {
+          if(estimate_gamma(j, k)) {
+            regressors(i, number_types + index) = precomputed_results[i].medium_dispersion[k];
+            ++index;
           }
-          ++index;
         }
       } else {
         // fill alpha & gamma
         for(int k(j); k < number_types; ++k) {
-          if(k == type_index) {
-            if(estimate_alpha) {
+          if(estimate_alpha(j, k)) {
+            if(k == type_index) {
               regressors(i, number_types + index) = precomputed_results[i].dispersion[j];
             }
-            if(estimate_gamma) {
-              regressors(i, index_start_gamma + index) = precomputed_results[i].medium_dispersion[j];
-            }
+            ++index;
           }
-          ++index;
+        }
+        for(int k(j); k < number_types; ++k) {
+          if(estimate_gamma(j, k)) {
+            if(k == type_index) {
+              regressors(i, number_types + index) = precomputed_results[i].medium_dispersion[j];
+            }
+            ++index;
+          }
         }
       }
     }
@@ -278,8 +288,8 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
                                Rcpp::NumericVector mark_range,
                                bool approximate,
                                R_xlen_t ndummy,
-                               bool estimate_alpha,
-                               bool estimate_gamma) {
+                               Rcpp::LogicalMatrix estimate_alpha,
+                               Rcpp::LogicalMatrix estimate_gamma) {
   // Construct std::vector of configurations.
   std::vector<std::vector<ppjsdm::Marked_point>> vector_configurations(configuration_list.size());
   for(R_xlen_t i(0); i < configuration_list.size(); ++i) {
