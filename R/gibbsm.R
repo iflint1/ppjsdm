@@ -305,6 +305,16 @@ gibbsm <- function(configuration_list,
     medium_range <- as.matrix(medium_range)
     long_range <- as.matrix(long_range)
 
+    if(nrow(short_range) != number_types |
+       ncol(short_range) != number_types |
+       nrow(medium_range) != number_types |
+       ncol(medium_range) != number_types |
+       nrow(long_range) != number_types |
+       ncol(long_range) != number_types) {
+      stop("The interaction radii have not been provided in the right format.")
+    }
+
+
     estimate_alpha <- short_range != 0
     estimate_gamma <- medium_range != long_range
 
