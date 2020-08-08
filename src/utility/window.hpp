@@ -82,6 +82,8 @@ private:
         return std::make_shared<Concrete_window<detail::Disk_window>>(window, marked_range);
       } else if(window_class == "im") {
         return std::make_shared<Concrete_window<detail::Im_window>>(window, marked_range);
+      } else if(window_class == "Rectangle_window_union") {
+        return std::make_shared<Concrete_window<detail::Rectangle_window_union>>(window, marked_range);
       } else {
         Rcpp::stop("Unrecognised window type.");
       }

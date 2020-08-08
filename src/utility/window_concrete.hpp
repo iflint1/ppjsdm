@@ -8,6 +8,7 @@
 #include "../utility/im_wrapper.hpp"
 
 #include <cmath> // std::sqrt
+#include <vector> // std::vector
 
 namespace ppjsdm {
 namespace detail {
@@ -23,11 +24,11 @@ public:
   delta_mark_(marked_range[1] - marked_range[0]) {
     const auto x(Rcpp::as<Rcpp::NumericVector>(window["x_range"]));
     x_0_ = x[0];
-    delta_x_ = x[1] - x_0_;
+    delta_x_ = x[1] - x[0];
 
     const auto y(Rcpp::as<Rcpp::NumericVector>(window["y_range"]));
     y_0_ = y[0];
-    delta_y_ = y[1] - y_0_;
+    delta_y_ = y[1] - y[0];
   }
 
   Marked_point sample(int type = 0) const {
@@ -138,6 +139,78 @@ public:
 private:
   Im_wrapper im_;
   double volume_;
+  double mark_lower_;
+  double delta_mark_;
+};
+
+class Rectangle_window_union {
+public:
+  explicit Rectangle_window_union(Rcpp::NumericVector marked_range): x_0_{0}, delta_x_{1}, y_0_{0}, delta_y_{1},
+  mark_lower_(marked_range[0]),
+  delta_mark_(marked_range[1] - marked_range[0]) {}
+
+  explicit Rectangle_window_union(Rcpp::List window, Rcpp::NumericVector marked_range):
+    mark_lower_(marked_range[0]),
+    delta_mark_(marked_range[1] - marked_range[0]) {
+    const auto x_ranges(Rcpp::as<Rcpp::List>(window["x_ranges"]));
+    const auto n(x_ranges.size());
+    x_0_ = std::vector<double>(n);
+    delta_x_ = std::vector<double>(n);
+    y_0_ = std::vector<double>(n);
+    delta_y_ = std::vector<double>(n);
+    const auto y_ranges(Rcpp::as<Rcpp::List>(window["y_ranges"]));
+    using size_t = decltype(x_ranges.size());
+    for(size_t i(0); i < n; ++i) {
+      const auto x(Rcpp::as<Rcpp::NumericVector>(x_ranges[i]));
+      x_0_[i] = x[0];
+      delta_x_[i] = x[1] - x[0];
+
+      const auto y(Rcpp::as<Rcpp::NumericVector>(y_ranges[i]));
+      y_0_[i] = y[0];
+      delta_y_[i] = y[1] - y[0];
+    }
+  }
+
+  double volume() const {
+    double volume(0);
+    using size_t = decltype(delta_x_.size());
+    for(size_t i(0); i < delta_x_.size(); ++i) {
+      volume += delta_x_[i] * delta_y_[i];
+    }
+    return volume;
+  }
+
+  Marked_point sample(int type = 0) const {
+    double total_weight(volume());
+    using size_t = decltype(delta_x_.size());
+    size_t index(0);
+    const auto u(unif_rand());
+    auto sum(delta_x_[index] * delta_y_[index]);
+    while(sum < u * total_weight) {
+      ++index;
+      sum += delta_x_[index] * delta_y_[index];
+    }
+    return Marked_point(x_0_[index] + unif_rand() * delta_x_[index],
+                        y_0_[index] + unif_rand() * delta_y_[index],
+                                                            type,
+                                                            mark_lower_ + delta_mark_ * unif_rand());
+  }
+
+  double square_diameter() const {
+    // TODO: I suspect I don't need this function here and in other windows
+    return 1.;
+  }
+
+  double diameter() const {
+    // TODO: I suspect I don't need this function here and in other windows
+    return 1.;
+  }
+
+private:
+  std::vector<double> x_0_;
+  std::vector<double> delta_x_;
+  std::vector<double> y_0_;
+  std::vector<double> delta_y_;
   double mark_lower_;
   double delta_mark_;
 };
