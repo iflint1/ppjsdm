@@ -9,7 +9,13 @@ add_names <- function(str, covariates) {
 }
 
 coerce_to_named_im_objects <- function(lst, str, window) {
-  lst <- lapply(as.list(lst), function(element) as.im(element, W = as.owin(window)))
+  lst <- lapply(as.list(lst), function(element) {
+    if(!is(element, "im")) {
+      as.im(element, W = as.owin(window))
+    } else {
+      element
+    }
+  })
   add_names(str, lst)
 }
 
