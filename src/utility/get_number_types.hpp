@@ -19,24 +19,24 @@ inline auto get_length_with_check(SEXP x) {
   }
 }
 
-inline R_xlen_t get_number_types_helper(R_xlen_t number_types) {
-  return number_types == 0 ? 1 : number_types;
+inline R_xlen_t get_number_types_helper(R_xlen_t default_number_types, R_xlen_t number_types) {
+  return number_types == 0 ? default_number_types : number_types;
 }
 
 template<typename... Args>
-inline R_xlen_t get_number_types_helper(R_xlen_t number_types, SEXP x, Args... args) {
+inline R_xlen_t get_number_types_helper(R_xlen_t default_number_types, R_xlen_t number_types, SEXP x, Args... args) {
   if(Rf_isNull(x)) {
-    return get_number_types_helper(number_types, args...);
+    return get_number_types_helper(default_number_types, number_types, args...);
   } else {
     const auto length_x(get_length_with_check(x));
     if(number_types != 0) {
       if(length_x != number_types) {
         Rcpp::stop("Two of the given arguments have incompatible sizes.");
       } else {
-        return get_number_types_helper(number_types, args...);
+        return get_number_types_helper(default_number_types, number_types, args...);
       }
     } else {
-      return get_number_types_helper(length_x, args...);
+      return get_number_types_helper(default_number_types, length_x, args...);
     }
   }
 }
@@ -44,8 +44,8 @@ inline R_xlen_t get_number_types_helper(R_xlen_t number_types, SEXP x, Args... a
 } // namespace detail
 
 template<typename... Args>
-inline auto get_number_types_and_check_conformance(Args... args) {
-  return detail::get_number_types_helper(0, args...);
+inline auto get_number_types_and_check_conformance(R_xlen_t default_number_types, Args... args) {
+  return detail::get_number_types_helper(default_number_types, 0, args...);
 }
 
 } // namespace ppjsdm

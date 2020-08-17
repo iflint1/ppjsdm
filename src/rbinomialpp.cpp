@@ -26,7 +26,7 @@ inline SEXP rbinomialpp_helper(const ppjsdm::Window& window, const Rcpp::Numeric
 
 // [[Rcpp::export]]
 SEXP rbinomialpp_cpp(SEXP window, SEXP n, R_xlen_t nsim, SEXP types, bool drop, Rcpp::NumericVector mark_range) {
-  const auto number_types(ppjsdm::get_number_types_and_check_conformance(n, types));
+  const auto number_types(ppjsdm::get_number_types_and_check_conformance(1, n, types));
   n = ppjsdm::construct_if_missing<Rcpp::IntegerVector>(n, 1, number_types);
   types = ppjsdm::make_types(types, number_types, n);
   const auto cpp_window(ppjsdm::Window(window, mark_range));

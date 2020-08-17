@@ -15,8 +15,9 @@ SEXP make_default_model_parameters(SEXP alpha,
                                    SEXP short_range,
                                    SEXP medium_range,
                                    SEXP long_range,
-                                   SEXP types) {
-  const auto number_types(ppjsdm::get_number_types_and_check_conformance(alpha, gamma, beta0, short_range, medium_range, long_range, types));
+                                   SEXP types,
+                                   int default_number_types) {
+  const auto number_types(ppjsdm::get_number_types_and_check_conformance(default_number_types, alpha, gamma, beta0, short_range, medium_range, long_range, types));
   alpha = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(alpha, 0., number_types);
   gamma = ppjsdm::construct_if_missing<Rcpp::NumericMatrix>(gamma, 0., number_types);
   beta0 = ppjsdm::construct_if_missing<Rcpp::NumericVector>(beta0, 0., number_types);

@@ -72,8 +72,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // make_default_model_parameters
-SEXP make_default_model_parameters(SEXP alpha, SEXP beta0, SEXP covariates, SEXP beta, SEXP gamma, SEXP short_range, SEXP medium_range, SEXP long_range, SEXP types);
-RcppExport SEXP _ppjsdm_make_default_model_parameters(SEXP alphaSEXP, SEXP beta0SEXP, SEXP covariatesSEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP typesSEXP) {
+SEXP make_default_model_parameters(SEXP alpha, SEXP beta0, SEXP covariates, SEXP beta, SEXP gamma, SEXP short_range, SEXP medium_range, SEXP long_range, SEXP types, int default_number_types);
+RcppExport SEXP _ppjsdm_make_default_model_parameters(SEXP alphaSEXP, SEXP beta0SEXP, SEXP covariatesSEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP typesSEXP, SEXP default_number_typesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -86,7 +86,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type medium_range(medium_rangeSEXP);
     Rcpp::traits::input_parameter< SEXP >::type long_range(long_rangeSEXP);
     Rcpp::traits::input_parameter< SEXP >::type types(typesSEXP);
-    rcpp_result_gen = Rcpp::wrap(make_default_model_parameters(alpha, beta0, covariates, beta, gamma, short_range, medium_range, long_range, types));
+    Rcpp::traits::input_parameter< int >::type default_number_types(default_number_typesSEXP);
+    rcpp_result_gen = Rcpp::wrap(make_default_model_parameters(alpha, beta0, covariates, beta, gamma, short_range, medium_range, long_range, types, default_number_types));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -196,7 +197,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ppjsdm_compute_papangelou_cpp", (DL_FUNC) &_ppjsdm_compute_papangelou_cpp, 16},
     {"_ppjsdm_compute_vcov", (DL_FUNC) &_ppjsdm_compute_vcov, 18},
     {"_ppjsdm_has_duplicates", (DL_FUNC) &_ppjsdm_has_duplicates, 1},
-    {"_ppjsdm_make_default_model_parameters", (DL_FUNC) &_ppjsdm_make_default_model_parameters, 9},
+    {"_ppjsdm_make_default_model_parameters", (DL_FUNC) &_ppjsdm_make_default_model_parameters, 10},
     {"_ppjsdm_prepare_gibbsm_data", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data, 14},
     {"_ppjsdm_rbinomialpp_cpp", (DL_FUNC) &_ppjsdm_rbinomialpp_cpp, 6},
     {"_ppjsdm_rgibbs_cpp", (DL_FUNC) &_ppjsdm_rgibbs_cpp, 17},

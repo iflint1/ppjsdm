@@ -68,6 +68,7 @@ model_parameters_defaults <- function(window,
 #' @param types Types of the points. Default is a vector (type1, type2, ...) of same size as n.
 #' @param model String representing the model to use You can check the currently authorised models with a call to `show_short_range_models()`.
 #' @param medium_range_model String representing the model to use You can check the currently authorised models with a call to `show_medium_range_models()`.
+#' @param default_number_types Default number of types.
 #' @export
 model_parameters <- function(window,
                              alpha,
@@ -81,7 +82,8 @@ model_parameters <- function(window,
                              saturation,
                              types,
                              model,
-                             medium_range_model) {
+                             medium_range_model,
+                             default_number_types) {
   # The parameters below are set to NULL, and are treated in the C++ code.
   # Their values is not straightforward to determine and depends on how many types the user has in mind.
   if(missing(alpha)) {
@@ -118,6 +120,10 @@ model_parameters <- function(window,
     types <- NULL
   }
 
+  if(missing(default_number_types)) {
+    default_number_types <- 1
+  }
+
   defaults <- model_parameters_defaults(window = window,
                                         covariates = covariates,
                                         saturation = saturation,
@@ -132,6 +138,7 @@ model_parameters <- function(window,
                                               short_range = short_range,
                                               medium_range = medium_range,
                                               long_range = long_range,
-                                              types = types)
+                                              types = types,
+                                              default_number_types = default_number_types)
   append(parameters, defaults)
 }

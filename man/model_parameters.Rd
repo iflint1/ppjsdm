@@ -17,7 +17,8 @@ model_parameters(
   saturation,
   types,
   model,
-  medium_range_model
+  medium_range_model,
+  default_number_types
 )
 }
 \arguments{
@@ -48,6 +49,8 @@ number of rows/columns as the covariates.}
 \item{model}{String representing the model to use You can check the currently authorised models with a call to `show_short_range_models()`.}
 
 \item{medium_range_model}{String representing the model to use You can check the currently authorised models with a call to `show_medium_range_models()`.}
+
+\item{default_number_types}{Default number of types.}
 }
 \description{
 Construct parameters for the model.

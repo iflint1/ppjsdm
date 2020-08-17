@@ -139,6 +139,11 @@ gibbsm <- function(configuration_list,
                    use_glmnet = TRUE,
                    use_aic = TRUE,
                    ndummy = 0) {
+  # If we're given a single configuration, convert it to a list.
+  if(inherits(configuration_list, "Configuration")) {
+    configuration_list <- list(configuration_list)
+  }
+
   if(!missing(short_range)) {
     estimate_radii <- is.vector(short_range, mode = "numeric") && length(short_range) == 2
   } else {
@@ -151,7 +156,8 @@ gibbsm <- function(configuration_list,
                                  medium_range_model = medium_range_model,
                                  short_range = short_range,
                                  medium_range = medium_range,
-                                 long_range = long_range)
+                                 long_range = long_range,
+                                 default_number_types = nlevels(types(configuration_list[[1]])))
   if(!estimate_radii) {
     short_range <- parameters$short_range
     medium_range <- parameters$medium_range
@@ -162,11 +168,6 @@ gibbsm <- function(configuration_list,
   saturation <- parameters$saturation
   model <- parameters$model
   medium_range_model <- parameters$medium_range_model
-
-  # If we're given a single configuration, convert it to a list.
-  if(inherits(configuration_list, "Configuration")) {
-    configuration_list <- list(configuration_list)
-  }
 
   # Try to force conversion to Configuration class.
   lapply(configuration_list, function(configuration) as.Configuration(configuration))
