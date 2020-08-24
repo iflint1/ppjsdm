@@ -186,7 +186,8 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
           std::vector<double> t_i(total_parameters);
           std::vector<double> t_j(total_parameters);
 
-          size_t current_index(0);
+          size_t current_index_alpha(0);
+          size_t current_index_gamma(0);
           for(int k1(0); k1 < number_types; ++k1) {
             if(k1 == ppjsdm::get_type(point_i)) {
               t_i[k1] = 1.;
@@ -195,35 +196,33 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
                 t_i[index_start_covariates + k2 * number_types + k1] = covariates_on_configuration[i][k2];
               }
 
-              size_t filling(current_index);
+              size_t filling_alpha(current_index_alpha);
+              size_t filling_gamma(current_index_gamma);
               for(int k2(k1); k2 < number_types; ++k2) {
                 if(estimate_alpha(k1, k2)) {
-                  t_i[number_types + filling] = short_i[k2];
-                  ++filling;
+                  t_i[number_types + filling_alpha] = short_i[k2];
+                  ++filling_alpha;
                 }
-              }
-              for(int k2(k1); k2 < number_types; ++k2) {
                 if(estimate_gamma(k1, k2)) {
-                  t_i[number_types + filling] = medium_i[k2];
-                  ++filling;
+                  t_i[index_start_gamma + filling_gamma] = medium_i[k2];
+                  ++filling_gamma;
                 }
               }
             } else {
-              size_t filling(current_index);
+              size_t filling_alpha(current_index_alpha);
+              size_t filling_gamma(current_index_gamma);
               for(int k2(k1); k2 < number_types; ++k2) {
                 if(estimate_alpha(k1, k2)) {
                   if(k2 == ppjsdm::get_type(point_i)) {
-                    t_i[number_types + filling] = short_i[k1];
+                    t_i[number_types + filling_alpha] = short_i[k1];
                   }
-                  ++filling;
+                  ++filling_alpha;
                 }
-              }
-              for(int k2(k1); k2 < number_types; ++k2) {
                 if(estimate_gamma(k1, k2)) {
                   if(k2 == ppjsdm::get_type(point_i)) {
-                    t_i[number_types + filling] = medium_i[k1];
+                    t_i[index_start_gamma + filling_gamma] = medium_i[k1];
                   }
-                  ++filling;
+                  ++filling_gamma;
                 }
               }
             }
@@ -237,31 +236,27 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
 
               for(int k2(k1); k2 < number_types; ++k2) {
                 if(estimate_alpha(k1, k2)) {
-                  t_j[number_types + current_index] = short_j[k2];
-                  ++current_index;
+                  t_j[number_types + current_index_alpha] = short_j[k2];
+                  ++current_index_alpha;
                 }
-              }
-              for(int k2(k1); k2 < number_types; ++k2) {
                 if(estimate_gamma(k1, k2)) {
-                  t_j[number_types + current_index] = medium_j[k2];
-                  ++current_index;
+                  t_j[index_start_gamma + current_index_gamma] = medium_j[k2];
+                  ++current_index_gamma;
                 }
               }
             } else {
               for(int k2(k1); k2 < number_types; ++k2) {
                 if(estimate_alpha(k1, k2)) {
                   if(k2 == ppjsdm::get_type(point_j)) {
-                    t_j[number_types + current_index] = short_j[k1];
+                    t_j[number_types + current_index_alpha] = short_j[k1];
                   }
-                  ++current_index;
+                  ++current_index_alpha;
                 }
-              }
-              for(int k2(k1); k2 < number_types; ++k2) {
                 if(estimate_gamma(k1, k2)) {
                   if(k2 == ppjsdm::get_type(point_j)) {
-                    t_j[index_start_gamma + current_index] = medium_j[k1];
+                    t_j[index_start_gamma + current_index_gamma] = medium_j[k1];
                   }
-                  ++current_index;
+                  ++current_index_gamma;
                 }
               }
             }

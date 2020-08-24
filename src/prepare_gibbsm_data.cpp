@@ -158,6 +158,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
                                                                     covariates.size(),
                                                                     estimate_alpha,
                                                                     estimate_gamma));
+  const auto index_start_gamma(number_parameters_struct.index_start_gamma);
   const auto index_start_covariates(number_parameters_struct.index_start_covariates);
   const auto total_parameters(number_parameters_struct.total_parameters);
 
@@ -214,7 +215,8 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     //   }
     // }
 
-    size_t index(0);
+    size_t index_alpha(0);
+    size_t index_gamma(0);
     for(int j(0); j < number_types; ++j) {
       if(j == type_index) {
         // fill log_lambda
@@ -228,14 +230,12 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
         // fill alpha & gamma
         for(int k(j); k < number_types; ++k) {
           if(estimate_alpha(j, k)) {
-            regressors(i, number_types + index) = precomputed_results[i].dispersion[k];
-            ++index;
+            regressors(i, number_types + index_alpha) = precomputed_results[i].dispersion[k];
+            ++index_alpha;
           }
-        }
-        for(int k(j); k < number_types; ++k) {
           if(estimate_gamma(j, k)) {
-            regressors(i, number_types + index) = precomputed_results[i].medium_dispersion[k];
-            ++index;
+            regressors(i, index_start_gamma + index_gamma) = precomputed_results[i].medium_dispersion[k];
+            ++index_gamma;
           }
         }
       } else {
@@ -243,17 +243,15 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
         for(int k(j); k < number_types; ++k) {
           if(estimate_alpha(j, k)) {
             if(k == type_index) {
-              regressors(i, number_types + index) = precomputed_results[i].dispersion[j];
+              regressors(i, number_types + index_alpha) = precomputed_results[i].dispersion[j];
             }
-            ++index;
+            ++index_alpha;
           }
-        }
-        for(int k(j); k < number_types; ++k) {
           if(estimate_gamma(j, k)) {
             if(k == type_index) {
-              regressors(i, number_types + index) = precomputed_results[i].medium_dispersion[j];
+              regressors(i, index_start_gamma + index_gamma) = precomputed_results[i].medium_dispersion[j];
             }
-            ++index;
+            ++index_gamma;
           }
         }
       }

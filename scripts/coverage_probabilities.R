@@ -6,13 +6,13 @@ set.seed(1)
 window <- Rectangle_window(c(-1, 1), c(-1, 1))
 nreplications <- 100
 ntypes <- 2
-beta0 <- rep(2.5, ntypes)
+beta0 <- c(2.5, 2)
 steps <- 0
 estimate_gamma <- TRUE
 alpha <- cbind(c(-0.2, 0.1), c(0.1, -0.6))
 
 covariates <- list(temperature = function(x, y) x, elevation = function(x, y) y)
-beta <- cbind(rep(2, ntypes), rep(1, ntypes))
+beta <- cbind(c(2, 2.5), c(1, 1.5))
 ndummy <- 1000
 
 model <- "square_bump"
@@ -20,13 +20,13 @@ medium_range_model <- "square_exponential"
 saturation <- 2
 
 short_range <- matrix(0.05, ntypes, ntypes)
-medium_range <- matrix(0.05, ntypes, ntypes)
+medium_range <- matrix(0.07, ntypes, ntypes)
 if(estimate_gamma) {
-  long_range <- matrix(0.1, ntypes, ntypes)
+  long_range <- matrix(0.12, ntypes, ntypes)
   is_in <- matrix(NA, nrow = nreplications, ncol = ntypes + ntypes * (ntypes + 1) + length(covariates) * ntypes)
   gamma <- cbind(c(-0.6, -0.3), c(-0.3, 0.))
 } else {
-  long_range <- matrix(0.05, ntypes, ntypes)
+  long_range <- matrix(0.07, ntypes, ntypes)
   is_in <- matrix(NA, nrow = nreplications, ncol = ntypes + ntypes * (ntypes + 1) / 2 + length(covariates) * ntypes)
   gamma <- matrix(0., ntypes, ntypes)
 }
@@ -79,6 +79,22 @@ for(i in seq_len(nreplications)) {
   is_in[i, ] <- true >= lower & true <= upper
   estimates[i, ] <- estimate
 }
+
+library(ggplot2)
+configuration <- samples[[1]]
+dat <- data.frame(x = configuration$x, y = configuration$y, types = configuration$types)
+X11(width = 12, height = 10)
+ggplot(dat, aes(x = y, y = x)) +
+  geom_point(aes(colour = types, shape = types), size = 5) +
+  scale_size(breaks = seq(from = 0.16, to = 0.4, by = 0.02)) +
+  coord_equal() +
+  xlab("x") +
+  ylab("y") +
+  theme(panel.background = element_rect(fill = 'white', colour = 'red'),
+        legend.title = element_blank())
+
+X11(width = 15, height = 10)
+plot(samples[[1]])
 
 coverage_probabilities <- colMeans(is_in, na.rm = TRUE)
 mean_estimates <- colMeans(estimates, na.rm = TRUE)

@@ -56,6 +56,19 @@ samples <- ppjsdm::rgibbs(window = window,
 
 Sys.time() - tm
 
+library(ggplot2)
+configuration <- samples[[1]]
+dat <- data.frame(x = configuration$x, y = configuration$y, types = configuration$types)
+X11(width = 12, height = 10)
+ggplot(dat, aes(x = y, y = x)) +
+  geom_point(aes(colour = types, shape = types), size = 5) +
+  scale_size(breaks = seq(from = 0.16, to = 0.4, by = 0.02)) +
+  coord_equal() +
+  xlab("x") +
+  ylab("y") +
+  theme(panel.background = element_rect(fill = 'white', colour = 'red'),
+        legend.title = element_blank())
+
 tm <- Sys.time()
 
 for(i in seq_len(nreplications)) {
