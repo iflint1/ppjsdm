@@ -1,10 +1,11 @@
 remove(list = ls())
 library(ppjsdm)
 library(spatstat)
-set.seed(1)
+seed <- 1
+set.seed(seed)
 
 window <- Rectangle_window(c(-1, 1), c(-1, 1))
-nreplications <- 100
+nreplications <- 1000
 ntypes <- 2
 beta0 <- c(2.5, 2)
 steps <- 0
@@ -13,7 +14,7 @@ alpha <- cbind(c(-0.2, 0.1), c(0.1, -0.6))
 
 covariates <- list(temperature = function(x, y) x, elevation = function(x, y) y)
 beta <- cbind(c(2, 2.5), c(1, 1.5))
-ndummy <- 1000
+ndummy <- 2000
 
 model <- "square_bump"
 medium_range_model <- "square_exponential"
@@ -56,7 +57,7 @@ samples <- ppjsdm::rgibbs(window = window,
                           beta = beta,
                           steps = steps)
 
-
+set.seed(seed)
 for(i in seq_len(nreplications)) {
   fit <- gibbsm(samples[[i]],
                 window = window,
