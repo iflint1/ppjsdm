@@ -120,7 +120,9 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
 #' @param print Print the fitted coefficients?
 #' @param use_glmnet Use `glmnet` instead of `glm`?
 #' @param use_aic Use AIC instead of BIC for model fitting?
-#' @param ndummy Number of dummy points for each type. By default, follows the recommendation of Baddeley et al.
+#' @param max_dummy Maximum number of dummy points for each type. By default, follows the recommendation of Baddeley et al.
+#' @param dummy_factor How many more dummy points there are, compared to the points in the configuration. By default, follows the recommendation of Baddeley et al.
+#' @param nthreads Maximum number of threads for parallel computing.
 #' @importFrom glmnet glmnet cv.glmnet
 #' @importFrom stats AIC BIC binomial coefficients deviance glm.fit lm
 #' @importFrom spatstat as.im as.owin
@@ -138,7 +140,9 @@ gibbsm <- function(configuration_list,
                    print = FALSE,
                    use_glmnet = TRUE,
                    use_aic = TRUE,
-                   ndummy = 0) {
+                   max_dummy = 0,
+                   dummy_factor = 0,
+                   nthreads = 4) {
   # If we're given a single configuration, convert it to a list.
   if(inherits(configuration_list, "Configuration")) {
     configuration_list <- list(configuration_list)
@@ -224,9 +228,11 @@ gibbsm <- function(configuration_list,
                                               saturation,
                                               mark_range,
                                               TRUE,
-                                              ndummy = ndummy,
+                                              max_dummy = max_dummy,
+                                              dummy_factor = dummy_factor,
                                               estimate_alpha = estimate_alpha,
-                                              estimate_gamma = estimate_gamma)
+                                              estimate_gamma = estimate_gamma,
+                                              nthreads = nthreads)
 
       fit <- fit_gibbs(gibbsm_data_list, use_glmnet = FALSE, use_aic = use_aic, estimate_alpha = estimate_alpha, estimate_gamma = estimate_gamma)
       list(fit = fit, sh = sh, me = me, lo = lo)
@@ -292,9 +298,11 @@ gibbsm <- function(configuration_list,
                                             saturation,
                                             mark_range,
                                             FALSE,
-                                            ndummy = ndummy,
+                                            max_dummy = max_dummy,
+                                            dummy_factor = dummy_factor,
                                             estimate_alpha = estimate_alpha,
-                                            estimate_gamma = estimate_gamma)
+                                            estimate_gamma = estimate_gamma,
+                                            nthreads = nthreads)
 
     fitted <- fit_gibbs(gibbsm_data_list,
                         use_glmnet = use_glmnet,
@@ -332,9 +340,11 @@ gibbsm <- function(configuration_list,
                                             saturation,
                                             mark_range,
                                             FALSE,
-                                            ndummy = ndummy,
+                                            max_dummy = max_dummy,
+                                            dummy_factor = dummy_factor,
                                             estimate_alpha = estimate_alpha,
-                                            estimate_gamma = estimate_gamma)
+                                            estimate_gamma = estimate_gamma,
+                                            nthreads = nthreads)
 
     fitted <- fit_gibbs(gibbsm_data_list,
                         use_glmnet = use_glmnet,

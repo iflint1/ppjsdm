@@ -17,7 +17,9 @@ gibbsm(
   print = FALSE,
   use_glmnet = TRUE,
   use_aic = TRUE,
-  ndummy = 0
+  max_dummy = 0,
+  dummy_factor = 0,
+  nthreads = 4
 )
 }
 \arguments{
@@ -45,7 +47,11 @@ gibbsm(
 
 \item{use_aic}{Use AIC instead of BIC for model fitting?}
 
-\item{ndummy}{Number of dummy points for each type. By default, follows the recommendation of Baddeley et al.}
+\item{max_dummy}{Maximum number of dummy points for each type. By default, follows the recommendation of Baddeley et al.}
+
+\item{dummy_factor}{How many more dummy points there are, compared to the points in the configuration. By default, follows the recommendation of Baddeley et al.}
+
+\item{nthreads}{Maximum number of threads for parallel computing.}
 }
 \description{
 Fit a multivariate Gibbs model to a dataset.

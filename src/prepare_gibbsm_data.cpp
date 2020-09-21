@@ -34,36 +34,46 @@ inline void add_to_formula(std::string& formula, Rcpp::CharacterVector names) {
   }
 }
 
-template<bool Approximate, typename Configuration>
+template<bool Approximate, typename Configuration, typename Vector>
 Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configuration_list,
                                       const ppjsdm::Window& window,
                                       const ppjsdm::Im_list_wrapper& covariates,
                                       const ppjsdm::Saturated_model& dispersion_model,
                                       const ppjsdm::Saturated_model& medium_dispersion_model,
-                                      unsigned long long int max_points_in_any_type,
-                                      R_xlen_t ndummy,
+                                      const Vector& max_points_by_type,
+                                      R_xlen_t max_dummy,
+                                      double dummy_factor,
                                       Rcpp::LogicalMatrix estimate_alpha,
                                       Rcpp::LogicalMatrix estimate_gamma,
-                                      int number_types) {
+                                      int number_types,
+                                      int nthreads) {
+#ifdef _OPENMP
+  omp_set_num_threads(nthreads);
+#endif
+
   using size_t = ppjsdm::size_t<Configuration>;
 
   // Sample the dummy points D.
   // This choice of rho is the guideline from the Baddeley et al. paper, see p. 8 therein.
+  if(max_dummy == 0) {
+    max_dummy = 500;
+  }
+  if(dummy_factor == 0.) {
+    dummy_factor = 4.;
+  }
   std::vector<double> rho_times_volume(number_types);
   size_t length_D(0);
-  if(ndummy == 0) {
-    const auto four_times_max_points_in_any_type(4 * max_points_in_any_type);
-    if(four_times_max_points_in_any_type < 500) {
-      std::fill(rho_times_volume.begin(), rho_times_volume.end(), four_times_max_points_in_any_type);
-      length_D = number_types * four_times_max_points_in_any_type;
+  for(typename decltype(rho_times_volume)::size_type i(0); i < rho_times_volume.size(); ++i) {
+    const int factor_times_max_points_in_any_type(dummy_factor * max_points_by_type[i]);
+    if(factor_times_max_points_in_any_type < max_dummy) {
+      rho_times_volume[i] = factor_times_max_points_in_any_type;
+      length_D += factor_times_max_points_in_any_type;
     } else {
-      std::fill(rho_times_volume.begin(), rho_times_volume.end(), 500);
-      length_D = number_types * 500;
+      rho_times_volume[i] = max_dummy;
+      length_D += max_dummy;
     }
-  } else {
-    std::fill(rho_times_volume.begin(), rho_times_volume.end(), ndummy);
-    length_D = number_types * ndummy;
   }
+
   const auto D(ppjsdm::rbinomialpp_single<std::vector<ppjsdm::Marked_point>>(window, rho_times_volume, number_types, length_D));
 
   // Make shift vector
@@ -285,9 +295,11 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
                                R_xlen_t saturation,
                                Rcpp::NumericVector mark_range,
                                bool approximate,
-                               R_xlen_t ndummy,
+                               R_xlen_t max_dummy,
+                               double dummy_factor,
                                Rcpp::LogicalMatrix estimate_alpha,
-                               Rcpp::LogicalMatrix estimate_gamma) {
+                               Rcpp::LogicalMatrix estimate_gamma,
+                               int nthreads) {
   // Construct std::vector of configurations.
   std::vector<std::vector<ppjsdm::Marked_point>> vector_configurations(configuration_list.size());
   for(R_xlen_t i(0); i < configuration_list.size(); ++i) {
@@ -303,24 +315,27 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
 
   const auto cpp_window(ppjsdm::Window(window, mark_range));
 
-  const auto max_points_by_type(ppjsdm::get_number_points(vector_configurations[0]));
+  auto max_points_by_type(ppjsdm::get_number_points(vector_configurations[0]));
   const auto number_types(max_points_by_type.size());
-  auto max_points_in_any_type(*std::max_element(max_points_by_type.begin(), max_points_by_type.end()));
+  //auto max_points_in_any_type(*std::max_element(max_points_by_type.begin(), max_points_by_type.end()));
 
   using size_t = typename decltype(vector_configurations)::size_type;
   for(size_t i(0); i < vector_configurations.size(); ++i) {
     const auto new_points_by_type(ppjsdm::get_number_points(vector_configurations[i]));
     for(size_t j(0); j < max_points_by_type.size(); ++j) {
-      if(max_points_in_any_type < new_points_by_type[j]) {
-        max_points_in_any_type = new_points_by_type[j];
+      // if(max_points_in_any_type < new_points_by_type[j]) {
+      //   max_points_in_any_type = new_points_by_type[j];
+      // }
+      if(max_points_by_type[j] < new_points_by_type[j]) {
+        max_points_by_type[j] = new_points_by_type[j];
       }
     }
   }
   const auto dispersion(ppjsdm::Saturated_model(model, short_range, saturation));
   const auto medium_range_dispersion(ppjsdm::Saturated_model(medium_range_model, medium_range, long_range, saturation));
   if(approximate) {
-    return prepare_gibbsm_data_helper<true>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), dispersion, medium_range_dispersion, max_points_in_any_type, ndummy, estimate_alpha, estimate_gamma, number_types);
+    return prepare_gibbsm_data_helper<true>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), dispersion, medium_range_dispersion, max_points_by_type, max_dummy, dummy_factor, estimate_alpha, estimate_gamma, number_types, nthreads);
   } else {
-    return prepare_gibbsm_data_helper<false>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), dispersion, medium_range_dispersion, max_points_in_any_type, ndummy, estimate_alpha, estimate_gamma, number_types);
+    return prepare_gibbsm_data_helper<false>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), dispersion, medium_range_dispersion, max_points_by_type, max_dummy, dummy_factor, estimate_alpha, estimate_gamma, number_types, nthreads);
   }
 }
