@@ -1,7 +1,13 @@
 fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate_gamma) {
   regressors <- gibbsm_data$regressors
   if(any(is.na(regressors))) {
-    warning(paste0("Some NA values detected in regression matrix; indices: "), which(is.na(regressors), arr.ind = TRUE), " and colnames: ", colnames(regressors))
+    max_indices <- 10
+    na_row_indices <- which(rowSums(is.na(regressors)) > 0)[seq_len(max_indices)]
+    na_row_indices <- na_row_indices[!is.na(na_row_indices)]
+    warning(paste0("Some NA values detected in regression matrix; indices: "),
+            na_row_indices,
+            " and colnames: ", colnames(regressors))
+    print(regressors[na_row_indices, ])
   }
 
   if(use_glmnet) {
