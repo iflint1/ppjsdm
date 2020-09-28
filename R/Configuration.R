@@ -8,7 +8,9 @@
 #' @export
 Configuration <- local({
   function(x, y, types, marks) {
-    if(nargs() == 1 && !missing(x)) {
+    if(nargs() == 0) {
+      configuration <- as.Configuration(vector(mode = "numeric", length = 0))
+    } else if(nargs() == 1 && !missing(x)) {
       configuration <- as.Configuration(x)
     } else {
       if(!missing(x)) {
