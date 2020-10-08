@@ -54,6 +54,12 @@ test_that("Configuration constructor default arguments", {
   expect_warning(expect_equal(ppjsdm::Configuration(marks = marks_default), configuration_default))
 })
 
+test_that("Empty configuration", {
+  expect_equal(ppjsdm::Configuration(x = vector(mode = "numeric", length = 0),
+                                     y = vector(mode = "numeric", length = 0)),
+               ppjsdm::Configuration())
+})
+
 test_that("Configuration copy-constructor", {
   x <- stats::runif(n = 1)
   y <- stats::runif(n = 1)
@@ -115,7 +121,6 @@ test_that("Configuration constructor from spatstat::ppp", {
 })
 
 test_that("Configuration unsupported constructors", {
-  expect_error(ppjsdm::Configuration())
   expect_error(ppjsdm::Configuration(c(0), c(1, 2)))
   expect_error(ppjsdm::Configuration(c(1, 2), 0))
   expect_error(ppjsdm::Configuration(c('a', 'b'), c(1, 2)))
