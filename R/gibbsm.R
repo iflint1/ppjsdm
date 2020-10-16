@@ -5,8 +5,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
     na_row_indices <- which(rowSums(is.na(regressors)) > 0)[seq_len(max_indices)]
     na_row_indices <- na_row_indices[!is.na(na_row_indices)]
     warning(paste0("Some NA values detected in regression matrix; indices: "),
-            na_row_indices,
-            " and colnames: ", colnames(regressors))
+            na_row_indices)
     print(regressors[na_row_indices, ])
   }
 
