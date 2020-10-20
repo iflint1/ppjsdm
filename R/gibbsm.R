@@ -1,4 +1,4 @@
-fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate_gamma) {
+fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate_gamma, types_names, covariates_names) {
   regressors <- gibbsm_data$regressors
   if(any(is.na(regressors))) {
     max_indices <- 10
@@ -99,6 +99,17 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
       }
     }
   }
+  if(!missing(types_names)) {
+    names(beta0) <- types_names
+    rownames(beta) <- types_names
+    rownames(alpha) <- types_names
+    colnames(alpha) <- types_names
+    rownames(gamma) <- types_names
+    colnames(gamma) <- types_names
+  }
+  if(!missing(covariates_names)) {
+    colnames(beta) <- covariates_names
+  }
   list(fit = fit,
        coefficients = list(beta0 = beta0,
                            alpha = alpha,
@@ -181,6 +192,10 @@ gibbsm <- function(configuration_list,
   # Try to force conversion to Configuration class.
   lapply(configuration_list, function(configuration) as.Configuration(configuration))
 
+  # Set types names and covariates names
+  types_names <- levels(types(configuration_list[[1]]))
+  covariates_names <- names(covariates)
+
   # Make sure we're given a list of configurations.
   stopifnot(inherits(configuration_list[[1]], "Configuration"))
 
@@ -239,7 +254,13 @@ gibbsm <- function(configuration_list,
                                               estimate_gamma = estimate_gamma,
                                               nthreads = nthreads)
 
-      fit <- fit_gibbs(gibbsm_data_list, use_glmnet = FALSE, use_aic = use_aic, estimate_alpha = estimate_alpha, estimate_gamma = estimate_gamma)
+      fit <- fit_gibbs(gibbsm_data_list,
+                       use_glmnet = FALSE,
+                       use_aic = use_aic,
+                       estimate_alpha = estimate_alpha,
+                       estimate_gamma = estimate_gamma,
+                       types_names = types_names,
+                       covariates_names = covariates_names)
       list(fit = fit, sh = sh, me = me, lo = lo)
     }
 
@@ -313,7 +334,9 @@ gibbsm <- function(configuration_list,
                         use_glmnet = use_glmnet,
                         use_aic = use_aic,
                         estimate_alpha = estimate_alpha,
-                        estimate_gamma = estimate_gamma)
+                        estimate_gamma = estimate_gamma,
+                        types_names = types_names,
+                        covariates_names = covariates_names)
   } else {
     short_range <- as.matrix(short_range)
     medium_range <- as.matrix(medium_range)
@@ -355,7 +378,9 @@ gibbsm <- function(configuration_list,
                         use_glmnet = use_glmnet,
                         use_aic = use_aic,
                         estimate_alpha = estimate_alpha,
-                        estimate_gamma = estimate_gamma)
+                        estimate_gamma = estimate_gamma,
+                        types_names = types_names,
+                        covariates_names = covariates_names)
   }
   fits <-  fitted$fit
   fits_coefficients <- fitted$coefficients
@@ -381,12 +406,22 @@ gibbsm <- function(configuration_list,
               window = window,
               fit_algorithm = fitted$fit_algorithm)
 
-
   if(estimate_radii) {
-    ret <- append(ret, list(coefficients = append(fits_coefficients, list(short_range = best_short, medium_range = best_medium, long_range = best_long))))
-  } else {
-    ret <- append(ret, list(coefficients = append(fits_coefficients, list(short_range = short_range, medium_range = medium_range, long_range = long_range))))
+    short_range <- best_short
+    medium_range <- best_medium
+    long_range <- best_long
   }
+  rownames(short_range) <- types_names
+  colnames(short_range) <- types_names
+  rownames(medium_range) <- types_names
+  colnames(medium_range) <- types_names
+  rownames(long_range) <- types_names
+  colnames(long_range) <- types_names
+
+  ret <- append(ret, list(coefficients = append(fits_coefficients,
+                                                list(short_range = short_range,
+                                                     medium_range = medium_range,
+                                                     long_range = long_range))))
   class(ret) <- "gibbsm"
   ret
 }
