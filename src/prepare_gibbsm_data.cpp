@@ -207,14 +207,6 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   Rcpp::NumericVector rho_offset(total_points);
   Rcpp::NumericMatrix regressors(total_points, total_parameters);
 
-  // Set names
-  rho_offset.names() = Rcpp::wrap("rho");
-  response.names() = Rcpp::wrap("response");
-  x.names() = Rcpp::wrap("x");
-  y.names() = Rcpp::wrap("y");
-  mark.names() = Rcpp::wrap("mark");
-  type.names() = Rcpp::wrap("type");
-
   // Fill the regressors, response, offset and shift with what we precomputed.
   for(size_t i(0); i < total_points; ++i) {
     if(precomputed_results[i].is_in_configuration) {
