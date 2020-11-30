@@ -51,6 +51,20 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   omp_set_num_threads(nthreads);
 #endif
 
+  // Check if we actually need to compute alpha/gamma regressors
+  bool need_to_compute_alpha(false);
+  bool need_to_compute_gamma(false);
+  for(R_xlen_t i(0); i < estimate_alpha.nrow(); ++i) {
+    for(R_xlen_t j(0); j < estimate_alpha.ncol(); ++j) {
+      if(estimate_alpha(i, j)) {
+        need_to_compute_alpha = true;
+      }
+      if(estimate_gamma(i, j)) {
+        need_to_compute_gamma = true;
+      }
+    }
+  }
+
   using size_t = ppjsdm::size_t<Configuration>;
 
   // Sample the dummy points D.
@@ -124,8 +138,14 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     // TODO: Avoidable?
     Configuration configuration_copy(configuration_list[configuration_index]);
     ppjsdm::remove_point_by_iterator(configuration_copy, std::next(configuration_copy.begin(), point_index));
-    const auto d(ppjsdm::compute_dispersion<Approximate>(dispersion_model, configuration_list[configuration_index][point_index], number_types, configuration_copy));
-    const auto e(ppjsdm::compute_dispersion<Approximate>(medium_dispersion_model, configuration_list[configuration_index][point_index], number_types, configuration_copy));
+    std::vector<double> d;
+    if(need_to_compute_alpha) {
+      d = ppjsdm::compute_dispersion<Approximate>(dispersion_model, configuration_list[configuration_index][point_index], number_types, configuration_copy);
+    }
+    std::vector<double> e;
+    if(need_to_compute_gamma) {
+      e = ppjsdm::compute_dispersion<Approximate>(medium_dispersion_model, configuration_list[configuration_index][point_index], number_types, configuration_copy);
+    }
     std::vector<double> cov(covariates_length);
     for(size_t k(0); k < covariates_length; ++k) {
       const auto covariate(covariates[k](configuration_list[configuration_index][point_index]));
@@ -153,8 +173,14 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
       continue;
     }
     for(size_t j(0); j < configuration_list.size(); ++j) {
-      const auto d(ppjsdm::compute_dispersion<Approximate>(dispersion_model, D[i], number_types, configuration_list[j]));
-      const auto e(ppjsdm::compute_dispersion<Approximate>(medium_dispersion_model, D[i], number_types, configuration_list[j]));
+      std::vector<double> d;
+      if(need_to_compute_alpha) {
+        d = ppjsdm::compute_dispersion<Approximate>(dispersion_model, D[i], number_types, configuration_list[j]);
+      }
+      std::vector<double> e;
+      if(need_to_compute_gamma) {
+        e = ppjsdm::compute_dispersion<Approximate>(medium_dispersion_model, D[i], number_types, configuration_list[j]);
+      }
       results_private.emplace_back(false, ppjsdm::get_type(D[i]), std::move(d), std::move(e), cov, ppjsdm::get_x(D[i]), ppjsdm::get_y(D[i]), ppjsdm::get_mark(D[i]));
     }
   }
