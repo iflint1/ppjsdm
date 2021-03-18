@@ -91,8 +91,8 @@ struct Half_exponential_implementation {
     return -std::log(2) / (upper - lower);
   }
 
-  static double get_square_lower_endpoint(double) {
-    return 0.;
+  static double get_square_lower_endpoint(double lower) {
+    return lower * lower;
   }
 
   static double apply(double square_distance, double lower, double upper) {
