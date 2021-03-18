@@ -32,6 +32,7 @@ const constexpr char* const medium_range_models[] = {
   "half_square_exponential",
   "Geyer",
   "linear",
+  "half_exponential",
   "exponential"
 };
 
@@ -141,6 +142,8 @@ private:
     } else if(model_string == medium_range_models[3]) {
       return std::make_shared<Concrete_model<potentials::Medium_range_linear>>(medium_range, long_range);
     } else if(model_string == medium_range_models[4]) {
+      return std::make_shared<Concrete_model<potentials::Medium_range_half_exponential>>(medium_range, long_range);
+    } else if(model_string == medium_range_models[5]) {
       return std::make_shared<Concrete_model<potentials::Medium_range_exponential>>(medium_range, long_range);
     } else {
       Rcpp::stop("Incorrect model entered. A call to show_medium_range_models() will show you the available choices.\n");
