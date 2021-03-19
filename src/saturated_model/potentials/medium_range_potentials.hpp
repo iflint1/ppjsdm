@@ -152,6 +152,60 @@ struct Two_sided_exponential_implementation {
   }
 };
 
+struct Two_sided_bump_implementation {
+  static constexpr bool is_nonincreasing = false;
+  static constexpr bool is_nonincreasing_after_lower_endpoint = false;
+  static constexpr bool is_two_valued = false;
+
+  static double set_lower(double lower, double) {
+    return lower;
+  }
+
+  static double set_upper(double, double upper) {
+    return upper;
+  }
+
+  static double get_square_lower_endpoint(double) {
+    return 0.;
+  }
+
+  static double apply(double square_distance, double lower, double upper) {
+    const auto average(0.5 * (lower + upper));
+    const auto distance(std::sqrt(square_distance));
+    if(distance == average) {
+      return 1.0;
+    } else if(distance < average) {
+      return 1.0 - std::exp(-(lower - average) * std::log(2) / (distance - average));
+    } else {
+      return 1.0 - std::exp(-(average - upper) * std::log(2) / (average - distance));
+    }
+  }
+};
+
+struct Two_sided_square_bump_implementation {
+  static constexpr bool is_nonincreasing = false;
+  static constexpr bool is_nonincreasing_after_lower_endpoint = false;
+  static constexpr bool is_two_valued = false;
+
+  static double set_lower(double lower, double) {
+    return lower;
+  }
+
+  static double set_upper(double, double upper) {
+    return upper;
+  }
+
+  static double get_square_lower_endpoint(double) {
+    return 0.;
+  }
+
+  static double apply(double square_distance, double lower, double upper) {
+    const auto average(0.5 * (lower + upper));
+    const auto distance(std::sqrt(square_distance));
+    return 1.0 - std::exp(-(lower - average) * (lower - average) * std::log(2) / ((distance - average) * (distance - average)));
+  }
+};
+
 struct Two_sided_Strauss_implementation {
   static constexpr bool is_nonincreasing = false;
   static constexpr bool is_nonincreasing_after_lower_endpoint = false;
@@ -219,6 +273,8 @@ using Medium_range_Geyer = Medium_range_potential<Two_sided_Strauss_implementati
 using Medium_range_linear = Medium_range_potential<Two_sided_linear_implementation>;
 using Medium_range_half_exponential = Medium_range_potential<Half_exponential_implementation>;
 using Medium_range_exponential = Medium_range_potential<Two_sided_exponential_implementation>;
+using Medium_range_bump = Medium_range_potential<Two_sided_bump_implementation>;
+using Medium_range_square_bump = Medium_range_potential<Two_sided_square_bump_implementation>;
 
 
 } // namespace potentials
