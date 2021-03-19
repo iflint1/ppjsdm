@@ -157,12 +157,12 @@ struct Two_sided_bump_implementation {
   static constexpr bool is_nonincreasing_after_lower_endpoint = false;
   static constexpr bool is_two_valued = false;
 
-  static double set_lower(double lower, double) {
-    return lower;
+  static double set_lower(double lower, double upper) {
+    return (lower + upper ) / 2.;
   }
 
-  static double set_upper(double, double upper) {
-    return upper;
+  static double set_upper(double lower, double upper) {
+    return -0.5 * std::log(2) * (upper - lower);
   }
 
   static double get_square_lower_endpoint(double) {
@@ -170,14 +170,13 @@ struct Two_sided_bump_implementation {
   }
 
   static double apply(double square_distance, double lower, double upper) {
-    const auto average(0.5 * (lower + upper));
     const auto distance(std::sqrt(square_distance));
-    if(distance == average) {
+    if(distance == lower) {
       return 1.0;
-    } else if(distance < average) {
-      return 1.0 - std::exp(-(lower - average) * std::log(2) / (distance - average));
+    } else if(distance < lower) {
+      return 1.0 - std::exp(upper / (lower - distance));
     } else {
-      return 1.0 - std::exp(-(average - upper) * std::log(2) / (average - distance));
+      return 1.0 - std::exp(upper / (distance - lower));
     }
   }
 };
@@ -187,12 +186,12 @@ struct Two_sided_square_bump_implementation {
   static constexpr bool is_nonincreasing_after_lower_endpoint = false;
   static constexpr bool is_two_valued = false;
 
-  static double set_lower(double lower, double) {
-    return lower;
+  static double set_lower(double lower, double upper) {
+    return (lower + upper ) / 2.;
   }
 
-  static double set_upper(double, double upper) {
-    return upper;
+  static double set_upper(double lower, double upper) {
+    return -0.25 * std::log(2) * (upper - lower) * (upper - lower);
   }
 
   static double get_square_lower_endpoint(double) {
@@ -200,9 +199,12 @@ struct Two_sided_square_bump_implementation {
   }
 
   static double apply(double square_distance, double lower, double upper) {
-    const auto average(0.5 * (lower + upper));
     const auto distance(std::sqrt(square_distance));
-    return 1.0 - std::exp(-(lower - average) * (lower - average) * std::log(2) / ((distance - average) * (distance - average)));
+    if(distance == lower) {
+      return 1.0;
+    } else {
+      return 1.0 - std::exp(upper / ((distance - lower) * (distance - lower)));
+    }
   }
 };
 
