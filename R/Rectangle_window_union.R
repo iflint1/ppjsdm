@@ -46,6 +46,7 @@ y_range.Rectangle_window_union <- function(window) {
 #' Return the area of a union of rectangle windows.
 #'
 #' @param window The window.
+#' @importFrom spatstat.geom area
 #' @export
 area.Rectangle_window_union <- function(window) {
   sum(sapply(seq_len(length(window$x_ranges)), function(i) {
@@ -58,6 +59,7 @@ area.Rectangle_window_union <- function(window) {
 #' Return the volume of a rectangle window.
 #'
 #' @param window The window.
+#' @importFrom spatstat.geom volume
 #' @export
 volume.Rectangle_window_union <- function(window) {
   area.Rectangle_window_union(window)

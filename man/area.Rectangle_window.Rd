@@ -4,7 +4,7 @@
 \alias{area.Rectangle_window}
 \title{Return the area of a rectangle window.}
 \usage{
-area.Rectangle_window(window)
+\method{area}{Rectangle_window}(window)
 }
 \arguments{
 \item{window}{The window.}

@@ -4,7 +4,7 @@
 \alias{volume.Rectangle_window}
 \title{Return the volume of a rectangle window.}
 \usage{
-volume.Rectangle_window(window)
+\method{volume}{Rectangle_window}(window)
 }
 \arguments{
 \item{window}{The window.}

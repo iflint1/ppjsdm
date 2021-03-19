@@ -141,7 +141,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
 #' @param nthreads Maximum number of threads for parallel computing.
 #' @importFrom glmnet glmnet cv.glmnet
 #' @importFrom stats AIC BIC binomial coefficients deviance glm.fit lm
-#' @importFrom spatstat as.im as.owin
+#' @importFrom spatstat.geom as.im as.owin
 #' @importFrom GA ga
 #' @export
 gibbsm <- function(configuration_list,

@@ -177,7 +177,7 @@ It is best to provide the covariates as `spatstat::im` objects, and it is usuall
 
 ```{r}
 model <- "Geyer"
-covariates <- list(temperature = spatstat::as.im(function(x, y) x - 0.5, W = owin()))
+covariates <- list(temperature = spatstat.geom::as.im(function(x, y) x - 0.5, W = owin()))
 beta <- 2
 plot_papangelou(model = model,
                 alpha = alpha,

@@ -129,7 +129,7 @@ test_that("Correct Papangelou conditional intensity value", {
                                                      beta0 = beta0,
                                                      beta = beta,
                                                      gamma = gamma,
-                                                     covariates = list(cov = spatstat::as.im(covariate(x[1], x[2]), W = window)),
+                                                     covariates = list(cov = spatstat.geom::as.im(covariate(x[1], x[2]), W = window)),
                                                      short_range = r_1,
                                                      medium_range = r_2,
                                                      long_range = r_3,

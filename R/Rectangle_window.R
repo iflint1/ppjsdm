@@ -38,6 +38,7 @@ y_range.Rectangle_window <- function(window) {
 #' Return the area of a rectangle window.
 #'
 #' @param window The window.
+#' @importFrom spatstat.geom area
 #' @export
 area.Rectangle_window <- function(window) {
   x <- window$x_range
@@ -48,6 +49,7 @@ area.Rectangle_window <- function(window) {
 #' Return the volume of a rectangle window.
 #'
 #' @param window The window.
+#' @importFrom spatstat.geom volume
 #' @export
 volume.Rectangle_window <- function(window) {
   area.Rectangle_window(window)
@@ -58,7 +60,7 @@ volume.Rectangle_window <- function(window) {
 #' @param W Window.
 #' @param ... Unused.
 #' @param fatal Unused.
-#' @importFrom spatstat owin
+#' @importFrom spatstat.geom owin
 #' @export
 as.owin.Rectangle_window <- function(W, ..., fatal = TRUE) {
   owin(W$x_range, W$y_range)

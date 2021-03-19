@@ -108,14 +108,14 @@ test_that("Configuration constructor from data frame or list", {
   expect_identical(ppjsdm::types(configuration), factor(c(6, 7)))
 })
 
-test_that("Configuration constructor from spatstat::ppp", {
+test_that("Configuration constructor from spatstat.geom::ppp", {
   x <- stats::runif(n = 2)
   y <- stats::runif(n = 2)
   types <- factor(c("a", "b"))
-  configuration_spatstat <- ppjsdm::as.Configuration(spatstat::ppp(x = x,
-                                                                   y = y,
-                                                                   marks = types,
-                                                                   W = spatstat::owin(c(0, 1), c(0, 3))))
+  configuration_spatstat <- ppjsdm::as.Configuration(spatstat.geom::ppp(x = x,
+                                                                        y = y,
+                                                                        marks = types,
+                                                                        W = spatstat.geom::owin(c(0, 1), c(0, 3))))
   configuration <- ppjsdm::Configuration(x = x, y = y, types = types)
   expect_identical(configuration, configuration_spatstat)
 })
@@ -181,15 +181,15 @@ test_that("Configuration number of points", {
   expect_equal(length(configuration), n)
 })
 
-test_that("Convert to spatstat::ppp", {
+test_that("Convert to spatstat.geom::ppp", {
   x_coordinates <- stats::runif(n = 3)
   y_coordinates <- stats::runif(n = 3)
   types <- c("a", "b", "a")
   marks <- stats::runif(n = 3)
   expect_equal(as.ppp(ppjsdm::Configuration(x = x_coordinates, y = y_coordinates, types = types, marks = marks), W = Rectangle_window(c(0, 2), c(0, 4))),
-               spatstat::ppp(x = x_coordinates, y = y_coordinates, window = owin(c(0, 2), c(0, 4)), marks = types))
+               spatstat.geom::ppp(x = x_coordinates, y = y_coordinates, window = spatstat.geom::owin(c(0, 2), c(0, 4)), marks = types))
   types <- c(1, 2, 1)
   expect_equal(as.ppp(ppjsdm::Configuration(x = x_coordinates, y = y_coordinates, types = types, marks = marks), W = Rectangle_window(c(0, 2), c(0, 4))),
-               spatstat::ppp(x = x_coordinates, y = y_coordinates, window = owin(c(0, 2), c(0, 4)), marks = types))
+               spatstat.geom::ppp(x = x_coordinates, y = y_coordinates, window = spatstat.geom::owin(c(0, 2), c(0, 4)), marks = types))
 
 })

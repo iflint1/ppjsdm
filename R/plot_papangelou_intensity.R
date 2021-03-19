@@ -18,7 +18,7 @@
 #' @param grid_steps Number of horizontal and vertical grid steps.
 #' @param mark Mark of the point.
 #' @param steps Nunber of steps in the Metropolis-Hastings simulation algorithm.
-#' @importFrom spatstat as.im as.owin as.ppp
+#' @importFrom spatstat.geom as.im as.owin as.ppp
 #' @importFrom stats na.omit
 #' @importFrom graphics plot
 #' @export

@@ -39,6 +39,7 @@ y_range.Disk_window <- function(window) {
 #' Return the area of a disk window.
 #'
 #' @param window The window.
+        #' @importFrom spatstat.geom area
 #' @export
 area.Disk_window <- function(window) {
   r <- window$radius
@@ -48,6 +49,7 @@ area.Disk_window <- function(window) {
 #' Return the volume of a disk window.
 #'
 #' @param window The window.
+#' @importFrom spatstat.geom volume
 #' @export
 volume.Disk_window <- function(window) {
   area.Disk_window(window)
@@ -58,7 +60,7 @@ volume.Disk_window <- function(window) {
 #' @param W Window.
 #' @param ... Unused.
 #' @param fatal Unused.
-#' @importFrom spatstat disc
+#' @importFrom spatstat.geom disc
 #' @export
 as.owin.Disk_window <- function(W, ..., fatal = TRUE) {
   disc(radius = W$radius, centre = W$centre)

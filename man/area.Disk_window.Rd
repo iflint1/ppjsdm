@@ -4,7 +4,7 @@
 \alias{area.Disk_window}
 \title{Return the area of a disk window.}
 \usage{
-area.Disk_window(window)
+\method{area}{Disk_window}(window)
 }
 \arguments{
 \item{window}{The window.}

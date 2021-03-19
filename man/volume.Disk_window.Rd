@@ -4,7 +4,7 @@
 \alias{volume.Disk_window}
 \title{Return the volume of a disk window.}
 \usage{
-volume.Disk_window(window)
+\method{volume}{Disk_window}(window)
 }
 \arguments{
 \item{window}{The window.}

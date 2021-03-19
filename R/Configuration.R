@@ -270,7 +270,7 @@ marks <- function(configuration) {
 #' @param W Window on which the points are located.
 #' @param ... Not used.
 #' @param fatal Not used.
-#' @importFrom spatstat as.owin owin ppp
+#' @importFrom spatstat.geom as.owin owin ppp
 #' @export
 as.ppp.Configuration <- function(X, W, ..., fatal = TRUE) {
   types <- X$types
