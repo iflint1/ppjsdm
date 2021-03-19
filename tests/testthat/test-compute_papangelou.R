@@ -35,25 +35,62 @@ test_that("Default values", {
 
 test_that("Correct Papangelou conditional intensity value", {
   set.seed(42)
-  Ntests <- 100
+  Ntests <- 200
   for(nt in seq_len(Ntests)) {
-    if(nt %% 3 == 0) {
-      varphi <- function(x, i, j) ifelse(x <= r_1[i, j], 1, 0)
-      model <- "Geyer"
-    } else if(nt %% 3 == 1) {
+    if(nt %% 6 == 0) {
       varphi <- function(x, i, j) exp(-log(2) * x / r_1[i, j])
       model <- "exponential"
-    } else if(nt %% 3 == 2) {
+    } else if(nt %% 6 == 1) {
+      varphi <- function(x, i, j) exp(-log(2) * x^2 / r_1[i, j]^2)
+      model <- "square_exponential"
+    } else if(nt %% 6 == 2) {
+      varphi <- function(x, i, j) 1 - exp(-r_1[i, j] * log(2) / x)
+      model <- "bump"
+    } else if(nt %% 6 == 3) {
       varphi <- function(x, i, j) 1 - exp(-r_1[i, j] * r_1[i, j] * log(2) / (x * x))
       model <- "square_bump"
+    } else if(nt %% 6 == 4) {
+      varphi <- function(x, i, j) ifelse(x <= r_1[i, j], 1, 0)
+      model <- "Geyer"
+    } else if(nt %% 6 == 5) {
+      varphi <- function(x, i, j) pmax(0, 1. - x / r_1[i, j])
+      model <- "linear"
     }
 
-    if(nt %% 2 == 0) {
-      psi <- function(x, i, j) ifelse(x <= r_3[i, j] & x >= r_2[i, j], 1, 0)
-      medium_range_model <- "Geyer"
-    } else if(nt %% 2 == 1) {
+    if(nt %% 8 == 0) {
       psi <- function(x, i, j) exp(-4 * log(2) * ((r_2[i, j] + r_3[i, j]) / 2 - x)^2 / (r_2[i, j] - r_3[i, j])^2)
       medium_range_model <- "square_exponential"
+    } else if(nt %% 8 == 1) {
+      psi <- function(x, i, j) ifelse(x > r_2[i, j], exp(-log(2) * (x - r_2[i, j])^2 / (r_3[i, j] - r_2[i, j])^2), 0.)
+      medium_range_model <- "half_square_exponential"
+    } else if(nt %% 8 == 2) {
+      psi <- function(x, i, j) ifelse(x <= r_3[i, j] & x >= r_2[i, j], 1, 0)
+      medium_range_model <- "Geyer"
+    } else if(nt %% 8 == 3) {
+      psi <- function(x, i, j) ifelse(2 * x <= r_2[i, j] + r_3[i, j],
+                                      ifelse(x <= r_2[i, j], 0., 2. / (r_3[i, j] - r_2[i, j]) * (x - r_2[i, j])),
+                                      ifelse(x >= r_3[i, j], 0., 2. / (r_3[i, j] - r_2[i, j]) * (r_3[i, j] - x)))
+      medium_range_model <- "linear"
+    } else if(nt %% 8 == 4) {
+      psi <- function(x, i, j) ifelse(x >= r_2[i, j], exp(-log(2) * (x - r_2[i, j]) / (r_3[i, j] - r_2[i, j])), 0.)
+      medium_range_model <- "half_exponential"
+    } else if(nt %% 8 == 5) {
+      psi <- function(x, i, j) exp(-2 * log(2) * abs(x - 0.5 * (r_3[i, j] + r_2[i, j])) / (r_3[i, j] - r_2[i, j]))
+      medium_range_model <- "exponential"
+    } else if(nt %% 8 == 6) {
+      psi <- function(x, i, j) {
+        me <- r_2[i, j]
+        hi <- r_3[i, j]
+        1.0 - exp(-0.5 * sign(x - 0.5 * (me + hi)) * log(2) * (hi - me) / (x - 0.5 * (me + hi)))
+      }
+      medium_range_model <- "bump"
+    } else if(nt %% 8 == 7) {
+      psi <- function(x, i, j) {
+        me <- r_2[i, j]
+        hi <- r_3[i, j]
+        1.0 - exp(-0.25 * log(2) * (hi - me)^2 / (x - 0.5 * (me + hi))^2)
+      }
+      medium_range_model <- "square_bump"
     }
 
     configuration <- ppjsdm::Configuration(x = runif(20, 0, 1), y = runif(20, 0, 1), types = c(rep("a", 9), rep("b", 11)))
@@ -62,12 +99,12 @@ test_that("Correct Papangelou conditional intensity value", {
     beta0 <- c(log(1), log(2))
     alpha <- cbind(c(0.5, 1), c(1, -0.5))
     gamma <- cbind(c(2, 0), c(0, -2))
-    r_1 <- matrix(runif(4, 0, 1), 2, 2)
+    r_1 <- matrix(runif(4, 0, 0.1), 2, 2)
     r_1 <- r_1 %*% t(r_1)
-    r_2 <- matrix(runif(4, 0, 1), 2, 2)
+    r_2 <- matrix(runif(4, 0, 0.1), 2, 2)
     r_2 <- r_2 %*% t(r_2)
-    r_3 <- matrix(runif(4, 0, 1), 2, 2)
-    r_3 <- r_3 %*% t(r_3)
+    r_3 <- matrix(runif(4, 0, 0.1), 2, 2)
+    r_3 <- r_2 + r_3 %*% t(r_3)
 
     beta <- matrix(4, 2, 1)
     covariate <- function(x, y) x + y
