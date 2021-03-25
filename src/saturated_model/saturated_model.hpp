@@ -35,7 +35,8 @@ const constexpr char* const medium_range_models[] = {
   "half_exponential",
   "exponential",
   "bump",
-  "square_bump"
+  "square_bump",
+  "tanh"
 };
 
 class Saturated_model {
@@ -151,6 +152,8 @@ private:
       return std::make_shared<Concrete_model<potentials::Medium_range_bump>>(medium_range, long_range);
     } else if(model_string == medium_range_models[7]) {
       return std::make_shared<Concrete_model<potentials::Medium_range_square_bump>>(medium_range, long_range);
+    } else if(model_string == medium_range_models[8]) {
+      return std::make_shared<Concrete_model<potentials::Medium_range_tanh>>(medium_range, long_range);
     } else {
       Rcpp::stop("Incorrect model entered. A call to show_medium_range_models() will show you the available choices.\n");
     }

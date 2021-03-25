@@ -57,40 +57,47 @@ test_that("Correct Papangelou conditional intensity value", {
       model <- "linear"
     }
 
-    if(nt %% 8 == 0) {
+    if(nt %% 9 == 0) {
       psi <- function(x, i, j) exp(-4 * log(2) * ((r_2[i, j] + r_3[i, j]) / 2 - x)^2 / (r_2[i, j] - r_3[i, j])^2)
       medium_range_model <- "square_exponential"
-    } else if(nt %% 8 == 1) {
+    } else if(nt %% 9 == 1) {
       psi <- function(x, i, j) ifelse(x > r_2[i, j], exp(-log(2) * (x - r_2[i, j])^2 / (r_3[i, j] - r_2[i, j])^2), 0.)
       medium_range_model <- "half_square_exponential"
-    } else if(nt %% 8 == 2) {
+    } else if(nt %% 9 == 2) {
       psi <- function(x, i, j) ifelse(x <= r_3[i, j] & x >= r_2[i, j], 1, 0)
       medium_range_model <- "Geyer"
-    } else if(nt %% 8 == 3) {
+    } else if(nt %% 9 == 3) {
       psi <- function(x, i, j) ifelse(2 * x <= r_2[i, j] + r_3[i, j],
                                       ifelse(x <= r_2[i, j], 0., 2. / (r_3[i, j] - r_2[i, j]) * (x - r_2[i, j])),
                                       ifelse(x >= r_3[i, j], 0., 2. / (r_3[i, j] - r_2[i, j]) * (r_3[i, j] - x)))
       medium_range_model <- "linear"
-    } else if(nt %% 8 == 4) {
+    } else if(nt %% 9 == 4) {
       psi <- function(x, i, j) ifelse(x >= r_2[i, j], exp(-log(2) * (x - r_2[i, j]) / (r_3[i, j] - r_2[i, j])), 0.)
       medium_range_model <- "half_exponential"
-    } else if(nt %% 8 == 5) {
+    } else if(nt %% 9 == 5) {
       psi <- function(x, i, j) exp(-2 * log(2) * abs(x - 0.5 * (r_3[i, j] + r_2[i, j])) / (r_3[i, j] - r_2[i, j]))
       medium_range_model <- "exponential"
-    } else if(nt %% 8 == 6) {
+    } else if(nt %% 9 == 6) {
       psi <- function(x, i, j) {
         me <- r_2[i, j]
         hi <- r_3[i, j]
         1.0 - exp(-0.5 * sign(x - 0.5 * (me + hi)) * log(2) * (hi - me) / (x - 0.5 * (me + hi)))
       }
       medium_range_model <- "bump"
-    } else if(nt %% 8 == 7) {
+    } else if(nt %% 9 == 7) {
       psi <- function(x, i, j) {
         me <- r_2[i, j]
         hi <- r_3[i, j]
         1.0 - exp(-0.25 * log(2) * (hi - me)^2 / (x - 0.5 * (me + hi))^2)
       }
       medium_range_model <- "square_bump"
+    } else if(nt %% 9 == 8) {
+      psi <- function(x, i, j) {
+        me <- r_2[i, j]
+        hi <- r_3[i, j]
+        1 / (2 * tanh(5 / 2)) * (tanh(5 / (hi - me) * (x - me)) + tanh(5 / (hi - me) * (hi - x)))
+      }
+      medium_range_model <- "tanh"
     }
 
     configuration <- ppjsdm::Configuration(x = runif(20, 0, 1), y = runif(20, 0, 1), types = c(rep("a", 9), rep("b", 11)))
