@@ -24,8 +24,24 @@ Rectangle_window_union <- local({
         stop("y_ranges should be a list of numeric vectors of length 2 representing intervals (x_min, x_max).")
       }
 
-      # TODO: Make sure lists are the same length
-      # TODO: Make sure they don't overlap
+      if(length(x_ranges) != length(y_ranges)) {
+        stop("The list of x/y ranges should be of the same length.")
+      }
+
+      # Make sure none of the rectangles overlap
+      if(length(x_ranges) > 1) {
+        for(i in 1:(length(x_ranges) - 1)) {
+          for(j in (i + 1):length(x_ranges)) {
+            if(x_ranges[[i]][1] < x_ranges[[j]][2] &&
+               x_ranges[[i]][2] > x_ranges[[j]][1] &&
+               y_ranges[[i]][2] > y_ranges[[j]][1] &&
+               y_ranges[[i]][1] < y_ranges[[i]][2] ) {
+              stop("Two of the given rectangles overlap.")
+            }
+          }
+        }
+      }
+
       structure(list(x_ranges = x_ranges, y_ranges = y_ranges), class = c("Rectangle_window_union"))
     }
   }
