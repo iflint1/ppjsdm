@@ -1,7 +1,7 @@
 #' Rectangle window union constructor
 #'
-#' @param x_ranges Range along the x-axis.
-#' @param y_ranges Range along the y-axis.
+#' @param x_ranges List of rectangle ranges along the x-axis.
+#' @param y_ranges List of rectangle ranges along the y-axis.
 #' @importFrom methods is
 #' @export
 Rectangle_window_union <- local({

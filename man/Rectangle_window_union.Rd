@@ -7,9 +7,9 @@
 Rectangle_window_union(x_ranges = list(c(0, 1)), y_ranges = list(c(0, 1)))
 }
 \arguments{
-\item{x_ranges}{Range along the x-axis.}
+\item{x_ranges}{List of rectangle ranges along the x-axis.}
 
-\item{y_ranges}{Range along the y-axis.}
+\item{y_ranges}{List of rectangle ranges along the y-axis.}
 }
 \description{
 Rectangle window union constructor
