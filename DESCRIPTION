@@ -9,11 +9,12 @@ Description: To be written.
 License: MIT + file LICENSE
 Imports: 
     GA,
+    ggplot2,
     glmnet,
     graphics,
     methods,
     Rcpp (>= 1.0.2),
-    spatstat,
+    spatstat (>= 2.0.0),
     spatstat.geom,
     stats
 Depends: R (>= 2.10.0)

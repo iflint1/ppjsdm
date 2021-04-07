@@ -195,7 +195,7 @@ print.Configuration <- function(x, ...) {
   cat(format(x))
 }
 
-#' @importFrom graphics legend par plot
+#' @importFrom ggplot2 aes coord_equal element_text geom_point ggplot ggtitle scale_color_manual scale_shape_manual theme theme_minimal xlab xlim ylab ylim
 #' @method plot Configuration
 #' @export
 plot.Configuration <- function(x, window, ...) {
@@ -208,27 +208,27 @@ plot.Configuration <- function(x, window, ...) {
       y_range <- y_range(window)
     }
     # TODO: Allow for user to supply colors & labels.
-    plot(x$x,
-         x$y,
-         xlim = x_range,
-         ylim = y_range,
-         col = droplevels(x$types),
-         xlab = "x",
-         ylab = "y",
-         main = "Points in the configuration",
-         ... )
 
-    par(mar = c(5, 4, 4, 20) + 0.1)
-
-    legend("topleft",
-           xpd = TRUE,
-           inset = c(1.03, 0),
-           legend = levels(droplevels(x$types)),
-           col = 1:length(levels(x$types)),
-           pch = 1,
-           pt.cex = 1,
-           cex = 0.8,
-           title = "Types of the points")
+    df <- data.frame(x = x$x, y = x$y, Types = droplevels(x$types), Marks = x$marks)
+    g <- ggplot(data = df)
+    if(!all(df$Marks == 1.)) {
+      g <- g + geom_point(aes(x = x, y = y, colour = Types, shape = Types, size = Marks))
+    } else {
+      g <- g + geom_point(aes(x = x, y = y, colour = Types, shape = Types))
+    }
+    g +
+      xlim(x_range[1], x_range[2]) +
+      ylim(y_range[1], y_range[2]) +
+      scale_color_manual(values = rep(c("#FF0000", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6"), nlevels(df$Types))) +
+      scale_shape_manual(values = rep(15:17, nlevels(df$Types))) +
+      xlab(NULL) +
+      ylab(NULL) +
+      ggtitle("") +
+      coord_equal() +
+      theme_minimal(base_size = 12) +
+      theme(plot.title = element_text(size = 11, hjust = 0.5),
+            axis.text.y = element_text(size = 12),
+            axis.text.x = element_text(size = 12))
   }
 }
 
