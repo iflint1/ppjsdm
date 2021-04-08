@@ -19,36 +19,27 @@
 
 #include <vector> // std::vector
 
-template<typename Model>
-inline SEXP rgibbs_helper(const Model& model, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t number_types) {
-  Rcpp::List samples(nsim);
-
-  for(R_xlen_t i(0); i < nsim; ++i) {
-    const auto sample(ppjsdm::simulate_coupling_from_the_past<std::vector<ppjsdm::Marked_point>>(model, number_types));
-    samples[i] = ppjsdm::make_R_configuration(sample, types);
-  }
-
-  return ppjsdm::get_list_or_first_element(samples, nsim == 1 && drop);
+template<typename Configuration, typename Model>
+inline auto sample(const Model& model, R_xlen_t number_types) {
+  return ppjsdm::simulate_coupling_from_the_past<Configuration>(model, number_types);
 }
 
 template<typename Configuration, typename Model>
-inline SEXP rgibbs_helper(const Model& model, const ppjsdm::Window& window, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t number_types, R_xlen_t steps) {
-  Rcpp::List samples(nsim);
-
-  for(R_xlen_t i(0); i < nsim; ++i) {
-    const auto sample(ppjsdm::simulate_metropolis_hastings<Configuration>(model, window, steps, number_types));
-    samples[i] = ppjsdm::make_R_configuration(sample, types);
-  }
-
-  return ppjsdm::get_list_or_first_element(samples, nsim == 1 && drop);
+inline auto sample(const Model& model, const ppjsdm::Window& window, R_xlen_t number_types, R_xlen_t steps) {
+  return ppjsdm::simulate_metropolis_hastings<Configuration>(model, window, steps, number_types);
 }
 
-template<typename Model, typename Configuration>
-inline SEXP rgibbs_helper(const Model& model, const ppjsdm::Window& window, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t number_types, R_xlen_t steps, const Configuration& starting_configuration) {
+template<typename Configuration, typename Model>
+inline auto sample(const Model& model, const ppjsdm::Window& window, R_xlen_t number_types, R_xlen_t steps, const Configuration& starting_configuration) {
+  return ppjsdm::simulate_metropolis_hastings<Configuration>(model, window, steps, number_types, starting_configuration);
+}
+
+template<typename Configuration, typename... Args>
+inline SEXP rgibbs_helper(R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, const Args&... args) {
   Rcpp::List samples(nsim);
 
   for(R_xlen_t i(0); i < nsim; ++i) {
-    const auto sample(ppjsdm::simulate_metropolis_hastings(model, window, steps, number_types, starting_configuration));
+    const auto sample(sample<Configuration>(args...));
     samples[i] = ppjsdm::make_R_configuration(sample, types);
   }
 
@@ -75,6 +66,7 @@ SEXP rgibbs_cpp(SEXP window,
                 Rcpp::NumericVector mark_range,
                 SEXP starting_configuration) {
   using Configuration_type = std::vector<ppjsdm::Marked_point>;
+
   const auto cpp_window(ppjsdm::Window(window, mark_range));
   const auto number_types(beta0.size());
   if(steps == 0) {
@@ -90,7 +82,7 @@ SEXP rgibbs_cpp(SEXP window,
                                                                                                         medium_range,
                                                                                                         long_range,
                                                                                                         saturation);
-    return rgibbs_helper(exponential_model, nsim, types, drop, number_types);
+    return rgibbs_helper<Configuration_type>(nsim, types, drop, exponential_model, number_types);
 
   } else {
     const ppjsdm::Truncated_exponential_family_model<Rcpp::NumericVector> exponential_model(beta0,
@@ -111,9 +103,9 @@ SEXP rgibbs_cpp(SEXP window,
       for(decltype(ppjsdm::size(wrapped_configuration)) j(0); j < length_configuration; ++j) {
         vector_starting_configuration[j] = wrapped_configuration[j];
       }
-      return rgibbs_helper(exponential_model, cpp_window, nsim, types, drop, number_types, steps, vector_starting_configuration);
+      return rgibbs_helper<Configuration_type>(nsim, types, drop, exponential_model, cpp_window, number_types, steps, vector_starting_configuration);
     } else {
-      return rgibbs_helper<Configuration_type>(exponential_model, cpp_window, nsim, types, drop, number_types, steps);
+      return rgibbs_helper<Configuration_type>(nsim, types, drop, exponential_model, cpp_window, number_types, steps);
     }
   }
 }
