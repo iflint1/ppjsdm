@@ -1,5 +1,4 @@
 library(ppjsdm)
-library(spatstat)
 
 context("compute_papangelou")
 
@@ -101,8 +100,12 @@ test_that("Correct Papangelou conditional intensity value", {
     }
 
     configuration <- ppjsdm::Configuration(x = runif(20, 0, 1), y = runif(20, 0, 1), types = c(rep("a", 9), rep("b", 11)))
-    configuration_a <- ppjsdm::Configuration(x = x_coordinates(configuration)[types(configuration) == "a"], y = y_coordinates(configuration)[types(configuration) == "a"], types = types(configuration)[types(configuration) == "a"])
-    configuration_b <- ppjsdm::Configuration(x = x_coordinates(configuration)[types(configuration) == "b"], y = y_coordinates(configuration)[types(configuration) == "b"], types = types(configuration)[types(configuration) == "b"])
+    configuration_a <- ppjsdm::Configuration(x = ppjsdm::x_coordinates(configuration)[ppjsdm::types(configuration) == "a"],
+                                             y = ppjsdm::y_coordinates(configuration)[ppjsdm::types(configuration) == "a"],
+                                             types = ppjsdm::types(configuration)[ppjsdm::types(configuration) == "a"])
+    configuration_b <- ppjsdm::Configuration(x = ppjsdm::x_coordinates(configuration)[ppjsdm::types(configuration) == "b"],
+                                             y = ppjsdm::y_coordinates(configuration)[ppjsdm::types(configuration) == "b"],
+                                             types = ppjsdm::types(configuration)[ppjsdm::types(configuration) == "b"])
     beta0 <- c(log(1), log(2))
     alpha <- cbind(c(0.5, 1), c(1, -0.5))
     gamma <- cbind(c(2, 0), c(0, -2))
@@ -115,8 +118,8 @@ test_that("Correct Papangelou conditional intensity value", {
 
     beta <- matrix(4, 2, 1)
     covariate <- function(x, y) x + y
-    x <- runif(2, 0, 1)
-    window <- owin(c(0, 1), c(0, 1))
+    x <- stats::runif(2, 0, 1)
+    window <- spatstat.geom::owin(c(0, 1), c(0, 1))
     # IMPORTANT NOTE: I'm assuming in places below that type = 1, so you can't change type below and expect everything to work.
     type <- 1
 
