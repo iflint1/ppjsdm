@@ -14,7 +14,6 @@ Imports:
     graphics,
     methods,
     Rcpp (>= 1.0.2),
-    spatstat (>= 2.0.0),
     spatstat.geom,
     stats
 Depends: R (>= 2.10.0)
