@@ -20,18 +20,18 @@
 #include <vector> // std::vector
 
 template<typename Configuration, typename Model>
-inline auto sample(const Model& model, R_xlen_t number_types) {
-  return ppjsdm::simulate_coupling_from_the_past<Configuration>(model, number_types);
+inline auto sample(const Model& model) {
+  return ppjsdm::simulate_coupling_from_the_past<Configuration>(model);
 }
 
 template<typename Configuration, typename Model>
-inline auto sample(const Model& model, const ppjsdm::Window& window, R_xlen_t number_types, R_xlen_t steps) {
-  return ppjsdm::simulate_metropolis_hastings<Configuration>(model, window, steps, number_types);
+inline auto sample(const Model& model, R_xlen_t steps) {
+  return ppjsdm::simulate_metropolis_hastings<Configuration>(model, steps);
 }
 
 template<typename Configuration, typename Model>
-inline auto sample(const Model& model, const ppjsdm::Window& window, R_xlen_t number_types, R_xlen_t steps, const Configuration& starting_configuration) {
-  return ppjsdm::simulate_metropolis_hastings<Configuration>(model, window, steps, number_types, starting_configuration);
+inline auto sample(const Model& model, R_xlen_t steps, const Configuration& starting_configuration) {
+  return ppjsdm::simulate_metropolis_hastings<Configuration>(model, steps, starting_configuration);
 }
 
 template<typename Configuration, typename... Args>
@@ -68,8 +68,6 @@ SEXP rgibbs_cpp(SEXP window,
   using Configuration_type = std::vector<ppjsdm::Marked_point>;
 
   const auto cpp_window(ppjsdm::Window(window, mark_range));
-  const auto number_types(beta0.size());
-
   const ppjsdm::Truncated_exponential_family_model_over_window<Rcpp::NumericVector> exponential_model(cpp_window,
                                                                                                       beta0,
                                                                                                       model,
@@ -84,7 +82,7 @@ SEXP rgibbs_cpp(SEXP window,
                                                                                                       saturation);
 
   if(steps == 0) {
-    return rgibbs_helper<Configuration_type>(nsim, types, drop, exponential_model, number_types);
+    return rgibbs_helper<Configuration_type>(nsim, types, drop, exponential_model);
   } else {
     if(starting_configuration != R_NilValue) {
       const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::wrap(starting_configuration));
@@ -93,9 +91,9 @@ SEXP rgibbs_cpp(SEXP window,
       for(decltype(ppjsdm::size(wrapped_configuration)) j(0); j < length_configuration; ++j) {
         vector_starting_configuration[j] = wrapped_configuration[j];
       }
-      return rgibbs_helper<Configuration_type>(nsim, types, drop, exponential_model, cpp_window, number_types, steps, vector_starting_configuration);
+      return rgibbs_helper<Configuration_type>(nsim, types, drop, exponential_model, steps, vector_starting_configuration);
     } else {
-      return rgibbs_helper<Configuration_type>(nsim, types, drop, exponential_model, cpp_window, number_types, steps);
+      return rgibbs_helper<Configuration_type>(nsim, types, drop, exponential_model, steps);
     }
   }
 }

@@ -8,7 +8,8 @@
 namespace ppjsdm {
 
 template<typename Configuration, typename Model>
-inline auto simulate_coupling_from_the_past(const Model& model, R_xlen_t number_types) {
+inline auto simulate_coupling_from_the_past(const Model& model) {
+  const auto number_types(model.get_number_types());
   auto Z(make_backwards_markov_chain<Configuration>(model, number_types));
   Z.extend_until_T0();
   while(true) {
