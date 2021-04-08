@@ -189,12 +189,16 @@ public:
     covariates_(covariates) {}
 
   template<typename Point, typename Configuration>
-  double compute_papangelou(const Point& point, const Configuration& configuration) const {
+  double compute_log_papangelou(const Point& point, const Configuration& configuration) const {
     double alpha_dispersion(detail::compute_alpha_dot_dispersion(point, alpha_, dispersion_, configuration));
     double gamma_dispersion(detail::compute_alpha_dot_dispersion(point, gamma_, medium_range_dispersion_, configuration));
     double beta_covariates(detail::compute_beta_dot_covariates(point, beta_, covariates_));
-    return std::exp(beta0_[get_type(point)]
-                      + beta_covariates + alpha_dispersion + gamma_dispersion);
+    return beta0_[get_type(point)] + beta_covariates + alpha_dispersion + gamma_dispersion;
+  }
+
+  template<typename Point, typename Configuration>
+  double compute_papangelou(const Point& point, const Configuration& configuration) const {
+    return std::exp(compute_log_papangelou(point, configuration));
   }
 
   auto get_number_types() const {
