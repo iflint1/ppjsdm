@@ -186,32 +186,32 @@ plot_papangelou(model = model,
                 covariates = covariates)
 ```
 
-# Multiple species setting
+<!-- # Multiple species setting -->
 
-The package is in fact meant to work in a multiple species setting, so let us give an example in that case.
+<!-- The package is in fact meant to work in a multiple species setting, so let us give an example in that case. -->
 
-```{r}
-beta0 <- c(4, 4)
-alpha <- cbind(c(-1, 0.1), c(0.1, -0.5))
-gamma <- cbind(c(-0.5, 0), c(0, -0.5))
-model <- "square_bump"
-medium_range_model <- "square_exponential"
-short_range <- cbind(c(0.05, 0.1), c(0.1, 0.2))
-medium_range <- cbind(c(0.075, 0), c(0, 0.2))
-long_range <- cbind(c(0.15, 0), c(0, 0.4))
-```
+<!-- ```{r} -->
+<!-- beta0 <- c(4, 4) -->
+<!-- alpha <- cbind(c(-1, 0.1), c(0.1, -0.5)) -->
+<!-- gamma <- cbind(c(-0.5, 0), c(0, -0.5)) -->
+<!-- model <- "square_bump" -->
+<!-- medium_range_model <- "square_exponential" -->
+<!-- short_range <- cbind(c(0.05, 0.1), c(0.1, 0.2)) -->
+<!-- medium_range <- cbind(c(0.075, 0), c(0, 0.2)) -->
+<!-- long_range <- cbind(c(0.15, 0), c(0, 0.4)) -->
+<!-- ``` -->
 
-As in the previous sections, we sample from this distribution and compute the corresponding Papangelou conditional intensity for an individual of the first species.
+<!-- As in the previous sections, we sample from this distribution and compute the corresponding Papangelou conditional intensity for an individual of the first species. -->
 
-```{r}
-plot_papangelou(model = model,
-                medium_range_model = medium_range_model,
-                alpha = alpha,
-                beta0 = beta0,
-                gamma = gamma,
-                short_range = short_range,
-                medium_range = medium_range,
-                long_range = long_range)
-```
+<!-- ```{r} -->
+<!-- plot_papangelou(model = model, -->
+<!--                 medium_range_model = medium_range_model, -->
+<!--                 alpha = alpha, -->
+<!--                 beta0 = beta0, -->
+<!--                 gamma = gamma, -->
+<!--                 short_range = short_range, -->
+<!--                 medium_range = medium_range, -->
+<!--                 long_range = long_range) -->
+<!-- ``` -->
 
-It can be seen that the new individual exhibits repulsion from individuals of its own species (the circles) and is instead attracted to individuals of the other species (the triangles).
+<!-- It can be seen that the new individual exhibits repulsion from individuals of its own species (the circles) and is instead attracted to individuals of the other species (the triangles). -->
