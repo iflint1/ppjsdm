@@ -285,8 +285,7 @@ public:
     }
   }
 
-  template<typename Point>
-  auto get_upper_bound_approximate_ppp_intensity(const Point& point) const {
+  auto get_upper_bound_approximate_ppp_intensity() const {
     const auto number_types(Model::beta0_.size());
     std::vector<double> upper_bound(number_types);
     using size_t = decltype(Model::beta0_.size());

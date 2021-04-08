@@ -69,33 +69,23 @@ SEXP rgibbs_cpp(SEXP window,
 
   const auto cpp_window(ppjsdm::Window(window, mark_range));
   const auto number_types(beta0.size());
-  if(steps == 0) {
-    const ppjsdm::Truncated_exponential_family_model_over_window<Rcpp::NumericVector> exponential_model(cpp_window,
-                                                                                                        beta0,
-                                                                                                        model,
-                                                                                                        medium_range_model,
-                                                                                                        alpha,
-                                                                                                        beta,
-                                                                                                        gamma,
-                                                                                                        covariates,
-                                                                                                        short_range,
-                                                                                                        medium_range,
-                                                                                                        long_range,
-                                                                                                        saturation);
-    return rgibbs_helper<Configuration_type>(nsim, types, drop, exponential_model, number_types);
 
+  const ppjsdm::Truncated_exponential_family_model_over_window<Rcpp::NumericVector> exponential_model(cpp_window,
+                                                                                                      beta0,
+                                                                                                      model,
+                                                                                                      medium_range_model,
+                                                                                                      alpha,
+                                                                                                      beta,
+                                                                                                      gamma,
+                                                                                                      covariates,
+                                                                                                      short_range,
+                                                                                                      medium_range,
+                                                                                                      long_range,
+                                                                                                      saturation);
+
+  if(steps == 0) {
+    return rgibbs_helper<Configuration_type>(nsim, types, drop, exponential_model, number_types);
   } else {
-    const ppjsdm::Truncated_exponential_family_model<Rcpp::NumericVector> exponential_model(beta0,
-                                                                                            model,
-                                                                                            medium_range_model,
-                                                                                            alpha,
-                                                                                            beta,
-                                                                                            gamma,
-                                                                                            covariates,
-                                                                                            short_range,
-                                                                                            medium_range,
-                                                                                            long_range,
-                                                                                            saturation);
     if(starting_configuration != R_NilValue) {
       const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::wrap(starting_configuration));
       const auto length_configuration(ppjsdm::size(wrapped_configuration));
