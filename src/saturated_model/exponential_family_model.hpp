@@ -21,8 +21,9 @@ namespace detail {
 template<typename Point, typename Beta, typename Covariates>
 inline auto compute_beta_dot_covariates(const Point& point, const Beta& beta, const Covariates& covariates) {
   double sum(0);
-  using size_t = decltype(covariates.size());
-  for(size_t i(0); i < covariates.size(); ++i) {
+  const auto number_covariates(covariates.size());
+  using size_t = std::remove_cv_t<decltype(covariates.size())>;
+  for(size_t i(0); i < number_covariates; ++i) {
     sum += beta(get_type(point), i) * covariates[i](point);
   }
   return sum;
@@ -36,10 +37,11 @@ inline auto compute_beta_dot_covariates_maximum(int type, const Beta& beta, cons
 
 template<typename Beta, typename Covariates>
 inline auto compute_beta_dot_covariates_maximum(const Beta& beta, const Covariates& covariates) {
-  const auto number_types(beta.nrow());
-  std::vector<double> result(number_types);
+  const auto number_covariates(beta.nrow());
+  std::vector<double> result(number_covariates);
   if(covariates.size() > 0) {
-    for(R_xlen_t i(0); i < number_types; ++i) {
+    using size_t = std::remove_cv_t<decltype(number_covariates)>;
+    for(size_t i(0); i < number_covariates; ++i) {
       result[i] = compute_beta_dot_covariates_maximum(i, beta, covariates);
     }
   }
@@ -49,8 +51,10 @@ inline auto compute_beta_dot_covariates_maximum(const Beta& beta, const Covariat
 template<typename Point, typename Alpha>
 inline bool is_alpha_zero(const Point& point,
                           const Alpha& alpha) {
-  for(R_xlen_t i(0); i < alpha.ncol(); ++i) {
-    if(alpha(get_type(point), i) != 0) {
+  const auto number_types(alpha.ncol());
+  using size_t = std::remove_cv_t<decltype(number_types)>;
+  for(size_t type(0); type < number_types; ++type) {
+    if(alpha(get_type(point), type) != 0) {
       return false;
     }
   }
@@ -60,8 +64,10 @@ inline bool is_alpha_zero(const Point& point,
 template<typename Point, typename Alpha>
 inline bool is_alpha_non_negative(const Point& point,
                                   const Alpha& alpha) {
-  for(R_xlen_t i(0); i < alpha.ncol(); ++i) {
-    if(alpha(get_type(point), i) < 0) {
+  const auto number_types(alpha.ncol());
+  using size_t = std::remove_cv_t<decltype(number_types)>;
+  for(size_t type(0); type < number_types; ++type) {
+    if(alpha(get_type(point), type) < 0) {
       return false;
     }
   }
@@ -71,8 +77,10 @@ inline bool is_alpha_non_negative(const Point& point,
 template<typename Point, typename Alpha>
 inline bool is_alpha_non_positive(const Point& point,
                                   const Alpha& alpha) {
-  for(R_xlen_t i(0); i < alpha.ncol(); ++i) {
-    if(alpha(get_type(point), i) > 0) {
+  const auto number_types(alpha.ncol());
+  using size_t = std::remove_cv_t<decltype(number_types)>;
+  for(size_t type(0); type < number_types; ++type) {
+    if(alpha(get_type(point), type) > 0) {
       return false;
     }
   }
@@ -89,9 +97,11 @@ inline auto compute_alpha_dot_dispersion(const Point& point,
   }
   const auto dispersion_value(compute_dispersion(dispersion, point, alpha.nrow(), configurations...));
   double sum(0);
-  for(R_xlen_t i(0); i < alpha.ncol(); ++i) {
-    if(dispersion_value[i] != 0) { // This ensures that \infty \times 0 = 0.
-      sum += alpha(get_type(point), i) * dispersion_value[i];
+  const auto number_types(alpha.ncol());
+  using size_t = std::remove_cv_t<decltype(number_types)>;
+  for(size_t type(0); type < number_types; ++type) {
+    if(dispersion_value[type] != 0) { // This ensures that \infty \times 0 = 0.
+      sum += alpha(get_type(point), type) * dispersion_value[type];
     }
   }
   return sum;
@@ -107,10 +117,12 @@ inline auto compute_positive_alpha_dot_dispersion(const Point& point,
   }
   const auto dispersion_value(compute_dispersion(dispersion, point, alpha.nrow(), configurations...));
   double sum(0);
-  for(R_xlen_t i(0); i < alpha.ncol(); ++i) {
-    const auto a(alpha(get_type(point), i));
+  const auto number_types(alpha.ncol());
+  using size_t = std::remove_cv_t<decltype(number_types)>;
+  for(size_t type(0); type < number_types; ++type) {
+    const auto a(alpha(get_type(point), type));
     if(a > 0) {
-      sum += a * dispersion_value[i];
+      sum += a * dispersion_value[type];
     }
   }
   return sum;
@@ -126,10 +138,12 @@ inline auto compute_negative_alpha_dot_dispersion(const Point& point,
   }
   const auto dispersion_value(compute_dispersion(dispersion, point, alpha.nrow(), configurations...));
   double sum(0);
-  for(R_xlen_t i(0); i < alpha.ncol(); ++i) {
-    const auto a(alpha(get_type(point), i));
+  const auto number_types(alpha.ncol());
+  using size_t = std::remove_cv_t<decltype(number_types)>;
+  for(size_t type(0); type < number_types; ++type) {
+    const auto a(alpha(get_type(point), type));
     if(a < 0) {
-      sum += a * dispersion_value[i];
+      sum += a * dispersion_value[type];
     }
   }
   return sum;
@@ -140,8 +154,10 @@ inline auto compute_alpha_dot_dispersion_maximum(const Alpha& alpha,
                                                  double dispersion_maximum,
                                                  int type) {
   double sum(0.);
-  for(R_xlen_t j(0); j < alpha.ncol(); ++j) {
-    const auto a(alpha(type, j));
+  const auto number_types(alpha.ncol());
+  using size_t = std::remove_cv_t<decltype(number_types)>;
+  for(size_t other_type(0); other_type < number_types; ++other_type) {
+    const auto a(alpha(type, other_type));
     if(a > 0.) {
       sum += a;
     }
@@ -158,8 +174,9 @@ template<typename Alpha>
 inline auto compute_alpha_dot_dispersion_maximum(const Alpha& alpha, double dispersion_maximum) {
   const auto number_types(alpha.nrow());
   std::vector<double> result(number_types);
-  for(R_xlen_t i(0); i < number_types; ++i) {
-    result[i] = compute_alpha_dot_dispersion_maximum(alpha, dispersion_maximum, i);
+  using size_t = std::remove_cv_t<decltype(number_types)>;
+  for(size_t type(0); type < number_types; ++type) {
+    result[type] = compute_alpha_dot_dispersion_maximum(alpha, dispersion_maximum, type);
   }
   return result;
 }
@@ -260,11 +277,12 @@ public:
   // TODO: This should somehow be restricted to window.
   auto get_integral() const {
     double integral(0);
-    const auto number_types(Model::beta_.nrow());
-    for(R_xlen_t i(0); i < number_types; ++i) {
-      integral += Model::covariates_.get_integral_of_dot(window_, [i, this](double x) {
-        return std::exp(x + Model::beta0_[i] + dot_dispersion_maximum_[i]);
-      }, Model::beta_(i, Rcpp::_));
+    const auto number_types(Model::get_number_types());
+    using size_t = std::remove_cv_t<decltype(number_types)>;
+    for(size_t type(0); type < number_types; ++type) {
+      integral += Model::covariates_.get_integral_of_dot(window_, [type, this](double x) {
+        return std::exp(x + Model::beta0_[type] + dot_dispersion_maximum_[type]);
+      }, Model::beta_(type, Rcpp::_));
     }
     return integral;
   }
@@ -281,32 +299,34 @@ public:
   }
 
   auto get_upper_bound_approximate_ppp_intensity() const {
-    const auto number_types(Model::beta0_.size());
+    const auto number_types(Model::get_number_types());
     std::vector<double> upper_bound(number_types);
-    using size_t = decltype(Model::beta0_.size());
-    for(size_t i(0); i < number_types; ++i) {
-      const auto value(std::exp(Model::beta0_[i] + beta_dot_covariates_maximum_[i]));
+    using size_t = std::remove_cv_t<decltype(number_types)>;
+    for(size_t type(0); type < number_types; ++type) {
+      const auto value(Model::beta0_[type] + beta_dot_covariates_maximum_[type]);
       if(std::isinf(value)) {
+        Rcpp::Rcout << Model::beta0_[type] << '\n';
+        Rcpp::Rcout << beta_dot_covariates_maximum_[type] << '\n';
         Rcpp::stop("Infinite value obtained as the bound to the approximate PPP intensity.");
       }
-      upper_bound[i] = value;
+      upper_bound[type] = std::exp(value);
     }
     return upper_bound;
   }
 
   auto get_upper_bound() const {
-    const auto number_types(Model::beta0_.size());
+    const auto number_types(Model::get_number_types());
     std::vector<double> upper_bound(number_types);
-    using size_t = decltype(Model::beta0_.size());
-    for(size_t i(0); i < number_types; ++i) {
-      const auto value(std::exp(Model::beta0_[i] + dot_dispersion_maximum_[i] + beta_dot_covariates_maximum_[i]));
+    using size_t = std::remove_cv_t<decltype(number_types)>;
+    for(size_t type(0); type < number_types; ++type) {
+      const auto value(Model::beta0_[type] + dot_dispersion_maximum_[type] + beta_dot_covariates_maximum_[type]);
       if(std::isinf(value)) {
-        Rcpp::Rcout << Model::beta0_[i] << '\n';
-        Rcpp::Rcout << dot_dispersion_maximum_[i] << '\n';
-        Rcpp::Rcout << beta_dot_covariates_maximum_[i] << '\n';
+        Rcpp::Rcout << Model::beta0_[type] << '\n';
+        Rcpp::Rcout << dot_dispersion_maximum_[type] << '\n';
+        Rcpp::Rcout << beta_dot_covariates_maximum_[type] << '\n';
         Rcpp::stop("Infinite value obtained as the bound to the Papangelou intensity.");
       }
-      upper_bound[i] = value;
+      upper_bound[type] = std::exp(value);
     }
     return upper_bound;
   }
