@@ -21,6 +21,7 @@
 #' @param medium_range_model String representing the model to use You can check the currently authorised models with a call to `show_medium_range_models()`.
 #' @param drop If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration. Default is TRUE.
 #' @param mark_range Range of additional marks to give to the points.
+#' @param starting_configuration Optional configuration to start with when using the Metropolis-Hastings algorithm (steps > 0).
 #' @export
 rgibbs <- function(window,
                    alpha,
@@ -38,7 +39,8 @@ rgibbs <- function(window,
                    steps = 0,
                    nsim = 1,
                    drop = TRUE,
-                   mark_range = c(1.0, 1.0)) {
+                   mark_range = c(1.0, 1.0),
+                   starting_configuration) {
   parameters <- model_parameters(window = window,
                                  alpha = alpha,
                                  gamma = gamma,
@@ -52,6 +54,9 @@ rgibbs <- function(window,
                                  types = types,
                                  model = model,
                                  medium_range_model = medium_range_model)
+  if(missing(starting_configuration)) {
+    starting_configuration <- NULL
+  }
   rgibbs_cpp(window = parameters$window,
              alpha = parameters$alpha,
              beta0 = parameters$beta0,
@@ -68,5 +73,6 @@ rgibbs <- function(window,
              model = parameters$model,
              medium_range_model = parameters$medium_range_model,
              drop = drop,
-             mark_range = mark_range)
+             mark_range = mark_range,
+             starting_configuration = starting_configuration)
 }

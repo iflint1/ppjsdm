@@ -21,7 +21,8 @@ rgibbs(
   steps = 0,
   nsim = 1,
   drop = TRUE,
-  mark_range = c(1, 1)
+  mark_range = c(1, 1),
+  starting_configuration
 )
 }
 \arguments{
@@ -61,6 +62,8 @@ Default is 0.}
 \item{drop}{If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration. Default is TRUE.}
 
 \item{mark_range}{Range of additional marks to give to the points.}
+
+\item{starting_configuration}{Optional configuration to start with when using the Metropolis-Hastings algorithm (steps > 0).}
 }
 \description{
 Sample a multivariate Gibbs point processes

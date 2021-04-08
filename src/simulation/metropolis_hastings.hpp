@@ -12,11 +12,18 @@ namespace ppjsdm {
 
 template<typename Configuration, typename Model>
 inline auto simulate_metropolis_hastings(const Model& model, const Window& window, unsigned long long int steps, R_xlen_t number_types) {
+  // Start from a rough approximate draw and go from there.
+  Configuration points(approximate_draw<Configuration>(model));
+
+  return simulate_metropolis_hastings(model, window, steps, number_types, points);
+}
+
+template<typename Configuration, typename Model>
+inline auto simulate_metropolis_hastings(const Model& model, const Window& window, unsigned long long int steps, R_xlen_t number_types, const Configuration& starting_configuration) {
   constexpr double prob(0.5);
   const double precomputed_constant((1 - prob) * window.volume() * static_cast<double>(number_types) / prob);
 
-  // Start from a rough approximate draw and go from there.
-  Configuration points(approximate_draw<Configuration>(model));
+  Configuration points(starting_configuration);
 
   for(decltype(steps) k(0); k < steps; ++k) {
     if(unif_rand() <= prob) {
