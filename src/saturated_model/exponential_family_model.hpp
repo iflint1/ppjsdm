@@ -257,11 +257,6 @@ public:
     return beta_covariates - beta_covariates_maximum;
   }
 
-  template<typename Point>
-  auto get_log_approximate_ppp_intensity(const Point& point) const {
-    return get_log_normalized_bounding_intensity(point);
-  }
-
   // TODO: This should somehow be restricted to window.
   auto get_integral() const {
     double integral(0);
@@ -416,7 +411,7 @@ struct approximate_draw_helper<Configuration, Truncated_exponential_family_model
   static auto get(const Truncated_exponential_family_model_over_window<Lambda>& model) {
     const auto configuration(simulate_inhomogeneous_ppp<Configuration>(model.get_window(),
                                                                        [&model](const auto& point) {
-                                                                         return model.get_log_approximate_ppp_intensity(point);
+                                                                         return model.get_log_normalized_bounding_intensity(point);
                                                                        },
                                                                        model.get_upper_bound_approximate_ppp_intensity(),
                                                                        model.get_number_types()));
