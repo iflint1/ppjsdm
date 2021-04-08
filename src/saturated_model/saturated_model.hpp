@@ -190,13 +190,13 @@ public:
 
     if(static_cast<unsigned long long int>(varphi.get_saturation())
          >= static_cast<unsigned long long int>(size(configurations...))) {
-      for_each_container([&count_vector, &point, &varphi, &configurations...](const auto& current_point) {
+      for_each_container([&count_vector, &point, &varphi](const auto& current_point) {
         if(apply_potential(varphi, current_point, point) > 0) {
           count_vector[get_type(current_point)] += 2;
         }
       }, configurations...);
     } else {
-      for_each_container([&count_vector, &point, &varphi, saturation = varphi.get_saturation(), &configurations...](const auto& current_point) {
+      for_each_container([&count_vector, &point, &varphi, saturation = varphi.get_saturation()](const auto& current_point) {
         if(count_vector[get_type(current_point)] < saturation && apply_potential(varphi, current_point, point) > 0) {
           ++count_vector[get_type(current_point)];
         }

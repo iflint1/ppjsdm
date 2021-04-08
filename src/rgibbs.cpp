@@ -19,6 +19,11 @@
 
 #include <vector> // std::vector
 
+namespace detail {
+
+template<typename Configuration, typename... Args>
+inline Configuration sample(Args&&... args);
+
 template<typename Configuration, typename Model>
 inline auto sample(const Model& model) {
   return ppjsdm::simulate_coupling_from_the_past<Configuration>(model);
@@ -34,12 +39,14 @@ inline auto sample(const Model& model, R_xlen_t steps, const Configuration& star
   return ppjsdm::simulate_metropolis_hastings<Configuration>(model, steps, starting_configuration);
 }
 
+} // namespace detail
+
 template<typename Configuration, typename... Args>
 inline SEXP rgibbs_helper(R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, const Args&... args) {
   Rcpp::List samples(nsim);
 
   for(R_xlen_t i(0); i < nsim; ++i) {
-    const auto sample(sample<Configuration>(args...));
+    const auto sample(detail::sample<Configuration>(args...));
     samples[i] = ppjsdm::make_R_configuration(sample, types);
   }
 
