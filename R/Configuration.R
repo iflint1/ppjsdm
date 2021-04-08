@@ -195,7 +195,7 @@ print.Configuration <- function(x, ...) {
   cat(format(x))
 }
 
-#' @importFrom ggplot2 aes coord_equal element_text geom_point ggplot ggtitle scale_color_manual scale_shape_manual theme theme_minimal xlab xlim ylab ylim
+#' @importFrom ggplot2 aes_string coord_equal element_text geom_point ggplot ggtitle scale_color_manual scale_shape_manual theme theme_minimal xlab xlim ylab ylim
 #' @method plot Configuration
 #' @export
 plot.Configuration <- function(x, window, ...) {
@@ -212,9 +212,9 @@ plot.Configuration <- function(x, window, ...) {
     df <- data.frame(x = x$x, y = x$y, Types = droplevels(x$types), Marks = x$marks)
     g <- ggplot(data = df)
     if(!all(df$Marks == 1.)) {
-      g <- g + geom_point(aes(x = x, y = y, colour = Types, shape = Types, size = Marks))
+      g <- g + geom_point(aes_string(x = 'x', y = 'y', colour = 'Types', shape = 'Types', size = 'Marks'))
     } else {
-      g <- g + geom_point(aes(x = x, y = y, colour = Types, shape = Types))
+      g <- g + geom_point(aes_string(x = 'x', y = 'y', colour = 'Types', shape = 'Types'))
     }
     g +
       xlim(x_range[1], x_range[2]) +
@@ -285,6 +285,7 @@ as.ppp.Configuration <- function(X, W, ..., fatal = TRUE) {
 #' Number of points in a configuration
 #'
 #' @param x Configuration.
+#' @method length Configuration
 #' @export
 length.Configuration <- function(x) {
   length(x$x)
