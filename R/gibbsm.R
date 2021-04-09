@@ -404,7 +404,8 @@ gibbsm <- function(configuration_list,
               aic = aic,
               bic = bic,
               window = window,
-              fit_algorithm = fitted$fit_algorithm)
+              fit_algorithm = fitted$fit_algorithm,
+              nthreads = nthreads)
 
   if(estimate_radii) {
     short_range <- best_short

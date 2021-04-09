@@ -20,24 +20,51 @@
 #include "utility/window.hpp"
 
 #include <algorithm> // std::remove_if
-#include <cmath> // std::log
+#include <cmath> // std::floor, std::log, std::sqrt
 #include <iterator> // std::next
 #include <string> // std::string, std::to_string
+#include <tuple> // std::make_pair, std::pair
 #include <vector> // std::vector
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
+namespace detail {
+
+// Using linear encoding for the triangular matrices used in the computation of A2/A3.
+// Reference for the formulas here:
+// https://stackoverflow.com/questions/27086195/linear-index-upper-triangular-matrix
+inline R_xlen_t encode_linear(R_xlen_t i, R_xlen_t j, R_xlen_t n) {
+  return n * (n - 1) / 2 - (n - i) * (n - i - 1) / 2 + j - i - 1;
+}
+
+inline std::pair<R_xlen_t, R_xlen_t> decode_linear(R_xlen_t k, R_xlen_t n) {
+  const auto i(n - 2 - static_cast<R_xlen_t>(std::floor(std::sqrt(-8 * k + 4 * n * (n - 1) - 7) / 2. - 0.5)));
+  return std::make_pair(i,
+                        k + i + 1 - n * (n - 1) / 2 + (n - i) * ((n - i) - 1) / 2);
+}
+
+} // namespace detail
 
 template<typename Configuration, typename Model>
 Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
-                                         const ppjsdm::Im_list_wrapper& covariates,
-                                         const ppjsdm::Saturated_model& dispersion_model,
-                                         const ppjsdm::Saturated_model& medium_dispersion_model,
-                                         const Model& model,
-                                         int number_types,
-                                         double rho,
-                                         Rcpp::NumericVector coefficients_vector,
-                                         Rcpp::NumericMatrix regressors,
-                                         Rcpp::List data_list,
-                                         Rcpp::LogicalMatrix estimate_alpha,
-                                         Rcpp::LogicalMatrix estimate_gamma) {
+                                        const ppjsdm::Im_list_wrapper& covariates,
+                                        const ppjsdm::Saturated_model& dispersion_model,
+                                        const ppjsdm::Saturated_model& medium_dispersion_model,
+                                        const Model& model,
+                                        int number_types,
+                                        double rho,
+                                        Rcpp::NumericVector coefficients_vector,
+                                        Rcpp::NumericMatrix regressors,
+                                        Rcpp::List data_list,
+                                        Rcpp::LogicalMatrix estimate_alpha,
+                                        Rcpp::LogicalMatrix estimate_gamma,
+                                        int nthreads) {
+#ifdef _OPENMP
+  omp_set_num_threads(nthreads);
+#endif
+
   using size_t = ppjsdm::size_t<Configuration>;
 
   const auto number_parameters_struct(ppjsdm::get_number_parameters(number_types, covariates.size(), estimate_alpha, estimate_gamma));
@@ -143,43 +170,126 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
     }
   }
 
-  // Finally, add A2 and A3.
+  // Parallel computations done before adding A2 and A3
+  const auto precomputed_size(regressors.nrow() * (regressors.nrow() - 1) / 2);
+
+  std::vector<R_xlen_t> non_zero_responses;
+  for(R_xlen_t k(0); k < regressors.nrow() * (regressors.nrow() - 1) / 2; ++k) {
+    const auto pr(detail::decode_linear(k, regressors.nrow()));
+    if(response[pr.first] == 1 && response[pr.second] == 1) {
+      non_zero_responses.emplace_back(k);
+    }
+  }
+
+  using dispersion_t = decltype(ppjsdm::compute_dispersion(dispersion_model,
+                                                           ppjsdm::Marked_point(x[0], y[0], type[0] - 1, mark[0]),
+                                                           number_types,
+                                                           configuration));
+  using papangelou_t = decltype(model.compute_papangelou(ppjsdm::Marked_point(x[0], y[0], type[0] - 1, mark[0]),
+                                                         configuration));
+  using vector_t = std::vector<dispersion_t>;
+  using vector_papangelou_t = std::vector<papangelou_t>;
+
+  vector_t precomputed_short_i(precomputed_size);
+  vector_t precomputed_short_j(precomputed_size);
+  vector_t precomputed_medium_i(precomputed_size);
+  vector_t precomputed_medium_j(precomputed_size);
+  vector_papangelou_t precomputed_papangelou_i_minus_i(regressors.nrow());
+  vector_papangelou_t precomputed_papangelou_i_minus_two(precomputed_size);
+  vector_papangelou_t precomputed_papangelou_j_minus_two(precomputed_size);
+
+  std::vector<ppjsdm::Marked_point> marked_points(regressors.nrow());
+  std::vector<Configuration> configurations_without_i(regressors.nrow());
+  for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
+    marked_points[i] = ppjsdm::Marked_point(x[i], y[i], type[i] - 1, mark[i]);
+
+    configurations_without_i[i] = Configuration(configuration);
+    ppjsdm::remove_point(configurations_without_i[i], marked_points[i]);
+
+    precomputed_papangelou_i_minus_i[i] = model.compute_papangelou(marked_points[i], configurations_without_i[i]);
+  }
+
+  Rcpp::Rcout << "Starting parallel part...\n";
+
+  // Actual precomputation in the parallel for loop below
+#pragma omp parallel
+{
+  vector_t short_i_private(precomputed_size);
+  vector_t short_j_private(precomputed_size);
+  vector_t medium_i_private(precomputed_size);
+  vector_t medium_j_private(precomputed_size);
+
+  vector_papangelou_t papangelou_i_minus_two_private(precomputed_size);
+  vector_papangelou_t papangelou_j_minus_two_private(precomputed_size);
+#pragma omp for nowait
+  for(std::remove_cv_t<decltype(non_zero_responses.size())> index = 0; index < non_zero_responses.size(); ++index) {
+    const auto k(non_zero_responses[index]);
+    const auto pr(detail::decode_linear(k, regressors.nrow()));
+    const auto i(pr.first);
+    const auto j(pr.second);
+    const ppjsdm::Marked_point point_i(marked_points[i]);
+    const ppjsdm::Marked_point point_j(marked_points[j]);
+
+    Configuration configuration_without_ij(configurations_without_i[i]);
+    ppjsdm::remove_point(configuration_without_ij, point_j);
+
+    if(compute_some_alphas) {
+      short_i_private[k] = ppjsdm::compute_dispersion(dispersion_model, point_i, number_types, configuration_without_ij);
+      short_j_private[k] = ppjsdm::compute_dispersion(dispersion_model, point_j, number_types, configuration_without_ij);
+    }
+    if(compute_some_gammas) {
+      medium_i_private[k] = ppjsdm::compute_dispersion(medium_dispersion_model, point_i, number_types, configuration_without_ij);
+      medium_j_private[k] = ppjsdm::compute_dispersion(medium_dispersion_model, point_j, number_types, configuration_without_ij);
+    }
+
+    papangelou_i_minus_two_private[k] = model.compute_papangelou(point_i, configuration_without_ij);
+    papangelou_j_minus_two_private[k] = model.compute_papangelou(point_j, configuration_without_ij);
+  }
+#pragma omp critical
+  for(std::remove_cv_t<decltype(non_zero_responses.size())> index = 0; index < non_zero_responses.size(); ++index) {
+    const auto k(non_zero_responses[index]);
+    if(short_i_private[k] != dispersion_t{}) {
+      precomputed_short_i[k] = short_i_private[k];
+    }
+    if(short_j_private[k] != dispersion_t{}) {
+      precomputed_short_j[k] = short_j_private[k];
+    }
+    if(medium_i_private[k] != dispersion_t{}) {
+      precomputed_medium_i[k] = medium_i_private[k];
+    }
+    if(medium_j_private[k] != dispersion_t{}) {
+      precomputed_medium_j[k] = medium_j_private[k];
+    }
+    if(papangelou_i_minus_two_private[k] != papangelou_t{}) {
+      precomputed_papangelou_i_minus_two[k] = papangelou_i_minus_two_private[k];
+    }
+    if(papangelou_j_minus_two_private[k] != papangelou_t{}) {
+      precomputed_papangelou_j_minus_two[k] = papangelou_j_minus_two_private[k];
+    }
+  }
+}
+
+  Rcpp::Rcout << "End of parallel part...\n";
+
+  // Finally, add A2 and A3 by using precomputed values above.
   for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
     if(response[i] == 1) {
       const ppjsdm::Marked_point point_i(x[i], y[i], type[i] - 1, mark[i]);
 
-      Configuration configuration_without_i(configuration);
-      ppjsdm::remove_point(configuration_without_i, point_i);
-      const auto papangelou_i_minus_i(model.compute_papangelou(point_i, configuration_without_i));
+      const auto papangelou_i_minus_i(precomputed_papangelou_i_minus_i[i]);
 
       for(R_xlen_t j(i + 1); j < regressors.nrow(); ++j) {
         if(response[j] == 1) {
           const ppjsdm::Marked_point point_j(x[j], y[j], type[j] - 1, mark[j]);
 
-          Configuration configuration_without_ij(configuration_without_i);
-          ppjsdm::remove_point(configuration_without_ij, point_j);
+          const auto short_i(precomputed_short_i[detail::encode_linear(i, j, regressors.nrow())]);
+          const auto medium_i(precomputed_medium_i[detail::encode_linear(i, j, regressors.nrow())]);
 
-          const auto papangelou_i_minus_two(model.compute_papangelou(point_i, configuration_without_ij));
-          const auto papangelou_j_minus_two(model.compute_papangelou(point_j, configuration_without_ij));
+          const auto short_j(precomputed_short_j[detail::encode_linear(i, j, regressors.nrow())]);
+          const auto medium_j(precomputed_medium_j[detail::encode_linear(i, j, regressors.nrow())]);
 
-          using dispersion_t = decltype(ppjsdm::compute_dispersion(dispersion_model, point_i, number_types, configuration_without_ij));
-          dispersion_t short_i, short_j, medium_i, medium_j;
-          // if(estimate_alpha(ppjsdm::get_type(point_i), ppjsdm::get_type(point_j))) {
-          //   short_i = ppjsdm::compute_dispersion(dispersion_model, point_i, number_types, configuration_without_ij);
-          //   short_j = ppjsdm::compute_dispersion(dispersion_model, point_j, number_types, configuration_without_ij);
-          // }
-          // if(estimate_gamma(ppjsdm::get_type(point_i), ppjsdm::get_type(point_j))) {
-          //   medium_i = ppjsdm::compute_dispersion(medium_dispersion_model, point_i, number_types, configuration_without_ij);
-          //   medium_j = ppjsdm::compute_dispersion(medium_dispersion_model, point_j, number_types, configuration_without_ij);
-          // }
-          if(compute_some_alphas) {
-            short_i = ppjsdm::compute_dispersion(dispersion_model, point_i, number_types, configuration_without_ij);
-            short_j = ppjsdm::compute_dispersion(dispersion_model, point_j, number_types, configuration_without_ij);
-          }
-          if(compute_some_gammas) {
-            medium_i = ppjsdm::compute_dispersion(medium_dispersion_model, point_i, number_types, configuration_without_ij);
-            medium_j = ppjsdm::compute_dispersion(medium_dispersion_model, point_j, number_types, configuration_without_ij);
-          }
+          const auto papangelou_i_minus_two(precomputed_papangelou_i_minus_two[detail::encode_linear(i, j, regressors.nrow())]);
+          const auto papangelou_j_minus_two(precomputed_papangelou_j_minus_two[detail::encode_linear(i, j, regressors.nrow())]);
 
           // TODO: Might want to write a function synchronized with prepare_gibbsm_data
           // that constructs the two vectors below.
@@ -305,7 +415,8 @@ Rcpp::NumericMatrix compute_vcov(SEXP configuration,
                                  Rcpp::NumericMatrix regressors,
                                  Rcpp::List data_list,
                                  Rcpp::LogicalMatrix estimate_alpha,
-                                 Rcpp::LogicalMatrix estimate_gamma) {
+                                 Rcpp::LogicalMatrix estimate_gamma,
+                                 int nthreads) {
   // Construct std::vector of configurations.
   const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::wrap(configuration));
   const auto length_configuration(ppjsdm::size(wrapped_configuration));
@@ -333,15 +444,16 @@ Rcpp::NumericMatrix compute_vcov(SEXP configuration,
                                                                                           saturation);
 
   return compute_vcov_helper(vector_configuration,
-                              ppjsdm::Im_list_wrapper(covariates),
-                              dispersion,
-                              medium_range_dispersion,
-                              exponential_model,
-                              number_types,
-                              rho,
-                              coefficients_vector,
-                              regressors,
-                              data_list,
-                              estimate_alpha,
-                              estimate_gamma);
+                             ppjsdm::Im_list_wrapper(covariates),
+                             dispersion,
+                             medium_range_dispersion,
+                             exponential_model,
+                             number_types,
+                             rho,
+                             coefficients_vector,
+                             regressors,
+                             data_list,
+                             estimate_alpha,
+                             estimate_gamma,
+                             nthreads);
 }
