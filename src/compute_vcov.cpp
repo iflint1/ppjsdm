@@ -48,12 +48,11 @@ inline std::pair<R_xlen_t, R_xlen_t> decode_linear(R_xlen_t k, R_xlen_t n) {
 
 } // namespace detail
 
-template<typename Configuration, typename Model>
+template<typename Configuration>
 Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
                                         const ppjsdm::Im_list_wrapper& covariates,
                                         const ppjsdm::Saturated_model& dispersion_model,
                                         const ppjsdm::Saturated_model& medium_dispersion_model,
-                                        const Model& model,
                                         int number_types,
                                         double rho,
                                         Rcpp::NumericVector coefficients_vector,
@@ -186,17 +185,12 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
                                                            ppjsdm::Marked_point(x[0], y[0], type[0] - 1, mark[0]),
                                                            number_types,
                                                            configuration));
-  using papangelou_t = decltype(model.compute_papangelou(ppjsdm::Marked_point(x[0], y[0], type[0] - 1, mark[0]),
-                                                         configuration));
   using vector_t = std::vector<dispersion_t>;
-  using vector_papangelou_t = std::vector<papangelou_t>;
 
   vector_t precomputed_short_i(precomputed_size);
   vector_t precomputed_short_j(precomputed_size);
   vector_t precomputed_medium_i(precomputed_size);
   vector_t precomputed_medium_j(precomputed_size);
-  vector_papangelou_t precomputed_papangelou_i_minus_two(precomputed_size);
-  vector_papangelou_t precomputed_papangelou_j_minus_two(precomputed_size);
 
   // Actual precomputation in the parallel for loop below
 #pragma omp parallel
@@ -205,9 +199,6 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
   vector_t short_j_private(non_zero_ij_responses.size());
   vector_t medium_i_private(non_zero_ij_responses.size());
   vector_t medium_j_private(non_zero_ij_responses.size());
-
-  vector_papangelou_t papangelou_i_minus_two_private(non_zero_ij_responses.size());
-  vector_papangelou_t papangelou_j_minus_two_private(non_zero_ij_responses.size());
 #pragma omp for nowait
   for(std::remove_cv_t<decltype(non_zero_ij_responses.size())> index = 0; index < non_zero_ij_responses.size(); ++index) {
     const auto k(non_zero_ij_responses[index]);
@@ -230,9 +221,6 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
       medium_i_private[index] = ppjsdm::compute_dispersion(medium_dispersion_model, point_i, number_types, configuration_without_ij);
       medium_j_private[index] = ppjsdm::compute_dispersion(medium_dispersion_model, point_j, number_types, configuration_without_ij);
     }
-
-    papangelou_i_minus_two_private[index] = model.compute_papangelou(point_i, configuration_without_ij);
-    papangelou_j_minus_two_private[index] = model.compute_papangelou(point_j, configuration_without_ij);
   }
 #pragma omp critical
   for(std::remove_cv_t<decltype(non_zero_ij_responses.size())> index = 0; index < non_zero_ij_responses.size(); ++index) {
@@ -248,12 +236,6 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
     }
     if(medium_j_private[index] != dispersion_t{}) {
       precomputed_medium_j[k] = medium_j_private[index];
-    }
-    if(papangelou_i_minus_two_private[index] != papangelou_t{}) {
-      precomputed_papangelou_i_minus_two[k] = papangelou_i_minus_two_private[index];
-    }
-    if(papangelou_j_minus_two_private[index] != papangelou_t{}) {
-      precomputed_papangelou_j_minus_two[k] = papangelou_j_minus_two_private[index];
     }
   }
 }
@@ -272,9 +254,6 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
 
     const auto short_j(precomputed_short_j[k]);
     const auto medium_j(precomputed_medium_j[k]);
-
-    const auto papangelou_i_minus_two(precomputed_papangelou_i_minus_two[k]);
-    const auto papangelou_j_minus_two(precomputed_papangelou_j_minus_two[k]);
 
     // TODO: Might want to write a function synchronized with prepare_gibbsm_data
     // that constructs the two vectors below.
@@ -358,11 +337,19 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
     }
 
     // TODO: I'm pretty sure papangelou_i_minus_two = exp(t_i, check)...
-    const auto constant(2. * (papangelou_i_minus_two / papangelou[i] - 1.) / ((papangelou_i_minus_two + rho) * (papangelou_j_minus_two + rho)));
+    double inner_product_i(0);
+    double inner_product_j(0);
+    for(R_xlen_t k1(0); k1 < coefficients_vector.size(); ++k1) {
+      inner_product_i += coefficients_vector[k1] * t_i[k1];
+      inner_product_j += coefficients_vector[k1] * t_j[k1];
+    }
+    const auto papangelou_i(std::exp(inner_product_i));
+    const auto papangelou_j(std::exp(inner_product_j));
+    const auto constant(2. * (papangelou_i / papangelou[i] - 1.) / ((papangelou_i + rho) * (papangelou_j + rho)));
     for(size_t k1(0); k1 < total_parameters; ++k1) {
       for(size_t k2(0); k2 < total_parameters; ++k2) {
         const auto A2_summand(t_i[k1] * t_j[k2] * constant);
-        const auto A3_summand(2. * (t_over_papangelou_on_configuration[i][k1] - t_i[k1] / (papangelou_i_minus_two + rho)) * (t_over_papangelou_on_configuration[j][k2] - t_j[k2] / (papangelou_j_minus_two + rho)));
+        const auto A3_summand(2. * (t_over_papangelou_on_configuration[i][k1] - t_i[k1] / (papangelou_i + rho)) * (t_over_papangelou_on_configuration[j][k2] - t_j[k2] / (papangelou_j + rho)));
         A(k1, k2) += A2_summand + A3_summand;
       }
     }
@@ -385,14 +372,10 @@ Rcpp::NumericMatrix compute_vcov(SEXP configuration,
                                  Rcpp::List covariates,
                                  Rcpp::CharacterVector model,
                                  Rcpp::CharacterVector medium_range_model,
-                                 SEXP short_range,
-                                 SEXP medium_range,
-                                 SEXP long_range,
+                                 Rcpp::NumericMatrix short_range,
+                                 Rcpp::NumericMatrix medium_range,
+                                 Rcpp::NumericMatrix long_range,
                                  R_xlen_t saturation,
-                                 Rcpp::NumericMatrix alpha,
-                                 Rcpp::NumericVector beta0,
-                                 Rcpp::NumericMatrix beta,
-                                 Rcpp::NumericMatrix gamma,
                                  double rho,
                                  Rcpp::NumericVector coefficients_vector,
                                  Rcpp::NumericMatrix regressors,
@@ -410,27 +393,14 @@ Rcpp::NumericMatrix compute_vcov(SEXP configuration,
     vector_configuration[j] = wrapped_configuration[j];
   }
 
-  const auto number_types(beta0.size());
+  const auto number_types(short_range.nrow());
   const auto dispersion(ppjsdm::Saturated_model(model, short_range, saturation));
   const auto medium_range_dispersion(ppjsdm::Saturated_model(medium_range_model, medium_range, long_range, saturation));
-
-  const ppjsdm::Truncated_exponential_family_model<Rcpp::NumericVector> exponential_model(beta0,
-                                                                                          model,
-                                                                                          medium_range_model,
-                                                                                          alpha,
-                                                                                          beta,
-                                                                                          gamma,
-                                                                                          covariates,
-                                                                                          short_range,
-                                                                                          medium_range,
-                                                                                          long_range,
-                                                                                          saturation);
 
   return compute_vcov_helper(vector_configuration,
                              ppjsdm::Im_list_wrapper(covariates),
                              dispersion,
                              medium_range_dispersion,
-                             exponential_model,
                              number_types,
                              rho,
                              coefficients_vector,
