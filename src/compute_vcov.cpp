@@ -187,20 +187,22 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
                                                            configuration));
   using vector_t = std::vector<dispersion_t>;
 
-  vector_t precomputed_short_i(precomputed_size);
-  vector_t precomputed_short_j(precomputed_size);
-  vector_t precomputed_medium_i(precomputed_size);
-  vector_t precomputed_medium_j(precomputed_size);
+  const auto precomputation_size(non_zero_ij_responses.size());
+
+  vector_t precomputed_short_i(precomputation_size);
+  vector_t precomputed_short_j(precomputation_size);
+  vector_t precomputed_medium_i(precomputation_size);
+  vector_t precomputed_medium_j(precomputation_size);
 
   // Actual precomputation in the parallel for loop below
 #pragma omp parallel
 {
-  vector_t short_i_private(non_zero_ij_responses.size());
-  vector_t short_j_private(non_zero_ij_responses.size());
-  vector_t medium_i_private(non_zero_ij_responses.size());
-  vector_t medium_j_private(non_zero_ij_responses.size());
+  vector_t short_i_private(precomputation_size);
+  vector_t short_j_private(precomputation_size);
+  vector_t medium_i_private(precomputation_size);
+  vector_t medium_j_private(precomputation_size);
 #pragma omp for nowait
-  for(std::remove_cv_t<decltype(non_zero_ij_responses.size())> index = 0; index < non_zero_ij_responses.size(); ++index) {
+  for(std::remove_cv_t<decltype(precomputation_size)> index = 0; index < precomputation_size; ++index) {
     const auto k(non_zero_ij_responses[index]);
     const auto pr(detail::decode_linear(k, regressors.nrow()));
     const auto i(pr.first);
@@ -223,25 +225,24 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
     }
   }
 #pragma omp critical
-  for(std::remove_cv_t<decltype(non_zero_ij_responses.size())> index = 0; index < non_zero_ij_responses.size(); ++index) {
-    const auto k(non_zero_ij_responses[index]);
+  for(std::remove_cv_t<decltype(precomputation_size)> index = 0; index < precomputation_size; ++index) {
     if(short_i_private[index] != dispersion_t{}) {
-      precomputed_short_i[k] = short_i_private[index];
+      precomputed_short_i[index] = short_i_private[index];
     }
     if(short_j_private[index] != dispersion_t{}) {
-      precomputed_short_j[k] = short_j_private[index];
+      precomputed_short_j[index] = short_j_private[index];
     }
     if(medium_i_private[index] != dispersion_t{}) {
-      precomputed_medium_i[k] = medium_i_private[index];
+      precomputed_medium_i[index] = medium_i_private[index];
     }
     if(medium_j_private[index] != dispersion_t{}) {
-      precomputed_medium_j[k] = medium_j_private[index];
+      precomputed_medium_j[index] = medium_j_private[index];
     }
   }
 }
 
   // Finally, add A2 and A3 by using precomputed values above.
-  for(std::remove_cv_t<decltype(non_zero_ij_responses.size())> index = 0; index < non_zero_ij_responses.size(); ++index) {
+  for(std::remove_cv_t<decltype(precomputation_size)> index = 0; index < precomputation_size; ++index) {
     const auto k(non_zero_ij_responses[index]);
     const auto pr(detail::decode_linear(k, regressors.nrow()));
     const auto i(pr.first);
@@ -249,11 +250,11 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
     const ppjsdm::Marked_point point_i(x[i], y[i], type[i] - 1, mark[i]);
     const ppjsdm::Marked_point point_j(x[j], y[j], type[j] - 1, mark[j]);
 
-    const auto short_i(precomputed_short_i[k]);
-    const auto medium_i(precomputed_medium_i[k]);
+    const auto short_i(precomputed_short_i[index]);
+    const auto medium_i(precomputed_medium_i[index]);
 
-    const auto short_j(precomputed_short_j[k]);
-    const auto medium_j(precomputed_medium_j[k]);
+    const auto short_j(precomputed_short_j[index]);
+    const auto medium_j(precomputed_medium_j[index]);
 
     // TODO: Might want to write a function synchronized with prepare_gibbsm_data
     // that constructs the two vectors below.
@@ -339,7 +340,7 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
     // TODO: I'm pretty sure papangelou_i_minus_two = exp(t_i, check)...
     double inner_product_i(0);
     double inner_product_j(0);
-    for(R_xlen_t k1(0); k1 < coefficients_vector.size(); ++k1) {
+    for(std::remove_cv_t<decltype(coefficients_vector.size())> k1(0); k1 < coefficients_vector.size(); ++k1) {
       inner_product_i += coefficients_vector[k1] * t_i[k1];
       inner_product_j += coefficients_vector[k1] * t_j[k1];
     }
