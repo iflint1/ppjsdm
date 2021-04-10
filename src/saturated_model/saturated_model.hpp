@@ -203,7 +203,7 @@ public:
       }, configurations...);
       // TODO: Ideally, use if constexpr
       if(!Approximate) {
-        for_each_container([&count_vector, &point, &varphi, saturation = varphi.get_saturation(), configurations...](const auto& current_point) {
+        for_each_container([&count_vector, &point, &varphi, saturation = varphi.get_saturation(), &configurations...](const auto& current_point) {
           unsigned long long int count(0);
           for_each_container([&point, &count, &current_point, &varphi, saturation](const auto& other_point) {
             if(!is_equal(other_point, current_point) && get_type(other_point) == get_type(point) && count < saturation && apply_potential(varphi, other_point, current_point) > 0) {
@@ -289,7 +289,7 @@ public:
 
     // TODO: Ideally, use if constexpr
     if(!Approximate) {
-      for_each_container([&dispersion, &point, &varphi, configurations...](const auto& current_point) {
+      for_each_container([&dispersion, &point, &varphi, &configurations...](const auto& current_point) {
         std::vector<double> count{};
         for_each_container([&point, &count, &current_point, &varphi](const auto& other_point) {
           if(!is_equal(other_point, current_point) && get_type(other_point) == get_type(point)) {
