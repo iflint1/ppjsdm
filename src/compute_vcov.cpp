@@ -24,6 +24,7 @@
 #include <iterator> // std::next
 #include <string> // std::string, std::to_string
 #include <tuple> // std::make_pair, std::pair
+#include <type_traits> // std::remove_cv_t
 #include <vector> // std::vector
 
 #ifdef _OPENMP
@@ -42,7 +43,7 @@ inline R_xlen_t encode_linear(R_xlen_t i, R_xlen_t j, R_xlen_t n) {
 inline std::pair<R_xlen_t, R_xlen_t> decode_linear(R_xlen_t k, R_xlen_t n) {
   const auto i(n - 2 - static_cast<R_xlen_t>(std::floor(std::sqrt(-8 * k + 4 * n * (n - 1) - 7) / 2. - 0.5)));
   return std::make_pair(i,
-                        k + i + 1 - n * (n - 1) / 2 + (n - i) * ((n - i) - 1) / 2);
+                        k + i + 1 + ((n - i) * (n - i - 1) - n * (n - 1)) / 2);
 }
 
 } // namespace detail
@@ -173,11 +174,11 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
   // Parallel computations done before adding A2 and A3
   const auto precomputed_size(regressors.nrow() * (regressors.nrow() - 1) / 2);
 
-  std::vector<R_xlen_t> non_zero_responses;
-  for(R_xlen_t k(0); k < regressors.nrow() * (regressors.nrow() - 1) / 2; ++k) {
+  std::vector<R_xlen_t> non_zero_ij_responses;
+  for(std::remove_cv_t<decltype(precomputed_size)> k(0); k < precomputed_size; ++k) {
     const auto pr(detail::decode_linear(k, regressors.nrow()));
     if(response[pr.first] == 1 && response[pr.second] == 1) {
-      non_zero_responses.emplace_back(k);
+      non_zero_ij_responses.emplace_back(k);
     }
   }
 
@@ -194,193 +195,175 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
   vector_t precomputed_short_j(precomputed_size);
   vector_t precomputed_medium_i(precomputed_size);
   vector_t precomputed_medium_j(precomputed_size);
-  vector_papangelou_t precomputed_papangelou_i_minus_i(regressors.nrow());
   vector_papangelou_t precomputed_papangelou_i_minus_two(precomputed_size);
   vector_papangelou_t precomputed_papangelou_j_minus_two(precomputed_size);
-
-  std::vector<ppjsdm::Marked_point> marked_points(regressors.nrow());
-  std::vector<Configuration> configurations_without_i(regressors.nrow());
-  for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-    marked_points[i] = ppjsdm::Marked_point(x[i], y[i], type[i] - 1, mark[i]);
-
-    configurations_without_i[i] = Configuration(configuration);
-    ppjsdm::remove_point(configurations_without_i[i], marked_points[i]);
-
-    precomputed_papangelou_i_minus_i[i] = model.compute_papangelou(marked_points[i], configurations_without_i[i]);
-  }
-
-  Rcpp::Rcout << "Starting parallel part...\n";
 
   // Actual precomputation in the parallel for loop below
 #pragma omp parallel
 {
-  vector_t short_i_private(precomputed_size);
-  vector_t short_j_private(precomputed_size);
-  vector_t medium_i_private(precomputed_size);
-  vector_t medium_j_private(precomputed_size);
+  vector_t short_i_private(non_zero_ij_responses.size());
+  vector_t short_j_private(non_zero_ij_responses.size());
+  vector_t medium_i_private(non_zero_ij_responses.size());
+  vector_t medium_j_private(non_zero_ij_responses.size());
 
-  vector_papangelou_t papangelou_i_minus_two_private(precomputed_size);
-  vector_papangelou_t papangelou_j_minus_two_private(precomputed_size);
+  vector_papangelou_t papangelou_i_minus_two_private(non_zero_ij_responses.size());
+  vector_papangelou_t papangelou_j_minus_two_private(non_zero_ij_responses.size());
 #pragma omp for nowait
-  for(std::remove_cv_t<decltype(non_zero_responses.size())> index = 0; index < non_zero_responses.size(); ++index) {
-    const auto k(non_zero_responses[index]);
+  for(std::remove_cv_t<decltype(non_zero_ij_responses.size())> index = 0; index < non_zero_ij_responses.size(); ++index) {
+    const auto k(non_zero_ij_responses[index]);
     const auto pr(detail::decode_linear(k, regressors.nrow()));
     const auto i(pr.first);
     const auto j(pr.second);
-    const ppjsdm::Marked_point point_i(marked_points[i]);
-    const ppjsdm::Marked_point point_j(marked_points[j]);
 
-    Configuration configuration_without_ij(configurations_without_i[i]);
+    const ppjsdm::Marked_point point_i(x[i], y[i], type[i] - 1, mark[i]);
+    const ppjsdm::Marked_point point_j(x[j], y[j], type[j] - 1, mark[j]);
+
+    Configuration configuration_without_ij(configuration);
+    ppjsdm::remove_point(configuration_without_ij, point_i);
     ppjsdm::remove_point(configuration_without_ij, point_j);
 
     if(compute_some_alphas) {
-      short_i_private[k] = ppjsdm::compute_dispersion(dispersion_model, point_i, number_types, configuration_without_ij);
-      short_j_private[k] = ppjsdm::compute_dispersion(dispersion_model, point_j, number_types, configuration_without_ij);
+      short_i_private[index] = ppjsdm::compute_dispersion(dispersion_model, point_i, number_types, configuration_without_ij);
+      short_j_private[index] = ppjsdm::compute_dispersion(dispersion_model, point_j, number_types, configuration_without_ij);
     }
     if(compute_some_gammas) {
-      medium_i_private[k] = ppjsdm::compute_dispersion(medium_dispersion_model, point_i, number_types, configuration_without_ij);
-      medium_j_private[k] = ppjsdm::compute_dispersion(medium_dispersion_model, point_j, number_types, configuration_without_ij);
+      medium_i_private[index] = ppjsdm::compute_dispersion(medium_dispersion_model, point_i, number_types, configuration_without_ij);
+      medium_j_private[index] = ppjsdm::compute_dispersion(medium_dispersion_model, point_j, number_types, configuration_without_ij);
     }
 
-    papangelou_i_minus_two_private[k] = model.compute_papangelou(point_i, configuration_without_ij);
-    papangelou_j_minus_two_private[k] = model.compute_papangelou(point_j, configuration_without_ij);
+    papangelou_i_minus_two_private[index] = model.compute_papangelou(point_i, configuration_without_ij);
+    papangelou_j_minus_two_private[index] = model.compute_papangelou(point_j, configuration_without_ij);
   }
 #pragma omp critical
-  for(std::remove_cv_t<decltype(non_zero_responses.size())> index = 0; index < non_zero_responses.size(); ++index) {
-    const auto k(non_zero_responses[index]);
-    if(short_i_private[k] != dispersion_t{}) {
-      precomputed_short_i[k] = short_i_private[k];
+  for(std::remove_cv_t<decltype(non_zero_ij_responses.size())> index = 0; index < non_zero_ij_responses.size(); ++index) {
+    const auto k(non_zero_ij_responses[index]);
+    if(short_i_private[index] != dispersion_t{}) {
+      precomputed_short_i[k] = short_i_private[index];
     }
-    if(short_j_private[k] != dispersion_t{}) {
-      precomputed_short_j[k] = short_j_private[k];
+    if(short_j_private[index] != dispersion_t{}) {
+      precomputed_short_j[k] = short_j_private[index];
     }
-    if(medium_i_private[k] != dispersion_t{}) {
-      precomputed_medium_i[k] = medium_i_private[k];
+    if(medium_i_private[index] != dispersion_t{}) {
+      precomputed_medium_i[k] = medium_i_private[index];
     }
-    if(medium_j_private[k] != dispersion_t{}) {
-      precomputed_medium_j[k] = medium_j_private[k];
+    if(medium_j_private[index] != dispersion_t{}) {
+      precomputed_medium_j[k] = medium_j_private[index];
     }
-    if(papangelou_i_minus_two_private[k] != papangelou_t{}) {
-      precomputed_papangelou_i_minus_two[k] = papangelou_i_minus_two_private[k];
+    if(papangelou_i_minus_two_private[index] != papangelou_t{}) {
+      precomputed_papangelou_i_minus_two[k] = papangelou_i_minus_two_private[index];
     }
-    if(papangelou_j_minus_two_private[k] != papangelou_t{}) {
-      precomputed_papangelou_j_minus_two[k] = papangelou_j_minus_two_private[k];
+    if(papangelou_j_minus_two_private[index] != papangelou_t{}) {
+      precomputed_papangelou_j_minus_two[k] = papangelou_j_minus_two_private[index];
     }
   }
 }
 
-  Rcpp::Rcout << "End of parallel part...\n";
-
   // Finally, add A2 and A3 by using precomputed values above.
-  for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-    if(response[i] == 1) {
-      const ppjsdm::Marked_point point_i(x[i], y[i], type[i] - 1, mark[i]);
+  for(std::remove_cv_t<decltype(non_zero_ij_responses.size())> index = 0; index < non_zero_ij_responses.size(); ++index) {
+    const auto k(non_zero_ij_responses[index]);
+    const auto pr(detail::decode_linear(k, regressors.nrow()));
+    const auto i(pr.first);
+    const auto j(pr.second);
+    const ppjsdm::Marked_point point_i(x[i], y[i], type[i] - 1, mark[i]);
+    const ppjsdm::Marked_point point_j(x[j], y[j], type[j] - 1, mark[j]);
 
-      const auto papangelou_i_minus_i(precomputed_papangelou_i_minus_i[i]);
+    const auto short_i(precomputed_short_i[k]);
+    const auto medium_i(precomputed_medium_i[k]);
 
-      for(R_xlen_t j(i + 1); j < regressors.nrow(); ++j) {
-        if(response[j] == 1) {
-          const ppjsdm::Marked_point point_j(x[j], y[j], type[j] - 1, mark[j]);
+    const auto short_j(precomputed_short_j[k]);
+    const auto medium_j(precomputed_medium_j[k]);
 
-          const auto short_i(precomputed_short_i[detail::encode_linear(i, j, regressors.nrow())]);
-          const auto medium_i(precomputed_medium_i[detail::encode_linear(i, j, regressors.nrow())]);
+    const auto papangelou_i_minus_two(precomputed_papangelou_i_minus_two[k]);
+    const auto papangelou_j_minus_two(precomputed_papangelou_j_minus_two[k]);
 
-          const auto short_j(precomputed_short_j[detail::encode_linear(i, j, regressors.nrow())]);
-          const auto medium_j(precomputed_medium_j[detail::encode_linear(i, j, regressors.nrow())]);
+    // TODO: Might want to write a function synchronized with prepare_gibbsm_data
+    // that constructs the two vectors below.
+    std::vector<double> t_i(total_parameters);
+    std::vector<double> t_j(total_parameters);
 
-          const auto papangelou_i_minus_two(precomputed_papangelou_i_minus_two[detail::encode_linear(i, j, regressors.nrow())]);
-          const auto papangelou_j_minus_two(precomputed_papangelou_j_minus_two[detail::encode_linear(i, j, regressors.nrow())]);
+    size_t current_index_alpha(0);
+    size_t current_index_gamma(0);
+    for(int k1(0); k1 < number_types; ++k1) {
+      if(k1 == ppjsdm::get_type(point_i)) {
+        t_i[k1] = 1.;
 
-          // TODO: Might want to write a function synchronized with prepare_gibbsm_data
-          // that constructs the two vectors below.
-          std::vector<double> t_i(total_parameters);
-          std::vector<double> t_j(total_parameters);
+        for(int k2(0); k2 < covariates.size(); ++k2) {
+          t_i[index_start_covariates + k2 * number_types + k1] = covariates_on_configuration[i][k2];
+        }
 
-          size_t current_index_alpha(0);
-          size_t current_index_gamma(0);
-          for(int k1(0); k1 < number_types; ++k1) {
-            if(k1 == ppjsdm::get_type(point_i)) {
-              t_i[k1] = 1.;
-
-              for(int k2(0); k2 < covariates.size(); ++k2) {
-                t_i[index_start_covariates + k2 * number_types + k1] = covariates_on_configuration[i][k2];
-              }
-
-              size_t filling_alpha(current_index_alpha);
-              size_t filling_gamma(current_index_gamma);
-              for(int k2(k1); k2 < number_types; ++k2) {
-                if(estimate_alpha(k1, k2)) {
-                  t_i[number_types + filling_alpha] = short_i[k2];
-                  ++filling_alpha;
-                }
-                if(estimate_gamma(k1, k2)) {
-                  t_i[index_start_gamma + filling_gamma] = medium_i[k2];
-                  ++filling_gamma;
-                }
-              }
-            } else {
-              size_t filling_alpha(current_index_alpha);
-              size_t filling_gamma(current_index_gamma);
-              for(int k2(k1); k2 < number_types; ++k2) {
-                if(estimate_alpha(k1, k2)) {
-                  if(k2 == ppjsdm::get_type(point_i)) {
-                    t_i[number_types + filling_alpha] = short_i[k1];
-                  }
-                  ++filling_alpha;
-                }
-                if(estimate_gamma(k1, k2)) {
-                  if(k2 == ppjsdm::get_type(point_i)) {
-                    t_i[index_start_gamma + filling_gamma] = medium_i[k1];
-                  }
-                  ++filling_gamma;
-                }
-              }
-            }
-
-            if(k1 == ppjsdm::get_type(point_j)) {
-              t_j[k1] = 1.;
-
-              for(int k2(0); k2 < covariates.size(); ++k2) {
-                t_j[index_start_covariates + k2 * number_types + k1] = covariates_on_configuration[j][k2];
-              }
-
-              for(int k2(k1); k2 < number_types; ++k2) {
-                if(estimate_alpha(k1, k2)) {
-                  t_j[number_types + current_index_alpha] = short_j[k2];
-                  ++current_index_alpha;
-                }
-                if(estimate_gamma(k1, k2)) {
-                  t_j[index_start_gamma + current_index_gamma] = medium_j[k2];
-                  ++current_index_gamma;
-                }
-              }
-            } else {
-              for(int k2(k1); k2 < number_types; ++k2) {
-                if(estimate_alpha(k1, k2)) {
-                  if(k2 == ppjsdm::get_type(point_j)) {
-                    t_j[number_types + current_index_alpha] = short_j[k1];
-                  }
-                  ++current_index_alpha;
-                }
-                if(estimate_gamma(k1, k2)) {
-                  if(k2 == ppjsdm::get_type(point_j)) {
-                    t_j[index_start_gamma + current_index_gamma] = medium_j[k1];
-                  }
-                  ++current_index_gamma;
-                }
-              }
-            }
+        size_t filling_alpha(current_index_alpha);
+        size_t filling_gamma(current_index_gamma);
+        for(int k2(k1); k2 < number_types; ++k2) {
+          if(estimate_alpha(k1, k2)) {
+            t_i[number_types + filling_alpha] = short_i[k2];
+            ++filling_alpha;
           }
-
-          const auto constant(2. * (papangelou_i_minus_two / papangelou_i_minus_i - 1.) / ((papangelou_i_minus_two + rho) * (papangelou_j_minus_two + rho)));
-          for(size_t k1(0); k1 < total_parameters; ++k1) {
-            for(size_t k2(0); k2 < total_parameters; ++k2) {
-              const auto A2_summand(t_i[k1] * t_j[k2] * constant);
-              const auto A3_summand(2. * (t_over_papangelou_on_configuration[i][k1] - t_i[k1] / (papangelou_i_minus_two + rho)) * (t_over_papangelou_on_configuration[j][k2] - t_j[k2] / (papangelou_j_minus_two + rho)));
-              A(k1, k2) += A2_summand + A3_summand;
-            }
+          if(estimate_gamma(k1, k2)) {
+            t_i[index_start_gamma + filling_gamma] = medium_i[k2];
+            ++filling_gamma;
           }
         }
+      } else {
+        size_t filling_alpha(current_index_alpha);
+        size_t filling_gamma(current_index_gamma);
+        for(int k2(k1); k2 < number_types; ++k2) {
+          if(estimate_alpha(k1, k2)) {
+            if(k2 == ppjsdm::get_type(point_i)) {
+              t_i[number_types + filling_alpha] = short_i[k1];
+            }
+            ++filling_alpha;
+          }
+          if(estimate_gamma(k1, k2)) {
+            if(k2 == ppjsdm::get_type(point_i)) {
+              t_i[index_start_gamma + filling_gamma] = medium_i[k1];
+            }
+            ++filling_gamma;
+          }
+        }
+      }
+
+      if(k1 == ppjsdm::get_type(point_j)) {
+        t_j[k1] = 1.;
+
+        for(int k2(0); k2 < covariates.size(); ++k2) {
+          t_j[index_start_covariates + k2 * number_types + k1] = covariates_on_configuration[j][k2];
+        }
+
+        for(int k2(k1); k2 < number_types; ++k2) {
+          if(estimate_alpha(k1, k2)) {
+            t_j[number_types + current_index_alpha] = short_j[k2];
+            ++current_index_alpha;
+          }
+          if(estimate_gamma(k1, k2)) {
+            t_j[index_start_gamma + current_index_gamma] = medium_j[k2];
+            ++current_index_gamma;
+          }
+        }
+      } else {
+        for(int k2(k1); k2 < number_types; ++k2) {
+          if(estimate_alpha(k1, k2)) {
+            if(k2 == ppjsdm::get_type(point_j)) {
+              t_j[number_types + current_index_alpha] = short_j[k1];
+            }
+            ++current_index_alpha;
+          }
+          if(estimate_gamma(k1, k2)) {
+            if(k2 == ppjsdm::get_type(point_j)) {
+              t_j[index_start_gamma + current_index_gamma] = medium_j[k1];
+            }
+            ++current_index_gamma;
+          }
+        }
+      }
+    }
+
+    // TODO: I'm pretty sure papangelou_i_minus_two = exp(t_i, check)...
+    const auto constant(2. * (papangelou_i_minus_two / papangelou[i] - 1.) / ((papangelou_i_minus_two + rho) * (papangelou_j_minus_two + rho)));
+    for(size_t k1(0); k1 < total_parameters; ++k1) {
+      for(size_t k2(0); k2 < total_parameters; ++k2) {
+        const auto A2_summand(t_i[k1] * t_j[k2] * constant);
+        const auto A3_summand(2. * (t_over_papangelou_on_configuration[i][k1] - t_i[k1] / (papangelou_i_minus_two + rho)) * (t_over_papangelou_on_configuration[j][k2] - t_j[k2] / (papangelou_j_minus_two + rho)));
+        A(k1, k2) += A2_summand + A3_summand;
       }
     }
   }
