@@ -195,13 +195,7 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
   vector_t precomputed_medium_j(precomputation_size);
 
   // Actual precomputation in the parallel for loop below
-#pragma omp parallel
-{
-  vector_t short_i_private(precomputation_size);
-  vector_t short_j_private(precomputation_size);
-  vector_t medium_i_private(precomputation_size);
-  vector_t medium_j_private(precomputation_size);
-#pragma omp for nowait
+#pragma omp parallel for
   for(std::remove_cv_t<decltype(precomputation_size)> index = 0; index < precomputation_size; ++index) {
     const auto k(non_zero_ij_responses[index]);
     const auto pr(detail::decode_linear(k, regressors.nrow()));
@@ -216,30 +210,14 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
     ppjsdm::remove_point(configuration_without_ij, point_j);
 
     if(compute_some_alphas) {
-      short_i_private[index] = ppjsdm::compute_dispersion(dispersion_model, point_i, number_types, configuration_without_ij);
-      short_j_private[index] = ppjsdm::compute_dispersion(dispersion_model, point_j, number_types, configuration_without_ij);
+      precomputed_short_i[index] = ppjsdm::compute_dispersion(dispersion_model, point_i, number_types, configuration_without_ij);
+      precomputed_short_j[index] = ppjsdm::compute_dispersion(dispersion_model, point_j, number_types, configuration_without_ij);
     }
     if(compute_some_gammas) {
-      medium_i_private[index] = ppjsdm::compute_dispersion(medium_dispersion_model, point_i, number_types, configuration_without_ij);
-      medium_j_private[index] = ppjsdm::compute_dispersion(medium_dispersion_model, point_j, number_types, configuration_without_ij);
+      precomputed_medium_i[index] = ppjsdm::compute_dispersion(medium_dispersion_model, point_i, number_types, configuration_without_ij);
+      precomputed_medium_j[index] = ppjsdm::compute_dispersion(medium_dispersion_model, point_j, number_types, configuration_without_ij);
     }
   }
-#pragma omp critical
-  for(std::remove_cv_t<decltype(precomputation_size)> index = 0; index < precomputation_size; ++index) {
-    if(short_i_private[index] != dispersion_t{}) {
-      precomputed_short_i[index] = short_i_private[index];
-    }
-    if(short_j_private[index] != dispersion_t{}) {
-      precomputed_short_j[index] = short_j_private[index];
-    }
-    if(medium_i_private[index] != dispersion_t{}) {
-      precomputed_medium_i[index] = medium_i_private[index];
-    }
-    if(medium_j_private[index] != dispersion_t{}) {
-      precomputed_medium_j[index] = medium_j_private[index];
-    }
-  }
-}
 
   // Finally, add A2 and A3 by using precomputed values above.
   for(std::remove_cv_t<decltype(precomputation_size)> index = 0; index < precomputation_size; ++index) {
