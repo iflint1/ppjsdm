@@ -209,6 +209,11 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
     ppjsdm::remove_point(configuration_without_ij, point_i);
     ppjsdm::remove_point(configuration_without_ij, point_j);
 
+    // TODO: Something to think about:
+    // ppjsdm::compute_dispersion(dispersion_model, point_i, number_types, configuration_without_ij)
+    // is not so different from ppjsdm::compute_dispersion(dispersion_model, point_i, number_types, configuration).
+    // When computing the distances between point_i, look at all of them and discard the distance between i and j.
+    // The latter was already computed, try to find a way to recover it.
     if(compute_some_alphas) {
       precomputed_short_i[index] = ppjsdm::compute_dispersion(dispersion_model, point_i, number_types, configuration_without_ij);
       precomputed_short_j[index] = ppjsdm::compute_dispersion(dispersion_model, point_j, number_types, configuration_without_ij);
@@ -220,7 +225,7 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
   }
 
   // Finally, add A2 and A3 by using precomputed values above.
-  for(std::remove_cv_t<decltype(precomputation_size)> index = 0; index < precomputation_size; ++index) {
+  for(std::remove_cv_t<decltype(precomputation_size)> index(0); index < precomputation_size; ++index) {
     const auto k(non_zero_ij_responses[index]);
     const auto pr(detail::decode_linear(k, regressors.nrow()));
     const auto i(pr.first);
