@@ -92,9 +92,8 @@ public:
     const auto chain_size(chain_.size());
     if(chain_size != 0) {
       for(auto n(static_cast<long long int>(chain_size) - 1); n >= 0; --n) {
-        const auto& current(chain_[static_cast<std::size_t>(n)]);
-        const auto exp_mark(std::get<0>(current));
-        const auto& point(std::get<1>(current));
+        const auto exp_mark(std::get<0>(chain_[static_cast<std::size_t>(n)]));
+        const auto& point(std::get<1>(chain_[static_cast<std::size_t>(n)]));
         // TODO: Write extensive tests for the functions compute_log_alpha_min_lower_bound, compute_log_alpha_max, etc since I'm not making any checks here.
         if(exp_mark >= 0.0) { // birth
           model_.add_to_L_or_U(exp_mark, point, L, L_complement);

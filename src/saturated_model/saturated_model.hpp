@@ -185,11 +185,11 @@ public:
                 const Point& point,
                 R_xlen_t number_types,
                 Configurations&... configurations) const {
-    using CountType = std::vector<unsigned long long int>;
+    using IntegerType = unsigned long long int;
+    using CountType = std::vector<IntegerType>;
     CountType count_vector(number_types);
 
-    if(static_cast<unsigned long long int>(varphi.get_saturation())
-         >= static_cast<unsigned long long int>(size(configurations...))) {
+    if(static_cast<IntegerType>(varphi.get_saturation()) >= static_cast<IntegerType>(size(configurations...))) {
       for_each_container([&count_vector, &point, &varphi](const auto& current_point) {
         if(apply_potential(varphi, current_point, point) > 0) {
           count_vector[get_type(current_point)] += 2;
@@ -204,7 +204,7 @@ public:
       // TODO: Ideally, use if constexpr
       if(!Approximate) {
         for_each_container([&count_vector, &point, &varphi, saturation = varphi.get_saturation(), &configurations...](const auto& current_point) {
-          unsigned long long int count(0);
+          IntegerType count(0);
           for_each_container([&point, &count, &current_point, &varphi, saturation](const auto& other_point) {
             if(!is_equal(other_point, current_point) && get_type(other_point) == get_type(point) && count < saturation && apply_potential(varphi, other_point, current_point) > 0) {
               ++count;
