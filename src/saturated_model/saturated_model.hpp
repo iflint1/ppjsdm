@@ -200,15 +200,14 @@ public:
                          saturation = varphi.get_saturation(), &configurations...](const auto& current_point) {
         if(!is_equal(current_point, point)) {
           IntegerType count(0);
-          for_each_container([&point, &count, &current_point, &varphi, saturation](const auto& other_point) {
+          conditional_for_each_container([&point, &count, &current_point, &varphi, saturation](const auto& other_point) {
             if(!is_equal(other_point, point) &&
                !is_equal(other_point, current_point) &&
                get_type(other_point) == get_type(point) &&
-               count < saturation &&
                apply_potential(varphi, other_point, current_point) > 0.) {
               ++count;
             }
-          }, configurations...);
+          }, [&count, saturation](){ return count == saturation; }, configurations...);
           if(apply_potential(varphi, current_point, point) > 0.) {
             if(count_vector[get_type(current_point)] < saturation) {
               ++count_vector[get_type(current_point)];
