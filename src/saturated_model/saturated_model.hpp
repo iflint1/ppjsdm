@@ -188,7 +188,7 @@ public:
     using IntegerType = unsigned long long int;
     using CountType = std::vector<IntegerType>;
     CountType count_vector(number_types);
-    CountType deltas(number_types);
+    std::vector<double> dispersion(number_types);
     if(static_cast<IntegerType>(varphi.get_saturation()) >= static_cast<IntegerType>(size(configurations...))) {
       for_each_container([&count_vector, &point, &varphi](const auto& current_point) {
         if(!is_equal(current_point, point) && apply_potential(varphi, current_point, point) > 0.) {
@@ -196,7 +196,7 @@ public:
         }
       }, configurations...);
     } else {
-      for_each_container([&deltas, &count_vector, &point, &varphi,
+      for_each_container([&dispersion, &count_vector, &point, &varphi,
                          saturation = varphi.get_saturation(), &configurations...](const auto& current_point) {
         if(!is_equal(current_point, point)) {
           IntegerType count(0);
@@ -214,16 +214,15 @@ public:
               ++count_vector[get_type(current_point)];
             }
             if(count < saturation) {
-              ++deltas[get_type(current_point)];
+              ++dispersion[get_type(current_point)];
             }
           }
         }
       }, configurations...);
     }
-    std::vector<double> dispersion(number_types);
     using size_t = typename decltype(dispersion)::size_type;
     for(size_t i(0); i < static_cast<size_t>(number_types); ++i) {
-      dispersion[i] = static_cast<double>(count_vector[i]) + static_cast<double>(deltas[i]);
+      dispersion[i] += static_cast<double>(count_vector[i]);
     }
     return dispersion;
   }
@@ -264,8 +263,7 @@ public:
                 const Point& point,
                 R_xlen_t number_types,
                 Configurations&... configurations) const {
-    if(static_cast<unsigned long long int>(varphi.get_saturation())
-         >= static_cast<unsigned long long int>(size(configurations...))) {
+    if(static_cast<unsigned long long int>(varphi.get_saturation()) >= static_cast<unsigned long long int>(size(configurations...))) {
       CountType count_vector(number_types);
       for_each_container([&count_vector, &point, &varphi](const auto& current_point) {
         if(!is_equal(current_point, point)) {
