@@ -188,42 +188,42 @@ public:
     using IntegerType = unsigned long long int;
     using CountType = std::vector<IntegerType>;
     CountType count_vector(number_types);
+    CountType deltas(number_types);
     if(static_cast<IntegerType>(varphi.get_saturation()) >= static_cast<IntegerType>(size(configurations...))) {
       for_each_container([&count_vector, &point, &varphi](const auto& current_point) {
-        if(!is_equal(current_point, point) && apply_potential(varphi, current_point, point) > 0) {
+        if(!is_equal(current_point, point) && apply_potential(varphi, current_point, point) > 0.) {
           count_vector[get_type(current_point)] += 2;
         }
       }, configurations...);
     } else {
-      for_each_container([&count_vector, &point, &varphi, saturation = varphi.get_saturation()](const auto& current_point) {
-        if(!is_equal(current_point, point) && count_vector[get_type(current_point)] < saturation && apply_potential(varphi, current_point, point) > 0) {
-          ++count_vector[get_type(current_point)];
-        }
-      }, configurations...);
-      // TODO: Ideally, use if constexpr
-      if(!Approximate) {
-        for_each_container([&count_vector, &point, &varphi, saturation = varphi.get_saturation(), &configurations...](const auto& current_point) {
-          if(!is_equal(current_point, point)) {
-            IntegerType count(0);
-            for_each_container([&point, &count, &current_point, &varphi, saturation](const auto& other_point) {
-              if(!is_equal(other_point, point) && !is_equal(other_point, current_point) && get_type(other_point) == get_type(point) && count < saturation && apply_potential(varphi, other_point, current_point) > 0) {
-                ++count;
-              }
-            }, configurations...);
-            count_vector[get_type(current_point)] -= count;
-            if(count < saturation && apply_potential(varphi, point, current_point) > 0) {
+      for_each_container([&deltas, &count_vector, &point, &varphi,
+                         saturation = varphi.get_saturation(), &configurations...](const auto& current_point) {
+        if(!is_equal(current_point, point)) {
+          IntegerType count(0);
+          for_each_container([&point, &count, &current_point, &varphi, saturation](const auto& other_point) {
+            if(!is_equal(other_point, point) &&
+               !is_equal(other_point, current_point) &&
+               get_type(other_point) == get_type(point) &&
+               count < saturation &&
+               apply_potential(varphi, other_point, current_point) > 0.) {
               ++count;
             }
-            count_vector[get_type(current_point)] += count;
+          }, configurations...);
+          if(apply_potential(varphi, current_point, point) > 0.) {
+            if(count_vector[get_type(current_point)] < saturation) {
+              ++count_vector[get_type(current_point)];
+            }
+            if(count < saturation) {
+              ++deltas[get_type(current_point)];
+            }
           }
-        }, configurations...);
-      }
+        }
+      }, configurations...);
     }
-
     std::vector<double> dispersion(number_types);
     using size_t = typename decltype(dispersion)::size_type;
     for(size_t i(0); i < static_cast<size_t>(number_types); ++i) {
-      dispersion[i] = static_cast<double>(count_vector[i]);
+      dispersion[i] = static_cast<double>(count_vector[i]) + static_cast<double>(deltas[i]);
     }
     return dispersion;
   }

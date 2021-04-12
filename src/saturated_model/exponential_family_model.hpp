@@ -238,12 +238,14 @@ public:
       dispersion_t short_range_dispersion_l, short_range_dispersion_u, medium_range_dispersion_l, medium_range_dispersion_u;
       alpha_need_to_add = -dot_dispersion_maximum;
       if(!is_column_zero(Model::alpha_, get_type(point))) {
+        // TODO: These two can definitely be computed faster by doing both at once.
         short_range_dispersion_u = compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l, l_complement);
         short_range_dispersion_l = compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l);
         alpha_need_to_add += positive_matrix_times_vector_at_index(Model::alpha_, short_range_dispersion_u, get_type(point));
         alpha_need_to_add += negative_matrix_times_vector_at_index(Model::alpha_, short_range_dispersion_l, get_type(point));
       }
       if(!is_column_zero(Model::gamma_, get_type(point))) {
+        // TODO: These two can definitely be computed faster by doing both at once.
         medium_range_dispersion_u = compute_dispersion(Model::medium_range_dispersion_, point, Model::gamma_.nrow(), l, l_complement);
         medium_range_dispersion_l = compute_dispersion(Model::medium_range_dispersion_, point, Model::gamma_.nrow(), l);
         alpha_need_to_add += positive_matrix_times_vector_at_index(Model::gamma_, medium_range_dispersion_u, get_type(point));
