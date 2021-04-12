@@ -49,15 +49,13 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
     coef <- coef[-which(names(coef) == "(Intercept)")]
     fit_algorithm <- "glmnet"
   } else {
-    fit <- glm.fit(x = regressors,
-                   y = gibbsm_data$response,
-                   offset = gibbsm_data$offset,
-                   intercept = FALSE,
-                   family = binomial())
+    fmla <- paste0("response ~ 0 + offset(offset) + ", paste0(colnames(regressors), collapse = ' + '))
+    fmla <- as.formula(fmla)
+    regressors <- as.data.frame(regressors)
+    regressors$offset <- gibbsm_data$offset
+    regressors$response <- gibbsm_data$response
+    fit <- glm(fmla, family = binomial(), data = regressors)
     shift <- rep(0, length(gibbsm_data$shift))
-    # Note: glm.fit does not correctly set the class,
-    # so the user cannot use `glm` methods...
-    class(fit) <- c(fit$class, c("glm", "lm"))
 
     aic <- AIC(fit)
     bic <- BIC(fit)
