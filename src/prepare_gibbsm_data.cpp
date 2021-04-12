@@ -135,16 +135,13 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     }
     // configuration_index contains the index of the configuration we're at in the loop.
     const auto point_index(i - previous_count);
-    // TODO: Avoidable?
-    Configuration configuration_copy(configuration_list[configuration_index]);
-    ppjsdm::remove_point_by_iterator(configuration_copy, std::next(configuration_copy.begin(), point_index));
     std::vector<double> d;
     if(need_to_compute_alpha) {
-      d = ppjsdm::compute_dispersion<Approximate>(dispersion_model, configuration_list[configuration_index][point_index], number_types, configuration_copy);
+      d = ppjsdm::compute_dispersion<Approximate>(dispersion_model, configuration_list[configuration_index][point_index], number_types, configuration_list[configuration_index]);
     }
     std::vector<double> e;
     if(need_to_compute_gamma) {
-      e = ppjsdm::compute_dispersion<Approximate>(medium_dispersion_model, configuration_list[configuration_index][point_index], number_types, configuration_copy);
+      e = ppjsdm::compute_dispersion<Approximate>(medium_dispersion_model, configuration_list[configuration_index][point_index], number_types, configuration_list[configuration_index]);
     }
     std::vector<double> cov(covariates_length);
     for(size_t k(0); k < covariates_length; ++k) {
