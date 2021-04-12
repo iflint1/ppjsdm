@@ -75,17 +75,9 @@ public:
 
   template<typename Point, typename Configuration>
   auto compute_log_papangelou(const Point& point, const Configuration& configuration) const {
-    auto inner_product(beta0_[get_type(point)]);
-    if(!is_column_zero(alpha_, get_type(point))) {
-      const auto dispersion(compute_dispersion(dispersion_, point, alpha_.nrow(), configuration));
-      inner_product += matrix_times_vector_at_index(alpha_, dispersion, get_type(point));
-    }
-    if(!is_column_zero(gamma_, get_type(point))) {
-      const auto dispersion(compute_dispersion(medium_range_dispersion_, point, gamma_.nrow(), configuration));
-      inner_product += matrix_times_vector_at_index(gamma_, dispersion, get_type(point));
-    }
-    inner_product += detail::compute_beta_dot_covariates(point, beta_, covariates_);
-    return inner_product;
+    return beta0_[get_type(point)] +
+      compute_total_dispersion(point, configuration) +
+      detail::compute_beta_dot_covariates(point, beta_, covariates_);
   }
 
   template<typename Point, typename Configuration>
@@ -105,6 +97,22 @@ protected:
   Rcpp::NumericMatrix beta_;
   Rcpp::NumericMatrix gamma_;
   Im_list_wrapper covariates_;
+
+  template<typename Point, typename... Configurations>
+  auto compute_total_dispersion(const Point& point, Configurations&... configurations) const {
+    using return_t = decltype(matrix_times_vector_at_index(alpha_, compute_dispersion(dispersion_, point, alpha_.nrow(), configurations...), 0));
+    const auto number_types(alpha_.nrow());
+    return_t return_value(0.);
+    if(!is_column_zero(alpha_, get_type(point))) {
+      const auto short_range_dispersion(compute_dispersion(dispersion_, point, number_types, configurations...));
+      return_value += matrix_times_vector_at_index(alpha_, short_range_dispersion, get_type(point));
+    }
+    if(!is_column_zero(gamma_, get_type(point))) {
+      const auto medium_range_dispersion(compute_dispersion(medium_range_dispersion_, point, number_types, configurations...));
+      return_value += matrix_times_vector_at_index(gamma_, medium_range_dispersion, get_type(point));
+    }
+    return return_value;
+  }
 };
 
 template<typename Lambda>
@@ -207,124 +215,67 @@ public:
   }
 
   // TODO: Factorise and make this function more readable.
+  // TODO: Write properly what this function is doing.
   template<typename Point, typename Configuration>
   void add_to_L_or_U(double exp_mark, const Point& point, Configuration& l, Configuration& l_complement) const {
-    // TODO: Write properly what this function is doing.
-    double dot_dispersion_maximum(dot_dispersion_maximum_[get_type(point)]);
+    const auto dot_dispersion_maximum(dot_dispersion_maximum_[get_type(point)]);
+    using FloatType = std::remove_cv_t<decltype(dot_dispersion_maximum)>;
+    FloatType alpha_need_to_add(0.), alpha_which_one_to_add_to(0.);
     if(is_column_nonnegative(Model::alpha_, get_type(point)) && is_column_nonnegative(Model::gamma_, get_type(point))) {
-      auto log_alpha(-dot_dispersion_maximum);
-      if(!is_column_zero(Model::alpha_, get_type(point))) {
-        const auto short_range_dispersion(compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l, l_complement));
-        log_alpha += matrix_times_vector_at_index(Model::alpha_, short_range_dispersion, get_type(point));
-      }
-      if(!is_column_zero(Model::gamma_, get_type(point))) {
-        const auto medium_range_dispersion(compute_dispersion(Model::medium_range_dispersion_, point, Model::gamma_.nrow(), l, l_complement));
-        log_alpha += matrix_times_vector_at_index(Model::gamma_, medium_range_dispersion, get_type(point));
-      }
-      if(log_alpha > 0.) {
-        Rcpp::stop("Bad upper-bound in the computation of alpha in the CFTP algorithm.");
-      }
-      if(log_alpha + exp_mark > 0.) {
-        auto log_alpha(-dot_dispersion_maximum);
-        if(!is_column_zero(Model::alpha_, get_type(point))) {
-          const auto short_range_dispersion(compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l));
-          log_alpha += matrix_times_vector_at_index(Model::alpha_, short_range_dispersion, get_type(point));
-        }
-        if(!is_column_zero(Model::gamma_, get_type(point))) {
-          const auto medium_range_dispersion(compute_dispersion(Model::medium_range_dispersion_, point, Model::gamma_.nrow(), l));
-          log_alpha += matrix_times_vector_at_index(Model::gamma_, medium_range_dispersion, get_type(point));
-        }
-        if(log_alpha > 0.) {
-          Rcpp::stop("Bad upper-bound in the computation of alpha in the CFTP algorithm.");
-        }
-        add_point(log_alpha + exp_mark > 0. ? l : l_complement, point);
+      alpha_need_to_add = Model::compute_total_dispersion(point, l, l_complement) - dot_dispersion_maximum;
+      if(alpha_need_to_add + exp_mark > 0.) {
+        alpha_which_one_to_add_to = Model::compute_total_dispersion(point, l) - dot_dispersion_maximum;
+        add_point(alpha_which_one_to_add_to + exp_mark > 0. ? l : l_complement, point);
       }
     } else if(is_column_nonpositive(Model::alpha_, get_type(point)) && is_column_nonpositive(Model::gamma_, get_type(point))) {
-      auto log_alpha(-dot_dispersion_maximum);
-      if(!is_column_zero(Model::alpha_, get_type(point))) {
-        const auto short_range_dispersion(compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l));
-        log_alpha += matrix_times_vector_at_index(Model::alpha_, short_range_dispersion, get_type(point));
-      }
-      if(!is_column_zero(Model::gamma_, get_type(point))) {
-        const auto medium_range_dispersion(compute_dispersion(Model::medium_range_dispersion_, point, Model::gamma_.nrow(), l));
-        log_alpha += matrix_times_vector_at_index(Model::gamma_, medium_range_dispersion, get_type(point));
-      }
-      if(log_alpha > 0.) {
-        Rcpp::stop("Bad upper-bound in the computation of alpha in the CFTP algorithm.");
-      }
-      if(log_alpha + exp_mark > 0.) {
-        auto log_alpha(-dot_dispersion_maximum);
-        if(!is_column_zero(Model::alpha_, get_type(point))) {
-          const auto short_range_dispersion(compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l, l_complement));
-          log_alpha += matrix_times_vector_at_index(Model::alpha_, short_range_dispersion, get_type(point));
-        }
-        if(!is_column_zero(Model::gamma_, get_type(point))) {
-          const auto medium_range_dispersion(compute_dispersion(Model::medium_range_dispersion_, point, Model::gamma_.nrow(), l, l_complement));
-          log_alpha += matrix_times_vector_at_index(Model::gamma_, medium_range_dispersion, get_type(point));
-        }
-        if(log_alpha > 0.) {
-          Rcpp::stop("Bad upper-bound in the computation of alpha in the CFTP algorithm.");
-        }
-        add_point(log_alpha + exp_mark > 0. ? l : l_complement, point);
+      alpha_need_to_add = Model::compute_total_dispersion(point, l) - dot_dispersion_maximum;
+      if(alpha_need_to_add + exp_mark > 0.) {
+        alpha_which_one_to_add_to = Model::compute_total_dispersion(point, l, l_complement) - dot_dispersion_maximum;
+        add_point(alpha_which_one_to_add_to + exp_mark > 0. ? l : l_complement, point);
       }
     } else {
       using dispersion_t = std::remove_cv_t<std::remove_reference_t<decltype(compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l))>>;
       dispersion_t short_range_dispersion_l, short_range_dispersion_u, medium_range_dispersion_l, medium_range_dispersion_u;
-      auto log_alpha(-dot_dispersion_maximum);
+      alpha_need_to_add = -dot_dispersion_maximum;
       if(!is_column_zero(Model::alpha_, get_type(point))) {
         short_range_dispersion_u = compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l, l_complement);
         short_range_dispersion_l = compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l);
-        log_alpha += positive_matrix_times_vector_at_index(Model::alpha_, short_range_dispersion_u, get_type(point));
-        log_alpha += negative_matrix_times_vector_at_index(Model::alpha_, short_range_dispersion_l, get_type(point));
+        alpha_need_to_add += positive_matrix_times_vector_at_index(Model::alpha_, short_range_dispersion_u, get_type(point));
+        alpha_need_to_add += negative_matrix_times_vector_at_index(Model::alpha_, short_range_dispersion_l, get_type(point));
       }
       if(!is_column_zero(Model::gamma_, get_type(point))) {
         medium_range_dispersion_u = compute_dispersion(Model::medium_range_dispersion_, point, Model::gamma_.nrow(), l, l_complement);
         medium_range_dispersion_l = compute_dispersion(Model::medium_range_dispersion_, point, Model::gamma_.nrow(), l);
-        log_alpha += positive_matrix_times_vector_at_index(Model::gamma_, medium_range_dispersion_u, get_type(point));
-        log_alpha += negative_matrix_times_vector_at_index(Model::gamma_, medium_range_dispersion_l, get_type(point));
+        alpha_need_to_add += positive_matrix_times_vector_at_index(Model::gamma_, medium_range_dispersion_u, get_type(point));
+        alpha_need_to_add += negative_matrix_times_vector_at_index(Model::gamma_, medium_range_dispersion_l, get_type(point));
       }
-      if(log_alpha > 0.) {
-        Rcpp::stop("Bad upper-bound in the computation of alpha in the CFTP algorithm.");
-      }
-      if(log_alpha + exp_mark > 0.) {
-        auto log_alpha(-dot_dispersion_maximum);
+      if(alpha_need_to_add + exp_mark > 0.) {
+        alpha_which_one_to_add_to = -dot_dispersion_maximum;
         if(!is_column_zero(Model::alpha_, get_type(point))) {
-          log_alpha += positive_matrix_times_vector_at_index(Model::alpha_, short_range_dispersion_l, get_type(point));
-          log_alpha += negative_matrix_times_vector_at_index(Model::alpha_, short_range_dispersion_u, get_type(point));
+          alpha_which_one_to_add_to += positive_matrix_times_vector_at_index(Model::alpha_, short_range_dispersion_l, get_type(point));
+          alpha_which_one_to_add_to += negative_matrix_times_vector_at_index(Model::alpha_, short_range_dispersion_u, get_type(point));
         }
         if(!is_column_zero(Model::gamma_, get_type(point))) {
-          log_alpha += positive_matrix_times_vector_at_index(Model::gamma_, medium_range_dispersion_l, get_type(point));
-          log_alpha += negative_matrix_times_vector_at_index(Model::gamma_, medium_range_dispersion_u, get_type(point));
+          alpha_which_one_to_add_to += positive_matrix_times_vector_at_index(Model::gamma_, medium_range_dispersion_l, get_type(point));
+          alpha_which_one_to_add_to += negative_matrix_times_vector_at_index(Model::gamma_, medium_range_dispersion_u, get_type(point));
         }
-        if(log_alpha > 0.) {
-          Rcpp::stop("Bad upper-bound in the computation of alpha in the CFTP algorithm.");
-        }
-        add_point(log_alpha + exp_mark > 0. ? l : l_complement, point);
+        add_point(alpha_which_one_to_add_to + exp_mark > 0. ? l : l_complement, point);
       }
+    }
+    if(alpha_need_to_add > 0. || alpha_which_one_to_add_to > 0.) {
+      Rcpp::stop("Internal error: Incorrect alpha value, probably due to bad upper-bound to dispersion in the CFTP algorithm.");
     }
   }
 
   double compute_log_alpha_min_lower_bound(R_xlen_t type) const {
-    double sum_alpha(0);
-    for(R_xlen_t j(0); j < Model::alpha_.ncol(); ++j) {
-      const auto a(Model::alpha_(type, j));
-      if(a > 0) {
-        sum_alpha -= a;
-      } else {
-        sum_alpha += a;
-      }
+    double sum_alpha(0.);
+    double sum_gamma(0.);
+    for(R_xlen_t other_type(0); other_type < Model::alpha_.ncol(); ++other_type) {
+      sum_alpha -= std::abs(Model::alpha_(type, other_type));
+      sum_gamma -= std::abs(Model::gamma_(type, other_type));
     }
-    double sum_gamma(0);
-    for(R_xlen_t j(0); j < Model::gamma_.ncol(); ++j) {
-      const auto g(Model::gamma_(type, j));
-      if(g > 0) {
-        sum_gamma -= g;
-      } else {
-        sum_gamma += g;
-      }
-    }
-
-    return sum_alpha * get_dispersion_maximum(Model::dispersion_) + sum_gamma * get_dispersion_maximum(Model::medium_range_dispersion_);
+    return sum_alpha  * get_dispersion_maximum(Model::dispersion_) +
+      sum_gamma * get_dispersion_maximum(Model::medium_range_dispersion_);
   }
 
   const auto& get_window() const {
