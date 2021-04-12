@@ -18,8 +18,6 @@ namespace detail {
 constexpr double do_not_need_mark = -1.0;
 constexpr double always_in_L = -2.0;
 
-} // namespace detail
-
 template <typename Configuration, typename Model>
 class Backwards_Markov_chain {
 public:
@@ -29,8 +27,8 @@ public:
                                                                   [&model](const auto& point) { return model.get_log_normalized_bounding_intensity(point); },
                                                                   model.get_upper_bound(),
                                                                   model.get_number_types())),
-    intensity_integral_(model.get_integral()),
-    chain_{} {}
+                                                                  intensity_integral_(model.get_integral()),
+                                                                  chain_{} {}
 
   auto size() const {
     return chain_.size();
@@ -92,16 +90,16 @@ public:
     if(chain_size != 0) {
       for(auto n(static_cast<long long int>(chain_size) - 1); n >= 0; --n) {
         const auto exp_mark(std::get<0>(chain_[static_cast<std::size_t>(n)]));
-        const auto& point(std::get<1>(chain_[static_cast<std::size_t>(n)]));
         // TODO: Write extensive tests for the functions compute_log_alpha_min_lower_bound, compute_log_alpha_max, etc since I'm not making any checks here.
         if(exp_mark >= 0.0) { // birth
-          model_.add_to_L_or_U(exp_mark, point, L, L_complement);
+          model_.add_to_L_or_U(exp_mark, std::get<1>(chain_[static_cast<std::size_t>(n)]), L, L_complement);
         } else if(exp_mark == detail::do_not_need_mark) { // death
+          const auto& point(std::get<1>(chain_[static_cast<std::size_t>(n)]));
           if(!remove_point(L_complement, point)) {
             remove_point(L, point);
           }
         } else {  // Avoid computations above in this case.
-          add_point(L, point);
+          add_point(L, std::get<1>(chain_[static_cast<std::size_t>(n)]));
         }
       }
     }
@@ -131,9 +129,11 @@ private:
   }
 };
 
+} // namespace detail
+
 template<typename Configuration, typename Model, typename... Args>
 inline auto make_backwards_markov_chain(Model&& model, Args&&... args) {
-  return Backwards_Markov_chain<Configuration, std::remove_cv_t<std::remove_reference_t<decltype(model)>>>(std::forward<Model>(model), std::forward<Args>(args)...);
+  return detail::Backwards_Markov_chain<Configuration, std::remove_cv_t<std::remove_reference_t<decltype(model)>>>(std::forward<Model>(model), std::forward<Args>(args)...);
 }
 
 }  // namespace ppjsdm
