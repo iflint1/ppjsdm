@@ -172,11 +172,11 @@ namespace detail {
 
 enum class dispersionMethod {two_values, nonincreasing, nonincreasing_after_lower_endpoint, generic};
 
-template<bool Approximate, dispersionMethod Method>
+template<dispersionMethod Method>
 class compute_dispersion_implementation;
 
-template<bool Approximate>
-class compute_dispersion_implementation<Approximate, dispersionMethod::two_values> {
+template<>
+class compute_dispersion_implementation<dispersionMethod::two_values> {
 public:
   compute_dispersion_implementation() {}
 
@@ -229,8 +229,8 @@ public:
   }
 };
 
-template<bool Approximate>
-class compute_dispersion_implementation<Approximate, dispersionMethod::nonincreasing> {
+template<>
+class compute_dispersion_implementation<dispersionMethod::nonincreasing> {
 private:
   using CountType = std::vector<std::vector<double>>;
 
@@ -309,8 +309,8 @@ public:
   }
 };
 
-template<bool Approximate>
-class compute_dispersion_implementation<Approximate, dispersionMethod::nonincreasing_after_lower_endpoint> {
+template<>
+class compute_dispersion_implementation<dispersionMethod::nonincreasing_after_lower_endpoint> {
 private:
   using CountType = std::vector<std::vector<double>>;
 
@@ -392,8 +392,8 @@ public:
   }
 };
 
-template<bool Approximate>
-class compute_dispersion_implementation<Approximate, dispersionMethod::generic> {
+template<>
+class compute_dispersion_implementation<dispersionMethod::generic> {
 private:
   using CountType = std::vector<std::vector<double>>;
 
@@ -469,19 +469,19 @@ public:
 
 } // namespace detail
 
-template<bool Approximate = false, typename Point, typename... Configurations>
+template<typename Point, typename... Configurations>
 inline auto compute_dispersion(const Saturated_model& model,
                                const Point& point,
                                R_xlen_t number_types,
                                Configurations&&... configurations) {
   if(model.is_two_valued()) {
-    return detail::compute_dispersion_implementation<Approximate, detail::dispersionMethod::two_values>{}(model, point, number_types, std::forward<Configurations>(configurations)...);
+    return detail::compute_dispersion_implementation<detail::dispersionMethod::two_values>{}(model, point, number_types, std::forward<Configurations>(configurations)...);
   } else if(model.is_nonincreasing()) {
-    return detail::compute_dispersion_implementation<Approximate, detail::dispersionMethod::nonincreasing>{}(model, point, number_types, std::forward<Configurations>(configurations)...);
+    return detail::compute_dispersion_implementation<detail::dispersionMethod::nonincreasing>{}(model, point, number_types, std::forward<Configurations>(configurations)...);
   } else if(model.is_nonincreasing_after_lower_endpoint()) {
-    return detail::compute_dispersion_implementation<Approximate, detail::dispersionMethod::nonincreasing_after_lower_endpoint>{}(model, point, number_types, std::forward<Configurations>(configurations)...);
+    return detail::compute_dispersion_implementation<detail::dispersionMethod::nonincreasing_after_lower_endpoint>{}(model, point, number_types, std::forward<Configurations>(configurations)...);
   } else {
-    return detail::compute_dispersion_implementation<Approximate, detail::dispersionMethod::generic>{}(model, point, number_types, std::forward<Configurations>(configurations)...);
+    return detail::compute_dispersion_implementation<detail::dispersionMethod::generic>{}(model, point, number_types, std::forward<Configurations>(configurations)...);
   }
 }
 

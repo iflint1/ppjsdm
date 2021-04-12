@@ -34,7 +34,7 @@ inline void add_to_formula(std::string& formula, Rcpp::CharacterVector names) {
   }
 }
 
-template<bool Approximate, typename Configuration, typename Vector>
+template<typename Configuration, typename Vector>
 Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configuration_list,
                                       const ppjsdm::Window& window,
                                       const ppjsdm::Im_list_wrapper& covariates,
@@ -137,11 +137,11 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     const auto point_index(i - previous_count);
     std::vector<double> d;
     if(need_to_compute_alpha) {
-      d = ppjsdm::compute_dispersion<Approximate>(dispersion_model, configuration_list[configuration_index][point_index], number_types, configuration_list[configuration_index]);
+      d = ppjsdm::compute_dispersion(dispersion_model, configuration_list[configuration_index][point_index], number_types, configuration_list[configuration_index]);
     }
     std::vector<double> e;
     if(need_to_compute_gamma) {
-      e = ppjsdm::compute_dispersion<Approximate>(medium_dispersion_model, configuration_list[configuration_index][point_index], number_types, configuration_list[configuration_index]);
+      e = ppjsdm::compute_dispersion(medium_dispersion_model, configuration_list[configuration_index][point_index], number_types, configuration_list[configuration_index]);
     }
     std::vector<double> cov(covariates_length);
     for(size_t k(0); k < covariates_length; ++k) {
@@ -172,11 +172,11 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     for(size_t j(0); j < configuration_list.size(); ++j) {
       std::vector<double> d;
       if(need_to_compute_alpha) {
-        d = ppjsdm::compute_dispersion<Approximate>(dispersion_model, D[i], number_types, configuration_list[j]);
+        d = ppjsdm::compute_dispersion(dispersion_model, D[i], number_types, configuration_list[j]);
       }
       std::vector<double> e;
       if(need_to_compute_gamma) {
-        e = ppjsdm::compute_dispersion<Approximate>(medium_dispersion_model, D[i], number_types, configuration_list[j]);
+        e = ppjsdm::compute_dispersion(medium_dispersion_model, D[i], number_types, configuration_list[j]);
       }
       results_private.emplace_back(false, ppjsdm::get_type(D[i]), std::move(d), std::move(e), cov, ppjsdm::get_x(D[i]), ppjsdm::get_y(D[i]), ppjsdm::get_mark(D[i]));
     }
@@ -309,7 +309,6 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
                                SEXP long_range,
                                R_xlen_t saturation,
                                Rcpp::NumericVector mark_range,
-                               bool approximate,
                                R_xlen_t max_dummy,
                                double dummy_factor,
                                Rcpp::LogicalMatrix estimate_alpha,
@@ -348,9 +347,5 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
   }
   const auto dispersion(ppjsdm::Saturated_model(model, short_range, saturation));
   const auto medium_range_dispersion(ppjsdm::Saturated_model(medium_range_model, medium_range, long_range, saturation));
-  if(approximate) {
-    return prepare_gibbsm_data_helper<true>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), dispersion, medium_range_dispersion, max_points_by_type, max_dummy, dummy_factor, estimate_alpha, estimate_gamma, number_types, nthreads);
-  } else {
-    return prepare_gibbsm_data_helper<false>(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), dispersion, medium_range_dispersion, max_points_by_type, max_dummy, dummy_factor, estimate_alpha, estimate_gamma, number_types, nthreads);
-  }
+  return prepare_gibbsm_data_helper(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), dispersion, medium_range_dispersion, max_points_by_type, max_dummy, dummy_factor, estimate_alpha, estimate_gamma, number_types, nthreads);
 }
