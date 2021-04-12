@@ -178,13 +178,13 @@ public:
     std::vector<double> upper_bound(number_types);
     using size_t = std::remove_cv_t<decltype(number_types)>;
     for(size_t type(0); type < number_types; ++type) {
-      const auto value(Model::beta0_[type] + beta_dot_covariates_maximum_[type]);
+      const auto value(std::exp(Model::beta0_[type] + beta_dot_covariates_maximum_[type]));
       if(std::isinf(value)) {
         Rcpp::Rcout << Model::beta0_[type] << '\n';
         Rcpp::Rcout << beta_dot_covariates_maximum_[type] << '\n';
         Rcpp::stop("Infinite value obtained as the bound to the approximate PPP intensity.");
       }
-      upper_bound[type] = std::exp(value);
+      upper_bound[type] = value;
     }
     return upper_bound;
   }
@@ -194,14 +194,14 @@ public:
     std::vector<double> upper_bound(number_types);
     using size_t = std::remove_cv_t<decltype(number_types)>;
     for(size_t type(0); type < number_types; ++type) {
-      const auto value(Model::beta0_[type] + dot_dispersion_maximum_[type] + beta_dot_covariates_maximum_[type]);
+      const auto value(std::exp(Model::beta0_[type] + dot_dispersion_maximum_[type] + beta_dot_covariates_maximum_[type]));
       if(std::isinf(value)) {
         Rcpp::Rcout << Model::beta0_[type] << '\n';
         Rcpp::Rcout << dot_dispersion_maximum_[type] << '\n';
         Rcpp::Rcout << beta_dot_covariates_maximum_[type] << '\n';
         Rcpp::stop("Infinite value obtained as the bound to the Papangelou intensity.");
       }
-      upper_bound[type] = std::exp(value);
+      upper_bound[type] = value;
     }
     return upper_bound;
   }
