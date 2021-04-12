@@ -23,13 +23,12 @@ constexpr double always_in_L = -2.0;
 template <typename Configuration, typename Model>
 class Backwards_Markov_chain {
 public:
-  explicit Backwards_Markov_chain(const Model& model, R_xlen_t number_types) :
+  explicit Backwards_Markov_chain(const Model& model) :
     model_(model),
     last_configuration_(simulate_inhomogeneous_ppp<Configuration>(model.get_window(),
                                                                   [&model](const auto& point) { return model.get_log_normalized_bounding_intensity(point); },
                                                                   model.get_upper_bound(),
-                                                                  number_types)),
-    number_types_(number_types),
+                                                                  model.get_number_types())),
     intensity_integral_(model.get_integral()),
     chain_{} {}
 
@@ -112,7 +111,6 @@ public:
 private:
   Model model_;
   Configuration last_configuration_;
-  R_xlen_t number_types_;
   double intensity_integral_;
   std::vector<std::tuple<double, Marked_point>> chain_;
 
