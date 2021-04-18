@@ -2,7 +2,7 @@ library(ppjsdm)
 
 context("gibbsm")
 
-test_that("gibbsm returns correct parameters for given test values", {
+test_that("gibbsm returns correct parameters for Geyer potentials potentials", {
   short_range <- matrix(0.01, 2, 2)
   medium_range <- matrix(0.02, 2, 2)
   long_range <- matrix(0.04, 2, 2)
@@ -13,7 +13,6 @@ test_that("gibbsm returns correct parameters for given test values", {
   set.seed(1)
   z <- ppjsdm::rppp(lambda = c(1e2, 1e2))
 
-  # Geyer potentials
   fit <- gibbsm(z, short_range = short_range,
                 medium_range = medium_range,
                 long_range = long_range,
@@ -33,8 +32,19 @@ test_that("gibbsm returns correct parameters for given test values", {
   expect_equal(as.vector(fit$coefficients$alpha), as.vector(target_alpha))
   expect_equal(as.vector(fit$coefficients$gamma), as.vector(target_gamma))
   expect_equal(as.vector(fit$coefficients$beta0), as.vector(target_beta0))
+})
 
-  # Exponential/Geyer potentials
+test_that("gibbsm returns correct parameters for Exponential/Geyer potentials", {
+  short_range <- matrix(0.01, 2, 2)
+  medium_range <- matrix(0.02, 2, 2)
+  long_range <- matrix(0.04, 2, 2)
+  max_dummy <- 1e3
+  dummy_factor <- 1e6
+  saturation <- 2
+
+  set.seed(1)
+  z <- ppjsdm::rppp(lambda = c(1e2, 1e2))
+
   fit <- gibbsm(z, short_range = short_range,
                 medium_range = medium_range,
                 long_range = long_range,
@@ -45,15 +55,27 @@ test_that("gibbsm returns correct parameters for given test values", {
                 model = "exponential",
                 medium_range_model = "Geyer")
 
-  target_alpha <- cbind(c(0.35010323872594129035462628962704911828041076660156, -0.17759870456817056227905027299129869788885116577148),
-                        c(-0.17759870456817056227905027299129869788885116577148, 0.35256504184130565970889392701792530715465545654297))
-  target_gamma <- cbind(c(-0.10084714698976385283124557190603809431195259094238, 0.09702105429207094622334750511072343215346336364746),
-                        c(0.09702105429207094622334750511072343215346336364746, -0.03847266422492109927411263470276026055216789245605))
-  target_beta0 <- c(4.48595848094682470019733955268748104572296142578125, 4.63547533681566203966895045596174895763397216796875)
+  target_alpha <- cbind(c(0.37477043101832158145114703984290827065706253051758, -0.19498177190133467173716041997977299615740776062012),
+                        c(-0.19498177190133467173716041997977299615740776062012, 0.27385642132631649037222132392344065010547637939453))
+  target_gamma <- cbind(c(-0.08229360683943837129206144709314685314893722534180, 0.08428574178534278815710933940863469615578651428223),
+                        c(0.08428574178534278815710933940863469615578651428223, -0.04164321456553284062085396044494700618088245391846))
+  target_beta0 <- c(4.48193857807983242480531771434471011161804199218750, 4.67031013303837738703805371187627315521240234375000)
 
   expect_equal(as.vector(fit$coefficients$alpha), as.vector(target_alpha))
   expect_equal(as.vector(fit$coefficients$gamma), as.vector(target_gamma))
   expect_equal(as.vector(fit$coefficients$beta0), as.vector(target_beta0))
+})
+
+test_that("gibbsm returns correct parameters for Exponential/Half exponential potentials", {
+  short_range <- matrix(0.01, 2, 2)
+  medium_range <- matrix(0.02, 2, 2)
+  long_range <- matrix(0.04, 2, 2)
+  max_dummy <- 1e3
+  dummy_factor <- 1e6
+  saturation <- 2
+
+  set.seed(1)
+  z <- ppjsdm::rppp(lambda = c(1e2, 1e2))
 
   # Exponential/Half exponential potentials
   fit <- gibbsm(z, short_range = short_range,
@@ -66,17 +88,28 @@ test_that("gibbsm returns correct parameters for given test values", {
                 model = "exponential",
                 medium_range_model = "half_exponential")
 
-  target_alpha <- cbind(c(0.41961698469347419315766956060542725026607513427734, -0.07094778573517783459845276183841633610427379608154),
-                        c(-0.07094778573517783459845276183841633610427379608154, 0.20364521431050097710624413593905046582221984863281))
-  target_gamma <- cbind(c(-0.42604101967695279240544437016069423407316207885742, 0.05816250390604346676148850292520364746451377868652),
-                        c(0.05816250390604346676148850292520364746451377868652, -0.03335581619183852764010111968673299998044967651367))
-  target_beta0 <- c(4.77603317684604888881949591450393199920654296875000, 4.67087840259726849723165287286974489688873291015625)
+  target_alpha <- cbind(c(0.47672377817360295226833954984613228589296340942383, -0.13114953861490216691088050993130309507250785827637),
+                        c(-0.13114953861490216691088050993130309507250785827637, 0.26278957802394509180032855510944500565528869628906))
+  target_gamma <- cbind(c(-0.34849770430217219541191298048943281173706054687500, 0.04682457184185797455233668529217538889497518539429),
+                        c(0.04682457184185797455233668529217538889497518539429, -0.03036531945194816464739240302606049226596951484680))
+  target_beta0 <- c(4.71716761058562195074728151666931807994842529296875, 4.67488892714819215257193718571215867996215820312500)
 
   expect_equal(as.vector(fit$coefficients$alpha), as.vector(target_alpha))
   expect_equal(as.vector(fit$coefficients$gamma), as.vector(target_gamma))
   expect_equal(as.vector(fit$coefficients$beta0), as.vector(target_beta0))
+})
 
-  # Exponential/Square exponential potentials
+test_that("gibbsm returns correct parameters for Exponential/Square exponential potentials", {
+  short_range <- matrix(0.01, 2, 2)
+  medium_range <- matrix(0.02, 2, 2)
+  long_range <- matrix(0.04, 2, 2)
+  max_dummy <- 1e3
+  dummy_factor <- 1e6
+  saturation <- 2
+
+  set.seed(1)
+  z <- ppjsdm::rppp(lambda = c(1e2, 1e2))
+
   fit <- gibbsm(z, short_range = short_range,
                 medium_range = medium_range,
                 long_range = long_range,
@@ -87,11 +120,11 @@ test_that("gibbsm returns correct parameters for given test values", {
                 model = "exponential",
                 medium_range_model = "square_exponential")
 
-  target_alpha <- cbind(c(0.38066332862224716571120097796665504574775695800781, -0.26417831434202587725934563422924838960170745849609),
-                        c(-0.26417831434202587725934563422924838960170745849609, 0.35588460295789992038351101655280217528343200683594))
-  target_gamma <- cbind(c(-0.25978657093834128799514360252942424267530441284180, 0.11162640512788384039577493922479334287345409393311),
-                        c(0.11162640512788384039577493922479334287345409393311, -0.07293830700391636112644988543252111412584781646729))
-  target_beta0 <- c(4.58641744896081160476342120091430842876434326171875, 4.66904973103962372960040738689713180065155029296875)
+  target_alpha <- cbind(c(0.51714305198667565033332493840134702622890472412109, -0.28437429917999018647023490302672144025564193725586),
+                        c(-0.28437429917999018647023490302672144025564193725586, 0.33298307882591560158402899105567485094070434570312))
+  target_gamma <- cbind(c(-0.20478739895648501168068378319730982184410095214844, 0.14560338667980046722938425318716326728463172912598),
+                        c(0.14560338667980046722938425318716326728463172912598, -0.09353107827259252160523317343177041038870811462402))
+  target_beta0 <- c(4.49886964648366038943549938267096877098083496093750, 4.67027070309024860961244485224597156047821044921875)
 
   expect_equal(as.vector(fit$coefficients$alpha), as.vector(target_alpha))
   expect_equal(as.vector(fit$coefficients$gamma), as.vector(target_gamma))
