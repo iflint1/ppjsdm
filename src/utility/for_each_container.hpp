@@ -6,7 +6,7 @@
 namespace ppjsdm {
 
 template<typename F, typename Condition>
-void conditional_for_each_container(F&&, Condition&&) {
+inline void conditional_for_each_container(F&&, Condition&&) {
   return;
 }
 
