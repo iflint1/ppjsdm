@@ -100,12 +100,12 @@ test_that("Correct Papangelou conditional intensity value", {
     }
 
     configuration <- ppjsdm::Configuration(x = runif(20, 0, 1), y = runif(20, 0, 1), types = c(rep("a", 9), rep("b", 11)))
-    configuration_a <- ppjsdm::Configuration(x = ppjsdm::x_coordinates(configuration)[ppjsdm::types(configuration) == "a"],
-                                             y = ppjsdm::y_coordinates(configuration)[ppjsdm::types(configuration) == "a"],
-                                             types = ppjsdm::types(configuration)[ppjsdm::types(configuration) == "a"])
-    configuration_b <- ppjsdm::Configuration(x = ppjsdm::x_coordinates(configuration)[ppjsdm::types(configuration) == "b"],
-                                             y = ppjsdm::y_coordinates(configuration)[ppjsdm::types(configuration) == "b"],
-                                             types = ppjsdm::types(configuration)[ppjsdm::types(configuration) == "b"])
+    configuration_by_type <- lapply(as.character(levels(ppjsdm::types(configuration))), function(type) {
+      ppjsdm::Configuration(x = ppjsdm::x_coordinates(configuration)[ppjsdm::types(configuration) == type],
+                            y = ppjsdm::y_coordinates(configuration)[ppjsdm::types(configuration) == type],
+                            types = ppjsdm::types(configuration)[ppjsdm::types(configuration) == type])
+    })
+
     beta0 <- c(log(1), log(2))
     alpha <- cbind(c(0.5, 1), c(1, -0.5))
     gamma <- cbind(c(2, 0), c(0, -2))
@@ -116,54 +116,66 @@ test_that("Correct Papangelou conditional intensity value", {
     r_3 <- matrix(runif(4, 0, 0.1), 2, 2)
     r_3 <- r_2 + r_3 %*% t(r_3)
 
+    N <- 3
     beta <- matrix(4, 2, 1)
     covariate <- function(x, y) x + y
-    x <- stats::runif(2, 0, 1)
+    if(nt %% 2 == 0) { # Compute the Papangelou conditional intensity on a point of the configuration
+      x <- c(configuration$x[1], configuration$y[1])
+    } else { # Compute the Papangelou conditional intensity on an outside point
+      x <- stats::runif(2, 0, 1)
+    }
     window <- spatstat.geom::owin(c(0, 1), c(0, 1))
-    # IMPORTANT NOTE: I'm assuming in places below that type = 1, so you can't change type below and expect everything to work.
     type <- 1
+    not_type <- 2
 
-    N <- 2
-    u_term_fun <- function(x, conf, i, j) {
-      s <- sapply(seq_len(length(conf$x)), function(k) varphi(dist(rbind(x, c(conf$x[k], conf$y[k]))), i, j))
+    # If x is in the configuration, remove it.
+    x_is_in_configuration <- which(x[1] == configuration_by_type[[type]]$x & x[2] == configuration_by_type[[type]]$y)
+    if(length(x_is_in_configuration) > 0) {
+      configuration_by_type[[type]] <- ppjsdm::Configuration(x = configuration_by_type[[type]]$x[-x_is_in_configuration],
+                                                             y = configuration_by_type[[type]]$y[-x_is_in_configuration],
+                                                             types = configuration_by_type[[type]]$types[-x_is_in_configuration])
+    }
+
+    dispersion_term <- function(x, conf, i, j, range) {
+      s <- sapply(seq_len(length(conf$x)), function(k) {
+        if(range == "short") {
+          varphi(dist(rbind(x, c(conf$x[k], conf$y[k]))), i, j)
+        } else if(range == "medium") {
+          psi(dist(rbind(x, c(conf$x[k], conf$y[k]))), i, j)
+        } else {
+          stop("Incorrect range value in dispersion term.")
+        }
+      })
       sum(s[order(s, decreasing = TRUE)[1:N]])
     }
-    v_term_fun <- function(x, conf, i, j) {
-      s <- sapply(seq_len(length(conf$x)), function(k) psi(dist(rbind(x, c(conf$x[k], conf$y[k]))), i, j))
-      sum(s[order(s, decreasing = TRUE)[1:N]])
+
+    compute_dispersion_term <- function(range) {
+      terms <- vector(mode = 'list', length = nlevels(ppjsdm::types(configuration)))
+      terms[[type]] <- dispersion_term(x, configuration_by_type[[type]], type, type, range = range) +
+        sum(sapply(seq_len(length(configuration_by_type[[type]]$x)), function(i) {
+          configuration_minus <- ppjsdm::Configuration(x = configuration_by_type[[type]]$x[-i],
+                                                       y = configuration_by_type[[type]]$y[-i],
+                                                       types = configuration_by_type[[type]]$types[-i])
+          configuration_minus_plus_x <- ppjsdm::Configuration(x = c(configuration_by_type[[type]]$x[-i], x[1]),
+                                                              y = c(configuration_by_type[[type]]$y[-i], x[2]),
+                                                              types = factor(c(configuration_by_type[[type]]$types[-i], type), labels = "a"))
+          p <- c(configuration_by_type[[type]]$x[i], configuration_by_type[[type]]$y[i])
+          dispersion_term(p, configuration_minus_plus_x, type, type, range = range) - dispersion_term(p, configuration_minus, type, type, range = range)
+        }))
+
+      terms[[not_type]] <- dispersion_term(x, configuration_by_type[[not_type]], type, not_type, range = range) + sum(sapply(seq_len(length(configuration_by_type[[not_type]]$x)), function(i) {
+        configuration_minus <- configuration_by_type[[type]]
+        configuration_minus_plus_x <- ppjsdm::Configuration(x = c(configuration_by_type[[type]]$x, x[1]),
+                                                            y = c(configuration_by_type[[type]]$y, x[2]),
+                                                            types = factor(c(configuration_by_type[[type]]$types, type), labels = "a"))
+        p <- c(configuration_by_type[[not_type]]$x[i], configuration_by_type[[not_type]]$y[i])
+        dispersion_term(p, configuration_minus_plus_x, not_type, type, range = range) - dispersion_term(p, configuration_minus, not_type, type, range = range)
+      }))
+      Reduce(c, terms)
     }
 
-    u_term1 <- u_term_fun(x, configuration_a, type, 1) + sum(sapply(seq_len(length(configuration_a$x)), function(i) {
-      configuration_minus <- ppjsdm::Configuration(x = configuration_a$x[-i], y = configuration_a$y[-i], types = configuration_a$types[-i])
-      configuration_minus_plus_x <- ppjsdm::Configuration(x = c(configuration_a$x[-i], x[1]), y = c(configuration_a$y[-i], x[2]), types = configuration_a$types)
-      p <- c(configuration_a$x[i], configuration_a$y[i])
-      z <- u_term_fun(p, configuration_minus_plus_x, 1, type) - u_term_fun(p, configuration_minus, 1, type)
-      z
-    }))
-    u_term2 <- u_term_fun(x, configuration_b, type, 2) + sum(sapply(seq_len(length(configuration_b$x)), function(i) {
-      configuration_minus <- configuration_a
-      configuration_minus_plus_x <- ppjsdm::Configuration(x = c(configuration_a$x, x[1]), y = c(configuration_a$y, x[2]), types = factor(c(configuration_a$types, 1), labels = "a"))
-      p <- c(configuration_b$x[i], configuration_b$y[i])
-      z <- u_term_fun(p, configuration_minus_plus_x, 2, type) - u_term_fun(p, configuration_minus, 2, type)
-      z
-    }))
-    u_term <- c(u_term1, u_term2)
-
-    v_term1 <- v_term_fun(x, configuration_a, type, 1) + sum(sapply(seq_len(length(configuration_a$x)), function(i) {
-      configuration_minus <- ppjsdm::Configuration(x = configuration_a$x[-i], y = configuration_a$y[-i], types = configuration_a$types[-i])
-      configuration_minus_plus_x <- ppjsdm::Configuration(x = c(configuration_a$x[-i], x[1]), y = c(configuration_a$y[-i], x[2]), types = configuration_a$types)
-      p <- c(configuration_a$x[i], configuration_a$y[i])
-      z <- v_term_fun(p, configuration_minus_plus_x, 1, type) - v_term_fun(p, configuration_minus, 1, type)
-      z
-    }))
-    v_term2 <- v_term_fun(x, configuration_b, type, 2) + sum(sapply(seq_len(length(configuration_b$x)), function(i) {
-      configuration_minus <- configuration_a
-      configuration_minus_plus_x <- ppjsdm::Configuration(x = c(configuration_a$x, x[1]), y = c(configuration_a$y, x[2]), types = factor(c(configuration_a$types, 1), labels = "a"))
-      p <- c(configuration_b$x[i], configuration_b$y[i])
-      z <- v_term_fun(p, configuration_minus_plus_x, 2, type) - v_term_fun(p, configuration_minus, 2, type)
-      z
-    }))
-    v_term <- c(v_term1, v_term2)
+    u_term <- compute_dispersion_term(range = "short")
+    v_term <- compute_dispersion_term(range = "medium")
 
     papangelou_direct <- as.double(exp(beta0[type] + beta[type] * covariate(x[1], x[2]) + alpha[type, ] %*% u_term + gamma[type, ] %*% v_term))
     papangelou_package <- ppjsdm::compute_papangelou(configuration = configuration,

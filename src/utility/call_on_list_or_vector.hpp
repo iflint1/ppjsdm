@@ -4,8 +4,6 @@
 #include <Rcpp.h>
 #include <Rinternals.h>
 
-#include <utility> // std::forward
-
 namespace ppjsdm {
 
 template<typename F>
