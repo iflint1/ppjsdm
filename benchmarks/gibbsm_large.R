@@ -9,8 +9,8 @@ x_covariate <- function(x, y) x
 y_covariate <- function(x, y) y
 
 dummy_factor <- 1e6
-model <- "exponential"
-medium_range_model <- "square_exponential"
+model <- "Geyer"
+medium_range_model <- "Geyer"
 
 set.seed(42)
 
@@ -19,7 +19,7 @@ configuration <- as.Configuration(configuration_spatstat)
 
 plot(configuration_spatstat)
 
-nd <- 200
+nd <- 100
 
 b <- microbenchmark(
   "ppjsdm::gibbsm with short-range and medium-range" = ppjsdm::gibbsm(configuration,
@@ -49,8 +49,10 @@ b <- microbenchmark(
                                                    model = model,
                                                    medium_range_model = medium_range_model),
   # `logi` is the fastest method according to docs, but `mpl` appears to be faster here.
-  "spatstat::ppm mpl" = ppm(configuration_spatstat ~ 1 + x_covariate + y_covariate, method = "mpl", nd = c(nd, nd)),
-  "spatstat::ppm logi" = ppm(configuration_spatstat ~ 1 + x_covariate + y_covariate, method = "logi", nd = c(nd, nd)),
+  "spatstat::ppm Poisson mpl" = ppm(configuration_spatstat ~ 1 + x_covariate + y_covariate, method = "mpl", nd = c(nd, nd)),
+  "spatstat::ppm Poisson logi" = ppm(configuration_spatstat ~ 1 + x_covariate + y_covariate, method = "logi", nd = c(nd, nd)),
+  "spatstat::ppm Strauss mpl" = ppm(configuration_spatstat ~ 1 + x_covariate + y_covariate, method = "mpl", nd = c(nd, nd), correction = "none", interaction = Strauss(0.01)),
+  "spatstat::ppm Strauss logi" = ppm(configuration_spatstat ~ 1 + x_covariate + y_covariate, method = "logi", nd = c(nd, nd), correction = "none", interaction = Strauss(0.01)),
   times = 10L
 )
 
