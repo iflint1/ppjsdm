@@ -67,14 +67,15 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 
   using size_t = ppjsdm::size_t<Configuration>;
 
-  // Sample the dummy points D.
-  // This choice of rho is the guideline from the Baddeley et al. paper, see p. 8 therein.
+  // This choice of intensity of dummy points rho is the guideline from the Baddeley et al. paper, see p. 8 therein.
   if(max_dummy == 0) {
     max_dummy = 500;
   }
   if(dummy_factor == 0.) {
     dummy_factor = 4.;
   }
+
+  // Sample the dummy points D.
   std::vector<double> rho_times_volume(number_types);
   size_t length_D(0);
   for(typename decltype(rho_times_volume)::size_type i(0); i < rho_times_volume.size(); ++i) {
@@ -87,8 +88,6 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
       length_D += max_dummy;
     }
   }
-
-
 
   const auto D(ppjsdm::rbinomialpp_single<std::vector<ppjsdm::Marked_point>>(window, rho_times_volume, number_types, length_D));
 
@@ -223,7 +222,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
                             Rcpp::Named("offset") = rho_offset,
                             Rcpp::Named("regressors") = regressors,
                             Rcpp::Named("shift") = shift
-                            );
+  );
 }
 
 // [[Rcpp::export]]
