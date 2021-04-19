@@ -130,3 +130,155 @@ test_that("gibbsm returns correct parameters for Exponential/Square exponential 
   expect_equal(as.vector(fit$coefficients$gamma), as.vector(target_gamma))
   expect_equal(as.vector(fit$coefficients$beta0), as.vector(target_beta0))
 })
+
+test_that("gibbsm works with infinite saturation for Geyer potentials potentials", {
+  short_range <- matrix(0.01, 2, 2)
+  medium_range <- matrix(0.02, 2, 2)
+  long_range <- matrix(0.04, 2, 2)
+  max_dummy <- 1e3
+  dummy_factor <- 1e6
+  saturation <- 1e6
+
+  set.seed(1)
+  z <- ppjsdm::rppp(lambda = c(1e2, 1e2))
+
+  set.seed(1)
+  fit_large <- gibbsm(z, short_range = short_range,
+                      medium_range = medium_range,
+                      long_range = long_range,
+                      use_glmnet = FALSE,
+                      max_dummy = max_dummy,
+                      dummy_factor = dummy_factor,
+                      saturation = 1e6,
+                      model = "Geyer",
+                      medium_range_model = "Geyer")
+
+  set.seed(1)
+  fit_infinite <- gibbsm(z, short_range = short_range,
+                         medium_range = medium_range,
+                         long_range = long_range,
+                         use_glmnet = FALSE,
+                         max_dummy = max_dummy,
+                         dummy_factor = dummy_factor,
+                         saturation = Inf,
+                         model = "Geyer",
+                         medium_range_model = "Geyer")
+
+  expect_equal(as.vector(fit_large$coefficients$alpha), as.vector(fit_infinite$coefficients$alpha))
+  expect_equal(as.vector(fit_large$coefficients$gamma), as.vector(fit_infinite$coefficients$gamma))
+  expect_equal(as.vector(fit_large$coefficients$beta0), as.vector(fit_infinite$coefficients$beta0))
+})
+
+test_that("gibbsm works with infinite saturation for Exponential/Geyer potentials", {
+  short_range <- matrix(0.01, 2, 2)
+  medium_range <- matrix(0.02, 2, 2)
+  long_range <- matrix(0.04, 2, 2)
+  max_dummy <- 1e3
+  dummy_factor <- 1e6
+  saturation <- 2
+
+  set.seed(1)
+  z <- ppjsdm::rppp(lambda = c(1e2, 1e2))
+
+  set.seed(1)
+  fit_large <- gibbsm(z, short_range = short_range,
+                      medium_range = medium_range,
+                      long_range = long_range,
+                      use_glmnet = FALSE,
+                      max_dummy = max_dummy,
+                      dummy_factor = dummy_factor,
+                      saturation = 1e6,
+                      model = "exponential",
+                      medium_range_model = "Geyer")
+
+  set.seed(1)
+  fit_infinite <- gibbsm(z, short_range = short_range,
+                         medium_range = medium_range,
+                         long_range = long_range,
+                         use_glmnet = FALSE,
+                         max_dummy = max_dummy,
+                         dummy_factor = dummy_factor,
+                         saturation = Inf,
+                         model = "exponential",
+                         medium_range_model = "Geyer")
+
+  expect_equal(as.vector(fit_large$coefficients$alpha), as.vector(fit_infinite$coefficients$alpha))
+  expect_equal(as.vector(fit_large$coefficients$gamma), as.vector(fit_infinite$coefficients$gamma))
+  expect_equal(as.vector(fit_large$coefficients$beta0), as.vector(fit_infinite$coefficients$beta0))
+})
+
+test_that("gibbsm works with infinite saturation for Exponential/Half exponential potentials", {
+  short_range <- matrix(0.01, 2, 2)
+  medium_range <- matrix(0.02, 2, 2)
+  long_range <- matrix(0.04, 2, 2)
+  max_dummy <- 1e3
+  dummy_factor <- 1e6
+  saturation <- 2
+
+  set.seed(1)
+  z <- ppjsdm::rppp(lambda = c(1e2, 1e2))
+
+  set.seed(1)
+  fit_large <- gibbsm(z, short_range = short_range,
+                      medium_range = medium_range,
+                      long_range = long_range,
+                      use_glmnet = FALSE,
+                      max_dummy = max_dummy,
+                      dummy_factor = dummy_factor,
+                      saturation = 1e6,
+                      model = "exponential",
+                      medium_range_model = "half_exponential")
+
+  set.seed(1)
+  fit_infinite <- gibbsm(z, short_range = short_range,
+                         medium_range = medium_range,
+                         long_range = long_range,
+                         use_glmnet = FALSE,
+                         max_dummy = max_dummy,
+                         dummy_factor = dummy_factor,
+                         saturation = Inf,
+                         model = "exponential",
+                         medium_range_model = "half_exponential")
+
+  expect_equal(as.vector(fit_large$coefficients$alpha), as.vector(fit_infinite$coefficients$alpha))
+  expect_equal(as.vector(fit_large$coefficients$gamma), as.vector(fit_infinite$coefficients$gamma))
+  expect_equal(as.vector(fit_large$coefficients$beta0), as.vector(fit_infinite$coefficients$beta0))
+})
+
+test_that("gibbsm works with infinite saturation for Exponential/Square exponential potentials", {
+  short_range <- matrix(0.01, 2, 2)
+  medium_range <- matrix(0.02, 2, 2)
+  long_range <- matrix(0.04, 2, 2)
+  max_dummy <- 1e3
+  dummy_factor <- 1e6
+  saturation <- 2
+
+  set.seed(1)
+  z <- ppjsdm::rppp(lambda = c(1e2, 1e2))
+
+  set.seed(1)
+  fit_large <- gibbsm(z, short_range = short_range,
+                      medium_range = medium_range,
+                      long_range = long_range,
+                      use_glmnet = FALSE,
+                      max_dummy = max_dummy,
+                      dummy_factor = dummy_factor,
+                      saturation = 1e6,
+                      model = "exponential",
+                      medium_range_model = "square_exponential")
+
+  set.seed(1)
+  fit_infinite <- gibbsm(z, short_range = short_range,
+                         medium_range = medium_range,
+                         long_range = long_range,
+                         use_glmnet = FALSE,
+                         max_dummy = max_dummy,
+                         dummy_factor = dummy_factor,
+                         saturation = Inf,
+                         model = "exponential",
+                         medium_range_model = "square_exponential")
+
+  expect_equal(as.vector(fit_large$coefficients$alpha), as.vector(fit_infinite$coefficients$alpha))
+  expect_equal(as.vector(fit_large$coefficients$gamma), as.vector(fit_infinite$coefficients$gamma))
+  expect_equal(as.vector(fit_large$coefficients$beta0), as.vector(fit_infinite$coefficients$beta0))
+})
