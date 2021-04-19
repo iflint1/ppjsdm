@@ -120,6 +120,24 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   }
   precomputed_results.reserve(total_configuration_length + length_D * configuration_list.size());
 
+  // TODO: Trying to precompute a lot of things, write better explanations
+  std::vector<std::vector<std::vector<double>>> dispersion_short(configuration_list.size());
+  std::vector<std::vector<std::vector<double>>> dispersion_medium(configuration_list.size());
+  for(size_t configuration_index(0); configuration_index < configuration_list.size(); ++configuration_index) {
+    if(need_to_compute_alpha) {
+      dispersion_short[configuration_index] = ppjsdm::compute_dispersion_index(dispersion_model,
+                                                                               number_types,
+                                                                               configuration_list[configuration_index],
+                                                                               D);
+    }
+    if(need_to_compute_gamma) {
+      dispersion_medium[configuration_index] = ppjsdm::compute_dispersion_index(medium_dispersion_model,
+                                                                                number_types,
+                                                                                configuration_list[configuration_index],
+                                                                                D);
+    }
+  }
+
   const size_t covariates_length(covariates.size());
 #pragma omp parallel
   {
@@ -137,11 +155,13 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     const auto point_index(i - previous_count);
     std::vector<double> d;
     if(need_to_compute_alpha) {
-      d = ppjsdm::compute_dispersion(dispersion_model, configuration_list[configuration_index][point_index], number_types, configuration_list[configuration_index]);
+      d = dispersion_short[configuration_index][point_index];
+      // d = ppjsdm::compute_dispersion(dispersion_model, configuration_list[configuration_index][point_index], number_types, configuration_list[configuration_index]);
     }
     std::vector<double> e;
     if(need_to_compute_gamma) {
-      e = ppjsdm::compute_dispersion(medium_dispersion_model, configuration_list[configuration_index][point_index], number_types, configuration_list[configuration_index]);
+      e = dispersion_medium[configuration_index][point_index];
+      // e = ppjsdm::compute_dispersion(medium_dispersion_model, configuration_list[configuration_index][point_index], number_types, configuration_list[configuration_index]);
     }
     std::vector<double> cov(covariates_length);
     for(size_t k(0); k < covariates_length; ++k) {
@@ -172,11 +192,13 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     for(size_t j(0); j < configuration_list.size(); ++j) {
       std::vector<double> d;
       if(need_to_compute_alpha) {
-        d = ppjsdm::compute_dispersion(dispersion_model, D[i], number_types, configuration_list[j]);
+        d = dispersion_short[j][i + ppjsdm::size(configuration_list[j])];
+        // d = ppjsdm::compute_dispersion(dispersion_model, D[i], number_types, configuration_list[j]);
       }
       std::vector<double> e;
       if(need_to_compute_gamma) {
-        e = ppjsdm::compute_dispersion(medium_dispersion_model, D[i], number_types, configuration_list[j]);
+        e = dispersion_medium[j][i + ppjsdm::size(configuration_list[j])];
+        // e = ppjsdm::compute_dispersion(medium_dispersion_model, D[i], number_types, configuration_list[j]);
       }
       results_private.emplace_back(false, ppjsdm::get_type(D[i]), std::move(d), std::move(e), cov, ppjsdm::get_x(D[i]), ppjsdm::get_y(D[i]), ppjsdm::get_mark(D[i]));
     }
