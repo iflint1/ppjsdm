@@ -138,7 +138,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
 #' @param dummy_factor How many more dummy points there are, compared to the points in the configuration. By default, follows the recommendation of Baddeley et al.
 #' @param nthreads Maximum number of threads for parallel computing.
 #' @importFrom glmnet glmnet cv.glmnet
-#' @importFrom stats AIC BIC binomial coefficients deviance glm.fit lm
+#' @importFrom stats AIC as.formula BIC binomial coefficients deviance glm lm
 #' @importFrom spatstat.geom as.im as.owin
 #' @importFrom GA ga
 #' @export
