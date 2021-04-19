@@ -78,15 +78,17 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   std::vector<double> rho_times_volume(number_types);
   size_t length_D(0);
   for(typename decltype(rho_times_volume)::size_type i(0); i < rho_times_volume.size(); ++i) {
-    const int factor_times_max_points_in_any_type(dummy_factor * max_points_by_type[i]);
-    if(factor_times_max_points_in_any_type < max_dummy) {
+    const auto factor_times_max_points_in_any_type(dummy_factor * static_cast<double>(max_points_by_type[i]));
+    if(factor_times_max_points_in_any_type < static_cast<double>(max_dummy)) {
       rho_times_volume[i] = factor_times_max_points_in_any_type;
-      length_D += factor_times_max_points_in_any_type;
+      length_D += static_cast<size_t>(factor_times_max_points_in_any_type);
     } else {
       rho_times_volume[i] = max_dummy;
       length_D += max_dummy;
     }
   }
+
+
 
   const auto D(ppjsdm::rbinomialpp_single<std::vector<ppjsdm::Marked_point>>(window, rho_times_volume, number_types, length_D));
 
