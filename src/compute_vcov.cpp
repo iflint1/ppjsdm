@@ -214,6 +214,7 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
     // is not so different from ppjsdm::compute_dispersion(dispersion_model, point_i, number_types, configuration).
     // When computing the distances between point_i, look at all of them and discard the distance between i and j.
     // The latter was already computed, try to find a way to recover it.
+    // Note written later: This can be done by re-using the tricks implemented in the new function to compute dipersion.
     if(compute_some_alphas) {
       precomputed_short_i[index] = ppjsdm::compute_dispersion(dispersion_model, point_i, number_types, configuration_without_ij);
       precomputed_short_j[index] = ppjsdm::compute_dispersion(dispersion_model, point_j, number_types, configuration_without_ij);
