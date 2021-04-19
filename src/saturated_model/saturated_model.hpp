@@ -459,41 +459,73 @@ inline auto generic_dispersion_computation(const Saturated_model& varphi,
 
   const auto configuration_size(size(configuration));
   using size_t = std::remove_cv_t<decltype(size(configuration))>;
-
   std::vector<CountType> count_vector(configuration_size);
-  for(size_t i(0); i < configuration_size; ++i) {
-    count_vector[i] = CountType(number_types);
-    for(size_t j(0); j < configuration_size; ++j) {
-      if(i != j) {
-        AbstractDispersion::update_count(varphi, count_vector[i][get_type(configuration[j])], configuration[i], configuration[j]);
+
+  // TODO: The code below seems to work, but it can definitely be optimized or grouped together with the non-saturated
+  // case below.
+  if(static_cast<decltype(size(configuration))>(varphi.get_saturation()) >= size(configuration)) {
+    for(size_t i(0); i < configuration_size; ++i) {
+      count_vector[i] = CountType(number_types);
+      for(size_t j(0); j < configuration_size; ++j) {
+        if(i != j) {
+          AbstractDispersion::update_count_nonsaturated(varphi, count_vector[i][get_type(configuration[j])], configuration[i], configuration[j]);
+        }
       }
     }
-  }
 
-  const auto other_configuration_size(size(other_configuration));
-  std::vector<DispersionType> dispersion(configuration_size + other_configuration_size);
+    const auto other_configuration_size(size(other_configuration));
+    std::vector<DispersionType> dispersion(configuration_size + other_configuration_size);
 
-  for(size_t i(0); i < configuration_size; ++i) {
-    dispersion[i] = DispersionType(number_types);
-    for(size_t j(0); j < configuration_size; ++j) {
-      if(i != j) {
-        AbstractDispersion::template add_delta<true>(varphi, dispersion[i][get_type(configuration[j])], count_vector[j][get_type(configuration[i])], configuration[j], configuration[i]);
+    for(size_t i(0); i < configuration_size; ++i) {
+      dispersion[i] = DispersionType(number_types);
+      add_count_to_dispersion<AbstractDispersion, 2>(varphi, dispersion[i], count_vector[i], number_types, configuration[i]);
+    }
+
+    for(size_t i(0); i < other_configuration_size; ++i) {
+      dispersion[configuration_size + i] = DispersionType(number_types);
+      CountType count_point(number_types);
+      for(size_t j(0); j < configuration_size; ++j) {
+        AbstractDispersion::update_count_nonsaturated(varphi, count_point[get_type(configuration[j])], other_configuration[i], configuration[j]);
+      }
+      add_count_to_dispersion<AbstractDispersion, 2>(varphi, dispersion[configuration_size + i], count_point, number_types, other_configuration[i]);
+    }
+
+    return dispersion;
+  } else {
+    for(size_t i(0); i < configuration_size; ++i) {
+      count_vector[i] = CountType(number_types);
+      for(size_t j(0); j < configuration_size; ++j) {
+        if(i != j) {
+          AbstractDispersion::update_count(varphi, count_vector[i][get_type(configuration[j])], configuration[i], configuration[j]);
+        }
       }
     }
-    add_count_to_dispersion<AbstractDispersion, 1>(varphi, dispersion[i], count_vector[i], number_types, configuration[i]);
-  }
 
-  for(size_t i(0); i < other_configuration_size; ++i) {
-    dispersion[configuration_size + i] = DispersionType(number_types);
-    CountType count_point(number_types);
-    for(size_t j(0); j < configuration_size; ++j) {
-      AbstractDispersion::template add_delta<false>(varphi, dispersion[configuration_size + i][get_type(configuration[j])], count_vector[j][get_type(other_configuration[i])], configuration[j], other_configuration[i]);
-      AbstractDispersion::update_count(varphi, count_point[get_type(configuration[j])], other_configuration[i], configuration[j]);
+    const auto other_configuration_size(size(other_configuration));
+    std::vector<DispersionType> dispersion(configuration_size + other_configuration_size);
+
+    for(size_t i(0); i < configuration_size; ++i) {
+      dispersion[i] = DispersionType(number_types);
+      for(size_t j(0); j < configuration_size; ++j) {
+        if(i != j) {
+          AbstractDispersion::template add_delta<true>(varphi, dispersion[i][get_type(configuration[j])], count_vector[j][get_type(configuration[i])], configuration[j], configuration[i]);
+        }
+      }
+      add_count_to_dispersion<AbstractDispersion, 1>(varphi, dispersion[i], count_vector[i], number_types, configuration[i]);
     }
-    add_count_to_dispersion<AbstractDispersion, 1>(varphi, dispersion[configuration_size + i], count_point, number_types, other_configuration[i]);
-  }
 
-  return dispersion;
+    for(size_t i(0); i < other_configuration_size; ++i) {
+      dispersion[configuration_size + i] = DispersionType(number_types);
+      CountType count_point(number_types);
+      for(size_t j(0); j < configuration_size; ++j) {
+        AbstractDispersion::template add_delta<false>(varphi, dispersion[configuration_size + i][get_type(configuration[j])], count_vector[j][get_type(other_configuration[i])], configuration[j], other_configuration[i]);
+        AbstractDispersion::update_count(varphi, count_point[get_type(configuration[j])], other_configuration[i], configuration[j]);
+      }
+      add_count_to_dispersion<AbstractDispersion, 1>(varphi, dispersion[configuration_size + i], count_point, number_types, other_configuration[i]);
+    }
+
+    return dispersion;
+  }
 }
 
 } // namespace detail
