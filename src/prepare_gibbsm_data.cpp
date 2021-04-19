@@ -154,9 +154,9 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 
       std::vector<double> covariates_values(covariates.size());
       for(size_t covariate_index(0); covariate_index < static_cast<size_t>(covariates.size()); ++covariate_index) {
-        const auto covariate(covariates[covariate_index](configuration_list[configuration_index][point_index]));
+        const auto covariate(covariates[covariate_index](current_point));
         if(R_IsNA(covariate)) {
-          Rcpp::stop("One of the covariates' value is NA on one of the locations in the dataset.");
+          Rcpp::stop("One of the covariates' value is NA on one of the locations.");
         }
         covariates_values[covariate_index] = covariate;
       }
