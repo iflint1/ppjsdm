@@ -177,6 +177,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
       const auto current_point(point_index < ppjsdm::size(configuration_list[configuration_index]) ?
                                  configuration_list[configuration_index][point_index] :
                                  D[point_index - ppjsdm::size(configuration_list[configuration_index])]);
+      // Check if the points generates any NA values, move on if so
       std::vector<double> covariates_values(covariates.size());
       bool found_na_point(false);
       for(size_t covariate_index(0); covariate_index < static_cast<size_t>(covariates.size()); ++covariate_index) {
@@ -191,56 +192,51 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
         continue;
       }
 
+      // fill response
       if(point_index < ppjsdm::size(configuration_list[configuration_index])) {
         response[filling] = 1;
       }
+
+      // fill x, y, mark
       x[filling] = ppjsdm::get_x(current_point);
       y[filling] = ppjsdm::get_y(current_point);
       mark[filling] = ppjsdm::get_mark(current_point);
 
+      // fill type
       const int type_index(ppjsdm::get_type(current_point));
       type[filling] = type_index + 1;
 
+      // fill rho
       rho_offset[filling] = -std::log(static_cast<double>(rho_times_volume[type_index]) / volume);
 
+      // fill log_lambda
+      regressors(filling, type_index) = 1.;
+
+      // fill covariates
+      for(size_t covariate_index(0); covariate_index < static_cast<size_t>(covariates.size()); ++covariate_index) {
+        regressors(filling, index_start_covariates + covariate_index * number_types + type_index) = covariates_values[covariate_index];
+      }
+
+      // fill alpha & gamma
       size_t index_alpha(0);
       size_t index_gamma(0);
       for(int j(0); j < number_types; ++j) {
-        if(j == type_index) {
-          // fill log_lambda
-          regressors(filling, j) = 1.;
-
-          // fill covariates
-          for(size_t covariate_index(0); covariate_index < static_cast<size_t>(covariates.size()); ++covariate_index) {
-            regressors(filling, index_start_covariates + covariate_index * number_types + j) = covariates_values[covariate_index];
-          }
-
-          // fill alpha & gamma
-          for(int k(j); k < number_types; ++k) {
-            if(estimate_alpha(j, k)) {
+        for(int k(j); k < number_types; ++k) {
+          if(estimate_alpha(j, k)) {
+            if(j == type_index) {
               regressors(filling, number_types + index_alpha) = dispersion_short[configuration_index][point_index][k];
-              ++index_alpha;
+            } else if(k == type_index) {
+              regressors(filling, number_types + index_alpha) = dispersion_short[configuration_index][point_index][j];
             }
-            if(estimate_gamma(j, k)) {
-              regressors(filling, index_start_gamma + index_gamma) = dispersion_medium[configuration_index][point_index][k];
-              ++index_gamma;
-            }
+            ++index_alpha;
           }
-        } else {
-          // fill alpha & gamma
-          for(int k(j); k < number_types; ++k) {
-            if(estimate_alpha(j, k)) {
-              if(k == type_index) {
-                regressors(filling, number_types + index_alpha) = dispersion_short[configuration_index][point_index][j];
-              }
-              ++index_alpha;
+          if(estimate_gamma(j, k)) {
+            if(j == type_index) {
+              regressors(filling, index_start_gamma + index_gamma) = dispersion_medium[configuration_index][point_index][k];
+            } else if(k == type_index) {
+              regressors(filling, index_start_gamma + index_gamma) = dispersion_medium[configuration_index][point_index][j];
             }
-            if(estimate_gamma(j, k)) {
-              if(k == type_index) {
-                regressors(filling, index_start_gamma + index_gamma) = dispersion_medium[configuration_index][point_index][j];
-              }
-              ++index_gamma;
-            }
+            ++index_gamma;
           }
         }
       }
