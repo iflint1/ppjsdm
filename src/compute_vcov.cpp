@@ -13,6 +13,7 @@
 #include "simulation/rbinomialpp_single.hpp"
 
 #include "utility/construct_if_missing.hpp"
+#include "utility/flatten_strict_upper_triangular.hpp"
 #include "utility/gibbsm_helper_functions.hpp"
 #include "utility/im_wrapper.hpp"
 #include "utility/is_symmetric_matrix.hpp"
@@ -23,30 +24,12 @@
 #include <cmath> // std::floor, std::log, std::sqrt
 #include <iterator> // std::next
 #include <string> // std::string, std::to_string
-#include <tuple> // std::make_pair, std::pair
 #include <type_traits> // std::remove_cv_t
 #include <vector> // std::vector
 
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-
-namespace detail {
-
-// Using linear encoding for the triangular matrices used in the computation of A2/A3.
-// Reference for the formulas here:
-// https://stackoverflow.com/questions/27086195/linear-index-upper-triangular-matrix
-inline R_xlen_t encode_linear(R_xlen_t i, R_xlen_t j, R_xlen_t n) {
-  return n * (n - 1) / 2 - (n - i) * (n - i - 1) / 2 + j - i - 1;
-}
-
-inline std::pair<R_xlen_t, R_xlen_t> decode_linear(R_xlen_t k, R_xlen_t n) {
-  const auto i(n - 2 - static_cast<R_xlen_t>(std::floor(std::sqrt(-8 * k + 4 * n * (n - 1) - 7) / 2. - 0.5)));
-  return std::make_pair(i,
-                        k + i + 1 + ((n - i) * (n - i - 1) - n * (n - 1)) / 2);
-}
-
-} // namespace detail
 
 template<typename Configuration>
 Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
@@ -175,7 +158,7 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
 
   std::vector<R_xlen_t> non_zero_ij_responses;
   for(std::remove_cv_t<decltype(precomputed_size)> k(0); k < precomputed_size; ++k) {
-    const auto pr(detail::decode_linear(k, regressors.nrow()));
+    const auto pr(ppjsdm::decode_linear(k, regressors.nrow()));
     if(response[pr.first] == 1 && response[pr.second] == 1) {
       non_zero_ij_responses.emplace_back(k);
     }
@@ -198,7 +181,7 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
 #pragma omp parallel for
   for(std::remove_cv_t<decltype(precomputation_size)> index = 0; index < precomputation_size; ++index) {
     const auto k(non_zero_ij_responses[index]);
-    const auto pr(detail::decode_linear(k, regressors.nrow()));
+    const auto pr(ppjsdm::decode_linear(k, regressors.nrow()));
     const auto i(pr.first);
     const auto j(pr.second);
 
@@ -228,7 +211,7 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
   // Finally, add A2 and A3 by using precomputed values above.
   for(std::remove_cv_t<decltype(precomputation_size)> index(0); index < precomputation_size; ++index) {
     const auto k(non_zero_ij_responses[index]);
-    const auto pr(detail::decode_linear(k, regressors.nrow()));
+    const auto pr(ppjsdm::decode_linear(k, regressors.nrow()));
     const auto i(pr.first);
     const auto j(pr.second);
     const ppjsdm::Marked_point point_i(x[i], y[i], type[i] - 1, mark[i]);
