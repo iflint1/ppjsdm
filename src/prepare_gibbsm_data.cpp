@@ -22,6 +22,8 @@
 #include <cmath> // std::log
 #include <iterator> // std::next
 #include <string> // std::string, std::to_string
+#include <sstream> // std::stringstream
+#include <type_traits> // std::remove_cv_t
 #include <vector> // std::vector
 
 #ifdef _OPENMP
@@ -88,8 +90,20 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
       length_D += max_dummy;
     }
   }
+  auto D(ppjsdm::rbinomialpp_single<std::vector<ppjsdm::Marked_point>>(window, rho_times_volume, number_types, length_D));
 
-  const auto D(ppjsdm::rbinomialpp_single<std::vector<ppjsdm::Marked_point>>(window, rho_times_volume, number_types, length_D));
+  // Remove points in D which generate NA values for one of the regressors.
+  D.erase(std::remove_if(D.begin(), D.end(),
+      [&covariates](const auto& point) {
+        for(std::remove_cv_t<decltype(covariates.size())> covariate_index(0); covariate_index < covariates.size(); ++covariate_index) {
+          const auto covariate(covariates[covariate_index](point));
+          if(R_IsNA(covariate)) {
+            return true;
+          }
+        }
+        return false;
+      }), D.end());
+  length_D = D.size();
 
   // Make shift vector
   Rcpp::NumericVector shift(Rcpp::no_init(number_types));
@@ -114,13 +128,31 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     }
   }
 
-  // Compue a few parameters necessary for the construction of regressors
+  // Precompute how many of the points in the configuration we'll have to drop due to NA values on the covariates.
   unsigned long long int total_configuration_length(0);
-  for(size_t i(0); i < configuration_list.size(); ++i) {
-    total_configuration_length += ppjsdm::size(configuration_list[i]);
+  size_t total_removed_points(0);
+  for(size_t configuration_index(0); configuration_index < configuration_list.size(); ++configuration_index) {
+    total_configuration_length += ppjsdm::size(configuration_list[configuration_index]);
+    for(size_t point_index(0); point_index < ppjsdm::size(configuration_list[configuration_index]); ++point_index) {
+      for(std::remove_cv_t<decltype(covariates.size())> covariate_index(0); covariate_index < covariates.size(); ++covariate_index) {
+        const auto covariate(covariates[covariate_index](configuration_list[configuration_index][point_index]));
+        if(R_IsNA(covariate)) {
+          ++total_removed_points;
+          break;
+        }
+      }
+    }
   }
 
-  const auto total_points(total_configuration_length + length_D * configuration_list.size());
+  // Send a warning if we had to drop any
+  if(total_removed_points > 0) {
+    std::stringstream ss;
+    ss << "Some of the covariates had an NA value on " << total_removed_points << " of the configuration points; these have been removed.";
+    Rcpp::warning(ss.str());
+  }
+
+  // Compute a few parameters necessary for the construction of regressors
+  const auto total_points(total_configuration_length - total_removed_points + length_D * configuration_list.size());
   const auto number_parameters_struct(ppjsdm::get_number_parameters(number_types,
                                                                     covariates.size(),
                                                                     estimate_alpha,
@@ -145,21 +177,26 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
       const auto current_point(point_index < ppjsdm::size(configuration_list[configuration_index]) ?
                                  configuration_list[configuration_index][point_index] :
                                  D[point_index - ppjsdm::size(configuration_list[configuration_index])]);
+      std::vector<double> covariates_values(covariates.size());
+      bool found_na_point(false);
+      for(size_t covariate_index(0); covariate_index < static_cast<size_t>(covariates.size()); ++covariate_index) {
+        const auto covariate(covariates[covariate_index](current_point));
+        if(R_IsNA(covariate)) {
+          found_na_point = true;
+          break;
+        }
+        covariates_values[covariate_index] = covariate;
+      }
+      if(found_na_point) {
+        continue;
+      }
+
       if(point_index < ppjsdm::size(configuration_list[configuration_index])) {
         response[filling] = 1;
       }
       x[filling] = ppjsdm::get_x(current_point);
       y[filling] = ppjsdm::get_y(current_point);
       mark[filling] = ppjsdm::get_mark(current_point);
-
-      std::vector<double> covariates_values(covariates.size());
-      for(size_t covariate_index(0); covariate_index < static_cast<size_t>(covariates.size()); ++covariate_index) {
-        const auto covariate(covariates[covariate_index](current_point));
-        if(R_IsNA(covariate)) {
-          Rcpp::stop("One of the covariates' value is NA on one of the locations.");
-        }
-        covariates_values[covariate_index] = covariate;
-      }
 
       const int type_index(ppjsdm::get_type(current_point));
       type[filling] = type_index + 1;
