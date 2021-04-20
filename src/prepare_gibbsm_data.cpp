@@ -117,14 +117,14 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   std::vector<std::vector<std::vector<double>>> dispersion_medium(configuration_list.size());
   for(size_t configuration_index(0); configuration_index < configuration_list.size(); ++configuration_index) {
     if(need_to_compute_alpha) {
-      dispersion_short[configuration_index] = ppjsdm::compute_dispersion_index(dispersion_model,
-                                                                               number_types,
-                                                                               configuration_list[configuration_index], D);
+      dispersion_short[configuration_index] = ppjsdm::compute_dispersion_for_fitting(dispersion_model,
+                                                                                     number_types,
+                                                                                     configuration_list[configuration_index], D);
     }
     if(need_to_compute_gamma) {
-      dispersion_medium[configuration_index] = ppjsdm::compute_dispersion_index(medium_dispersion_model,
-                                                                                number_types,
-                                                                                configuration_list[configuration_index], D);
+      dispersion_medium[configuration_index] = ppjsdm::compute_dispersion_for_fitting(medium_dispersion_model,
+                                                                                      number_types,
+                                                                                      configuration_list[configuration_index], D);
     }
   }
 
