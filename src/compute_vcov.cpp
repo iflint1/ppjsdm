@@ -245,16 +245,18 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
     std::vector<double> t_i(total_parameters);
     std::vector<double> t_j(total_parameters);
 
+    t_i[ppjsdm::get_type(point_i)] = 1.;
+    t_j[ppjsdm::get_type(point_j)] = 1.;
+
+    for(int k2(0); k2 < covariates.size(); ++k2) {
+      t_i[index_start_covariates + k2 * number_types + ppjsdm::get_type(point_i)] = covariates_on_configuration[i][k2];
+      t_j[index_start_covariates + k2 * number_types + ppjsdm::get_type(point_j)] = covariates_on_configuration[j][k2];
+    }
+
     size_t current_index_alpha(0);
     size_t current_index_gamma(0);
     for(int k1(0); k1 < number_types; ++k1) {
       if(k1 == ppjsdm::get_type(point_i)) {
-        t_i[k1] = 1.;
-
-        for(int k2(0); k2 < covariates.size(); ++k2) {
-          t_i[index_start_covariates + k2 * number_types + k1] = covariates_on_configuration[i][k2];
-        }
-
         size_t filling_alpha(current_index_alpha);
         size_t filling_gamma(current_index_gamma);
         for(int k2(k1); k2 < number_types; ++k2) {
@@ -287,12 +289,6 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
       }
 
       if(k1 == ppjsdm::get_type(point_j)) {
-        t_j[k1] = 1.;
-
-        for(int k2(0); k2 < covariates.size(); ++k2) {
-          t_j[index_start_covariates + k2 * number_types + k1] = covariates_on_configuration[j][k2];
-        }
-
         for(int k2(k1); k2 < number_types; ++k2) {
           if(estimate_alpha(k1, k2)) {
             t_j[number_types + current_index_alpha] = short_j[k2];
