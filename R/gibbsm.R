@@ -1,4 +1,4 @@
-fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate_gamma, types_names, covariates_names) {
+fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate_gamma, types_names, covariates_names, use_regularization) {
   regressors <- gibbsm_data$regressors
   if(any(is.na(regressors))) {
     max_indices <- 10
@@ -22,29 +22,53 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
 
     # We don't use an offset explicitely because the call to glmnet above returns nonsensical results or hangs.
     # Instead, use a shift for all the log_lambda regressors according to -log(rho).
-    fit <- glmnet(x = regressors,
-                  y = gibbsm_data$response,
-                  alpha = 1,
-                  intercept = FALSE,
-                  family = "binomial",
-                  penalty.factor = pfactor)
+    if(use_regularization) {
+      fit <- glmnet(x = regressors,
+                    y = gibbsm_data$response,
+                    alpha = 1,
+                    intercept = FALSE,
+                    family = "binomial",
+                    penalty.factor = pfactor)
 
-    shift <- gibbsm_data$shift
+      shift <- gibbsm_data$shift
 
-    tLL <- fit$nulldev - deviance(fit)
-    k <- fit$df
-    n <- fit$nobs
-    aic <- -tLL + 2 * k + 2 * k * (k + 1) / (n - k - 1)
-    bic <- log(n) * k - tLL
+      tLL <- fit$nulldev - deviance(fit)
+      k <- fit$df
+      n <- fit$nobs
+      aic <- -tLL + 2 * k + 2 * k * (k + 1) / (n - k - 1)
+      bic <- log(n) * k - tLL
 
-    if(use_aic) {
-      coef <- coefficients(fit)[, which.min(aic)]
-      aic <- min(aic)
-      bic <- bic[which.min(aic)]
+      if(use_aic) {
+        coef <- coefficients(fit)[, which.min(aic)]
+        aic <- min(aic)
+        bic <- bic[which.min(aic)]
+      } else {
+        coef <- coefficients(fit)[, which.min(bic)]
+        aic <- aic[which.min(bic)]
+        bic <- min(bic)
+      }
     } else {
-      coef <- coefficients(fit)[, which.min(bic)]
-      aic <- aic[which.min(bic)]
-      bic <- min(bic)
+      fit <- glmnet(x = regressors,
+                    y = gibbsm_data$response,
+                    alpha = 1,
+                    intercept = FALSE,
+                    family = "binomial",
+                    penalty.factor = pfactor,
+                    lambda = rev(0:99),
+                    thres = 1e-12,
+                    maxit = 1e8)
+
+      shift <- gibbsm_data$shift
+
+      tLL <- fit$nulldev - deviance(fit)
+      k <- fit$df
+      n <- fit$nobs
+      aic <- -tLL + 2 * k + 2 * k * (k + 1) / (n - k - 1)
+      aic <- aic[length(aic)]
+      bic <- log(n) * k - tLL
+      bic <- bic[length(bic)]
+      coef <- coefficients(fit, s = 0)
+      coef <- setNames(as.vector(coef), nm = rownames(coef))
     }
     coef <- coef[-which(names(coef) == "(Intercept)")]
     fit_algorithm <- "glmnet"
@@ -137,6 +161,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
 #' @param max_dummy Maximum number of dummy points for each type. By default, follows the recommendation of Baddeley et al.
 #' @param dummy_factor How many more dummy points there are, compared to the points in the configuration. By default, follows the recommendation of Baddeley et al.
 #' @param nthreads Maximum number of threads for parallel computing.
+#' @param use_regularization Add option to use `glmnet` without regularization.
 #' @importFrom glmnet glmnet cv.glmnet
 #' @importFrom stats AIC as.formula BIC binomial coefficients deviance glm lm
 #' @importFrom spatstat.geom as.im as.owin
@@ -156,7 +181,8 @@ gibbsm <- function(configuration_list,
                    use_aic = TRUE,
                    max_dummy = 0,
                    dummy_factor = 0,
-                   nthreads = 4) {
+                   nthreads = 4,
+                   use_regularization = FALSE) {
   # If we're given a single configuration, convert it to a list.
   if(inherits(configuration_list, "Configuration")) {
     configuration_list <- list(configuration_list)
@@ -257,7 +283,8 @@ gibbsm <- function(configuration_list,
                        estimate_alpha = estimate_alpha,
                        estimate_gamma = estimate_gamma,
                        types_names = types_names,
-                       covariates_names = covariates_names)
+                       covariates_names = covariates_names,
+                       use_regularization = use_regularization)
       list(fit = fit, sh = sh, me = me, lo = lo)
     }
 
@@ -332,7 +359,8 @@ gibbsm <- function(configuration_list,
                         estimate_alpha = estimate_alpha,
                         estimate_gamma = estimate_gamma,
                         types_names = types_names,
-                        covariates_names = covariates_names)
+                        covariates_names = covariates_names,
+                        use_regularization = use_regularization)
   } else {
     short_range <- as.matrix(short_range)
     medium_range <- as.matrix(medium_range)
@@ -375,7 +403,8 @@ gibbsm <- function(configuration_list,
                         estimate_alpha = estimate_alpha,
                         estimate_gamma = estimate_gamma,
                         types_names = types_names,
-                        covariates_names = covariates_names)
+                        covariates_names = covariates_names,
+                        use_regularization = use_regularization)
   }
   fits <-  fitted$fit
   fits_coefficients <- fitted$coefficients

@@ -19,7 +19,8 @@ gibbsm(
   use_aic = TRUE,
   max_dummy = 0,
   dummy_factor = 0,
-  nthreads = 4
+  nthreads = 4,
+  use_regularization = FALSE
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ gibbsm(
 \item{dummy_factor}{How many more dummy points there are, compared to the points in the configuration. By default, follows the recommendation of Baddeley et al.}
 
 \item{nthreads}{Maximum number of threads for parallel computing.}
+
+\item{use_regularization}{Add option to use `glmnet` without regularization.}
 }
 \description{
 Fit a multivariate Gibbs model to a dataset.
