@@ -57,7 +57,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
                     family = "binomial",
                     penalty.factor = pfactor,
                     lambda = rev(0:99),
-                    thres = 1e-12,
+                    thresh = 1e-12,
                     maxit = 1e8)
 
       shift <- gibbsm_data$shift
@@ -166,7 +166,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
 #' @param nthreads Maximum number of threads for parallel computing.
 #' @param use_regularization Add option to use `glmnet` without regularization.
 #' @importFrom glmnet glmnet cv.glmnet
-#' @importFrom stats AIC as.formula BIC binomial coefficients deviance glm lm
+#' @importFrom stats AIC as.formula BIC binomial coefficients deviance glm lm setNames
 #' @importFrom spatstat.geom as.im as.owin
 #' @importFrom GA ga
 #' @export
