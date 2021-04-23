@@ -35,7 +35,7 @@ inline auto generic_dispersion_computation(const Saturated_model& varphi,
   if(static_cast<decltype(size(configurations...))>(varphi.get_saturation()) >= size(configurations...)) {
     for_each_container([&count_vector, &point, &varphi](const auto& current_point) {
       if(!is_equal(current_point, point)) {
-        AbstractDispersion::update_count_nonsaturated(varphi, count_vector[get_type(current_point)], current_point, point);
+        AbstractDispersion::template update_count<std::numeric_limits<int>::max()>(varphi, count_vector[get_type(current_point)], current_point, point);
       }
     }, configurations...);
     add_count_to_dispersion<AbstractDispersion, 2>(varphi, dispersion, count_vector, point);

@@ -35,9 +35,9 @@ inline auto dispersion_computation_fitting(const Saturated_model& varphi,
       count_vector[i] = CountType(number_types);
       for(size_t j(0); j < i; ++j) {
         // TODO: varphi(configuration[i], configuration[j]) only needs to be computed once
-        AbstractDispersion::update_count_nonsaturated(varphi, count_vector[i][get_type(configuration[j])],
+        AbstractDispersion::template update_count<std::numeric_limits<int>::max()>(varphi, count_vector[i][get_type(configuration[j])],
                                                       configuration[i], configuration[j]);
-        AbstractDispersion::update_count_nonsaturated(varphi, count_vector[j][get_type(configuration[i])],
+        AbstractDispersion::template update_count<std::numeric_limits<int>::max()>(varphi, count_vector[j][get_type(configuration[i])],
                                                       configuration[i], configuration[j]);
       }
     }
@@ -51,7 +51,7 @@ inline auto dispersion_computation_fitting(const Saturated_model& varphi,
       dispersion[configuration_size + i] = DispersionType(number_types);
       CountType count_point(number_types);
       for(size_t j(0); j < configuration_size; ++j) {
-        AbstractDispersion::update_count_nonsaturated(varphi, count_point[get_type(configuration[j])],
+        AbstractDispersion::template update_count<std::numeric_limits<int>::max()>(varphi, count_point[get_type(configuration[j])],
                                                       other_configuration[i], configuration[j]);
       }
       add_count_to_dispersion<AbstractDispersion, 2>(varphi, dispersion[configuration_size + i],

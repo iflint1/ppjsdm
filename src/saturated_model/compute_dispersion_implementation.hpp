@@ -53,13 +53,6 @@ struct compute_dispersion_implementation<dispersionMethod::two_values> {
     }
   }
 
-  template<typename Point, typename Other>
-  static void update_count_nonsaturated(const Saturated_model& varphi, ValueType& count, const Point& point, const Other& other) {
-    if(apply_potential(varphi, point, other) > 0.) {
-      ++count;
-    }
-  }
-
   template<bool CountedAlready, typename Point, typename Other>
   static auto delta(const Saturated_model& varphi,
                     const ValueType& count,
@@ -148,15 +141,6 @@ struct compute_dispersion_implementation<dispersionMethod::nonincreasing_after_l
         std::pop_heap(count.begin(), count.end());
         count.pop_back();
       }
-    }
-  }
-
-  template<typename Point, typename Other>
-  static void update_count_nonsaturated(const Saturated_model& varphi, ValueType& count, const Point& point, const Other& other) {
-    const auto sq(normalized_square_distance(point, other));
-    if(sq >= varphi.get_square_lower_endpoint(get_type(point), get_type(other))) {
-      count.emplace_back(sq);
-      std::push_heap(count.begin(), count.end());
     }
   }
 
@@ -291,13 +275,6 @@ struct compute_dispersion_implementation<dispersionMethod::generic> {
       std::pop_heap(count.begin(), count.end(), std::greater<double>{});
       count.pop_back();
     }
-  }
-
-  template<typename Point, typename Other>
-  static void update_count_nonsaturated(const Saturated_model& varphi, ValueType& count, const Point& point, const Other& other) {
-    const auto disp(apply_potential(varphi, other, point));
-    count.emplace_back(disp);
-    std::push_heap(count.begin(), count.end(), std::greater<double>{});
   }
 
   template<bool CountedAlready, typename Point, typename Other>
