@@ -7,7 +7,7 @@
 
 #include "point/point_manipulation.hpp"
 
-#include "saturated_model/saturated_model.hpp"
+#include "saturated_model/compute_dispersion_fitting.hpp"
 
 #include "simulation/rppp_single.hpp"
 

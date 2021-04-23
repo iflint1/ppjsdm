@@ -3,7 +3,7 @@
 
 #include <Rcpp.h>
 
-#include "saturated_model.hpp"
+#include "compute_dispersion.hpp"
 #include "../configuration/configuration_manipulation.hpp"
 #include "../point/point_manipulation.hpp"
 #include "../simulation/inhomogeneous_ppp.hpp"
@@ -122,7 +122,7 @@ private:
 
   template<typename D>
   auto get_dispersion_maximum(const D& dispersion) const {
-    if(dispersion.is_nonincreasing()) {
+    if(dispersion.is_nonincreasing_after_lower_endpoint()) {
       return 6 * dispersion.get_maximum();
     } else {
       return std::numeric_limits<double>::infinity();

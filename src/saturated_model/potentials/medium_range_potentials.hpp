@@ -1,22 +1,23 @@
-#ifndef INCLUDE_PPJSDM_MEDIUM_RANGE_POTENTIALS
-#define INCLUDE_PPJSDM_MEDIUM_RANGE_POTENTIALS
+#ifndef INCLUDE_MEDIUM_RANGE_POTENTIALS
+#define INCLUDE_MEDIUM_RANGE_POTENTIALS
 
 #include <Rcpp.h>
 
+#include "potential.hpp"
 #include "../../point/point_manipulation.hpp"
 #include "../../point/square_distance.hpp"
 #include "../../utility/lightweight_matrix.hpp"
 #include "../../utility/window.hpp"
 
 #include <cmath> // std::sqrt, std::exp, std::log
-#include <type_traits> // std::enable_if, std::false_type, std::true_type
+#include <memory> // std::shared_ptr
 
 namespace ppjsdm {
 namespace potentials {
 
 // Note: Public inheritance in order to inherit member variables if they exist in Varphi.
 template<typename Varphi>
-class Medium_range_potential: public Varphi {
+class Medium_range_potential: public Varphi, public Potential {
 private:
   Lightweight_square_matrix<double> medium_;
   Lightweight_square_matrix<double> long_;
@@ -41,17 +42,23 @@ public:
     }
   }
 
-  double apply(double normalized_square_distance, int i, int j) const {
+  double apply(double normalized_square_distance, int i, int j) const override {
     return Varphi::apply(normalized_square_distance, medium_(i, j), long_(i, j));
   }
 
-  double get_square_lower_endpoint(int i, int j) const {
+  double get_square_lower_endpoint(int i, int j) const override {
     return Varphi::get_square_lower_endpoint(medium_(i, j));
+  }
+
+  bool is_nonincreasing_after_lower_endpoint() const override {
+    return Varphi::is_nonincreasing_after_lower_endpoint;
+  }
+  bool is_two_valued() const override {
+    return Varphi::is_two_valued;
   }
 };
 
 struct Half_square_exponential_implementation {
-  static constexpr bool is_nonincreasing = false;
   static constexpr bool is_nonincreasing_after_lower_endpoint = true;
   static constexpr bool is_two_valued = false;
 
@@ -79,7 +86,6 @@ struct Half_square_exponential_implementation {
 };
 
 struct Half_exponential_implementation {
-  static constexpr bool is_nonincreasing = false;
   static constexpr bool is_nonincreasing_after_lower_endpoint = true;
   static constexpr bool is_two_valued = false;
 
@@ -106,7 +112,6 @@ struct Half_exponential_implementation {
 };
 
 struct Two_sided_square_exponential_implementation {
-  static constexpr bool is_nonincreasing = false;
   static constexpr bool is_nonincreasing_after_lower_endpoint = false;
   static constexpr bool is_two_valued = false;
 
@@ -130,7 +135,6 @@ struct Two_sided_square_exponential_implementation {
 };
 
 struct Two_sided_exponential_implementation {
-  static constexpr bool is_nonincreasing = false;
   static constexpr bool is_nonincreasing_after_lower_endpoint = false;
   static constexpr bool is_two_valued = false;
 
@@ -153,7 +157,6 @@ struct Two_sided_exponential_implementation {
 };
 
 struct Two_sided_bump_implementation {
-  static constexpr bool is_nonincreasing = false;
   static constexpr bool is_nonincreasing_after_lower_endpoint = false;
   static constexpr bool is_two_valued = false;
 
@@ -182,7 +185,6 @@ struct Two_sided_bump_implementation {
 };
 
 struct Two_sided_square_bump_implementation {
-  static constexpr bool is_nonincreasing = false;
   static constexpr bool is_nonincreasing_after_lower_endpoint = false;
   static constexpr bool is_two_valued = false;
 
@@ -209,7 +211,6 @@ struct Two_sided_square_bump_implementation {
 };
 
 struct Two_sided_Strauss_implementation {
-  static constexpr bool is_nonincreasing = false;
   static constexpr bool is_nonincreasing_after_lower_endpoint = false;
   static constexpr bool is_two_valued = true;
 
@@ -235,7 +236,6 @@ struct Two_sided_Strauss_implementation {
 };
 
 struct Two_sided_linear_implementation {
-  static constexpr bool is_nonincreasing = false;
   static constexpr bool is_nonincreasing_after_lower_endpoint = false;
   static constexpr bool is_two_valued = false;
 
@@ -270,7 +270,6 @@ struct Two_sided_linear_implementation {
 };
 
 struct Tanh_implementation {
-  static constexpr bool is_nonincreasing = false;
   static constexpr bool is_nonincreasing_after_lower_endpoint = false;
   static constexpr bool is_two_valued = false;
   static constexpr const double lambda = 5;
@@ -305,8 +304,47 @@ using Medium_range_bump = Medium_range_potential<Two_sided_bump_implementation>;
 using Medium_range_square_bump = Medium_range_potential<Two_sided_square_bump_implementation>;
 using Medium_range_tanh = Medium_range_potential<Tanh_implementation>;
 
-
 } // namespace potentials
+
+const constexpr char* const medium_range_models[] = {
+  "square_exponential",
+  "half_square_exponential",
+  "Geyer",
+  "linear",
+  "half_exponential",
+  "exponential",
+  "bump",
+  "square_bump",
+  "tanh"
+};
+
+inline std::shared_ptr<const Potential> make_medium_range_object(Rcpp::CharacterVector model,
+                                                                 Rcpp::NumericMatrix medium_range,
+                                                                 Rcpp::NumericMatrix long_range) {
+  const auto model_string(model[0]);
+  if(model_string == medium_range_models[0]) {
+    return std::make_shared<potentials::Medium_range_square_exponential>(medium_range, long_range);
+  } else if(model_string == medium_range_models[1]) {
+    return std::make_shared<potentials::Medium_range_half_square_exponential>(medium_range, long_range);
+  } else if(model_string == medium_range_models[2]) {
+    return std::make_shared<potentials::Medium_range_Geyer>(medium_range, long_range);
+  } else if(model_string == medium_range_models[3]) {
+    return std::make_shared<potentials::Medium_range_linear>(medium_range, long_range);
+  } else if(model_string == medium_range_models[4]) {
+    return std::make_shared<potentials::Medium_range_half_exponential>(medium_range, long_range);
+  } else if(model_string == medium_range_models[5]) {
+    return std::make_shared<potentials::Medium_range_exponential>(medium_range, long_range);
+  } else if(model_string == medium_range_models[6]) {
+    return std::make_shared<potentials::Medium_range_bump>(medium_range, long_range);
+  } else if(model_string == medium_range_models[7]) {
+    return std::make_shared<potentials::Medium_range_square_bump>(medium_range, long_range);
+  } else if(model_string == medium_range_models[8]) {
+    return std::make_shared<potentials::Medium_range_tanh>(medium_range, long_range);
+  } else {
+    Rcpp::stop("Incorrect model entered. A call to show_medium_range_models() will show you the available choices.\n");
+  }
+}
+
 } // namespace ppjsdm
 
-#endif // INCLUDE_PPJSDM_MEDIUM_RANGE_POTENTIALS
+#endif // INCLUDE_MEDIUM_RANGE_POTENTIALS

@@ -7,6 +7,7 @@
 
 #include "point/point_manipulation.hpp"
 
+#include "saturated_model/compute_dispersion_vcov.hpp"
 #include "saturated_model/exponential_family_model.hpp"
 #include "saturated_model/saturated_model.hpp"
 
