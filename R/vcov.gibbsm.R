@@ -4,8 +4,8 @@
 #' @param ... Ignored.
 #' @export
 vcov.gibbsm <- function(object, ...) {
-  if(object$fit_algorithm != "glm") {
-    stop("Can only compute VCOV matrix when GLM has been used.")
+  if(object$used_regularization) {
+    stop("Can only compute VCOV matrix when no regularization was used.")
   }
   if(!all(object$data_list$shift[1] == object$data_list$shift)) {
     stop("Need uniform rho to compute VCOV matrix.")

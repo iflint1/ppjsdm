@@ -9,6 +9,8 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
     print(regressors[na_row_indices, ])
   }
 
+  number_types <- length(gibbsm_data$shift)
+
   if(use_glmnet) {
     nregressors <- ncol(regressors)
     pfactor <- rep(1, nregressors)
@@ -71,6 +73,9 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
       coef <- setNames(as.vector(coef), nm = rownames(coef))
     }
     coef <- coef[-which(names(coef) == "(Intercept)")]
+    for(i in seq_len(number_types)) {
+      coef[match(paste0("log_lambda", i), names(coef))] <- coef[match(paste0("log_lambda", i), names(coef))] - shift[i]
+    }
     fit_algorithm <- "glmnet"
   } else {
     fmla <- paste0("response ~ 0 + offset(offset) + ", paste0(colnames(regressors), collapse = ' + '))
@@ -87,8 +92,6 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
     coef <- coefficients(fit)
     fit_algorithm <- "glm"
   }
-
-  number_types <- length(shift)
   beta0 <- vector(mode = "numeric", length = number_types)
   alpha <- matrix(0, number_types, number_types)
   gamma <- matrix(0, number_types, number_types)
@@ -429,6 +432,7 @@ gibbsm <- function(configuration_list,
               bic = bic,
               window = window,
               fit_algorithm = fitted$fit_algorithm,
+              used_regularization = use_regularization,
               nthreads = nthreads)
 
   if(estimate_radii) {
