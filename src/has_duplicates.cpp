@@ -11,7 +11,7 @@
 //'
 //' @param configuration Configuration.
 //' @export
-//' @useDynLib ppjsdm
+//' @useDynLib ppjsdm, .registration = TRUE
 //' @import Rcpp
 // [[Rcpp::export]]
 bool has_duplicates(Rcpp::List configuration) {

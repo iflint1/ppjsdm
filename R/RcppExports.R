@@ -2,58 +2,58 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 compute_papangelou_cpp <- function(configuration, x, y, model, medium_range_model, alpha, beta0, beta, gamma, covariates, short_range, medium_range, long_range, saturation, type = 1L, mark = 1.0) {
-    .Call('_ppjsdm_compute_papangelou_cpp', PACKAGE = 'ppjsdm', configuration, x, y, model, medium_range_model, alpha, beta0, beta, gamma, covariates, short_range, medium_range, long_range, saturation, type, mark)
+    .Call(`_ppjsdm_compute_papangelou_cpp`, configuration, x, y, model, medium_range_model, alpha, beta0, beta, gamma, covariates, short_range, medium_range, long_range, saturation, type, mark)
 }
 
 compute_vcov <- function(configuration, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, rho, coefficients_vector, regressors, data_list, estimate_alpha, estimate_gamma, nthreads) {
-    .Call('_ppjsdm_compute_vcov', PACKAGE = 'ppjsdm', configuration, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, rho, coefficients_vector, regressors, data_list, estimate_alpha, estimate_gamma, nthreads)
+    .Call(`_ppjsdm_compute_vcov`, configuration, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, rho, coefficients_vector, regressors, data_list, estimate_alpha, estimate_gamma, nthreads)
 }
 
 #' Check if a configuration contains duplicates.
 #'
 #' @param configuration Configuration.
 #' @export
-#' @useDynLib ppjsdm
+#' @useDynLib ppjsdm, .registration = TRUE
 #' @import Rcpp
 has_duplicates <- function(configuration) {
-    .Call('_ppjsdm_has_duplicates', PACKAGE = 'ppjsdm', configuration)
+    .Call(`_ppjsdm_has_duplicates`, configuration)
 }
 
 make_default_model_parameters <- function(alpha, beta0, covariates, beta, gamma, short_range, medium_range, long_range, types, default_number_types) {
-    .Call('_ppjsdm_make_default_model_parameters', PACKAGE = 'ppjsdm', alpha, beta0, covariates, beta, gamma, short_range, medium_range, long_range, types, default_number_types)
+    .Call(`_ppjsdm_make_default_model_parameters`, alpha, beta0, covariates, beta, gamma, short_range, medium_range, long_range, types, default_number_types)
 }
 
 prepare_gibbsm_data <- function(configuration_list, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, max_dummy, dummy_factor, estimate_alpha, estimate_gamma, nthreads) {
-    .Call('_ppjsdm_prepare_gibbsm_data', PACKAGE = 'ppjsdm', configuration_list, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, max_dummy, dummy_factor, estimate_alpha, estimate_gamma, nthreads)
+    .Call(`_ppjsdm_prepare_gibbsm_data`, configuration_list, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, max_dummy, dummy_factor, estimate_alpha, estimate_gamma, nthreads)
 }
 
 rbinomialpp_cpp <- function(window, n, nsim, types, drop, mark_range) {
-    .Call('_ppjsdm_rbinomialpp_cpp', PACKAGE = 'ppjsdm', window, n, nsim, types, drop, mark_range)
+    .Call(`_ppjsdm_rbinomialpp_cpp`, window, n, nsim, types, drop, mark_range)
 }
 
 rgibbs_cpp <- function(window, alpha, beta0, covariates, beta, gamma, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, mark_range, starting_configuration) {
-    .Call('_ppjsdm_rgibbs_cpp', PACKAGE = 'ppjsdm', window, alpha, beta0, covariates, beta, gamma, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, mark_range, starting_configuration)
+    .Call(`_ppjsdm_rgibbs_cpp`, window, alpha, beta0, covariates, beta, gamma, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, mark_range, starting_configuration)
 }
 
 rppp_cpp <- function(window, lambda, nsim, types, drop, mark_range) {
-    .Call('_ppjsdm_rppp_cpp', PACKAGE = 'ppjsdm', window, lambda, nsim, types, drop, mark_range)
+    .Call(`_ppjsdm_rppp_cpp`, window, lambda, nsim, types, drop, mark_range)
 }
 
 #' Show the authorised short range models.
 #'
 #' @export
-#' @useDynLib ppjsdm
+#' @useDynLib ppjsdm, .registration = TRUE
 #' @import Rcpp
 show_short_range_models <- function() {
-    invisible(.Call('_ppjsdm_show_short_range_models', PACKAGE = 'ppjsdm'))
+    invisible(.Call(`_ppjsdm_show_short_range_models`))
 }
 
 #' Show the authorised medium range models.
 #'
 #' @export
-#' @useDynLib ppjsdm
+#' @useDynLib ppjsdm, .registration = TRUE
 #' @import Rcpp
 show_medium_range_models <- function() {
-    invisible(.Call('_ppjsdm_show_medium_range_models', PACKAGE = 'ppjsdm'))
+    invisible(.Call(`_ppjsdm_show_medium_range_models`))
 }
 

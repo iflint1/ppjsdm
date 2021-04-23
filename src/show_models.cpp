@@ -5,7 +5,7 @@
 //' Show the authorised short range models.
 //'
 //' @export
-//' @useDynLib ppjsdm
+//' @useDynLib ppjsdm, .registration = TRUE
 //' @import Rcpp
 // [[Rcpp::export]]
 void show_short_range_models() {
@@ -18,7 +18,7 @@ void show_short_range_models() {
 //' Show the authorised medium range models.
 //'
 //' @export
-//' @useDynLib ppjsdm
+//' @useDynLib ppjsdm, .registration = TRUE
 //' @import Rcpp
 // [[Rcpp::export]]
 void show_medium_range_models() {
