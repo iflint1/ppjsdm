@@ -71,8 +71,8 @@ inline auto dispersion_computation_fitting(const Saturated_model& varphi,
       dispersion[i] = DispersionType(number_types);
       for(size_t j(0); j < i; ++j) {
         // TODO: varphi(configuration[i], configuration[j]) only needs to be computed once
-        dispersion[i][get_type(configuration[j])] += AbstractDispersion::template delta<true>(varphi, count_vector[j][get_type(configuration[i])], configuration[j], configuration[i]);
-        dispersion[j][get_type(configuration[i])] += AbstractDispersion::template delta<true>(varphi, count_vector[i][get_type(configuration[j])], configuration[j], configuration[i]);
+        dispersion[i][get_type(configuration[j])] += AbstractDispersion::template delta<1, true>(varphi, count_vector[j][get_type(configuration[i])], configuration[j], configuration[i]);
+        dispersion[j][get_type(configuration[i])] += AbstractDispersion::template delta<1, true>(varphi, count_vector[i][get_type(configuration[j])], configuration[j], configuration[i]);
       }
       add_count_to_dispersion<AbstractDispersion, 1>(varphi, dispersion[i], count_vector[i], configuration[i]);
     }
@@ -81,8 +81,8 @@ inline auto dispersion_computation_fitting(const Saturated_model& varphi,
       dispersion[configuration_size + i] = DispersionType(number_types);
       CountType count_point(number_types);
       for(size_t j(0); j < configuration_size; ++j) {
-        dispersion[configuration_size + i][get_type(configuration[j])] += AbstractDispersion::template delta<false>(varphi, count_vector[j][get_type(other_configuration[i])], configuration[j], other_configuration[i]);
-        AbstractDispersion::update_count(varphi, count_point[get_type(configuration[j])], other_configuration[i], configuration[j]);
+        dispersion[configuration_size + i][get_type(configuration[j])] += AbstractDispersion::template delta<1, false>(varphi, count_vector[j][get_type(other_configuration[i])], configuration[j], other_configuration[i]);
+        AbstractDispersion::template update_count<0>(varphi, count_point[get_type(configuration[j])], other_configuration[i], configuration[j]);
       }
       add_count_to_dispersion<AbstractDispersion, 1>(varphi, dispersion[configuration_size + i], count_point, other_configuration[i]);
     }

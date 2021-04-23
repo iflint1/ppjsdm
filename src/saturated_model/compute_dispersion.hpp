@@ -53,7 +53,7 @@ inline auto generic_dispersion_computation(const Saturated_model& varphi,
                            }, configurations...);
                            AbstractDispersion::template update_count<0>(varphi, count_vector[get_type(current_point)],
                                                                         current_point, point);
-                           dispersion[get_type(current_point)] += AbstractDispersion::template delta<false>(varphi, count, current_point, point);
+                           dispersion[get_type(current_point)] += AbstractDispersion::template delta<0, false>(varphi, count, current_point, point);
                          }
                        }, configurations...);
     add_count_to_dispersion<AbstractDispersion, 1>(varphi, dispersion, count_vector, point);

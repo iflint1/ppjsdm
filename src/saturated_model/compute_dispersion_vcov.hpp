@@ -80,8 +80,8 @@ inline auto generic_vcov_dispersion_computation(const Saturated_model& varphi,
       for(size_t i(0); i < configuration_size; ++i) {
         sum_deltas[i] = DispersionType(number_types);
         for(size_t j(0); j < i; ++j) {
-          sum_deltas[i][get_type(configuration[j])] += AbstractDispersion::template delta<true>(varphi, count_vector[j][get_type(configuration[i])], configuration[j], configuration[i]);
-          sum_deltas[j][get_type(configuration[i])] += AbstractDispersion::template delta<true>(varphi, count_vector[i][get_type(configuration[j])], configuration[i], configuration[j]);
+          sum_deltas[i][get_type(configuration[j])] += AbstractDispersion::template delta<2, true>(varphi, count_vector[j][get_type(configuration[i])], configuration[j], configuration[i]);
+          sum_deltas[j][get_type(configuration[i])] += AbstractDispersion::template delta<2, true>(varphi, count_vector[i][get_type(configuration[j])], configuration[i], configuration[j]);
         }
       }
     }
@@ -102,16 +102,16 @@ inline auto generic_vcov_dispersion_computation(const Saturated_model& varphi,
         dispersion_j[index] = DispersionType(number_types);
         for(size_t l(0); l < configuration_size; ++l) {
           if(l != i && l != j) {
-            dispersion_i[index][get_type(configuration[l])] += AbstractDispersion::template delta_discarding<true>(varphi, count_vector[l][get_type(configuration[i])], configuration[l], configuration[i], configuration[j]);
-            dispersion_j[index][get_type(configuration[l])] += AbstractDispersion::template delta_discarding<true>(varphi, count_vector[l][get_type(configuration[j])], configuration[l], configuration[j], configuration[i]);
+            dispersion_i[index][get_type(configuration[l])] += AbstractDispersion::template delta_discarding<2, true>(varphi, count_vector[l][get_type(configuration[i])], configuration[l], configuration[i], configuration[j]);
+            dispersion_j[index][get_type(configuration[l])] += AbstractDispersion::template delta_discarding<2, true>(varphi, count_vector[l][get_type(configuration[j])], configuration[l], configuration[j], configuration[i]);
           }
         }
       } else {
         dispersion_i[index] = sum_deltas[i];
         dispersion_j[index] = sum_deltas[j];
 
-        dispersion_i[index][get_type(configuration[j])] -= AbstractDispersion::template delta<true>(varphi, count_vector[j][get_type(configuration[i])], configuration[j], configuration[i]);
-        dispersion_j[index][get_type(configuration[i])] -= AbstractDispersion::template delta<true>(varphi, count_vector[i][get_type(configuration[j])], configuration[i], configuration[j]);
+        dispersion_i[index][get_type(configuration[j])] -= AbstractDispersion::template delta<2, true>(varphi, count_vector[j][get_type(configuration[i])], configuration[j], configuration[i]);
+        dispersion_j[index][get_type(configuration[i])] -= AbstractDispersion::template delta<2, true>(varphi, count_vector[i][get_type(configuration[j])], configuration[i], configuration[j]);
       }
       add_count_to_dispersion_discarding<AbstractDispersion, 1>(varphi, dispersion_i[index],
                                                                 count_vector[i], configuration[i], configuration[j]);
