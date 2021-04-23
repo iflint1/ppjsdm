@@ -10,7 +10,7 @@ namespace ppjsdm {
 // Reference for the formulas here:
 // https://stackoverflow.com/questions/27086195/linear-index-upper-triangular-matrix
 inline auto encode_linear(int i, int j, int n) {
-  return n * (n - 1) / 2 - (n - i) * (n - i - 1) / 2 + j - i - 1;
+  return (n * (n - 1) - (n - i) * (n - i - 1)) / 2 + j - i - 1;
 }
 
 inline auto decode_linear(int k, int n) {

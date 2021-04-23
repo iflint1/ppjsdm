@@ -27,10 +27,6 @@
 #include <type_traits> // std::remove_cv_t
 #include <vector> // std::vector
 
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-
 template<typename Configuration>
 Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
                                         const ppjsdm::Im_list_wrapper& covariates,
@@ -44,9 +40,6 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
                                         Rcpp::LogicalMatrix estimate_alpha,
                                         Rcpp::LogicalMatrix estimate_gamma,
                                         int nthreads) {
-#ifdef _OPENMP
-  omp_set_num_threads(nthreads);
-#endif
 
   using size_t = ppjsdm::size_t<Configuration>;
 
@@ -164,52 +157,17 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
     }
   }
 
-  using dispersion_t = decltype(ppjsdm::compute_dispersion(dispersion_model,
-                                                           ppjsdm::Marked_point(x[0], y[0], type[0] - 1, mark[0]),
-                                                           number_types,
-                                                           configuration));
-  using vector_t = std::vector<dispersion_t>;
-
-  const auto precomputation_size(non_zero_ij_responses.size());
-
-  vector_t precomputed_short_i(precomputation_size);
-  vector_t precomputed_short_j(precomputation_size);
-  vector_t precomputed_medium_i(precomputation_size);
-  vector_t precomputed_medium_j(precomputation_size);
-
-  // Actual precomputation in the parallel for loop below
-#pragma omp parallel for
-  for(std::remove_cv_t<decltype(precomputation_size)> index = 0; index < precomputation_size; ++index) {
-    const auto k(non_zero_ij_responses[index]);
-    const auto pr(ppjsdm::decode_linear(k, regressors.nrow()));
-    const auto i(pr.first);
-    const auto j(pr.second);
-
-    const ppjsdm::Marked_point point_i(x[i], y[i], type[i] - 1, mark[i]);
-    const ppjsdm::Marked_point point_j(x[j], y[j], type[j] - 1, mark[j]);
-
-    Configuration configuration_without_ij(configuration);
-    ppjsdm::remove_point(configuration_without_ij, point_i);
-    ppjsdm::remove_point(configuration_without_ij, point_j);
-
-    // TODO: Something to think about:
-    // ppjsdm::compute_dispersion(dispersion_model, point_i, number_types, configuration_without_ij)
-    // is not so different from ppjsdm::compute_dispersion(dispersion_model, point_i, number_types, configuration).
-    // When computing the distances between point_i, look at all of them and discard the distance between i and j.
-    // The latter was already computed, try to find a way to recover it.
-    // Note written later: This can be done by re-using the tricks implemented in the new function to compute dipersion.
-    if(compute_some_alphas) {
-      precomputed_short_i[index] = ppjsdm::compute_dispersion(dispersion_model, point_i, number_types, configuration_without_ij);
-      precomputed_short_j[index] = ppjsdm::compute_dispersion(dispersion_model, point_j, number_types, configuration_without_ij);
-    }
-    if(compute_some_gammas) {
-      precomputed_medium_i[index] = ppjsdm::compute_dispersion(medium_dispersion_model, point_i, number_types, configuration_without_ij);
-      precomputed_medium_j[index] = ppjsdm::compute_dispersion(medium_dispersion_model, point_j, number_types, configuration_without_ij);
-    }
+  using precomputation_t = decltype(ppjsdm::compute_dispersion_for_vcov(dispersion_model, number_types, configuration, nthreads));
+  precomputation_t short_computation, medium_computation;
+  if(compute_some_alphas) {
+    short_computation = ppjsdm::compute_dispersion_for_vcov(dispersion_model, number_types, configuration, nthreads);
+  }
+  if(compute_some_gammas) {
+    medium_computation = ppjsdm::compute_dispersion_for_vcov(medium_dispersion_model, number_types, configuration, nthreads);
   }
 
   // Finally, add A2 and A3 by using precomputed values above.
-  for(std::remove_cv_t<decltype(precomputation_size)> index(0); index < precomputation_size; ++index) {
+  for(std::remove_cv_t<decltype(non_zero_ij_responses.size())> index(0); index < non_zero_ij_responses.size(); ++index) {
     const auto k(non_zero_ij_responses[index]);
     const auto pr(ppjsdm::decode_linear(k, regressors.nrow()));
     const auto i(pr.first);
@@ -217,11 +175,26 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
     const ppjsdm::Marked_point point_i(x[i], y[i], type[i] - 1, mark[i]);
     const ppjsdm::Marked_point point_j(x[j], y[j], type[j] - 1, mark[j]);
 
-    const auto short_i(precomputed_short_i[index]);
-    const auto medium_i(precomputed_medium_i[index]);
+    // TODO: Code below is horrible, trying to quickly implement new technique
+    size_t i_index_configuration{};
+    size_t j_index_configuration{};
+    for(size_t l(0); l < ppjsdm::size(configuration); ++l) {
+      if(ppjsdm::is_equal(point_i, configuration[l])) {
+        i_index_configuration = l;
+      }
+      if(ppjsdm::is_equal(point_j, configuration[l])) {
+        j_index_configuration = l;
+      }
+    }
+    const auto index_in_computation(ppjsdm::encode_linear(std::min(i_index_configuration, j_index_configuration),
+                                                          std::max(i_index_configuration, j_index_configuration),
+                                                          ppjsdm::size(configuration)));
 
-    const auto short_j(precomputed_short_j[index]);
-    const auto medium_j(precomputed_medium_j[index]);
+    const auto short_i(short_computation.first[index_in_computation]);
+    const auto medium_i(medium_computation.first[index_in_computation]);
+
+    const auto short_j(short_computation.second[index_in_computation]);
+    const auto medium_j(medium_computation.second[index_in_computation]);
 
     // TODO: Might want to write a function synchronized with prepare_gibbsm_data
     // that constructs the two vectors below.
