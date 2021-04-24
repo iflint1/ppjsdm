@@ -24,18 +24,34 @@ context("Heap") {
         for(int j(0); j < i; ++j) {
           vector[j] = unif_rand();
         }
-        std::make_heap(vector.begin(), vector.end(), std::greater<double>{});
         auto sorted_vector(vector);
-        std::sort(sorted_vector.begin(), sorted_vector.end());
+
+        // Max-heap
+        std::make_heap(vector.begin(), vector.end(), std::less<double>{});
+        std::sort(sorted_vector.begin(), sorted_vector.end(), std::greater<double>{});
 
         if(i >= 1) {
-          expect_true(ppjsdm::get_nth<0>(vector) == sorted_vector[0]);
+          expect_true(ppjsdm::get_nth<0>(vector, std::less<double>{}) == sorted_vector[0]);
         }
         if(i >= 2) {
-          expect_true(ppjsdm::get_nth<1>(vector) == sorted_vector[1]);
+          expect_true(ppjsdm::get_nth<1>(vector, std::less<double>{}) == sorted_vector[1]);
         }
         if(i >= 3) {
-          expect_true(ppjsdm::get_nth<2>(vector) == sorted_vector[2]);
+          expect_true(ppjsdm::get_nth<2>(vector, std::less<double>{}) == sorted_vector[2]);
+        }
+
+        // Min-heap
+        std::make_heap(vector.begin(), vector.end(), std::greater<double>{});
+        std::sort(sorted_vector.begin(), sorted_vector.end(), std::less<double>{});
+
+        if(i >= 1) {
+          expect_true(ppjsdm::get_nth<0>(vector, std::greater<double>{}) == sorted_vector[0]);
+        }
+        if(i >= 2) {
+          expect_true(ppjsdm::get_nth<1>(vector, std::greater<double>{}) == sorted_vector[1]);
+        }
+        if(i >= 3) {
+          expect_true(ppjsdm::get_nth<2>(vector, std::greater<double>{}) == sorted_vector[2]);
         }
       }
     }

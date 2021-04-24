@@ -19,60 +19,6 @@
 namespace ppjsdm {
 namespace detail {
 
-// Get the 'Saturation-th' element in the underlying Min-heap with maximum size Saturation + Buffer.
-template<long long int Buffer, long long int Depth = Buffer>
-struct get_smallest {
-  template<typename Vector>
-  auto operator()(unsigned long long int saturation, const Vector& count) const {
-    if(count.size() == saturation + Buffer - Depth) {
-      // Note that since saturation >= 1, the calls to get_nth satisfy count.size() >= N + 1
-      return get_nth<Buffer - Depth>(count);
-    } else {
-      return get_smallest<Buffer, Depth - 1>{}(saturation, count);
-    }
-  }
-};
-
-template<long long int Buffer>
-struct get_smallest<Buffer, 0> {
-  template<typename Vector>
-  auto operator()(unsigned long long int, const Vector& count) const {
-    return get_nth<Buffer>(count);
-  }
-};
-
-// Get the 'Saturation-th' element in the underlying Min-heap with maximum size Saturation + Buffer,
-// excluding an element.
-template<long long int Buffer, long long int Depth = Buffer>
-struct get_smallest_excluding {
-  template<typename Vector>
-  auto operator()(unsigned long long int saturation, const Vector& count, const typename Vector::value_type& value) const {
-    if(count.size() == saturation + Buffer - Depth) {
-      const auto nth(get_nth<Buffer - Depth>(count));
-      if(nth != value) {
-        return nth;
-      } else {
-        return get_nth<Buffer - Depth + 1>(count);
-      }
-    } else {
-      return get_smallest_excluding<Buffer, Depth - 1>{}(saturation, count, value);
-    }
-  }
-};
-
-template<long long int Buffer>
-struct get_smallest_excluding<Buffer, 0> {
-  template<typename Vector>
-  auto operator()(unsigned long long int, const Vector& count, const typename Vector::value_type& value) const {
-    const auto nth(get_nth<Buffer>(count));
-    if(nth != value) {
-      return nth;
-    } else {
-      return get_nth<Buffer + 1>(count);
-    }
-  }
-};
-
 template<typename Point, typename Other>
 inline auto apply_potential(const Saturated_model& potential, const Point& point, const Other& other) {
   return potential.apply(normalized_square_distance(point, other), get_type(point), get_type(other));
@@ -346,7 +292,7 @@ public:
     if(count.size() < varphi.get_saturation() + static_cast<int>(CountedAlready)) {
       return disp;
     } else {
-      const auto smallest(detail::get_smallest<Buffer - static_cast<int>(CountedAlready)>{}(varphi.get_saturation() + static_cast<int>(CountedAlready), count));
+      const auto smallest(get_smallest<Buffer - static_cast<int>(CountedAlready)>(varphi.get_saturation() + static_cast<int>(CountedAlready), count, std::greater<double>{}));
       return std::max(disp - smallest, 0.);
     }
   }
@@ -370,7 +316,7 @@ public:
         return disp;
       } else {
         // TODO: -1 seems to give the correct results, but I don't understand why.
-        const auto smallest(detail::get_smallest_excluding<Buffer - static_cast<int>(CountedAlready) - 1>{}(varphi.get_saturation() + 1 + static_cast<int>(CountedAlready), count, discard_disp));
+        const auto smallest(get_smallest_excluding<Buffer - static_cast<int>(CountedAlready) - 1>(varphi.get_saturation() + 1 + static_cast<int>(CountedAlready), count, discard_disp, std::greater<double>{}));
         // double smallest;
         // if(count.size() == varphi.get_saturation() + static_cast<int>(CountedAlready) + 1) {
         //   smallest = get_nth<0>{}(count);
