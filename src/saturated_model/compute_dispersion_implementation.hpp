@@ -8,6 +8,7 @@
 #include "../point/point_manipulation.hpp"
 #include "../point/square_distance.hpp"
 #include "../utility/flatten_strict_upper_triangular.hpp"
+#include "../utility/heap.hpp"
 
 #include <algorithm> // std::accumulate, std::pop_heap, std::push_heap
 #include <functional> // std::greater
@@ -18,61 +19,6 @@
 namespace ppjsdm {
 namespace detail {
 
-// Note: In general, this function assumes that count.size() >= N + 1
-template<long long int N>
-struct get_nth {
-  template<typename Vector>
-  auto operator()(const Vector& count) const;
-};
-
-// Note: Assumes that count.size() >= 1
-template<>
-struct get_nth<0> {
-  template<typename Vector>
-  auto operator()(const Vector& count) const {
-    return count[0];
-  }
-};
-
-// Note: Assumes that count.size() >= 2
-template<>
-struct get_nth<1> {
-  template<typename Vector>
-  auto operator()(const Vector& count) const {
-    if(count[1] > count[2]) {
-      return count[2];
-    } else {
-      return count[1];
-    }
-  }
-};
-
-// Note: Assumes that count.size() >= 3
-// Note: This specialization has not been tested since not needed by any of the algorithms.
-template<>
-struct get_nth<2> {
-  template<typename Vector>
-  auto operator()(const Vector& count) const {
-    if(count[1] > count[2]) {
-      if(count.size() > 6) {
-        return std::min(count[1], std::min(count[5], count[6]));
-      } else if(count.size() == 6) {
-        return std::min(count[1], count[5]);
-      } else {
-        return count[1];
-      }
-    } else {
-      if(count.size() > 4) {
-        return std::min(count[2], std::min(count[3], count[4]));
-      } else if(count.size() == 4) {
-        return std::min(count[2], count[3]);
-      } else {
-        return count[2];
-      }
-    }
-  }
-};
-
 // Get the 'Saturation-th' element in the underlying Min-heap with maximum size Saturation + Buffer.
 template<long long int Buffer, long long int Depth = Buffer>
 struct get_smallest {
@@ -80,7 +26,7 @@ struct get_smallest {
   auto operator()(unsigned long long int saturation, const Vector& count) const {
     if(count.size() == saturation + Buffer - Depth) {
       // Note that since saturation >= 1, the calls to get_nth satisfy count.size() >= N + 1
-      return get_nth<Buffer - Depth>{}(count);
+      return get_nth<Buffer - Depth>(count);
     } else {
       return get_smallest<Buffer, Depth - 1>{}(saturation, count);
     }
@@ -91,7 +37,7 @@ template<long long int Buffer>
 struct get_smallest<Buffer, 0> {
   template<typename Vector>
   auto operator()(unsigned long long int, const Vector& count) const {
-    return get_nth<Buffer>{}(count);
+    return get_nth<Buffer>(count);
   }
 };
 
@@ -102,11 +48,11 @@ struct get_smallest_excluding {
   template<typename Vector>
   auto operator()(unsigned long long int saturation, const Vector& count, const typename Vector::value_type& value) const {
     if(count.size() == saturation + Buffer - Depth) {
-      const auto nth(get_nth<Buffer - Depth>{}(count));
+      const auto nth(get_nth<Buffer - Depth>(count));
       if(nth != value) {
         return nth;
       } else {
-        return get_nth<Buffer - Depth + 1>{}(count);
+        return get_nth<Buffer - Depth + 1>(count);
       }
     } else {
       return get_smallest_excluding<Buffer, Depth - 1>{}(saturation, count, value);
@@ -118,11 +64,11 @@ template<long long int Buffer>
 struct get_smallest_excluding<Buffer, 0> {
   template<typename Vector>
   auto operator()(unsigned long long int, const Vector& count, const typename Vector::value_type& value) const {
-    const auto nth(get_nth<Buffer>{}(count));
+    const auto nth(get_nth<Buffer>(count));
     if(nth != value) {
       return nth;
     } else {
-      return get_nth<Buffer + 1>{}(count);
+      return get_nth<Buffer + 1>(count);
     }
   }
 };
