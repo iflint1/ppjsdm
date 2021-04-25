@@ -56,9 +56,9 @@ inline auto generic_vcov_dispersion_computation(const Saturated_model& varphi,
         dispersion_i[index] = DispersionType(number_types);
         dispersion_j[index] = DispersionType(number_types);
 
-        add_count_to_dispersion_discarding<AbstractDispersion, 2>(varphi, dispersion_i[index],
+        add_count_to_dispersion_discarding<0, AbstractDispersion, 2>(varphi, dispersion_i[index],
                                                                   count_vector[i], configuration[i], configuration[j]);
-        add_count_to_dispersion_discarding<AbstractDispersion, 2>(varphi, dispersion_j[index],
+        add_count_to_dispersion_discarding<0, AbstractDispersion, 2>(varphi, dispersion_j[index],
                                                                   count_vector[j], configuration[j], configuration[i]);
       }
     }
@@ -113,9 +113,9 @@ inline auto generic_vcov_dispersion_computation(const Saturated_model& varphi,
         dispersion_i[index][get_type(configuration[j])] -= AbstractDispersion::template delta<2, true>(varphi, count_vector[j][get_type(configuration[i])], configuration[j], configuration[i]);
         dispersion_j[index][get_type(configuration[i])] -= AbstractDispersion::template delta<2, true>(varphi, count_vector[i][get_type(configuration[j])], configuration[i], configuration[j]);
       }
-      add_count_to_dispersion_discarding<AbstractDispersion, 1>(varphi, dispersion_i[index],
+      add_count_to_dispersion_discarding<2, AbstractDispersion, 1>(varphi, dispersion_i[index],
                                                                 count_vector[i], configuration[i], configuration[j]);
-      add_count_to_dispersion_discarding<AbstractDispersion, 1>(varphi, dispersion_j[index],
+      add_count_to_dispersion_discarding<2, AbstractDispersion, 1>(varphi, dispersion_j[index],
                                                                 count_vector[j], configuration[j], configuration[i]);
     }
     return std::pair<std::vector<DispersionType>, std::vector<DispersionType>>(dispersion_i, dispersion_j);

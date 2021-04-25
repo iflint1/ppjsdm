@@ -6,6 +6,9 @@
 namespace ppjsdm {
 namespace detail {
 
+template<long long int N>
+struct get_nth_implementation;
+
 // Note: In general, this function assumes that count.size() >= N + 1
 template<long long int N>
 struct get_nth_implementation {
@@ -84,20 +87,6 @@ struct get_nth_implementation<2> {
   }
 };
 
-} // namespace detail
-
-template<long long int N, typename Vector, typename Compare>
-inline auto get_nth(const Vector& vector, Compare comp) {
-  return detail::get_nth_implementation<N>{}(vector, comp);
-}
-
-template<long long int N, typename Vector>
-inline auto get_nth(const Vector& vector) {
-  return get_nth<N>(vector, std::less<std::remove_reference_t<std::remove_cv_t<decltype(vector[0])>>>{});
-}
-
-namespace detail {
-
 template<long long int Buffer, long long int Depth = Buffer, bool IsFirstStep = (Buffer == Depth), bool IsBufferNonZero = (Buffer != 0)>
 struct get_nth_smallest_if_implementation;
 
@@ -119,11 +108,11 @@ template<long long int Buffer>
 struct get_nth_smallest_if_implementation<Buffer, 0, false, true> {
   template<typename Heap, typename Compare, typename Condition>
   auto operator()(typename Heap::size_type, const Heap& heap, Compare comp, Condition cond) const {
-    const auto nth(get_nth<Buffer>(heap, comp));
+    const auto nth(get_nth_implementation<Buffer>{}(heap, comp));
     if(!cond(nth)) {
       return nth;
     } else {
-      return get_nth<Buffer - 1>(heap, comp);
+      return get_nth_implementation<Buffer - 1>{}(heap, comp);
     }
   }
 };
@@ -134,7 +123,7 @@ template<long long int Buffer, long long int Depth>
 struct get_nth_smallest_if_implementation<Buffer, Depth, true, false> {
   template<typename Heap, typename Compare, typename Condition>
   auto operator()(typename Heap::size_type, const Heap& heap, Compare comp, Condition) const {
-    return get_nth<0>(heap, comp);
+    return get_nth_implementation<0>{}(heap, comp);
   }
 };
 
@@ -146,14 +135,74 @@ struct get_nth_smallest_if_implementation<Buffer, Depth, true, true> {
   template<typename Heap, typename Compare, typename Condition>
   auto operator()(typename Heap::size_type N, const Heap& heap, Compare comp, Condition cond) const {
     if(heap.size() == N) {
-      return get_nth<0>(heap, comp);
+      return get_nth_implementation<0>{}(heap, comp);
     } else { // Continue iteration
       return get_nth_smallest_if_implementation<Buffer, Depth - 1, false, true>{}(N, heap, comp, cond);
     }
   }
 };
 
+template<long long int Buffer>
+struct accumulate_n_smallest_implementation;
+
+template<>
+struct accumulate_n_smallest_implementation<0> {
+  template<typename Heap, typename Compare, typename BinaryOperation>
+  auto operator()(typename Heap::size_type, const Heap& heap, Compare, BinaryOperation op) const {
+    return std::accumulate(heap.begin(), heap.end(), static_cast<typename Heap::value_type>(0.), op);
+  }
+};
+
+template<>
+struct accumulate_n_smallest_implementation<1> {
+  template<typename Heap, typename Compare, typename BinaryOperation>
+  auto operator()(typename Heap::size_type N, const Heap& heap, Compare, BinaryOperation op) const {
+    if(heap.size() <= N) {
+      return std::accumulate(heap.begin(), heap.end(), static_cast<typename Heap::value_type>(0.), op);
+    } else {
+      return std::accumulate(heap.begin() + 1, heap.end(), static_cast<typename Heap::value_type>(0.), op);
+    }
+  }
+};
+
+template<>
+struct accumulate_n_smallest_implementation<2> {
+  template<typename Heap, typename Compare, typename BinaryOperation>
+  auto operator()(typename Heap::size_type N, const Heap& heap, Compare comp, BinaryOperation op) const {
+    if(heap.size() <= N) {
+      return std::accumulate(heap.begin(), heap.end(), static_cast<typename Heap::value_type>(0.), op);
+    } else if(heap.size() == N + 1) {
+      return std::accumulate(heap.begin() + 1, heap.end(), static_cast<typename Heap::value_type>(0.), op);
+    } else {
+      if(heap.size() > 2) {
+        if(comp(heap[2], heap[1])) {
+          return std::accumulate(heap.begin() + 3, heap.end(), op(static_cast<typename Heap::value_type>(0.), heap[2]), op);
+        } else {
+          return std::accumulate(heap.begin() + 3, heap.end(), op(static_cast<typename Heap::value_type>(0.), heap[1]), op);
+        }
+      } else {
+        return static_cast<typename Heap::value_type>(0.);
+      }
+    }
+  }
+};
+
 } // namespace detail
+
+template<long long int N, typename Heap, typename Compare>
+inline auto get_nth(const Heap& heap, Compare comp) {
+  return detail::get_nth_implementation<N>{}(heap, comp);
+}
+
+template<long long int N, typename Heap>
+inline auto get_nth(const Heap& heap) {
+  return get_nth<N>(heap, std::less<std::remove_reference_t<std::remove_cv_t<decltype(heap[0])>>>{});
+}
+
+template<long long int Buffer, typename Heap, typename Compare, typename BinaryOperation>
+inline auto accumulate_n_smallest(typename Heap::size_type N, const Heap& heap, Compare comp, BinaryOperation op) {
+  return detail::accumulate_n_smallest_implementation<Buffer>{}(N, heap, comp, op);
+}
 
 // Given a heap x_1 >  ... > x_k, and k >= N, returns x_{1 + k - N} if !cond(x_{1 + k - N}), and if not x_{k - N}.
 // In words, this returns the N-th smallest element in the heap if it does not satisfy a condition, and the 'N+1'-th otherwise.

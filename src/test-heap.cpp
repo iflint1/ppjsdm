@@ -7,6 +7,15 @@
 #include <cmath> // std::floor, std::fabs
 #include <vector> // std::vector
 
+namespace detail {
+
+struct Acc {
+  template<typename S, typename T>
+  auto operator()(S count, T element) const { return count + element; }
+};
+
+} // namespace detail
+
 context("Heap") {
   test_that("Get nth element of a heap") {
     const int max_tested_size(20);
@@ -153,6 +162,68 @@ context("Heap") {
             expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, [&sorted_vector](const auto element){ return element <= sorted_vector[3]; }, Greater{}) == sorted_vector[0]);
             expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, [&sorted_vector](const auto element){ return element <= sorted_vector[3]; }, Greater{}) == sorted_vector[1]);
           }
+        }
+      }
+    }
+  }
+
+  test_that("Accumulate n smallest points of a Max-heap") {
+    const int max_tested_size(20);
+    const int number_replications(20);
+    for(int i(0); i < max_tested_size; ++i) {
+      for(int replication(0); replication < number_replications; ++replication) {
+        std::vector<double> vector(i);
+        for(int j(0); j < i; ++j) {
+          vector[j] = std::sin(j + replication);
+        }
+        auto sorted_vector(vector);
+
+        using Greater = std::greater<double>;
+        using Less = std::less<double>;
+
+        std::make_heap(vector.begin(), vector.end(), Less{});
+        std::sort(sorted_vector.begin(), sorted_vector.end(), Greater{});
+
+        expect_true(ppjsdm::accumulate_n_smallest<0>(i, vector, Less{}, detail::Acc{}) == Approx(std::accumulate(sorted_vector.begin(), sorted_vector.end(), 0., detail::Acc{})));
+        expect_true(ppjsdm::accumulate_n_smallest<1>(i, vector, Less{}, detail::Acc{}) == Approx(std::accumulate(sorted_vector.begin(), sorted_vector.end(), 0., detail::Acc{})));
+        expect_true(ppjsdm::accumulate_n_smallest<2>(i, vector, Less{}, detail::Acc{}) == Approx(std::accumulate(sorted_vector.begin(), sorted_vector.end(), 0., detail::Acc{})));
+        if(i >= 1) {
+          expect_true(ppjsdm::accumulate_n_smallest<1>(i - 1, vector, Less{}, detail::Acc{}) == Approx(std::accumulate(sorted_vector.begin() + 1, sorted_vector.end(), 0., detail::Acc{})));
+          expect_true(ppjsdm::accumulate_n_smallest<2>(i - 1, vector, Less{}, detail::Acc{}) == Approx(std::accumulate(sorted_vector.begin() + 1, sorted_vector.end(), 0., detail::Acc{})));
+        }
+        if(i >= 2) {
+          expect_true(ppjsdm::accumulate_n_smallest<2>(i - 2, vector, Less{}, detail::Acc{}) == Approx(std::accumulate(sorted_vector.begin() + 2, sorted_vector.end(), 0., detail::Acc{})));
+        }
+      }
+    }
+  }
+
+  test_that("Accumulate n Largest points of a Min-heap") {
+    const int max_tested_size(20);
+    const int number_replications(20);
+    for(int i(0); i < max_tested_size; ++i) {
+      for(int replication(0); replication < number_replications; ++replication) {
+        std::vector<double> vector(i);
+        for(int j(0); j < i; ++j) {
+          vector[j] = std::sin(j + replication);
+        }
+        auto sorted_vector(vector);
+
+        using Greater = std::greater<double>;
+        using Less = std::less<double>;
+
+        std::make_heap(vector.begin(), vector.end(), Greater{});
+        std::sort(sorted_vector.begin(), sorted_vector.end(), Less{});
+
+        expect_true(ppjsdm::accumulate_n_smallest<0>(i, vector, Greater{}, detail::Acc{}) == Approx(std::accumulate(sorted_vector.begin(), sorted_vector.end(), 0., detail::Acc{})));
+        expect_true(ppjsdm::accumulate_n_smallest<1>(i, vector, Greater{}, detail::Acc{}) == Approx(std::accumulate(sorted_vector.begin(), sorted_vector.end(), 0., detail::Acc{})));
+        expect_true(ppjsdm::accumulate_n_smallest<2>(i, vector, Greater{}, detail::Acc{}) == Approx(std::accumulate(sorted_vector.begin(), sorted_vector.end(), 0., detail::Acc{})));
+        if(i >= 1) {
+          expect_true(ppjsdm::accumulate_n_smallest<1>(i - 1, vector, Greater{}, detail::Acc{}) == Approx(std::accumulate(sorted_vector.begin() + 1, sorted_vector.end(), 0., detail::Acc{})));
+          expect_true(ppjsdm::accumulate_n_smallest<2>(i - 1, vector, Greater{}, detail::Acc{}) == Approx(std::accumulate(sorted_vector.begin() + 1, sorted_vector.end(), 0., detail::Acc{})));
+        }
+        if(i >= 2) {
+          expect_true(ppjsdm::accumulate_n_smallest<2>(i - 2, vector, Greater{}, detail::Acc{}) == Approx(std::accumulate(sorted_vector.begin() + 2, sorted_vector.end(), 0., detail::Acc{})));
         }
       }
     }

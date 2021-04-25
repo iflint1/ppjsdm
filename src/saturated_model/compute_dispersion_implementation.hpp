@@ -31,7 +31,7 @@ template<>
 struct compute_dispersion_implementation<dispersionMethod::two_values> {
   using ValueType = unsigned long long int;
 
-  template<typename Vector, typename Point>
+  template<int Buffer, typename Vector, typename Point>
   static auto add_count_to_dispersion(const Saturated_model& varphi,
                                       const Vector& count_vector,
                                       const Point&,
@@ -39,7 +39,7 @@ struct compute_dispersion_implementation<dispersionMethod::two_values> {
     return std::min(varphi.get_saturation(), count_vector[i]);
   }
 
-  template<typename Point, typename ToDiscard, typename Vector>
+  template<int Buffer, typename Point, typename ToDiscard, typename Vector>
   static auto add_count_to_dispersion_discarding(const Saturated_model& varphi,
                                                  const Vector& count_vector,
                                                  const Point& point,
@@ -269,39 +269,17 @@ class compute_dispersion_generic_implementation {
 public:
   using ValueType = std::vector<double>;
 
-  // TODO: Can add Buffer template argument to avoid some of this.
-  template<typename Point, typename Vector>
+  template<int Buffer, typename Point, typename Vector>
   static auto add_count_to_dispersion(const Saturated_model& varphi,
                                       const Vector& count_vector,
                                       const Point& point,
                                       decltype(count_vector.size()) i) {
-    if(count_vector[i].size() <= varphi.get_saturation()) {
-      return std::accumulate(count_vector[i].begin(),
-                             count_vector[i].end(),
-                             0., [&varphi, i, &point](auto count, auto val) {
-                               return count + PutInHeap::get(varphi, val, i, get_type(point));
-                             });
-    } else if(count_vector[i].size() == varphi.get_saturation() + 1) {
-      return std::accumulate(count_vector[i].begin() + 1,
-                             count_vector[i].end(),
-                             0., [&varphi, i, &point](auto count, auto val) {
-                               return count + PutInHeap::get(varphi, val, i, get_type(point));
-                             });
-    } else {
-      const auto to_skip(get_nth<1>(count_vector[i], HeapOrder{}));
-      return std::accumulate(count_vector[i].begin() + 1,
-                             count_vector[i].end(),
-                             0., [to_skip, &varphi, i, &point](auto count, auto val) {
-                               if(val != to_skip) {
-                                 return count + PutInHeap::get(varphi, val, i, get_type(point));
-                               } else {
-                                 return count;
-                               }
-                             });
-    }
+    return accumulate_n_smallest<Buffer>(varphi.get_saturation(), count_vector[i], HeapOrder{}, [&varphi, i, &point](auto count, auto val) {
+      return count + PutInHeap::get(varphi, val, i, get_type(point));
+    });
   }
 
-  template<typename Point, typename ToDiscard, typename Vector>
+  template<int Buffer, typename Point, typename ToDiscard, typename Vector>
   static auto add_count_to_dispersion_discarding(const Saturated_model& varphi,
                                                  const Vector& count_vector,
                                                  const Point& point,
@@ -319,41 +297,16 @@ public:
       const auto smallest(get_nth<0>(count_vector[i], HeapOrder{}));
       const auto discard_disp(PutInHeap::put(varphi, discard_sq, point, to_discard));
       if(HeapOrder{}(discard_disp, smallest)) { // to_discard is in count
-        if(count_vector[i].size() <= varphi.get_saturation() + 1) {
-          return std::accumulate(count_vector[i].begin(),
-                                 count_vector[i].end(),
-                                 0., [discard_disp, &varphi, i, &point](auto count, auto val) {
-                                   if(val != discard_disp) {
-                                     return count + PutInHeap::get(varphi, val, i, get_type(point));
-                                   } else {
-                                     return count;
-                                   }
-                                 });
-        } else if(count_vector[i].size() == varphi.get_saturation() + 2) {
-          return std::accumulate(count_vector[i].begin() + 1,
-                                 count_vector[i].end(),
-                                 0., [discard_disp, &varphi, i, &point](auto count, auto val) {
-                                   if(val != discard_disp) {
-                                     return count + PutInHeap::get(varphi, val, i, get_type(point));
-                                   } else {
-                                     return count;
-                                   }
-                                 });
-        } else {
-          const auto to_skip(get_nth<1>(count_vector[i], HeapOrder{}));
-          return std::accumulate(count_vector[i].begin() + 1,
-                                 count_vector[i].end(),
-                                 0., [discard_disp, to_skip, &varphi, i, &point](auto count, auto val) {
-                                   if(val != discard_disp && val != to_skip) {
-                                     return count + PutInHeap::get(varphi, val, i, get_type(point));
-                                   } else {
-                                     return count;
-                                   }
-                                 });
-        }
+        return accumulate_n_smallest<Buffer>(varphi.get_saturation() + 1, count_vector[i], HeapOrder{}, [discard_disp, &varphi, i, &point](auto count, auto val) {
+          if(val != discard_disp) {
+            return count + PutInHeap::get(varphi, val, i, get_type(point));
+          } else {
+            return count;
+          }
+        });
       }
     }
-    return add_count_to_dispersion(varphi, count_vector, point, i);
+    return add_count_to_dispersion<Buffer>(varphi, count_vector, point, i);
   }
 
   template<int Buffer, typename Point, typename Other>
@@ -463,7 +416,7 @@ template<>
 struct compute_dispersion_implementation<dispersionMethod::nonincreasing_after_lower_endpoint> :
   public compute_dispersion_generic_implementation<std::less<double>, put_square_distance> {};
 
-template<typename AbstractDispersion, int N = 1, typename Vector, typename CountVector, typename Point>
+template<int Buffer, typename AbstractDispersion, int N = 1, typename Vector, typename CountVector, typename Point>
 static void add_count_to_dispersion(const Saturated_model& varphi,
                                     Vector& dispersion,
                                     const CountVector& count_vector,
@@ -471,12 +424,12 @@ static void add_count_to_dispersion(const Saturated_model& varphi,
   using size_t = typename Vector::size_type;
   using FloatType = typename Vector::value_type;
   for(size_t i(0); i < dispersion.size(); ++i) {
-    const auto count_to_dispersion(static_cast<FloatType>(AbstractDispersion::add_count_to_dispersion(varphi, count_vector, point, i)));
+    const auto count_to_dispersion(static_cast<FloatType>(AbstractDispersion::template add_count_to_dispersion<Buffer>(varphi, count_vector, point, i)));
     dispersion[i] += static_cast<FloatType>(N) * count_to_dispersion;
   }
 }
 
-template<typename AbstractDispersion, int N = 1, typename Vector, typename CountVector, typename Point, typename ToDiscard>
+template<int Buffer, typename AbstractDispersion, int N = 1, typename Vector, typename CountVector, typename Point, typename ToDiscard>
 static void add_count_to_dispersion_discarding(const Saturated_model& varphi,
                                                Vector& dispersion,
                                                const CountVector& count_vector,
@@ -487,9 +440,9 @@ static void add_count_to_dispersion_discarding(const Saturated_model& varphi,
   for(size_t i(0); i < dispersion.size(); ++i) {
     FloatType count_to_dispersion{};
     if(i == static_cast<size_t>(get_type(to_discard))) {
-      count_to_dispersion = static_cast<FloatType>(AbstractDispersion::add_count_to_dispersion_discarding(varphi, count_vector, point, to_discard, i));
+      count_to_dispersion = static_cast<FloatType>(AbstractDispersion::template add_count_to_dispersion_discarding<Buffer>(varphi, count_vector, point, to_discard, i));
     } else {
-      count_to_dispersion = static_cast<FloatType>(AbstractDispersion::add_count_to_dispersion(varphi, count_vector, point, i));
+      count_to_dispersion = static_cast<FloatType>(AbstractDispersion::template add_count_to_dispersion<Buffer>(varphi, count_vector, point, i));
     }
     dispersion[i] += static_cast<FloatType>(N) * count_to_dispersion;
   }

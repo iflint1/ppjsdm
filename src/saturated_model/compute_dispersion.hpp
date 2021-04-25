@@ -38,7 +38,7 @@ inline auto generic_dispersion_computation(const Saturated_model& varphi,
         AbstractDispersion::template update_count<std::numeric_limits<int>::max()>(varphi, count_vector[get_type(current_point)], current_point, point);
       }
     }, configurations...);
-    add_count_to_dispersion<AbstractDispersion, 2>(varphi, dispersion, count_vector, point);
+    add_count_to_dispersion<0, AbstractDispersion, 2>(varphi, dispersion, count_vector, point);
   } else {
     for_each_container([&dispersion, &count_vector, &point, &varphi,
                        saturation = varphi.get_saturation(), &configurations...](const auto& current_point) {
@@ -56,7 +56,7 @@ inline auto generic_dispersion_computation(const Saturated_model& varphi,
                            dispersion[get_type(current_point)] += AbstractDispersion::template delta<0, false>(varphi, count, current_point, point);
                          }
                        }, configurations...);
-    add_count_to_dispersion<AbstractDispersion, 1>(varphi, dispersion, count_vector, point);
+    add_count_to_dispersion<0, AbstractDispersion, 1>(varphi, dispersion, count_vector, point);
   }
   return dispersion;
 }
