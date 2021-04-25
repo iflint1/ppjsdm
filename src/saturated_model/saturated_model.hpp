@@ -54,23 +54,6 @@ private:
   unsigned long long int saturation_;
 };
 
-namespace detail {
-
-enum class dispersionMethod {two_values, nonincreasing_after_lower_endpoint, generic};
-
-template<template<dispersionMethod> class T, typename... Args>
-inline auto dispatch_model(const Saturated_model& model,
-                           Args&&... args) {
-  if(model.is_two_valued()) {
-    return T<dispersionMethod::two_values>{}(model, std::forward<Args>(args)...);
-  } else if(model.is_nonincreasing_after_lower_endpoint()) {
-    return T<dispersionMethod::nonincreasing_after_lower_endpoint>{}(model, std::forward<Args>(args)...);
-  } else {
-    return T<dispersionMethod::generic>{}(model, std::forward<Args>(args)...);
-  }
-}
-
-} // namespace detail
 } // namespace ppjsdm
 
 #endif // INCLUDE_SATURATED_MODEL

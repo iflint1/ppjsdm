@@ -90,11 +90,11 @@ inline auto dispersion_computation_fitting(const Saturated_model& varphi,
   return dispersion;
 }
 
-template<detail::dispersionMethod T>
+template<typename T>
 struct Functor_fitting {
   template<typename... Args>
   auto operator()(Args&&... args) const {
-    return dispersion_computation_fitting<detail::compute_dispersion_implementation<T>>(std::forward<Args>(args)...);
+    return dispersion_computation_fitting<T>(std::forward<Args>(args)...);
   }
 };
 

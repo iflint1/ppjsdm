@@ -61,11 +61,11 @@ inline auto generic_dispersion_computation(const Saturated_model& varphi,
   return dispersion;
 }
 
-template<detail::dispersionMethod T>
+template<typename T>
 struct Functor_generic {
   template<typename... Args>
   auto operator()(Args&&... args) const {
-    return generic_dispersion_computation<detail::compute_dispersion_implementation<T>>(std::forward<Args>(args)...);
+    return generic_dispersion_computation<T>(std::forward<Args>(args)...);
   }
 };
 

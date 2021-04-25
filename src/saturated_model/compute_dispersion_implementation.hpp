@@ -24,11 +24,7 @@ inline auto apply_potential(const Saturated_model& potential, const Point& point
   return potential.apply(normalized_square_distance(point, other), get_type(point), get_type(other));
 }
 
-template<dispersionMethod Method>
-struct compute_dispersion_implementation;
-
-template<>
-struct compute_dispersion_implementation<dispersionMethod::two_values> {
+struct compute_dispersion_two_values_implementation {
   using ValueType = unsigned long long int;
 
   template<int Buffer, typename Vector, typename Point>
@@ -72,174 +68,10 @@ struct compute_dispersion_implementation<dispersionMethod::two_values> {
                                const ValueType& count,
                                const Point& point,
                                const Other& other,
-                               const ToDiscard& to_discard) {
-    if((count < varphi.get_saturation() + static_cast<int>(CountedAlready) + static_cast<int>(apply_potential(varphi, point, to_discard) > 0.)) && (apply_potential(varphi, point, other) > 0.)) {
-      return 1.;
-    } else {
-      return 0.;
-    }
+                               const ToDiscard&) {
+    return delta<Buffer, CountedAlready>(varphi, count - 1, point, other);
   }
 };
-
-// template<>
-// struct compute_dispersion_implementation<dispersionMethod::nonincreasing_after_lower_endpoint> {
-// private:
-//   using Less = std::less<double>;
-// public:
-//   using ValueType = std::vector<double>;
-//
-//   template<typename Point, typename Vector>
-//   static auto add_count_to_dispersion(const Saturated_model& varphi,
-//                                       const Vector& count_vector,
-//                                       const Point& point,
-//                                       decltype(count_vector.size()) i) {
-//     if(count_vector[i].size() <= varphi.get_saturation()) {
-//       return std::accumulate(count_vector[i].begin(),
-//                              count_vector[i].end(),
-//                              0., [&varphi, i, &point](double count, auto val) {
-//                                return count + varphi.apply(val, i, get_type(point));
-//                              });
-//     } else if(count_vector[i].size() == varphi.get_saturation() + 1) {
-//       return std::accumulate(count_vector[i].begin() + 1,
-//                              count_vector[i].end(),
-//                              0., [&varphi, i, &point](double count, auto val) {
-//                                return count + varphi.apply(val, i, get_type(point));
-//                              });
-//     } else {
-//       const auto to_skip(get_nth<1>(count_vector[i], Less{}));
-//       return std::accumulate(count_vector[i].begin() + 1,
-//                              count_vector[i].end(),
-//                              0., [&varphi, i, &point, to_skip](double count, auto val) {
-//                                if(val != to_skip) {
-//                                  return count + varphi.apply(val, i, get_type(point));
-//                                } else {
-//                                  return count;
-//                                }
-//                              });
-//     }
-//   }
-//
-//   template<typename Point, typename ToDiscard, typename Vector>
-//   static auto add_count_to_dispersion_discarding(const Saturated_model& varphi,
-//                                                  const Vector& count_vector,
-//                                                  const Point& point,
-//                                                  const ToDiscard& to_discard,
-//                                                  decltype(count_vector.size()) i) {
-//     // TODO: Temp solution to make sure everything works, it's extremely inefficient
-//     const auto discard_sq(normalized_square_distance(point, to_discard));
-//     Vector count_vector_copy(count_vector);
-//     count_vector_copy[i].erase(std::remove(count_vector_copy[i].begin(), count_vector_copy[i].end(), discard_sq), count_vector_copy[i].end());
-//     std::make_heap(count_vector_copy[i].begin(), count_vector_copy[i].end(), Less{});
-//
-//     return add_count_to_dispersion(varphi, count_vector_copy, point, i);
-//   }
-//
-//   template<int Buffer = 1, typename Point, typename Other>
-//   static void update_count(const Saturated_model& varphi, ValueType& count, const Point& point, const Other& other) {
-//     const auto sq(normalized_square_distance(point, other));
-//     if(sq >= varphi.get_square_lower_endpoint(get_type(point), get_type(other))) {
-//       if(count.size() < varphi.get_saturation() + Buffer) {
-//         count.emplace_back(sq);
-//         std::push_heap(count.begin(), count.end(), Less{});
-//       } else if(Less{}(sq, get_nth<0>(count, Less{}))) {
-//         count.emplace_back(sq);
-//         std::pop_heap(count.begin(), count.end(), Less{});
-//         count.pop_back();
-//       }
-//     }
-//   }
-//
-//   template<int Buffer, bool CountedAlready, typename Point, typename Other>
-//   static auto delta(const Saturated_model& varphi,
-//                     const ValueType& count,
-//                     const Point& point,
-//                     const Other& other) {
-//     // const auto sq(normalized_square_distance(point, other));
-//     // if(sq >= varphi.get_square_lower_endpoint(get_type(point), get_type(other))) {
-//     //   // TODO: if constexpr
-//     //   if(CountedAlready) {
-//     //     if(count.size() <= varphi.get_saturation()) {
-//     //       dispersion += varphi.apply(sq, get_type(point), get_type(other));
-//     //     } else if(sq < count[0]) {
-//     //       dispersion += varphi.apply(sq, get_type(point), get_type(other)) - varphi.apply(count[0], get_type(point), get_type(other));
-//     //     }
-//     //   } else {
-//     //     if(count.size() < varphi.get_saturation()) {
-//     //       dispersion += varphi.apply(sq, get_type(point), get_type(other));
-//     //     } else {
-//     //       const auto m(count.size() == varphi.get_saturation() ? count[0] : std::max(count[1], count[2]));
-//     //       if(sq < m) {
-//     //         dispersion += varphi.apply(sq, get_type(point), get_type(other)) - varphi.apply(m, get_type(point), get_type(other));
-//     //       }
-//     //     }
-//     //   }
-//     // }
-//
-//     // const auto sq(normalized_square_distance(point, other));
-//     // if(sq >= varphi.get_square_lower_endpoint(get_type(point), get_type(other))) {
-//     //   // TODO: if constexpr
-//     //   if(CountedAlready) {
-//     //     if(count.size() <= varphi.get_saturation()) {
-//     //       return varphi.apply(sq, get_type(point), get_type(other));
-//     //     } else {
-//     //       const auto largest(count.size() == varphi.get_saturation() + 1 ? count[0] : std::max(count[std::min<int>(1, count.size() - 1)], count[std::min<int>(2, count.size() - 1)]));
-//     //       if(sq < largest) {
-//     //         return varphi.apply(sq, get_type(point), get_type(other)) - varphi.apply(largest, get_type(point), get_type(other));
-//     //       }
-//     //     }
-//     //   } else {
-//     //     if(count.size() < varphi.get_saturation()) {
-//     //       return varphi.apply(sq, get_type(point), get_type(other));
-//     //     } else {
-//     //       // TODO: Horrible code below
-//     //       const auto largest(count.size() == varphi.get_saturation() ?
-//     //                            count[0] :
-//     //                            count.size() == varphi.get_saturation() + 1 ?
-//     //                            std::max(count[std::min<int>(1, count.size() - 1)], count[std::min<int>(2, count.size() - 1)]) :
-//     //                            std::max(std::min(count[std::min<int>(1, count.size() - 1)], count[std::min<int>(2, count.size() - 1)]),
-//     //                                     std::max(std::max(count[std::min<int>(3, count.size() - 1)], count[std::min<int>(4, count.size() - 1)]),
-//     //                                              std::max(count[std::min<int>(5, count.size() - 1)], count[std::min<int>(6, count.size() - 1)]))));
-//     //       if(sq < largest) {
-//     //         return varphi.apply(sq, get_type(point), get_type(other)) - varphi.apply(largest, get_type(point), get_type(other));
-//     //       }
-//     //     }
-//     //   }
-//     // }
-//     // return 0.;
-//
-//     const auto sq(normalized_square_distance(point, other));
-//     if(sq >= varphi.get_square_lower_endpoint(get_type(point), get_type(other))) {
-//       // TODO: put + get always gives the same result, rewrite
-//       if(count.size() < varphi.get_saturation() + static_cast<int>(CountedAlready)) {
-//         return varphi.apply(sq, get_type(point), get_type(other));
-//       } else {
-//         const auto smallest(get_nth_smallest<Buffer - static_cast<int>(CountedAlready)>(varphi.get_saturation() + static_cast<int>(CountedAlready), count, Less{}));
-//         if(Less{}(sq, smallest)) {
-//           return varphi.apply(sq, get_type(point), get_type(other)) - varphi.apply(smallest, get_type(point), get_type(other));
-//         } else {
-//           return 0.;
-//         }
-//       }
-//     } else {
-//       return 0.;
-//     }
-//   }
-//
-//   template<int Buffer, bool CountedAlready, typename Point, typename Other, typename ToDiscard>
-//   static auto delta_discarding(const Saturated_model& varphi,
-//                                const ValueType& count,
-//                                const Point& point,
-//                                const Other& other,
-//                                const ToDiscard& to_discard) {
-//     const auto discard_sq(normalized_square_distance(point, to_discard));
-//     // TODO: Temp solution to make sure everything works, it's extremely inefficient
-//     ValueType count_copy(count);
-//     count_copy.erase(std::remove(count_copy.begin(), count_copy.end(), discard_sq), count_copy.end());
-//     std::make_heap(count_copy.begin(), count_copy.end(), Less{});
-//
-//     return delta<Buffer, CountedAlready>(varphi, count_copy, point, other);
-//   }
-// };
 
 struct put_potential {
   using HeapOrder = std::greater<double>;
@@ -413,14 +245,6 @@ public:
   }
 };
 
-template<>
-struct compute_dispersion_implementation<dispersionMethod::generic> :
-  public compute_dispersion_generic_implementation<put_potential> {};
-
-template<>
-struct compute_dispersion_implementation<dispersionMethod::nonincreasing_after_lower_endpoint> :
-  public compute_dispersion_generic_implementation<put_square_distance> {};
-
 template<int Buffer, typename AbstractDispersion, int N = 1, typename Vector, typename CountVector, typename Point>
 static void add_count_to_dispersion(const Saturated_model& varphi,
                                     Vector& dispersion,
@@ -450,6 +274,18 @@ static void add_count_to_dispersion_discarding(const Saturated_model& varphi,
       count_to_dispersion = static_cast<FloatType>(AbstractDispersion::template add_count_to_dispersion<Buffer>(varphi, count_vector, point, i));
     }
     dispersion[i] += static_cast<FloatType>(N) * count_to_dispersion;
+  }
+}
+
+template<template<class> class T, typename... Args>
+inline auto dispatch_model(const Saturated_model& model,
+                           Args&&... args) {
+  if(model.is_two_valued()) {
+    return T<compute_dispersion_two_values_implementation>{}(model, std::forward<Args>(args)...);
+  } else if(model.is_nonincreasing_after_lower_endpoint()) {
+    return T<compute_dispersion_generic_implementation<put_square_distance>>{}(model, std::forward<Args>(args)...);
+  } else {
+    return T<compute_dispersion_generic_implementation<put_potential>>{}(model, std::forward<Args>(args)...);
   }
 }
 

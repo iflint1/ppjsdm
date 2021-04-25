@@ -122,11 +122,11 @@ inline auto generic_vcov_dispersion_computation(const Saturated_model& varphi,
   }
 }
 
-template<detail::dispersionMethod T>
+template<typename T>
 struct Functor_vcov {
   template<typename... Args>
   auto operator()(Args&&... args) const {
-    return generic_vcov_dispersion_computation<detail::compute_dispersion_implementation<T>>(std::forward<Args>(args)...);
+    return generic_vcov_dispersion_computation<T>(std::forward<Args>(args)...);
   }
 };
 
