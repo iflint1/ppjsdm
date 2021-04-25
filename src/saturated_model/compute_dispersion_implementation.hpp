@@ -4,15 +4,12 @@
 #include <Rcpp.h>
 
 #include "saturated_model.hpp"
-#include "../configuration/configuration_manipulation.hpp"
 #include "../point/point_manipulation.hpp"
 #include "../point/square_distance.hpp"
-#include "../utility/flatten_strict_upper_triangular.hpp"
 #include "../utility/heap.hpp"
 
 #include <algorithm> // std::accumulate, std::pop_heap, std::push_heap
 #include <functional> // std::greater
-#include <type_traits> // std::decay_t
 #include <utility> // std::forward, std::move
 #include <vector> // std::vector
 

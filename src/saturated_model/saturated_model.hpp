@@ -4,6 +4,7 @@
 #include <Rcpp.h>
 
 #include "potentials/medium_range_potentials.hpp"
+#include "potentials/potential.hpp"
 #include "potentials/short_range_potentials.hpp"
 
 #include <memory> // std::shared_ptr
