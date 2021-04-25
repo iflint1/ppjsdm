@@ -5,7 +5,7 @@ Version: 1.0
 Date: 2019-09-10
 Author: Ian Flint
 Maintainer: Ian Flint <ian.flint@unimelb.edu.au>
-Description: To be written.
+Description: Point processes in joint species distribution models.
 License: MIT + file LICENSE
 Imports: 
     GA,
