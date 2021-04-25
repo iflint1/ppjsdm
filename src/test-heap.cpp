@@ -57,47 +57,50 @@ context("Heap") {
         }
         auto sorted_vector(vector);
 
-        std::make_heap(vector.begin(), vector.end(), std::less<double>{});
-        std::sort(sorted_vector.begin(), sorted_vector.end(), std::greater<double>{});
+        using Greater = std::greater<double>;
+        using Less = std::less<double>;
+
+        std::make_heap(vector.begin(), vector.end(), Less{});
+        std::sort(sorted_vector.begin(), sorted_vector.end(), Greater{});
 
         // The size of the heap is i, and so the i-th smallest is always the largest.
         // This observation is true whenever the first argument is i.
-        expect_true(ppjsdm::get_nth_smallest_if<0>(i - 0, vector, std::less<double>{}, [](const auto){ return false; }) == sorted_vector[0]);
-        expect_true(ppjsdm::get_nth_smallest_if<1>(i - 0, vector, std::less<double>{}, [](const auto){ return false; }) == sorted_vector[0]);
-        expect_true(ppjsdm::get_nth_smallest_if<2>(i - 0, vector, std::less<double>{}, [](const auto){ return false; }) == sorted_vector[0]);
+        expect_true(ppjsdm::get_nth_smallest_if<0>(i - 0, vector, [](const auto){ return false; }, Less{}) == sorted_vector[0]);
+        expect_true(ppjsdm::get_nth_smallest_if<1>(i - 0, vector, [](const auto){ return false; }, Less{}) == sorted_vector[0]);
+        expect_true(ppjsdm::get_nth_smallest_if<2>(i - 0, vector, [](const auto){ return false; }, Less{}) == sorted_vector[0]);
         if(i >= 2) {
           // The size of the heap is i, and we want the 'i-1'-th smallest, i.e. the second-largest.
-          expect_true(ppjsdm::get_nth_smallest_if<1>(i - 1, vector, std::less<double>{}, [](const auto){ return false; }) == sorted_vector[1]);
-          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, std::less<double>{}, [](const auto){ return false; }) == sorted_vector[1]);
+          expect_true(ppjsdm::get_nth_smallest_if<1>(i - 1, vector, [](const auto){ return false; }, Less{}) == sorted_vector[1]);
+          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, [](const auto){ return false; }, Less{}) == sorted_vector[1]);
 
           // The cases below correspond to the removal of sorted_vector[l].
           // If we remove the largest one, the 'i-1'-th smallest does not change.
           // In other cases, it becomes the largest one.
-          expect_true(ppjsdm::get_nth_smallest_if<1>(i - 1, vector, std::less<double>{}, [&sorted_vector](const auto element){ return element >= sorted_vector[0]; }) == sorted_vector[1]);
-          expect_true(ppjsdm::get_nth_smallest_if<1>(i - 1, vector, std::less<double>{}, [&sorted_vector](const auto element){ return element >= sorted_vector[1]; }) == sorted_vector[0]);
+          expect_true(ppjsdm::get_nth_smallest_if<1>(i - 1, vector, [&sorted_vector](const auto element){ return element >= sorted_vector[0]; }, Less{}) == sorted_vector[1]);
+          expect_true(ppjsdm::get_nth_smallest_if<1>(i - 1, vector, [&sorted_vector](const auto element){ return element >= sorted_vector[1]; }, Less{}) == sorted_vector[0]);
           if(i >= 3) {
-            expect_true(ppjsdm::get_nth_smallest_if<1>(i - 1, vector, std::less<double>{}, [&sorted_vector](const auto element){ return element >= sorted_vector[2]; }) == sorted_vector[0]);
+            expect_true(ppjsdm::get_nth_smallest_if<1>(i - 1, vector, [&sorted_vector](const auto element){ return element >= sorted_vector[2]; }, Less{}) == sorted_vector[0]);
           }
           if(i >= 4) {
-            expect_true(ppjsdm::get_nth_smallest_if<1>(i - 1, vector, std::less<double>{}, [&sorted_vector](const auto element){ return element >= sorted_vector[3]; }) == sorted_vector[0]);
+            expect_true(ppjsdm::get_nth_smallest_if<1>(i - 1, vector, [&sorted_vector](const auto element){ return element >= sorted_vector[3]; }, Less{}) == sorted_vector[0]);
           }
         }
         if(i >= 3) {
-          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, std::less<double>{}, [](const auto){ return false; }) == sorted_vector[2]);
+          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, [](const auto){ return false; }, Less{}) == sorted_vector[2]);
 
-          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, std::less<double>{}, [&sorted_vector](const auto element){ return element >= sorted_vector[0]; }) == sorted_vector[1]);
-          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, std::less<double>{}, [&sorted_vector](const auto element){ return element >= sorted_vector[1]; }) == sorted_vector[0]);
-          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, std::less<double>{}, [&sorted_vector](const auto element){ return element >= sorted_vector[2]; }) == sorted_vector[0]);
+          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, [&sorted_vector](const auto element){ return element >= sorted_vector[0]; }, Less{}) == sorted_vector[1]);
+          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, [&sorted_vector](const auto element){ return element >= sorted_vector[1]; }, Less{}) == sorted_vector[0]);
+          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, [&sorted_vector](const auto element){ return element >= sorted_vector[2]; }, Less{}) == sorted_vector[0]);
 
           // The cases below correspond to the removal of sorted_vector[l].
           // If we remove the largest one or second-largest one, the 'i-1'-th smallest does not change.
           // In other cases, it becomes the second-largest one instead of the third-largest.
-          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, std::less<double>{}, [&sorted_vector](const auto element){ return element >= sorted_vector[0]; }) == sorted_vector[2]);
-          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, std::less<double>{}, [&sorted_vector](const auto element){ return element >= sorted_vector[1]; }) == sorted_vector[2]);
-          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, std::less<double>{}, [&sorted_vector](const auto element){ return element >= sorted_vector[2]; }) == sorted_vector[1]);
+          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, [&sorted_vector](const auto element){ return element >= sorted_vector[0]; }, Less{}) == sorted_vector[2]);
+          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, [&sorted_vector](const auto element){ return element >= sorted_vector[1]; }, Less{}) == sorted_vector[2]);
+          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, [&sorted_vector](const auto element){ return element >= sorted_vector[2]; }, Less{}) == sorted_vector[1]);
           if(i >= 4) {
-            expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, std::less<double>{}, [&sorted_vector](const auto element){ return element >= sorted_vector[3]; }) == sorted_vector[0]);
-            expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, std::less<double>{}, [&sorted_vector](const auto element){ return element >= sorted_vector[3]; }) == sorted_vector[1]);
+            expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, [&sorted_vector](const auto element){ return element >= sorted_vector[3]; }, Less{}) == sorted_vector[0]);
+            expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, [&sorted_vector](const auto element){ return element >= sorted_vector[3]; }, Less{}) == sorted_vector[1]);
           }
         }
       }
@@ -115,38 +118,40 @@ context("Heap") {
         }
         auto sorted_vector(vector);
 
-        std::make_heap(vector.begin(), vector.end(), std::greater<double>{});
-        std::sort(sorted_vector.begin(), sorted_vector.end(), std::less<double>{});
+        using Greater = std::greater<double>;
+        using Less = std::less<double>;
+        std::make_heap(vector.begin(), vector.end(), Greater{});
+        std::sort(sorted_vector.begin(), sorted_vector.end(), Less{});
 
-        expect_true(ppjsdm::get_nth_smallest_if<0>(i - 0, vector, std::greater<double>{}, [](const auto){ return false; }) == sorted_vector[0]);
-        expect_true(ppjsdm::get_nth_smallest_if<1>(i - 0, vector, std::greater<double>{}, [](const auto){ return false; }) == sorted_vector[0]);
-        expect_true(ppjsdm::get_nth_smallest_if<2>(i - 0, vector, std::greater<double>{}, [](const auto){ return false; }) == sorted_vector[0]);
+        expect_true(ppjsdm::get_nth_smallest_if<0>(i - 0, vector, [](const auto){ return false; }, Greater{}) == sorted_vector[0]);
+        expect_true(ppjsdm::get_nth_smallest_if<1>(i - 0, vector, [](const auto){ return false; }, Greater{}) == sorted_vector[0]);
+        expect_true(ppjsdm::get_nth_smallest_if<2>(i - 0, vector, [](const auto){ return false; }, Greater{}) == sorted_vector[0]);
         if(i >= 2) {
-          expect_true(ppjsdm::get_nth_smallest_if<1>(i - 1, vector, std::greater<double>{}, [](const auto){ return false; }) == sorted_vector[1]);
-          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, std::greater<double>{}, [](const auto){ return false; }) == sorted_vector[1]);
+          expect_true(ppjsdm::get_nth_smallest_if<1>(i - 1, vector, [](const auto){ return false; }, Greater{}) == sorted_vector[1]);
+          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, [](const auto){ return false; }, Greater{}) == sorted_vector[1]);
 
-          expect_true(ppjsdm::get_nth_smallest_if<1>(i - 1, vector, std::greater<double>{}, [&sorted_vector](const auto element){ return element <= sorted_vector[0]; }) == sorted_vector[1]);
-          expect_true(ppjsdm::get_nth_smallest_if<1>(i - 1, vector, std::greater<double>{}, [&sorted_vector](const auto element){ return element <= sorted_vector[1]; }) == sorted_vector[0]);
+          expect_true(ppjsdm::get_nth_smallest_if<1>(i - 1, vector, [&sorted_vector](const auto element){ return element <= sorted_vector[0]; }, Greater{}) == sorted_vector[1]);
+          expect_true(ppjsdm::get_nth_smallest_if<1>(i - 1, vector, [&sorted_vector](const auto element){ return element <= sorted_vector[1]; }, Greater{}) == sorted_vector[0]);
           if(i >= 3) {
-            expect_true(ppjsdm::get_nth_smallest_if<1>(i - 1, vector, std::greater<double>{}, [&sorted_vector](const auto element){ return element <= sorted_vector[2]; }) == sorted_vector[0]);
+            expect_true(ppjsdm::get_nth_smallest_if<1>(i - 1, vector, [&sorted_vector](const auto element){ return element <= sorted_vector[2]; }, Greater{}) == sorted_vector[0]);
           }
           if(i >= 4) {
-            expect_true(ppjsdm::get_nth_smallest_if<1>(i - 1, vector, std::greater<double>{}, [&sorted_vector](const auto element){ return element <= sorted_vector[3]; }) == sorted_vector[0]);
+            expect_true(ppjsdm::get_nth_smallest_if<1>(i - 1, vector, [&sorted_vector](const auto element){ return element <= sorted_vector[3]; }, Greater{}) == sorted_vector[0]);
           }
         }
         if(i >= 3) {
-          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, std::greater<double>{}, [](const auto){ return false; }) == sorted_vector[2]);
+          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, [](const auto){ return false; }, Greater{}) == sorted_vector[2]);
 
-          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, std::greater<double>{}, [&sorted_vector](const auto element){ return element <= sorted_vector[0]; }) == sorted_vector[1]);
-          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, std::greater<double>{}, [&sorted_vector](const auto element){ return element <= sorted_vector[1]; }) == sorted_vector[0]);
-          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, std::greater<double>{}, [&sorted_vector](const auto element){ return element <= sorted_vector[2]; }) == sorted_vector[0]);
+          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, [&sorted_vector](const auto element){ return element <= sorted_vector[0]; }, Greater{}) == sorted_vector[1]);
+          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, [&sorted_vector](const auto element){ return element <= sorted_vector[1]; }, Greater{}) == sorted_vector[0]);
+          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, [&sorted_vector](const auto element){ return element <= sorted_vector[2]; }, Greater{}) == sorted_vector[0]);
 
-          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, std::greater<double>{}, [&sorted_vector](const auto element){ return element <= sorted_vector[0]; }) == sorted_vector[2]);
-          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, std::greater<double>{}, [&sorted_vector](const auto element){ return element <= sorted_vector[1]; }) == sorted_vector[2]);
-          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, std::greater<double>{}, [&sorted_vector](const auto element){ return element <= sorted_vector[2]; }) == sorted_vector[1]);
+          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, [&sorted_vector](const auto element){ return element <= sorted_vector[0]; }, Greater{}) == sorted_vector[2]);
+          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, [&sorted_vector](const auto element){ return element <= sorted_vector[1]; }, Greater{}) == sorted_vector[2]);
+          expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, [&sorted_vector](const auto element){ return element <= sorted_vector[2]; }, Greater{}) == sorted_vector[1]);
           if(i >= 4) {
-            expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, std::greater<double>{}, [&sorted_vector](const auto element){ return element <= sorted_vector[3]; }) == sorted_vector[0]);
-            expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, std::greater<double>{}, [&sorted_vector](const auto element){ return element <= sorted_vector[3]; }) == sorted_vector[1]);
+            expect_true(ppjsdm::get_nth_smallest_if<2>(i - 1, vector, [&sorted_vector](const auto element){ return element <= sorted_vector[3]; }, Greater{}) == sorted_vector[0]);
+            expect_true(ppjsdm::get_nth_smallest_if<2>(i - 2, vector, [&sorted_vector](const auto element){ return element <= sorted_vector[3]; }, Greater{}) == sorted_vector[1]);
           }
         }
       }

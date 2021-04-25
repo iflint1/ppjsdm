@@ -98,38 +98,6 @@ inline auto get_nth(const Vector& vector) {
 
 namespace detail {
 
-// Get the 'Saturation-th' element in the underlying Min-heap with maximum size Saturation + Buffer,
-// satisfying a condition.
-template<long long int Buffer, long long int Depth = Buffer>
-struct get_smallest_if_implementation {
-  template<typename Heap, typename Compare, typename Condition>
-  auto operator()(unsigned long long int saturation, const Heap& heap, Compare comp, Condition cond) const {
-    if(heap.size() == saturation + Buffer - Depth) {
-      const auto nth(get_nth<Buffer - Depth>(heap, comp));
-      if(!cond(nth)) {
-        return nth;
-      } else {
-        return get_nth<Buffer - Depth + 1>(heap, comp);
-      }
-    } else {
-      return get_smallest_if_implementation<Buffer, Depth - 1>{}(saturation, heap, comp, cond);
-    }
-  }
-};
-
-template<long long int Buffer>
-struct get_smallest_if_implementation<Buffer, 0> {
-  template<typename Heap, typename Compare, typename Condition>
-  auto operator()(unsigned long long int, const Heap& heap, Compare comp, Condition cond) const {
-    const auto nth(get_nth<Buffer>(heap, comp));
-    if(!cond(nth)) {
-      return nth;
-    } else {
-      return get_nth<Buffer + 1>(heap, comp);
-    }
-  }
-};
-
 template<long long int Buffer, long long int Depth = Buffer, bool IsFirstStep = (Buffer == Depth), bool IsBufferNonZero = (Buffer != 0)>
 struct get_nth_smallest_if_implementation;
 
@@ -191,42 +159,39 @@ struct get_nth_smallest_if_implementation<Buffer, Depth, true, true> {
 // In words, this returns the N-th smallest element in the heap if it does not satisfy a condition, and the 'N+1'-th otherwise.
 // It is known at compile-time that 0 <= k - N <= Buffer.
 // It is additionally known at compile-time that if k == N, then the element does not satisfy the condition.
-template<long long int Buffer, typename Heap, typename Compare, typename Condition>
-inline auto get_nth_smallest_if(typename Heap::size_type N, const Heap& heap, Compare comp, Condition cond) {
-  return detail::get_nth_smallest_if_implementation<Buffer>{}(N, heap, comp, cond);
+template<long long int Buffer, long long int Lag = 0, typename Heap, typename Compare, typename Condition>
+inline auto get_nth_smallest_if(typename Heap::size_type N, const Heap& heap, Condition cond, Compare comp) {
+  return detail::get_nth_smallest_if_implementation<Buffer, Buffer - Lag>{}(N, heap, comp, cond);
 }
 
-template<long long int Buffer, typename Heap, typename Condition>
+template<long long int Buffer, long long int Lag = 0, typename Heap, typename Condition>
 inline auto get_nth_smallest_if(typename Heap::size_type N, const Heap& heap, Condition cond) {
-  return get_nth_smallest_if<Buffer>(N, heap, std::less<std::remove_reference_t<std::remove_cv_t<decltype(heap[0])>>>{}, cond);
+  return get_nth_smallest_if<Buffer, Lag>(N, heap, cond, std::less<std::remove_reference_t<std::remove_cv_t<decltype(heap[0])>>>{});
 }
 
-template<long long int Buffer, typename Vector, typename Compare>
-inline auto get_smallest(unsigned long long int saturation, const Vector& vector, Compare comp) {
-  return detail::get_smallest_if_implementation<Buffer>{}(saturation, vector, comp, [](const auto){ return false; });
+template<long long int Buffer, long long int Lag = 0, typename Heap, typename Compare>
+inline auto get_nth_smallest(typename Heap::size_type N, const Heap& heap, Compare comp) {
+  return get_nth_smallest_if<Buffer, Lag>(N, heap, [](const auto){ return false; }, comp);
 }
 
-template<long long int N, typename Vector>
-inline auto get_smallest(unsigned long long int saturation, const Vector& vector) {
-  return get_smallest<N>(saturation, vector, std::less<std::remove_reference_t<std::remove_cv_t<decltype(vector[0])>>>{});
+template<long long int Buffer, long long int Lag = 0, typename Heap>
+inline auto get_nth_smallest(typename Heap::size_type N, const Heap& heap) {
+  return get_nth_smallest<Buffer, Lag>(N, heap, std::less<std::remove_reference_t<std::remove_cv_t<decltype(heap[0])>>>{});
 }
 
-template<long long int Buffer, typename Vector, typename Compare>
-inline auto get_smallest_excluding(unsigned long long int saturation,
-                                   const Vector& vector,
-                                   const typename Vector::value_type& value,
-                                   Compare comp) {
-  return detail::get_smallest_if_implementation<Buffer>{}(saturation, vector, comp, [value](const auto& element){ return element == value; });
+template<long long int Buffer, long long int Lag = 0, typename Heap, typename Compare>
+inline auto get_nth_smallest_excluding(typename Heap::size_type N,
+                                       const Heap& heap,
+                                       const typename Heap::value_type& value,
+                                       Compare comp) {
+  return get_nth_smallest_if<Buffer, Lag>(N, heap, [comp, value](const auto& element){ return !comp(element, value); }, comp);
 }
 
-template<long long int N, typename Vector>
-inline auto get_smallest_excluding(unsigned long long int saturation,
-                                   const Vector& vector,
-                                   const typename Vector::value_type& value) {
-  return get_smallest_excluding<N>(saturation,
-                                   vector,
-                                   value,
-                                   std::less<std::remove_reference_t<std::remove_cv_t<decltype(vector[0])>>>{});
+template<long long int Buffer, long long int Lag = 0, typename Heap>
+inline auto get_nth_smallest_excluding(typename Heap::size_type N,
+                                       const Heap& heap,
+                                       const typename Heap::value_type& value) {
+  return get_nth_smallest_excluding<Buffer, Lag>(N, heap, value, std::less<std::remove_reference_t<std::remove_cv_t<decltype(heap[0])>>>{});
 }
 
 } // namespace ppjsdm
