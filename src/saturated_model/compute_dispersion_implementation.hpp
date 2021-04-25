@@ -176,13 +176,10 @@ public:
         const auto smallest(get_nth_smallest<Buffer - static_cast<int>(CountedAlready)>(varphi.get_saturation() + static_cast<int>(CountedAlready), count, HeapOrder{}));
         if(HeapOrder{}(disp, smallest)) {
           return PutInHeap::get(varphi, disp, get_type(point), get_type(other)) - PutInHeap::get(varphi, smallest, get_type(point), get_type(other));
-        } else {
-          return 0.;
         }
       }
-    } else {
-      return 0.;
     }
+    return 0.;
   }
 
   template<int Buffer, bool CountedAlready, typename Point, typename Other, typename ToDiscard>
@@ -216,8 +213,6 @@ public:
         // to_discard is not in count
         if(HeapOrder{}(disp, smallest)) {
           return PutInHeap::get(varphi, disp, get_type(point), get_type(other)) - PutInHeap::get(varphi, smallest, get_type(point), get_type(other));
-        } else {
-          return 0.;
         }
       } else {
         const auto disp(PutInHeap::put(varphi, sq, point, other));
@@ -227,21 +222,16 @@ public:
           const auto smallest(get_nth_smallest_excluding<Buffer - static_cast<int>(CountedAlready), 1>(varphi.get_saturation() + static_cast<int>(CountedAlready), count, discard_disp, HeapOrder{}));
           if(HeapOrder{}(disp, smallest)) {
             return PutInHeap::get(varphi, disp, get_type(point), get_type(other)) - PutInHeap::get(varphi, smallest, get_type(point), get_type(other));
-          } else {
-            return 0.;
           }
         } else {
           const auto smallest(get_nth_smallest<Buffer - static_cast<int>(CountedAlready)>(varphi.get_saturation() + static_cast<int>(CountedAlready), count, HeapOrder{}));
           if(HeapOrder{}(disp, smallest)) {
             return PutInHeap::get(varphi, disp, get_type(point), get_type(other)) - PutInHeap::get(varphi, smallest, get_type(point), get_type(other));
-          } else {
-            return 0.;
           }
         }
       }
-    } else {
-      return 0.;
     }
+    return 0.;
   }
 };
 
