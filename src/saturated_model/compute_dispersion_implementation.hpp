@@ -242,6 +242,8 @@ struct compute_dispersion_implementation<dispersionMethod::two_values> {
 // };
 
 struct put_potential {
+  using HeapOrder = std::greater<double>;
+
   template<typename Point, typename Other>
   static auto put(const Saturated_model& varphi, double square_distance, const Point& point, const Other& other) {
     return varphi.apply(square_distance, get_type(point), get_type(other));
@@ -253,6 +255,8 @@ struct put_potential {
 };
 
 struct put_square_distance {
+  using HeapOrder = std::less<double>;
+
   template<typename Point, typename Other>
   static auto put(const Saturated_model&, double square_distance, const Point&, const Other&) {
     return square_distance;
@@ -263,9 +267,10 @@ struct put_square_distance {
   }
 };
 
-// TODO: use std::conditional to automatically choose the heap order.
-template<typename HeapOrder = std::greater<double>, typename PutInHeap = put_potential>
+template<typename PutInHeap = put_potential>
 class compute_dispersion_generic_implementation {
+private:
+  using HeapOrder = typename PutInHeap::HeapOrder;
 public:
   using ValueType = std::vector<double>;
 
@@ -410,11 +415,11 @@ public:
 
 template<>
 struct compute_dispersion_implementation<dispersionMethod::generic> :
-  public compute_dispersion_generic_implementation<std::greater<double>, put_potential> {};
+  public compute_dispersion_generic_implementation<put_potential> {};
 
 template<>
 struct compute_dispersion_implementation<dispersionMethod::nonincreasing_after_lower_endpoint> :
-  public compute_dispersion_generic_implementation<std::less<double>, put_square_distance> {};
+  public compute_dispersion_generic_implementation<put_square_distance> {};
 
 template<int Buffer, typename AbstractDispersion, int N = 1, typename Vector, typename CountVector, typename Point>
 static void add_count_to_dispersion(const Saturated_model& varphi,
