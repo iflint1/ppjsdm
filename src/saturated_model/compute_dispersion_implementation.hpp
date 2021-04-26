@@ -65,8 +65,8 @@ struct compute_dispersion_two_values_implementation {
                                const ValueType& count,
                                const Point& point,
                                const Other& other,
-                               const ToDiscard&) {
-    return delta<Buffer, CountedAlready>(varphi, count - 1, point, other);
+                               const ToDiscard& to_discard) {
+    return delta<Buffer, CountedAlready>(varphi, count - static_cast<int>(apply_potential(varphi, point, to_discard) > 0.), point, other);
   }
 };
 
