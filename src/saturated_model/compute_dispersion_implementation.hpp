@@ -124,21 +124,14 @@ public:
     // Vector count_vector_copy(count_vector);
     // count_vector_copy[i].erase(std::remove(count_vector_copy[i].begin(), count_vector_copy[i].end(), discard_disp), count_vector_copy[i].end());
     // std::make_heap(count_vector_copy[i].begin(), count_vector_copy[i].end(), HeapOrder{});
-    // return add_count_to_dispersion(varphi, count_vector_copy, point, i);
+    // return add_count_to_dispersion<Buffer>(varphi, count_vector_copy, point, i);
 
     const auto discard_sq(normalized_square_distance(point, to_discard));
     if(discard_sq >= varphi.get_square_lower_endpoint(get_type(point), get_type(to_discard))) {
-      const auto smallest(get_nth<0>(count_vector[i], HeapOrder{}));
       const auto discard_disp(PutInHeap::put(varphi, discard_sq, point, to_discard));
-      if(HeapOrder{}(discard_disp, smallest)) { // to_discard is in count
-        return accumulate_n_smallest<Buffer>(varphi.get_saturation() + 1, count_vector[i], HeapOrder{}, [discard_disp, &varphi, i, &point](auto count, auto val) {
-          if(val != discard_disp) {
-            return count + PutInHeap::get(varphi, val, i, get_type(point));
-          } else {
-            return count;
-          }
-        });
-      }
+      return accumulate_n_smallest_excluding<Buffer>(varphi.get_saturation(), count_vector[i], HeapOrder{}, [&varphi, i, &point](auto count, auto val) {
+        return count + PutInHeap::get(varphi, val, i, get_type(point));
+      }, discard_disp);
     }
     return add_count_to_dispersion<Buffer>(varphi, count_vector, point, i);
   }
@@ -192,7 +185,6 @@ public:
     // std::make_heap(count_copy.begin(), count_copy.end(), HeapOrder{});
     // return delta<Buffer, CountedAlready>(varphi, count_copy, point, other);
 
-    // TODO: Code below seems to work, but not super confident; test all functions with Catch!
     const auto sq(normalized_square_distance(point, other));
     if(sq >= varphi.get_square_lower_endpoint(get_type(point), get_type(other))) {
       if(count.size() < varphi.get_saturation() + static_cast<int>(CountedAlready)) {
@@ -202,7 +194,7 @@ public:
         const auto smallest(get_nth<0>(count, HeapOrder{}));
         if(sq_discard >= varphi.get_square_lower_endpoint(get_type(point), get_type(to_discard))) {
           const auto discard_disp(PutInHeap::put(varphi, sq_discard, point, to_discard));
-          if(HeapOrder{}(discard_disp, smallest)) { // to_discard is in count
+          if(!HeapOrder{}(smallest, discard_disp)) { // to_discard is in count
             return varphi.apply(sq, get_type(point), get_type(other));
           }
         }
@@ -220,11 +212,10 @@ public:
           if(HeapOrder{}(disp, smallest)) {
             return PutInHeap::get(varphi, disp, get_type(point), get_type(other)) - PutInHeap::get(varphi, smallest, get_type(point), get_type(other));
           }
-        } else {
-          const auto smallest(get_nth_smallest<Buffer - static_cast<int>(CountedAlready)>(varphi.get_saturation() + static_cast<int>(CountedAlready), count, HeapOrder{}));
-          if(HeapOrder{}(disp, smallest)) {
-            return PutInHeap::get(varphi, disp, get_type(point), get_type(other)) - PutInHeap::get(varphi, smallest, get_type(point), get_type(other));
-          }
+        }
+        const auto smallest(get_nth_smallest<Buffer - static_cast<int>(CountedAlready)>(varphi.get_saturation() + static_cast<int>(CountedAlready), count, HeapOrder{}));
+        if(HeapOrder{}(disp, smallest)) {
+          return PutInHeap::get(varphi, disp, get_type(point), get_type(other)) - PutInHeap::get(varphi, smallest, get_type(point), get_type(other));
         }
       }
     }

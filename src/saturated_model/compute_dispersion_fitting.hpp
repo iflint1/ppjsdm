@@ -1,5 +1,5 @@
-#ifndef INCLUDE_COMPUTE_DISPERSION
-#define INCLUDE_COMPUTE_DISPERSION
+#ifndef INCLUDE_COMPUTE_DISPERSION_FITTING
+#define INCLUDE_COMPUTE_DISPERSION_FITTING
 
 #include <Rcpp.h>
 
@@ -86,7 +86,7 @@ struct dispersion_computation_fitting {
           dispersion[configuration_size + i][get_type(configuration[j])] += AbstractDispersion::template delta<1, false>(varphi, count_vector[j][get_type(other_configuration[i])], configuration[j], other_configuration[i]);
           AbstractDispersion::template update_count<0>(varphi, count_point[get_type(configuration[j])], other_configuration[i], configuration[j]);
         }
-        add_count_to_dispersion<1, AbstractDispersion, 1>(varphi, dispersion[configuration_size + i], count_point, other_configuration[i]);
+        add_count_to_dispersion<0, AbstractDispersion, 1>(varphi, dispersion[configuration_size + i], count_point, other_configuration[i]);
       }
     }
     return dispersion;
@@ -104,4 +104,4 @@ inline auto compute_dispersion_for_fitting(const Saturated_model& model,
 
 } // namespace ppjsdm
 
-#endif // INCLUDE_COMPUTE_DISPERSION
+#endif // INCLUDE_COMPUTE_DISPERSION_FITTING

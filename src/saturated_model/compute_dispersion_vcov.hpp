@@ -1,5 +1,5 @@
-#ifndef INCLUDE_COMPUTE_DISPERSION
-#define INCLUDE_COMPUTE_DISPERSION
+#ifndef INCLUDE_COMPUTE_DISPERSION_VCOV
+#define INCLUDE_COMPUTE_DISPERSION_VCOV
 
 #include <Rcpp.h>
 
@@ -132,10 +132,10 @@ template<typename Configuration>
 inline auto compute_dispersion_for_vcov(const Saturated_model& model,
                                         R_xlen_t number_types,
                                         const Configuration& configuration,
-                                        int nthreads) {
+                                        int nthreads = 1) {
   return detail::dispatch_model<detail::generic_vcov_dispersion_computation>(model, number_types, configuration, nthreads);
 }
 
 } // namespace ppjsdm
 
-#endif // INCLUDE_COMPUTE_DISPERSION
+#endif // INCLUDE_COMPUTE_DISPERSION_VCOV

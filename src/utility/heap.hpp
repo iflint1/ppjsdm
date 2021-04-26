@@ -187,6 +187,81 @@ struct accumulate_n_smallest_implementation<2> {
   }
 };
 
+template<long long int Buffer>
+struct accumulate_n_smallest_excluding_implementation;
+
+template<>
+struct accumulate_n_smallest_excluding_implementation<0> {
+  template<typename Heap, typename Compare, typename BinaryOperation>
+  auto operator()(typename Heap::size_type N, const Heap& heap, Compare comp, BinaryOperation op, typename Heap::value_type to_discard) const {
+    if(!comp(get_nth_implementation<0>{}(heap, comp), to_discard)) { // to_discard is in the heap
+      return std::accumulate(heap.begin(), heap.end(), static_cast<typename Heap::value_type>(0.), [op, to_discard](auto count, auto val) {
+        if(val != to_discard) {
+          return op(count, val);
+        } else {
+          return count;
+        }});
+    } else { // to_discard is not in the heap
+      return accumulate_n_smallest_implementation<0>{}(N, heap, comp, op);
+    }
+  }
+};
+
+template<>
+struct accumulate_n_smallest_excluding_implementation<1> {
+  template<typename Heap, typename Compare, typename BinaryOperation>
+  auto operator()(typename Heap::size_type N, const Heap& heap, Compare comp, BinaryOperation op, typename Heap::value_type to_discard) const {
+    if(!comp(get_nth_implementation<0>{}(heap, comp), to_discard)) { // to_discard is in the heap
+      return std::accumulate(heap.begin(), heap.end(), static_cast<typename Heap::value_type>(0.), [op, to_discard](auto count, auto val) {
+        if(val != to_discard) {
+          return op(count, val);
+        } else {
+          return count;
+        }});
+    } else { // to_discard is not in the heap
+      return accumulate_n_smallest_implementation<1>{}(N, heap, comp, op);
+    }
+  }
+};
+
+template<>
+struct accumulate_n_smallest_excluding_implementation<2> {
+  template<typename Heap, typename Compare, typename BinaryOperation>
+  auto operator()(typename Heap::size_type N, const Heap& heap, Compare comp, BinaryOperation op, typename Heap::value_type to_discard) const {
+    if(!comp(get_nth_implementation<0>{}(heap, comp), to_discard)) { // to_discard is in the heap
+      if(heap.size() <= N + 1) {
+        return std::accumulate(heap.begin(), heap.end(), static_cast<typename Heap::value_type>(0.), [op, to_discard](auto count, auto val) {
+          if(val != to_discard) {
+            return op(count, val);
+          } else {
+            return count;
+          }});
+      } else {
+        if(get_nth_implementation<0>{}(heap, comp) == to_discard) { // In this case, removing to_discard doesn't change anything
+          if(heap.size() > 2) {
+            if(comp(heap[2], heap[1])) {
+              return std::accumulate(heap.begin() + 3, heap.end(), op(static_cast<typename Heap::value_type>(0.), heap[2]), op);
+            } else {
+              return std::accumulate(heap.begin() + 3, heap.end(), op(static_cast<typename Heap::value_type>(0.), heap[1]), op);
+            }
+          } else {
+            return static_cast<typename Heap::value_type>(0.);
+          }
+        } else { // The length of the selected part of the heap is N + 1, so when removing to_discard we get N terms
+          return std::accumulate(heap.begin() + 1, heap.end(), static_cast<typename Heap::value_type>(0.), [op, to_discard](auto count, auto val) {
+            if(val != to_discard) {
+              return op(count, val);
+            } else {
+              return count;
+            }});
+        }
+      }
+    } else { // to_discard is not in the heap
+      return accumulate_n_smallest_implementation<2>{}(N, heap, comp, op);
+    }
+  }
+};
+
 } // namespace detail
 
 template<long long int N, typename Heap, typename Compare>
@@ -202,6 +277,11 @@ inline auto get_nth(const Heap& heap) {
 template<long long int Buffer, typename Heap, typename Compare, typename BinaryOperation>
 inline auto accumulate_n_smallest(typename Heap::size_type N, const Heap& heap, Compare comp, BinaryOperation op) {
   return detail::accumulate_n_smallest_implementation<Buffer>{}(N, heap, comp, op);
+}
+
+template<long long int Buffer, typename Heap, typename Compare, typename BinaryOperation>
+inline auto accumulate_n_smallest_excluding(typename Heap::size_type N, const Heap& heap, Compare comp, BinaryOperation op, typename Heap::value_type to_discard) {
+  return detail::accumulate_n_smallest_excluding_implementation<Buffer>{}(N, heap, comp, op, to_discard);
 }
 
 // Given a heap x_1 >  ... > x_k, and k >= N, returns x_{1 + k - N} if !cond(x_{1 + k - N}), and if not x_{k - N}.

@@ -4,7 +4,7 @@
 #include "utility/heap.hpp"
 
 #include <algorithm> // std::make_heap, std::sort
-#include <cmath> // std::floor, std::fabs
+#include <cmath> // std::sin
 #include <vector> // std::vector
 
 namespace detail {
