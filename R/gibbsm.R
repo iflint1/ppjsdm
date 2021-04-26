@@ -50,15 +50,23 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
         bic <- min(bic)
       }
     } else {
+      # fit <- glmnet(x = regressors,
+      #               y = gibbsm_data$response,
+      #               alpha = 1,
+      #               intercept = FALSE,
+      #               family = "binomial",
+      #               penalty.factor = pfactor,
+      #               lambda = rev(0:99),
+      #               thresh = 1e-12,
+      #               maxit = 1e8)
       fit <- glmnet(x = regressors,
                     y = gibbsm_data$response,
                     alpha = 1,
                     intercept = FALSE,
                     family = "binomial",
                     penalty.factor = pfactor,
-                    lambda = rev(0:99),
-                    thresh = 1e-12,
-                    maxit = 1e8)
+                    lambda = 0)
+
 
       shift <- gibbsm_data$shift
 
