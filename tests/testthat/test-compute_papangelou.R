@@ -22,7 +22,7 @@ test_that("Default values", {
                                                     medium_range_model = "square_exponential",
                                                     alpha = matrix(0, ncol = 2, nrow = 2),
                                                     beta0 = c(0, 0),
-                                                    beta = matrix(0, ncol = 2, nrow = 0),
+                                                    beta = matrix(0, ncol = 0, nrow = 2),
                                                     gamma = matrix(0, ncol = 2, nrow = 2),
                                                     covariates = list(),
                                                     short_range = matrix(0, ncol = 2, nrow = 2),
