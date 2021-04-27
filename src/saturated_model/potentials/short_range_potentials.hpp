@@ -81,7 +81,11 @@ struct Square_exponential_implementation {
   static constexpr bool is_two_valued = false;
 
   static double set(double radius) {
-    return -std::log(2) / (radius * radius);
+    if(radius > 0) {
+      return -std::log(2) / (radius * radius);
+    } else {
+      return -std::numeric_limits<double>::infinity();
+    }
   }
 
   static double apply(double square_distance, double constant) {
@@ -94,7 +98,11 @@ struct Exponential_implementation {
   static constexpr bool is_two_valued = false;
 
   static double set(double radius) {
-    return -std::log(2) / radius;
+    if(radius > 0) {
+      return -std::log(2) / radius;
+    } else {
+      return -std::numeric_limits<double>::infinity();
+    }
   }
 
   static double apply(double square_distance, double constant) {
@@ -107,7 +115,11 @@ struct Linear_implementation {
   static constexpr bool is_two_valued = false;
 
   static double set(double radius) {
-    return -1. / radius;
+    if(radius > 0) {
+      return -1. / radius;
+    } else {
+      return -std::numeric_limits<double>::infinity();
+    }
   }
 
   static double apply(double square_distance, double constant) {

@@ -68,7 +68,11 @@ struct Half_square_exponential_implementation {
 
   static double set_upper(double lower, double upper) {
     const auto delta(upper - lower);
-    return -std::log(2) / (delta * delta);
+    if(delta > 0) {
+      return -std::log(2) / (delta * delta);
+    } else {
+      return -std::numeric_limits<double>::infinity();
+    }
   }
 
   static double get_square_lower_endpoint(double lower) {
@@ -94,7 +98,12 @@ struct Half_exponential_implementation {
   }
 
   static double set_upper(double lower, double upper) {
-    return -std::log(2) / (upper - lower);
+    const auto delta(upper - lower);
+    if(delta > 0) {
+      return -std::log(2) / delta;
+    } else {
+      return -std::numeric_limits<double>::infinity();
+    }
   }
 
   static double get_square_lower_endpoint(double lower) {
@@ -121,7 +130,11 @@ struct Two_sided_square_exponential_implementation {
 
   static double set_upper(double lower, double upper) {
     const auto delta(upper - lower);
-    return -4 * std::log(2) / (delta * delta);
+    if(delta > 0) {
+      return -4 * std::log(2) / (delta * delta);
+    } else {
+      return -std::numeric_limits<double>::infinity();
+    }
   }
 
   static double get_square_lower_endpoint(double) {
@@ -143,7 +156,12 @@ struct Two_sided_exponential_implementation {
   }
 
   static double set_upper(double lower, double upper) {
-    return -2 * std::log(2) / (upper - lower);
+    const auto delta(upper - lower);
+    if(delta > 0) {
+      return -2 * std::log(2) / delta;
+    } else {
+      return -std::numeric_limits<double>::infinity();
+    }
   }
 
   static double get_square_lower_endpoint(double) {
@@ -254,13 +272,13 @@ struct Two_sided_linear_implementation {
   static double apply(double square_distance, double lower, double upper) {
     const auto distance(std::sqrt(square_distance));
     if(2 * distance <= (lower + upper)) {
-      if(distance <= lower) {
+      if(distance <= lower || upper == lower) {
         return 0.;
       } else {
         return 2. / (upper - lower) * (distance - lower);
       }
     } else {
-      if(distance >= upper) {
+      if(distance >= upper || upper == lower) {
         return 0.;
       } else {
         return 2. / (upper - lower) * (upper - distance);
