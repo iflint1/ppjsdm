@@ -194,7 +194,7 @@ template<>
 struct accumulate_n_smallest_excluding_implementation<0> {
   template<typename Heap, typename Compare, typename BinaryOperation>
   auto operator()(typename Heap::size_type N, const Heap& heap, Compare comp, BinaryOperation op, typename Heap::value_type to_discard) const {
-    if(!comp(get_nth_implementation<0>{}(heap, comp), to_discard)) { // to_discard is in the heap
+    if(heap.size() > 0 && !comp(get_nth_implementation<0>{}(heap, comp), to_discard)) { // to_discard is in the heap
       return std::accumulate(heap.begin(), heap.end(), static_cast<typename Heap::value_type>(0.), [op, to_discard](auto count, auto val) {
         if(val != to_discard) {
           return op(count, val);
@@ -211,7 +211,7 @@ template<>
 struct accumulate_n_smallest_excluding_implementation<1> {
   template<typename Heap, typename Compare, typename BinaryOperation>
   auto operator()(typename Heap::size_type N, const Heap& heap, Compare comp, BinaryOperation op, typename Heap::value_type to_discard) const {
-    if(!comp(get_nth_implementation<0>{}(heap, comp), to_discard)) { // to_discard is in the heap
+    if(heap.size() > 0 && !comp(get_nth_implementation<0>{}(heap, comp), to_discard)) { // to_discard is in the heap
       return std::accumulate(heap.begin(), heap.end(), static_cast<typename Heap::value_type>(0.), [op, to_discard](auto count, auto val) {
         if(val != to_discard) {
           return op(count, val);
@@ -228,7 +228,7 @@ template<>
 struct accumulate_n_smallest_excluding_implementation<2> {
   template<typename Heap, typename Compare, typename BinaryOperation>
   auto operator()(typename Heap::size_type N, const Heap& heap, Compare comp, BinaryOperation op, typename Heap::value_type to_discard) const {
-    if(!comp(get_nth_implementation<0>{}(heap, comp), to_discard)) { // to_discard is in the heap
+    if(heap.size() > 0 && !comp(get_nth_implementation<0>{}(heap, comp), to_discard)) { // to_discard is in the heap
       if(heap.size() <= N + 1) {
         return std::accumulate(heap.begin(), heap.end(), static_cast<typename Heap::value_type>(0.), [op, to_discard](auto count, auto val) {
           if(val != to_discard) {
@@ -271,7 +271,7 @@ inline auto get_nth(const Heap& heap, Compare comp) {
 
 template<long long int N, typename Heap>
 inline auto get_nth(const Heap& heap) {
-  return get_nth<N>(heap, std::less<std::remove_reference_t<std::remove_cv_t<decltype(heap[0])>>>{});
+  return get_nth<N>(heap, std::less<std::remove_cv_t<std::remove_reference_t<decltype(heap[0])>>>{});
 }
 
 template<long long int Buffer, typename Heap, typename Compare, typename BinaryOperation>
@@ -295,7 +295,7 @@ inline auto get_nth_smallest_if(typename Heap::size_type N, const Heap& heap, Co
 
 template<long long int Buffer, long long int Lag = 0, typename Heap, typename Condition>
 inline auto get_nth_smallest_if(typename Heap::size_type N, const Heap& heap, Condition cond) {
-  return get_nth_smallest_if<Buffer, Lag>(N, heap, cond, std::less<std::remove_reference_t<std::remove_cv_t<decltype(heap[0])>>>{});
+  return get_nth_smallest_if<Buffer, Lag>(N, heap, cond, std::less<std::remove_cv_t<std::remove_reference_t<decltype(heap[0])>>>{});
 }
 
 template<long long int Buffer, long long int Lag = 0, typename Heap, typename Compare>
@@ -305,7 +305,7 @@ inline auto get_nth_smallest(typename Heap::size_type N, const Heap& heap, Compa
 
 template<long long int Buffer, long long int Lag = 0, typename Heap>
 inline auto get_nth_smallest(typename Heap::size_type N, const Heap& heap) {
-  return get_nth_smallest<Buffer, Lag>(N, heap, std::less<std::remove_reference_t<std::remove_cv_t<decltype(heap[0])>>>{});
+  return get_nth_smallest<Buffer, Lag>(N, heap, std::less<std::remove_cv_t<std::remove_reference_t<decltype(heap[0])>>>{});
 }
 
 template<long long int Buffer, long long int Lag = 0, typename Heap, typename Compare>
@@ -320,7 +320,7 @@ template<long long int Buffer, long long int Lag = 0, typename Heap>
 inline auto get_nth_smallest_excluding(typename Heap::size_type N,
                                        const Heap& heap,
                                        const typename Heap::value_type& value) {
-  return get_nth_smallest_excluding<Buffer, Lag>(N, heap, value, std::less<std::remove_reference_t<std::remove_cv_t<decltype(heap[0])>>>{});
+  return get_nth_smallest_excluding<Buffer, Lag>(N, heap, value, std::less<std::remove_cv_t<std::remove_reference_t<decltype(heap[0])>>>{});
 }
 
 } // namespace ppjsdm
