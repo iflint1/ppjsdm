@@ -38,7 +38,7 @@ double runif(long& l) {
 
 context("Dispersion") {
   test_that("Compute dispersion by different methods") {
-    const int min_tested_size(1);
+    const int min_tested_size(0);
     const int max_tested_size(11);
 
     const int min_saturation(2);

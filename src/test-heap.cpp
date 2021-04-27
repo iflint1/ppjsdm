@@ -20,7 +20,7 @@ context("Heap") {
   test_that("Get nth element of a heap") {
     const int max_tested_size(20);
     const int number_replications(10);
-    for(int i(1); i < max_tested_size; ++i) {
+    for(int i(0); i < max_tested_size; ++i) {
       for(int replication(0); replication < number_replications; ++replication) {
         std::vector<double> vector(i);
         for(int j(0); j < i; ++j) {
@@ -32,7 +32,9 @@ context("Heap") {
         std::make_heap(vector.begin(), vector.end(), std::less<double>{});
         std::sort(sorted_vector.begin(), sorted_vector.end(), std::greater<double>{});
 
-        expect_true(ppjsdm::get_nth<0>(vector, std::less<double>{}) == sorted_vector[0]);
+        if(i >= 1) {
+          expect_true(ppjsdm::get_nth<0>(vector, std::less<double>{}) == sorted_vector[0]);
+        }
         if(i >= 2) {
           expect_true(ppjsdm::get_nth<1>(vector, std::less<double>{}) == sorted_vector[1]);
         }
@@ -44,7 +46,9 @@ context("Heap") {
         std::make_heap(vector.begin(), vector.end(), std::greater<double>{});
         std::sort(sorted_vector.begin(), sorted_vector.end(), std::less<double>{});
 
-        expect_true(ppjsdm::get_nth<0>(vector, std::greater<double>{}) == sorted_vector[0]);
+        if(i >= 1) {
+          expect_true(ppjsdm::get_nth<0>(vector, std::greater<double>{}) == sorted_vector[0]);
+        }
         if(i >= 2) {
           expect_true(ppjsdm::get_nth<1>(vector, std::greater<double>{}) == sorted_vector[1]);
         }
