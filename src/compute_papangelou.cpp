@@ -13,9 +13,14 @@ Rcpp::NumericVector compute_papangelou_cpp(SEXP configuration, Rcpp::NumericVect
   const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
   const ppjsdm::Truncated_exponential_family_model<Rcpp::NumericVector> exponential_model(beta0, model, medium_range_model, alpha, beta, gamma, covariates, short_range, medium_range, long_range, saturation);
   const auto length_x(x.size());
+  std::vector<ppjsdm::Marked_point> points(x.size());
+  for(typename decltype(points)::size_type i(0); i < points.size(); ++i) {
+    points[i] = ppjsdm::Marked_point(x[i], y[i], type - 1, mark);
+  }
+  const auto result_vector(exponential_model.compute_papangelou_vectorized(points, wrapped_configuration));
   Rcpp::NumericVector result(Rcpp::no_init(length_x));
   for(R_xlen_t i(0); i < length_x; ++i) {
-    result[i] = exponential_model.compute_papangelou(ppjsdm::Marked_point(x[i], y[i], type - 1, mark), wrapped_configuration);
+    result[i] = result_vector[i];
   }
   return result;
 }

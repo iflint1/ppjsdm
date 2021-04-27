@@ -53,7 +53,7 @@ struct dispersion_computation_fitting {
         }
       }
 
-      for(size_t i(0); i < other_configuration_size; ++i) {
+      for(decltype(size(other_configuration)) i(0); i < other_configuration_size; ++i) {
         dispersion[index_configuration + i] = DispersionType(number_types);
         CountType count_point(number_types);
         for(size_t j(0); j < configuration_size; ++j) {
@@ -85,7 +85,7 @@ struct dispersion_computation_fitting {
         }
       }
 
-      for(size_t i(0); i < other_configuration_size; ++i) {
+      for(decltype(size(other_configuration)) i(0); i < other_configuration_size; ++i) {
         dispersion[index_configuration + i] = DispersionType(number_types);
         CountType count_point(number_types);
         for(size_t j(0); j < configuration_size; ++j) {

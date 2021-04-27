@@ -4,6 +4,7 @@
 #include <Rcpp.h>
 
 #include "compute_dispersion.hpp"
+#include "compute_dispersion_fitting.hpp"
 #include "../configuration/configuration_manipulation.hpp"
 #include "../point/point_manipulation.hpp"
 #include "../simulation/inhomogeneous_ppp.hpp"
@@ -85,6 +86,18 @@ public:
     return std::exp(compute_log_papangelou(point, configuration));
   }
 
+  // TODO: Code quality is awful for this, make a unique compute_papangelou function, same for compute_total_dispersion
+  template<typename Points, typename Configuration>
+  auto compute_papangelou_vectorized(const Points& points, const Configuration& configuration) const {
+    auto dispersion(compute_total_dispersion_vectorized(points, configuration));
+    for(typename decltype(dispersion)::size_type i(0); i < dispersion.size(); ++i) {
+      dispersion[i] += beta0_[get_type(points[i])];
+      dispersion[i] += detail::compute_beta_dot_covariates(points[i], beta_, covariates_);
+      dispersion[i] = std::exp(dispersion[i]);
+    }
+    return dispersion;
+  }
+
   auto get_number_types() const {
     return beta0_.size();
   }
@@ -110,6 +123,25 @@ protected:
     if(!is_column_zero(gamma_, get_type(point))) {
       const auto medium_range_dispersion(compute_dispersion(medium_range_dispersion_, point, number_types, configurations...));
       return_value += matrix_times_vector_at_index(gamma_, medium_range_dispersion, get_type(point));
+    }
+    return return_value;
+  }
+
+  template<typename Points, typename... Configurations>
+  auto compute_total_dispersion_vectorized(const Points& points, Configurations&... configurations) const {
+    const auto number_types(alpha_.nrow());
+    std::vector<decltype(matrix_times_vector_at_index(alpha_, compute_dispersion_for_fitting<false>(dispersion_, number_types, configurations..., points)[0], 0))> return_value(points.size());
+    if(!is_column_zero(alpha_, get_type(points[0]))) {
+      const auto short_range_dispersion(compute_dispersion_for_fitting<false>(dispersion_, number_types, configurations..., points));
+      for(typename Points::size_type i(0); i < return_value.size(); ++i) {
+        return_value[i] += matrix_times_vector_at_index(alpha_, short_range_dispersion[i], get_type(points[i]));
+      }
+    }
+    if(!is_column_zero(gamma_, get_type(points[0]))) {
+      const auto medium_range_dispersion(compute_dispersion_for_fitting<false>(medium_range_dispersion_, number_types, configurations..., points));
+      for(typename Points::size_type i(0); i < return_value.size(); ++i) {
+        return_value[i] += matrix_times_vector_at_index(gamma_, medium_range_dispersion[i], get_type(points[i]));
+      }
     }
     return return_value;
   }

@@ -153,7 +153,6 @@ The Geyer model does not have any smoothing, i.e. it corresponds to the choice $
 extreme_configuration <- rgibbs(alpha = matrix(-Inf),
                                 beta0 = log(100),
                                 model = "Geyer")
-par(mar = c(5, 4, 4, 13) + 0.1)
 plot(extreme_configuration)
 ```
 
@@ -164,8 +163,7 @@ As an illustration, here is a plot of an extremely attractive square exponential
 extreme_configuration <- rgibbs(alpha = 2.5,
                                 beta0 = 0,
                                 model = "square_exponential",
-                                steps = 1000000)
-par(mar = c(5, 4, 4, 13) + 0.1)
+                                steps = 1e5)
 plot(extreme_configuration)
 ```
 
