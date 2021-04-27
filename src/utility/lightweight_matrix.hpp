@@ -17,8 +17,11 @@ public:
   explicit Lightweight_matrix(size_type rows, size_type columns):
   rows_(rows), columns_(columns), matrix_(rows * columns) {}
 
+  explicit Lightweight_matrix():
+    Lightweight_matrix(static_cast<size_type>(0), static_cast<size_type>(0)) {}
+
   explicit Lightweight_matrix(Rcpp::NumericMatrix matrix):
-    Lightweight_matrix(matrix.nrow()) {
+    Lightweight_matrix(matrix.nrow(), matrix.ncol()) {
     for(size_type i(0); i < rows_; ++i) {
       for(size_type j(0); j < columns_; ++j) {
         operator()(i, j) = static_cast<T>(matrix(i, j));
@@ -41,6 +44,7 @@ public:
   auto nrow() const {
     return rows_;
   }
+
 private:
   size_type rows_;
   size_type columns_;
@@ -56,6 +60,9 @@ public:
 
   explicit Lightweight_square_matrix(size_type dim):
     columns_(dim), matrix_(dim * dim) {}
+
+  explicit Lightweight_square_matrix():
+    Lightweight_square_matrix(static_cast<size_type>(0)) {}
 
   explicit Lightweight_square_matrix(Rcpp::NumericMatrix matrix):
     Lightweight_square_matrix(matrix.nrow()) {
