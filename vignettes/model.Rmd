@@ -110,6 +110,7 @@ The Papangelou conditional intensity is now larger at locations closer to existi
 Thus, our model is either attractive or repulsive depending on the sign of `alpha`.
 
 The model also incorporates medium-ranges interaction via the parameter $\gamma$.
+
 ```{r}
 gamma <- -0.1
 medium_range <- 0.1

@@ -191,11 +191,16 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
                                                           std::max(i_index_configuration, j_index_configuration),
                                                           ppjsdm::size(configuration)));
 
-    const auto short_i(short_computation.first[index_in_computation]);
-    const auto medium_i(medium_computation.first[index_in_computation]);
-
-    const auto short_j(short_computation.second[index_in_computation]);
-    const auto medium_j(medium_computation.second[index_in_computation]);
+    using dispersion_t = std::remove_cv_t<std::remove_reference_t<decltype(short_computation.first[0])>>;
+    dispersion_t short_i, medium_i, short_j, medium_j;
+    if(compute_some_alphas) {
+      short_i = short_computation.first[index_in_computation];
+      short_j = short_computation.second[index_in_computation];
+    }
+    if(compute_some_gammas) {
+      medium_i = medium_computation.first[index_in_computation];
+      medium_j = medium_computation.second[index_in_computation];
+    }
 
     // TODO: Might want to write a function synchronized with prepare_gibbsm_data
     // that constructs the two vectors below.
