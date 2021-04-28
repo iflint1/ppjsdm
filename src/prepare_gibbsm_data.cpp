@@ -44,6 +44,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
                                       const ppjsdm::Saturated_model& medium_dispersion_model,
                                       const Vector& max_points_by_type,
                                       R_xlen_t max_dummy,
+                                      R_xlen_t min_dummy,
                                       double dummy_factor,
                                       Rcpp::LogicalMatrix estimate_alpha,
                                       Rcpp::LogicalMatrix estimate_gamma,
@@ -71,7 +72,10 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 
   // This choice of intensity of dummy points rho is the guideline from the Baddeley et al. paper, see p. 8 therein.
   if(max_dummy == 0) {
-    max_dummy = 500;
+    max_dummy = 10000;
+  }
+  if(min_dummy == 0) {
+    min_dummy = 500;
   }
   if(dummy_factor == 0.) {
     dummy_factor = 4.;
@@ -81,10 +85,15 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   std::vector<double> rho_times_volume(number_types);
   size_t length_D(0);
   for(typename decltype(rho_times_volume)::size_type i(0); i < rho_times_volume.size(); ++i) {
-    const auto factor_times_max_points_in_any_type(dummy_factor * static_cast<double>(max_points_by_type[i]));
-    if(factor_times_max_points_in_any_type < static_cast<double>(max_dummy)) {
-      rho_times_volume[i] = factor_times_max_points_in_any_type;
-      length_D += static_cast<size_t>(factor_times_max_points_in_any_type);
+    const auto factor_times_max_points_in_type(dummy_factor * static_cast<double>(max_points_by_type[i]));
+    if(factor_times_max_points_in_type < static_cast<double>(max_dummy)) {
+      if(factor_times_max_points_in_type > static_cast<double>(min_dummy)) {
+        rho_times_volume[i] = factor_times_max_points_in_type;
+        length_D += static_cast<size_t>(factor_times_max_points_in_type);
+      } else {
+        rho_times_volume[i] = min_dummy;
+        length_D += min_dummy;
+      }
     } else {
       rho_times_volume[i] = max_dummy;
       length_D += max_dummy;
@@ -270,6 +279,7 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
                                R_xlen_t saturation,
                                Rcpp::NumericVector mark_range,
                                R_xlen_t max_dummy,
+                               R_xlen_t min_dummy,
                                double dummy_factor,
                                Rcpp::LogicalMatrix estimate_alpha,
                                Rcpp::LogicalMatrix estimate_gamma,
@@ -303,5 +313,5 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
   }
   const auto dispersion(ppjsdm::Saturated_model(model, short_range, saturation));
   const auto medium_range_dispersion(ppjsdm::Saturated_model(medium_range_model, medium_range, long_range, saturation));
-  return prepare_gibbsm_data_helper(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), dispersion, medium_range_dispersion, max_points_by_type, max_dummy, dummy_factor, estimate_alpha, estimate_gamma, number_types, nthreads);
+  return prepare_gibbsm_data_helper(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), dispersion, medium_range_dispersion, max_points_by_type, max_dummy, min_dummy, dummy_factor, estimate_alpha, estimate_gamma, number_types, nthreads);
 }

@@ -170,6 +170,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
 #' @param use_glmnet Use `glmnet` instead of `glm`?
 #' @param use_aic Use AIC instead of BIC for model fitting?
 #' @param max_dummy Maximum number of dummy points for each type. By default, follows the recommendation of Baddeley et al.
+#' @param min_dummy Minimum number of dummy points for each type. By default, follows the recommendation of Baddeley et al.
 #' @param dummy_factor How many more dummy points there are, compared to the points in the configuration. By default, follows the recommendation of Baddeley et al.
 #' @param nthreads Maximum number of threads for parallel computing.
 #' @param use_regularization Add option to use `glmnet` without regularization.
@@ -191,6 +192,7 @@ gibbsm <- function(configuration_list,
                    use_glmnet = TRUE,
                    use_aic = TRUE,
                    max_dummy = 0,
+                   min_dummy = 0,
                    dummy_factor = 0,
                    nthreads = 4,
                    use_regularization = FALSE) {
@@ -283,6 +285,7 @@ gibbsm <- function(configuration_list,
                                               saturation,
                                               mark_range,
                                               max_dummy = max_dummy,
+                                              min_dummy = min_dummy,
                                               dummy_factor = dummy_factor,
                                               estimate_alpha = estimate_alpha,
                                               estimate_gamma = estimate_gamma,
@@ -359,6 +362,7 @@ gibbsm <- function(configuration_list,
                                             saturation,
                                             mark_range,
                                             max_dummy = max_dummy,
+                                            min_dummy = min_dummy,
                                             dummy_factor = dummy_factor,
                                             estimate_alpha = estimate_alpha,
                                             estimate_gamma = estimate_gamma,
@@ -403,6 +407,7 @@ gibbsm <- function(configuration_list,
                                             saturation,
                                             mark_range,
                                             max_dummy = max_dummy,
+                                            min_dummy = min_dummy,
                                             dummy_factor = dummy_factor,
                                             estimate_alpha = estimate_alpha,
                                             estimate_gamma = estimate_gamma,

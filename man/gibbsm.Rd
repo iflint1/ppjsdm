@@ -18,6 +18,7 @@ gibbsm(
   use_glmnet = TRUE,
   use_aic = TRUE,
   max_dummy = 0,
+  min_dummy = 0,
   dummy_factor = 0,
   nthreads = 4,
   use_regularization = FALSE
@@ -49,6 +50,8 @@ gibbsm(
 \item{use_aic}{Use AIC instead of BIC for model fitting?}
 
 \item{max_dummy}{Maximum number of dummy points for each type. By default, follows the recommendation of Baddeley et al.}
+
+\item{min_dummy}{Minimum number of dummy points for each type. By default, follows the recommendation of Baddeley et al.}
 
 \item{dummy_factor}{How many more dummy points there are, compared to the points in the configuration. By default, follows the recommendation of Baddeley et al.}
 
