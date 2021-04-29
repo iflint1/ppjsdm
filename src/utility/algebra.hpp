@@ -9,7 +9,7 @@ namespace ppjsdm {
 // Computes (Alpha * beta) [index], for a matrix alpha and a vector beta,
 // for all values alpha_{ij} such that f(alpha_{ij}) is true.
 // Overload when beta is not a scalar.
-template<typename Alpha, typename Beta, typename F>
+template<typename Alpha, typename Beta, typename F, typename std::enable_if_t<!std::is_same<Beta, std::remove_cv_t<std::remove_reference_t<decltype(Alpha{}(0, 0))>>>::value>* = nullptr>
 inline auto conditional_matrix_times_vector_at_index(const Alpha& alpha,
                                                      const Beta& beta,
                                                      std::remove_cv_t<std::remove_reference_t<decltype(alpha.ncol())>> index,
@@ -31,31 +31,31 @@ inline auto conditional_matrix_times_vector_at_index(const Alpha& alpha,
 
 // Specialization of the above when beta is constant
 // Overload for scalar beta.
-// template<typename Alpha, typename Beta, typename F, typename std::enable_if_t<std::is_same<Beta, std::remove_cv_t<std::remove_reference_t<decltype(Alpha{}(0, 0))>>>::value>* = nullptr>
-// inline auto conditional_matrix_times_vector_at_index(const Alpha& alpha,
-//                                                      const Beta& beta,
-//                                                      std::remove_cv_t<std::remove_reference_t<decltype(alpha.ncol())>> index,
-//                                                      F&& f) {
-//   std::remove_cv_t<std::remove_reference_t<decltype(alpha(0, 0))>> sum(0.);
-//   if(beta == 0.) {
-//     return sum;
-//   }
-//
-//   const auto ncol(alpha.ncol());
-//   using size_t = std::remove_cv_t<std::remove_reference_t<decltype(ncol)>>;
-//   for(size_t col(0); col < ncol; ++col) {
-//     const auto a(alpha(index, col));
-//     if(f(a)) {
-//       sum += a;
-//     }
-//   }
-//   // The condition below ensures that 0 * Inf = 0 when beta = Inf and sum = 0.
-//   if(sum != 0.) {
-//     return sum * beta;
-//   } else {
-//     return 0.;
-//   }
-// }
+template<typename Alpha, typename Beta, typename F, typename std::enable_if_t<std::is_same<Beta, std::remove_cv_t<std::remove_reference_t<decltype(Alpha{}(0, 0))>>>::value>* = nullptr>
+inline auto conditional_matrix_times_vector_at_index(const Alpha& alpha,
+                                                     const Beta& beta,
+                                                     std::remove_cv_t<std::remove_reference_t<decltype(alpha.ncol())>> index,
+                                                     F&& f) {
+  std::remove_cv_t<std::remove_reference_t<decltype(alpha(0, 0))>> sum(0.);
+  if(beta == 0.) {
+    return sum;
+  }
+
+  const auto ncol(alpha.ncol());
+  using size_t = std::remove_cv_t<std::remove_reference_t<decltype(ncol)>>;
+  for(size_t col(0); col < ncol; ++col) {
+    const auto a(alpha(index, col));
+    if(f(a)) {
+      sum += a;
+    }
+  }
+  // The condition below ensures that 0 * Inf = 0 when beta = Inf and sum = 0.
+  if(sum != 0.) {
+    return sum * beta;
+  } else {
+    return 0.;
+  }
+}
 
 // Computes (Alpha * beta) [index], for a matrix alpha and a vector beta.
 template<typename Alpha, typename Beta>

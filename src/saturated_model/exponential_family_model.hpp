@@ -196,8 +196,8 @@ public:
     Model(beta0, model, medium_range_model, alpha, beta, gamma, covariates, short_range, medium_range, long_range, saturation),
     window_(window),
     beta_dot_covariates_maximum_(detail::compute_beta_dot_covariates_maximum(beta, Model::covariates_)),
-    dot_dispersion_maximum_(positive_matrix_times_vector(alpha, std::vector<double>{get_dispersion_maximum(Model::dispersion_)})) {
-    const auto gamma_dot_dispersion_maximum(positive_matrix_times_vector(gamma, std::vector<double>{get_dispersion_maximum(Model::medium_range_dispersion_)}));
+    dot_dispersion_maximum_(positive_matrix_times_vector(alpha, get_dispersion_maximum(Model::dispersion_))) {
+    const auto gamma_dot_dispersion_maximum(positive_matrix_times_vector(gamma, get_dispersion_maximum(Model::medium_range_dispersion_)));
     std::transform(dot_dispersion_maximum_.begin(), dot_dispersion_maximum_.end(), gamma_dot_dispersion_maximum.begin(),
                    dot_dispersion_maximum_.begin(), std::plus<double>());
   }
@@ -316,8 +316,13 @@ public:
         add_point(alpha_which_one_to_add_to + exp_mark > 0. ? l : l_complement, point);
       }
     }
-    if(alpha_need_to_add > 0. || alpha_which_one_to_add_to > 0.) {
-      Rcpp::stop("Internal error: Incorrect alpha value, probably due to bad upper-bound to dispersion in the CFTP algorithm.");
+    if(alpha_need_to_add > 0.) {
+      Rcpp::Rcout << alpha_need_to_add << '\n';
+      Rcpp::stop("Internal error: Incorrect first alpha value, probably due to bad upper-bound to dispersion in the CFTP algorithm.");
+    }
+    if(alpha_which_one_to_add_to > 0.) {
+      Rcpp::Rcout << alpha_which_one_to_add_to << '\n';
+      Rcpp::stop("Internal error: Incorrect second alpha value, probably due to bad upper-bound to dispersion in the CFTP algorithm.");
     }
   }
 

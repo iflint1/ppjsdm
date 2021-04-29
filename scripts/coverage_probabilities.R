@@ -5,7 +5,7 @@ seed <- 1
 set.seed(seed)
 
 window <- Rectangle_window(c(-1, 1), c(-1, 1))
-nreplications <- 1000
+nreplications <- 1e3
 ntypes <- 2
 beta0 <- c(2.5, 2)
 steps <- 0
@@ -14,7 +14,8 @@ alpha <- cbind(c(-0.2, 0.1), c(0.1, -0.6))
 
 covariates <- list(temperature = function(x, y) x, elevation = function(x, y) y)
 beta <- cbind(c(2, 2.5), c(1, 1.5))
-ndummy <- 2000
+max_dummy <- 2000
+dummy_factor <- 1e5
 
 model <- "square_bump"
 medium_range_model <- "square_exponential"
@@ -51,7 +52,6 @@ samples <- ppjsdm::rgibbs(window = window,
                           nsim = nreplications,
                           model = model,
                           medium_range_model = medium_range_model,
-                          drop = FALSE,
                           saturation = saturation,
                           covariates = covariates,
                           beta = beta,
@@ -65,8 +65,9 @@ for(i in seq_len(nreplications)) {
                 short_range = short_range,
                 medium_range = medium_range,
                 long_range = long_range,
-                use_glmnet = FALSE,
-                ndummy = ndummy,
+                max_dummy = max_dummy,
+                dummy_factor = dummy_factor,
+                use_regularization = FALSE,
                 model = model,
                 medium_range_model = medium_range_model,
                 covariates = covariates,
