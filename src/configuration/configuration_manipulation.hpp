@@ -32,7 +32,6 @@ struct configuration_manipulation_defaults {
   }
 
   static inline auto remove_point_by_iterator(Configuration& configuration, typename Configuration::iterator iterator) {
-    //auto iterator(std::next(configuration.begin(), index));
     const auto point(*iterator);
     configuration.erase(iterator);
     return point;
@@ -81,6 +80,13 @@ inline auto remove_random_point(Configuration& configuration) {
   using difference_type = typename std::iterator_traits<decltype(configuration.begin())>::difference_type;
   const difference_type index(Rcpp::sample(size(configuration), 1, false, R_NilValue, false)[0]);
   return remove_point_by_iterator(configuration, std::next(configuration.begin(), index));
+}
+
+template<typename Configuration>
+inline auto random_point(Configuration& configuration) {
+  using difference_type = typename std::iterator_traits<decltype(configuration.begin())>::difference_type;
+  const difference_type index(Rcpp::sample(size(configuration), 1, false, R_NilValue, false)[0]);
+  return std::next(configuration.begin(), index);
 }
 
 template<typename Configuration>

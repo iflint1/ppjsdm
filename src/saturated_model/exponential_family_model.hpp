@@ -124,10 +124,10 @@ protected:
 
   template<typename Points, typename Configuration>
   auto compute_total_dispersion_vectorized(const Points& points, const Configuration& configuration) const {
-    const auto number_types(get_number_types());
+    // Are any of the alpha/gamma rows non-zero?
     bool is_any_alpha_nonzero(false);
     bool is_any_gamma_nonzero(false);
-    for(typename Points::size_type i(0); i < points.size(); ++i) {
+    for(typename Points::size_type i(0); i < size(points); ++i) {
       if(!is_column_zero(alpha_, get_type(points[i]))) {
         is_any_alpha_nonzero = true;
       }
@@ -138,6 +138,9 @@ protected:
         break;
       }
     }
+
+    // Precompute dispersion if required
+    const auto number_types(get_number_types());
     using dispersion_t = decltype(compute_dispersion_for_fitting<true>(dispersion_, number_types, configuration, points));
     dispersion_t short_range_dispersion, medium_range_dispersion;
     if(is_any_alpha_nonzero) {
@@ -146,14 +149,14 @@ protected:
     if(is_any_gamma_nonzero) {
       medium_range_dispersion = compute_dispersion_for_fitting<true>(medium_range_dispersion_, number_types, configuration, points);
     }
-    std::vector<decltype(matrix_times_vector_at_index(alpha_, short_range_dispersion[0], 0))> return_value(points.size());
-    for(typename Points::size_type i(0); i < return_value.size(); ++i) {
+
+    // Fill in the returned vector
+    std::vector<decltype(matrix_times_vector_at_index(alpha_, short_range_dispersion[0], 0))> return_value(size(points));
+    for(typename Points::size_type i(0); i < size(points); ++i) {
       if(!is_column_zero(alpha_, get_type(points[i])) || !is_column_zero(gamma_, get_type(points[i]))) {
         typename Configuration::size_type index_in_configuration(0);
-        for(; index_in_configuration < size(configuration); ++index_in_configuration) {
-          if(is_equal(configuration[index_in_configuration], points[index_in_configuration])) {
-            break;
-          }
+        while(index_in_configuration < size(configuration) && !is_equal(configuration[index_in_configuration], points[i])) {
+          ++index_in_configuration;
         }
         if(!is_column_zero(alpha_, get_type(points[i]))) {
           return_value[i] += matrix_times_vector_at_index(alpha_, short_range_dispersion[index_in_configuration < size(configuration) ? index_in_configuration : i + size(configuration)], get_type(points[i]));
