@@ -65,7 +65,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
                     intercept = FALSE,
                     family = "binomial",
                     penalty.factor = pfactor,
-                    lambda = 0)
+                    lambda = rev(0:99))
 
 
       shift <- gibbsm_data$shift
@@ -111,7 +111,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
   beta <- matrix(NA, nrow = number_types, ncol = length(beta_vector) / number_types)
   for(i in seq_len(number_types)) {
     # Shift all columns with row name log_lambdai
-    beta0[i] <- coef[match(paste0("log_lambda", i), names(coef))] - shift[i]
+    beta0[i] <- coef[match(paste0("log_lambda", i), names(coef))]
     if(length(beta_vector) != 0) {
       beta[i, ] <- beta_vector[endsWith(names(beta_vector), paste0("_", i))]
     }
