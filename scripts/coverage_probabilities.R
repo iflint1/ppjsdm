@@ -102,90 +102,91 @@ coverage_probabilities <- colMeans(is_in, na.rm = TRUE)
 mean_estimates <- colMeans(estimates, na.rm = TRUE)
 median_estimates <- sapply(seq_len(ncol(estimates)), function(n) median(estimates[, n]))
 mode_estimates <- sapply(seq_len(ncol(estimates)), function(n) rethinking::chainmode(estimates[, n]))
+rmse_estimates <- sapply(seq_len(ncol(estimates)), function(n) sqrt(mean((estimates[, n] - true[n])^2)))
 
 output_string <- ""
 output_string <- paste0(output_string, "$\\beta_{1,0}$ & ",
                         sprintf("%.2e", beta0[1]), " & ",
                         sprintf("%.2e", mean_estimates[1]), " & ",
                         sprintf("%.2e", median_estimates[1]), " & ",
-                        sprintf("%.2e", mode_estimates[1]), " & ",
+                        sprintf("%.2e", rmse_estimates[1]), " & ",
                         sprintf("%.2f", coverage_probabilities[1]), " \\\\", sep = "\n")
 
 output_string <- paste0(output_string, "$\\beta_{2,0}$ & ",
                         sprintf("%.2e", beta0[2]), " & ",
                         sprintf("%.2e", mean_estimates[2]), " & ",
                         sprintf("%.2e", median_estimates[2]), " & ",
-                        sprintf("%.2e", mode_estimates[2]), " & ",
+                        sprintf("%.2e", rmse_estimates[2]), " & ",
                         sprintf("%.2f", coverage_probabilities[2]), " \\\\", sep = "\n")
 
 output_string <- paste0(output_string, "$\\alpha_{1,1}$ & ",
                         sprintf("%.2e", alpha[1, 1]), " & ",
                         sprintf("%.2e", mean_estimates[3]), " & ",
                         sprintf("%.2e", median_estimates[3]), " & ",
-                        sprintf("%.2e", mode_estimates[3]), " & ",
+                        sprintf("%.2e", rmse_estimates[3]), " & ",
                         sprintf("%.2f", coverage_probabilities[3]), " \\\\", sep = "\n")
 
 output_string <- paste0(output_string, "$\\alpha_{1,2}$ & ",
                         sprintf("%.2e", alpha[1, 2]), " & ",
                         sprintf("%.2e", mean_estimates[4]), " & ",
                         sprintf("%.2e", median_estimates[4]), " & ",
-                        sprintf("%.2e", mode_estimates[4]), " & ",
+                        sprintf("%.2e", rmse_estimates[4]), " & ",
                         sprintf("%.2f", coverage_probabilities[4]), " \\\\", sep = "\n")
 
 output_string <- paste0(output_string, "$\\alpha_{2,2}$ & ",
                         sprintf("%.2e", alpha[2, 2]), " & ",
                         sprintf("%.2e", mean_estimates[5]), " & ",
                         sprintf("%.2e", median_estimates[5]), " & ",
-                        sprintf("%.2e", mode_estimates[5]), " & ",
+                        sprintf("%.2e", rmse_estimates[5]), " & ",
                         sprintf("%.2f", coverage_probabilities[5]), " \\\\", sep = "\n")
 
 output_string <- paste0(output_string, "$\\gamma_{1,1}$ & ",
                         sprintf("%.2e", gamma[1, 1]), " & ",
                         sprintf("%.2e", mean_estimates[6]), " & ",
                         sprintf("%.2e", median_estimates[6]), " & ",
-                        sprintf("%.2e", mode_estimates[6]), " & ",
+                        sprintf("%.2e", rmse_estimates[6]), " & ",
                         sprintf("%.2f", coverage_probabilities[6]), " \\\\", sep = "\n")
 
 output_string <- paste0(output_string, "$\\gamma_{1,2}$ & ",
                         sprintf("%.2e", gamma[1, 2]), " & ",
                         sprintf("%.2e", mean_estimates[7]), " & ",
                         sprintf("%.2e", median_estimates[7]), " & ",
-                        sprintf("%.2e", mode_estimates[7]), " & ",
+                        sprintf("%.2e", rmse_estimates[7]), " & ",
                         sprintf("%.2f", coverage_probabilities[7]), " \\\\", sep = "\n")
 
 output_string <- paste0(output_string, "$\\gamma_{2,2}$ & ",
                         sprintf("%.2e", gamma[2, 2]), " & ",
                         sprintf("%.2e", mean_estimates[8]), " & ",
                         sprintf("%.2e", median_estimates[8]), " & ",
-                        sprintf("%.2e", mode_estimates[8]), " & ",
+                        sprintf("%.2e", rmse_estimates[8]), " & ",
                         sprintf("%.2f", coverage_probabilities[8]), " \\\\", sep = "\n")
 
 output_string <- paste0(output_string, "$\\beta_{1,1}$ & ",
                         sprintf("%.2e", beta[1, 1]), " & ",
                         sprintf("%.2e", mean_estimates[9]), " & ",
                         sprintf("%.2e", median_estimates[9]), " & ",
-                        sprintf("%.2e", mode_estimates[9]), " & ",
+                        sprintf("%.2e", rmse_estimates[9]), " & ",
                         sprintf("%.2f", coverage_probabilities[9]), " \\\\", sep = "\n")
 
 output_string <- paste0(output_string, "$\\beta_{2,1}$ & ",
                         sprintf("%.2e", beta[2, 1]), " & ",
                         sprintf("%.2e", mean_estimates[10]), " & ",
                         sprintf("%.2e", median_estimates[10]), " & ",
-                        sprintf("%.2e", mode_estimates[10]), " & ",
+                        sprintf("%.2e", rmse_estimates[10]), " & ",
                         sprintf("%.2f", coverage_probabilities[10]), " \\\\", sep = "\n")
 
 output_string <- paste0(output_string, "$\\beta_{1,2}$ & ",
                         sprintf("%.2e", beta[1, 2]), " & ",
                         sprintf("%.2e", mean_estimates[11]), " & ",
                         sprintf("%.2e", median_estimates[11]), " & ",
-                        sprintf("%.2e", mode_estimates[11]), " & ",
+                        sprintf("%.2e", rmse_estimates[11]), " & ",
                         sprintf("%.2f", coverage_probabilities[11]), " \\\\", sep = "\n")
 
 output_string <- paste0(output_string, "$\\beta_{2,2}$ & ",
                         sprintf("%.2e", beta[2, 2]), " & ",
                         sprintf("%.2e", mean_estimates[12]), " & ",
                         sprintf("%.2e", median_estimates[12]), " & ",
-                        sprintf("%.2e", mode_estimates[12]), " & ",
+                        sprintf("%.2e", rmse_estimates[12]), " & ",
                         sprintf("%.2f", coverage_probabilities[12]), " \\\\", sep = "\n")
 
 
