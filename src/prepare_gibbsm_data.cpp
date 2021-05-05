@@ -253,7 +253,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     }
   }
 
-  const auto col_names(make_model_coloumn_names(covariates, number_types, estimate_alpha, estimate_gamma));
+  const auto col_names(make_model_coloumn_names(covariates, estimate_alpha, estimate_gamma));
   Rcpp::colnames(regressors) = col_names;
 
   return Rcpp::List::create(Rcpp::Named("response") = response,

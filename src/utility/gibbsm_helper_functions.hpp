@@ -38,9 +38,10 @@ inline auto get_number_parameters(int number_types,
 }
 
 inline auto make_model_coloumn_names(const Im_list_wrapper& covariates,
-                                     int number_types,
                                      Rcpp::LogicalMatrix estimate_alpha,
                                      Rcpp::LogicalMatrix estimate_gamma) {
+
+  const auto number_types(estimate_alpha.nrow());
 
   // Rcpp::CharacterVector short_range_direct_names(Rcpp::no_init(short_range_traits_input.ncol()));
   // Rcpp::CharacterVector medium_range_direct_names(Rcpp::no_init(medium_range_traits_input.ncol()));

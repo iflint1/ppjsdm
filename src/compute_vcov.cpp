@@ -359,7 +359,7 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
                                                 covariates));
 
   Rcpp::NumericMatrix rcpp_matrix(Rcpp::wrap(S_inv * (A1 + A2_plus_A3 + G2) * S_inv));
-  const auto col_names(make_model_coloumn_names(covariates, rho.size(), estimate_alpha, estimate_gamma));
+  const auto col_names(make_model_coloumn_names(covariates, estimate_alpha, estimate_gamma));
   Rcpp::colnames(rcpp_matrix) = col_names;
   Rcpp::rownames(rcpp_matrix) = col_names;
 
