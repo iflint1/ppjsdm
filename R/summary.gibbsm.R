@@ -47,6 +47,7 @@ summary.gibbsm <- function(object, ...) {
               breaks = c(0,0.001, 0.01, 0.05, 1),
               labels = c("***", "**", "*", "  "),
               include.lowest = TRUE)
+  y$vc <- vc
   y$coefficients <- data.frame(coefficients = coefficients,
                                se = se,
                                CI95_lo = lo,
