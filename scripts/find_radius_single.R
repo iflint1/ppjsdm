@@ -1,27 +1,28 @@
 remove(list = ls())
+library(ggplot2)
 library(ppjsdm)
 library(spatstat)
 seed <- 1
 
 window <- Rectangle_window(c(0, 1), c(0, 1))
-nreplications <- 10
+nreplications <-
 ntypes <- 2
-beta0 <- c(4, 5)
-steps <- 0
-alpha <- cbind(c(-2, -1), c(-1, -2))
+beta0 <- c(6.5, 2.6)
+steps <- 1e5
+alpha <- cbind(c(-1, -0.5), c(-0.5, 2))
 
 covariates <- list(x = function(x, y) x - 0.5)
 beta <- cbind(c(-1, 1))
-max_dummy <- 1000
-dummy_factor <- 4
+max_dummy <- 1e4
+dummy_factor <- 2
 
 model <- "exponential"
 medium_range_model <- "square_exponential"
 saturation <- 2
 
-short_range_search <- seq(from = 0.02, to = 0.3, by = 0.01)
+short_range_search <- seq(from = 0.0025, to = 0.5, by = 0.0025)
 
-short_range <- cbind(c(0.02, 0.08), c(0.08, 0.2))
+short_range <- cbind(c(0.05, 0.05), c(0.05, 0.05))
 medium_range <- short_range
 long_range <- medium_range
 gamma <- matrix(0., ntypes, ntypes)
@@ -47,81 +48,93 @@ samples <- ppjsdm::rgibbs(window = window,
 
 Sys.time() - tm
 
-results <- list()
+tm <- Sys.time()
+
+results1 <- list()
 for(k1 in seq_len(length(short_range_search))) {
-  for(k2 in seq_len(length(short_range_search))) {
-    for(k3 in seq_len(length(short_range_search))) {
-      test_short_range <- cbind(c(short_range_search[k1], short_range_search[k2]),
-                                c(short_range_search[k2], short_range_search[k3]))
-      average_logLik <- mean(sapply(seq_len(nreplications), function(i) {
-        set.seed(seed)
-        fit <- ppjsdm::gibbsm(samples[[i]],
-                              window = window,
-                              short_range = test_short_range,
-                              medium_range = medium_range,
-                              long_range = long_range,
-                              use_glmnet = FALSE,
-                              max_dummy = max_dummy,
-                              dummy_factor = dummy_factor,
-                              model = model,
-                              medium_range_model = medium_range_model,
-                              covariates = covariates,
-                              saturation = saturation)
-        logLik(fit$complete)
-      }))
-      results[[length(results) + 1]] <- list(short_range = test_short_range, average_logLik = average_logLik)
-    }
-  }
+  test_short_range <- matrix(short_range_search[k1], ncol = 2, nrow = 2)
+  average_logLik <- mean(sapply(seq_len(nreplications), function(i) {
+    set.seed(seed)
+    fit <- ppjsdm::gibbsm(samples[[i]],
+                          window = window,
+                          short_range = test_short_range,
+                          medium_range = medium_range,
+                          long_range = long_range,
+                          use_glmnet = FALSE,
+                          max_dummy = max_dummy,
+                          dummy_factor = dummy_factor,
+                          model = model,
+                          medium_range_model = medium_range_model,
+                          covariates = covariates,
+                          saturation = saturation)
+    logLik(fit$complete)
+  }))
+  results1[[length(results1) + 1]] <- list(short_range = test_short_range, average_logLik = average_logLik)
 }
-
-# Code below optimizes radii for each replication
-
-# best_short <- lapply(seq_len(nreplications), function(i) {
-#   best_logLik <- -Inf
-#   best_short <- NA
-#   for(k1 in seq_len(length(short_range_search))) {
-#     for(k2 in seq_len(length(short_range_search))) {
-#       for(k3 in seq_len(length(short_range_search))) {
-#         test_short_range <- cbind(c(short_range_search[k1], short_range_search[k2]), c(short_range_search[k2], short_range_search[k3]))
-#         set.seed(seed)
-#         fit <- ppjsdm::gibbsm(samples[[i]],
-#                               window = window,
-#                               short_range = test_short_range,
-#                               medium_range = medium_range,
-#                               long_range = long_range,
-#                               use_glmnet = FALSE,
-#                               max_dummy = max_dummy,
-#                               dummy_factor = dummy_factor,
-#                               model = model,
-#                               medium_range_model = medium_range_model,
-#                               covariates = covariates,
-#                               saturation = saturation)
-#         current_logLik <- logLik(fit$complete)
-#         if(current_logLik > best_logLik) {
-#           best_logLik <- current_logLik
-#           best_short <- test_short_range
-#         }
-#       }
-#     }
-#   }
-#
-#   best_short
-# })
 
 Sys.time() - tm
 
-plot(sapply(results, function(res) res$average_logLik))
+tm <- Sys.time()
 
-best_short <- lapply(results, function(res) res$short_range)[[which.max(sapply(results, function(res) res$average_logLik))]]
+results2 <- lapply(seq_len(nreplications), function(i) {
+  lapply(seq_len(length(short_range_search)), function(k1) {
+    test_short_range <- matrix(short_range_search[k1], ncol = 2, nrow = 2)
+    set.seed(seed)
+    fit <- ppjsdm::gibbsm(samples[[i]],
+                          window = window,
+                          short_range = test_short_range,
+                          medium_range = medium_range,
+                          long_range = long_range,
+                          use_glmnet = FALSE,
+                          max_dummy = max_dummy,
+                          dummy_factor = dummy_factor,
+                          model = model,
+                          medium_range_model = medium_range_model,
+                          covariates = covariates,
+                          saturation = saturation)
+    list(logLik = logLik(fit$complete),
+         short = short_range_search[k1])
+  })
+})
 
-# print(Reduce("+", best_short) / length(best_short))
+Sys.time() - tm
+
+best_short <- lapply(results1, function(res) res$short_range)[[which.max(sapply(results1, function(res) res$average_logLik))]]
 print(best_short)
+
+df <- data.frame(short_range = short_range_search, average_logLik = sapply(results1, function(res) res$average_logLik))
+ggplot(data = df, aes(x = short_range, y = average_logLik)) +
+  geom_line(size = 0.5) +
+  geom_point() +
+  geom_vline(xintercept = short_range[1, 1], colour = 'red') +
+  xlab("Short-range interaction radius") +
+  ylab("Average pseudo-loglikelihood") +
+  theme_minimal()
+
+best_shorts <- sapply(results2, function(r) r[[which.max(sapply(r, function(rr) rr$logLik))]]$short)
+
+print(mean(best_shorts[best_shorts < max(short_range_search)]))
+print(sum(best_shorts < max(short_range_search)) / length(best_shorts))
+
+df <- data.frame(x = best_shorts)
+ggplot(data = df, aes(x = x)) +
+  geom_histogram(binwidth = 0.005) +
+  geom_vline(xintercept = short_range[1, 1], colour = 'red') +
+  geom_vline(xintercept = median(best_shorts), colour = 'blue') +
+  geom_vline(xintercept = mean(best_shorts), colour = 'yellow') +
+  xlab("Short-range interaction radius") +
+  theme_minimal()
+
+which(best_shorts == max(short_range_search))
+
+plot(x = short_range_search, y = sapply(results2[[88]], function(a) a$logLik), type = 'l')
+
 
 library(ggplot2)
 configuration <- samples[[1]]
 dat <- data.frame(x = configuration$x, y = configuration$y, types = configuration$types)
 X11(width = 12, height = 10)
-ggplot(dat, aes(x = y, y = x)) +
+ggplot(dat, aes(x = x, y = y)) +
   geom_point(aes(colour = types, shape = types), size = 5) +
   scale_size(breaks = seq(from = 0.16, to = 0.4, by = 0.02)) +
   coord_equal() +
