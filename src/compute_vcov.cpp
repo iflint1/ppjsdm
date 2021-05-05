@@ -54,15 +54,8 @@ inline auto make_G2(const Vector& papangelou, Rcpp::NumericVector rho, Rcpp::Num
   using size_t = decltype(regressors.ncol());
 
   // G2_temp is a temporary matrix we use to avoid taking the sqrt of rho
-  // Start by initializing to 0
-  arma::mat G2(number_parameters, number_parameters);
-  arma::mat G2_temp(number_parameters, number_parameters);
-  for(size_t row(0); row < number_parameters; ++row) {
-    for(size_t col(0); col < number_parameters; ++col) {
-      G2(row, col) = 0.;
-      G2_temp(row, col) = 0.;
-    }
-  }
+  arma::mat G2(number_parameters, number_parameters, arma::fill::zeros);
+  arma::mat G2_temp(number_parameters, number_parameters, arma::fill::zeros);
 
   double kappa(0);
   for(size_t i(0); i < regressors.nrow(); ++i) {
@@ -88,11 +81,16 @@ inline auto make_G2(const Vector& papangelou, Rcpp::NumericVector rho, Rcpp::Num
     const auto constant(papangelou[i] * papangelou[i] / ((papangelou[i] + rho[type[i] - 1]) * (papangelou[i] + rho[type[i] - 1]) * (papangelou[i] + rho[type[i] - 1])) / rho[type[i] - 1]);
     for(size_t k1(0); k1 < number_parameters; ++k1) {
       const auto value(regressors(i, k1) * constant);
-      G2(k1, k1) += value * regressors(i, k1);
-      for(size_t k2(k1 + 1); k2 < number_parameters; ++k2) {
+      for(size_t k2(k1); k2 < number_parameters; ++k2) {
         G2(k1, k2) += value * regressors(i, k2);
-        G2(k2, k1) = G2(k1, k2);
       }
+    }
+  }
+
+  // Symmetrize G2
+  for(size_t k1(0); k1 < number_parameters; ++k1) {
+    for(size_t k2(k1 + 1); k2 < number_parameters; ++k2) {
+      G2(k2, k1) = G2(k1, k2);
     }
   }
   return G2;
@@ -103,22 +101,23 @@ inline auto make_S(const Vector& papangelou, Rcpp::NumericVector rho, Rcpp::Nume
   const auto number_parameters(regressors.ncol());
   using size_t = decltype(regressors.ncol());
 
-  // Start by initializing to 0
-  arma::mat S(number_parameters, number_parameters);
-  for(size_t row(0); row < number_parameters; ++row) {
-    for(size_t col(0); col < number_parameters; ++col) {
-      S(row, col) = 0.;
-    }
-  }
+  arma::mat S(number_parameters, number_parameters, arma::fill::zeros);
 
-  // Fill S
+  // Fill upper triangular part of S
   for(size_t row(0); row < regressors.nrow(); ++row) {
     const auto constant(papangelou[row] / ((papangelou[row] + rho[type[row] - 1]) * (papangelou[row] + rho[type[row] - 1])));
     for(size_t k1(0); k1 < number_parameters; ++k1) {
       const auto value(regressors(row, k1) * constant);
-      for(size_t k2(0); k2 < number_parameters; ++k2) {
+      for(size_t k2(k1); k2 < number_parameters; ++k2) {
         S(k1, k2) += value * regressors(row, k2);
       }
+    }
+  }
+
+  // Symmetrize S
+  for(size_t k1(0); k1 < number_parameters; ++k1) {
+    for(size_t k2(k1 + 1); k2 < number_parameters; ++k2) {
+      S(k2, k1) = S(k1, k2);
     }
   }
 
@@ -130,23 +129,22 @@ inline auto make_A1(const Vector& papangelou, Rcpp::NumericVector rho, Rcpp::Num
   const auto number_parameters(regressors.ncol());
   using size_t = decltype(regressors.ncol());
 
-  // Start by initializing to 0
-  arma::mat A1(number_parameters, number_parameters);
-  for(size_t row(0); row < number_parameters; ++row) {
-    for(size_t col(0); col < number_parameters; ++col) {
-      A1(row, col) = 0.;
-    }
-  }
+  arma::mat A1(number_parameters, number_parameters, arma::fill::zeros);
 
-  // Fill A1
+  // Fill upper triangular part of A1
   for(size_t row(0); row < regressors.nrow(); ++row) {
     const auto constant(papangelou[row] / ((papangelou[row] + rho[type[row] - 1]) * (papangelou[row] + rho[type[row] - 1]) * (papangelou[row] + rho[type[row] - 1])));
     for(size_t k1(0); k1 < number_parameters; ++k1) {
-      A1(k1, k1) += regressors(row, k1) * regressors(row, k1) * constant;
-      for(size_t k2(k1 + 1); k2 < number_parameters; ++k2) {
+      for(size_t k2(k1); k2 < number_parameters; ++k2) {
         A1(k1, k2) += regressors(row, k1) * regressors(row, k2) * constant;
-        A1(k2, k1) = A1(k1, k2);
       }
+    }
+  }
+
+  // Symmetrize A1
+  for(size_t k1(0); k1 < number_parameters; ++k1) {
+    for(size_t k2(k1 + 1); k2 < number_parameters; ++k2) {
+      A1(k2, k1) = A1(k1, k2);
     }
   }
 
@@ -180,13 +178,7 @@ inline auto make_A2_plus_A3(const Vector& papangelou,
 
   using size_t = decltype(ppjsdm::size(configuration));
 
-  // Start by initializing to 0
-  arma::mat A(number_parameters, number_parameters);
-  for(size_t k1(0); k1 < number_parameters; ++k1) {
-    for(size_t k2(0); k2 < number_parameters; ++k2) {
-      A(k1, k2) = 0.;
-    }
-  }
+  arma::mat A(number_parameters, number_parameters, arma::fill::zeros);
 
   // Do you need to compute some of the alphas/gammas?
   bool compute_some_alphas(false);
@@ -312,7 +304,7 @@ inline auto make_A2_plus_A3(const Vector& papangelou,
         const auto constant_1((papangelou_i / papangelou[i] - 1.) / ((papangelou_i + rho[ppjsdm::get_type(point_i)]) * (papangelou_j + rho[ppjsdm::get_type(point_j)])));
         const auto constant_2((papangelou_j / papangelou[j] - 1.) / ((papangelou_j + rho[ppjsdm::get_type(point_j)]) * (papangelou_i + rho[ppjsdm::get_type(point_i)])));
         for(size_t k1(0); k1 < number_parameters; ++k1) {
-          for(size_t k2(0); k2 < number_parameters; ++k2) {
+          for(size_t k2(k1); k2 < number_parameters; ++k2) {
             const auto A2_summand_1(t_i[k1] * t_j[k2] * constant_1);
             const auto A2_summand_2(t_j[k1] * t_i[k2] * constant_2);
             const auto A3_summand_1((regressors(i, k1) / (papangelou[i] + rho[ppjsdm::get_type(point_i)]) - t_i[k1] / (papangelou_i + rho[ppjsdm::get_type(point_i)])) * (regressors(j, k2) / (papangelou[j] + rho[ppjsdm::get_type(point_j)]) - t_j[k2] / (papangelou_j + rho[ppjsdm::get_type(point_j)])));
@@ -321,6 +313,13 @@ inline auto make_A2_plus_A3(const Vector& papangelou,
           }
         }
       }
+    }
+  }
+
+  // Symmetrize A
+  for(size_t k1(0); k1 < number_parameters; ++k1) {
+    for(size_t k2(k1 + 1); k2 < number_parameters; ++k2) {
+      A(k2, k1) = A(k1, k2);
     }
   }
 
@@ -342,7 +341,8 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
                                         Rcpp::LogicalMatrix estimate_gamma,
                                         int nthreads) {
   const auto papangelou(detail::make_papangelou(regressors, theta));
-  const arma::mat S_inv(arma::inv(detail::make_S(papangelou, rho, regressors, Rcpp::as<Rcpp::IntegerVector>(data_list["type"]))));
+  const auto S(detail::make_S(papangelou, rho, regressors, Rcpp::as<Rcpp::IntegerVector>(data_list["type"])));
+  const auto S_inv(arma::inv_sympd(S));
   const auto G2(detail::make_G2(papangelou, rho, regressors, Rcpp::as<Rcpp::IntegerVector>(data_list["type"])));
   const auto A1(detail::make_A1(papangelou, rho, regressors, Rcpp::as<Rcpp::IntegerVector>(data_list["type"])));
   const auto A2_plus_A3(detail::make_A2_plus_A3(papangelou,
