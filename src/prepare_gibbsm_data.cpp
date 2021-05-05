@@ -218,7 +218,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
       // fill rho
       rho_offset[filling] = -std::log(static_cast<double>(rho_times_volume[type_index]) / volume);
 
-      // fill log_lambda
+      // fill beta0
       regressors(filling, type_index) = 1.;
 
       // fill covariates
