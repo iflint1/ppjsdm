@@ -49,7 +49,7 @@ inline auto make_papangelou(Rcpp::NumericMatrix regressors, Rcpp::NumericVector 
 }
 
 template<typename Vector>
-inline auto make_G2(const Vector& papangelou, Rcpp::NumericVector rho, Rcpp::NumericMatrix regressors, Rcpp::IntegerVector type) {
+inline auto make_G2(const Vector& papangelou, Rcpp::NumericVector rho, Rcpp::NumericMatrix regressors, Rcpp::IntegerVector type, double window_volume) {
   const auto number_parameters(regressors.ncol());
   using size_t = decltype(regressors.ncol());
 
@@ -59,7 +59,7 @@ inline auto make_G2(const Vector& papangelou, Rcpp::NumericVector rho, Rcpp::Num
 
   double kappa(0);
   for(size_t i(0); i < regressors.nrow(); ++i) {
-    kappa += 1. / (papangelou[i] + rho[type[i] - 1]);
+    kappa += window_volume * papangelou[i] / (papangelou[i] + rho[type[i] - 1]);
 
     const auto constant_1(papangelou[i] / ((papangelou[i] + rho[type[i] - 1]) * (papangelou[i] + rho[type[i] - 1])));
     const auto constant_2(-constant_1 / rho[type[i] - 1]);
@@ -329,11 +329,12 @@ inline auto make_A2_plus_A3(const Vector& papangelou,
 } // namespace detail
 
 template<typename Configuration>
-Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
+Rcpp::List compute_vcov_helper(const Configuration& configuration,
                                         const ppjsdm::Im_list_wrapper& covariates,
                                         const ppjsdm::Saturated_model& dispersion_model,
                                         const ppjsdm::Saturated_model& medium_dispersion_model,
                                         Rcpp::NumericVector rho,
+                                        double window_volume,
                                         Rcpp::NumericVector theta,
                                         Rcpp::NumericMatrix regressors,
                                         Rcpp::List data_list,
@@ -343,7 +344,7 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
   const auto papangelou(detail::make_papangelou(regressors, theta));
   const auto S(detail::make_S(papangelou, rho, regressors, Rcpp::as<Rcpp::IntegerVector>(data_list["type"])));
   const auto S_inv(arma::inv_sympd(S));
-  const auto G2(detail::make_G2(papangelou, rho, regressors, Rcpp::as<Rcpp::IntegerVector>(data_list["type"])));
+  const auto G2(detail::make_G2(papangelou, rho, regressors, Rcpp::as<Rcpp::IntegerVector>(data_list["type"]), window_volume));
   const auto A1(detail::make_A1(papangelou, rho, regressors, Rcpp::as<Rcpp::IntegerVector>(data_list["type"])));
   const auto A2_plus_A3(detail::make_A2_plus_A3(papangelou,
                                                 rho,
@@ -358,16 +359,22 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
                                                 nthreads,
                                                 covariates));
 
-  Rcpp::NumericMatrix rcpp_matrix(Rcpp::wrap(S_inv * (A1 + A2_plus_A3 + G2) * S_inv));
   const auto col_names(make_model_coloumn_names(covariates, estimate_alpha, estimate_gamma));
-  Rcpp::colnames(rcpp_matrix) = col_names;
-  Rcpp::rownames(rcpp_matrix) = col_names;
 
-  return rcpp_matrix;
+  Rcpp::NumericMatrix G1_rcpp(Rcpp::wrap(S_inv * (A1 + A2_plus_A3) * S_inv));
+  Rcpp::NumericMatrix G2_rcpp(Rcpp::wrap(S_inv * G2 * S_inv));
+
+  Rcpp::colnames(G1_rcpp) = col_names;
+  Rcpp::rownames(G1_rcpp) = col_names;
+  Rcpp::colnames(G2_rcpp) = col_names;
+  Rcpp::rownames(G2_rcpp) = col_names;
+
+  return Rcpp::List::create(Rcpp::Named("G1") = G1_rcpp,
+                            Rcpp::Named("G2") = G2_rcpp);
 }
 
 // [[Rcpp::export]]
-Rcpp::NumericMatrix compute_vcov(SEXP configuration,
+Rcpp::List compute_vcov(SEXP configuration,
                                  Rcpp::List covariates,
                                  Rcpp::CharacterVector model,
                                  Rcpp::CharacterVector medium_range_model,
@@ -376,6 +383,7 @@ Rcpp::NumericMatrix compute_vcov(SEXP configuration,
                                  Rcpp::NumericMatrix long_range,
                                  R_xlen_t saturation,
                                  Rcpp::NumericVector rho,
+                                 double window_volume,
                                  Rcpp::NumericVector theta,
                                  Rcpp::NumericMatrix regressors,
                                  Rcpp::List data_list,
@@ -400,6 +408,7 @@ Rcpp::NumericMatrix compute_vcov(SEXP configuration,
                              dispersion,
                              medium_range_dispersion,
                              rho,
+                             window_volume,
                              theta,
                              regressors,
                              data_list,
