@@ -7,9 +7,6 @@ vcov.gibbsm <- function(object, ...) {
   if(object$used_regularization) {
     stop("Can only compute VCOV matrix when no regularization was used.")
   }
-  if(!all(object$data_list$shift[1] == object$data_list$shift)) {
-    stop("Need uniform rho to compute VCOV matrix.")
-  }
   if(length(object$configuration_list) != 1) {
     stop("Cannot compute VCOV matrix for a fit obtained on a list of configurations.")
   }
@@ -23,7 +20,7 @@ vcov.gibbsm <- function(object, ...) {
                medium_range = fits_coefficients$medium_range,
                long_range = fits_coefficients$long_range,
                saturation = object$parameters$saturation,
-               rho = exp(-object$data_list$shift[1]),
+               rho = exp(-object$data_list$shift),
                theta = object$coefficients_vector,
                regressors = object$data_list$regressors,
                data_list = object$data_list,

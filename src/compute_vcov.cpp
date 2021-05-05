@@ -34,7 +34,7 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
                                         const ppjsdm::Saturated_model& dispersion_model,
                                         const ppjsdm::Saturated_model& medium_dispersion_model,
                                         int number_types,
-                                        double rho,
+                                        Rcpp::NumericVector rho,
                                         Rcpp::NumericVector theta,
                                         Rcpp::NumericMatrix regressors,
                                         Rcpp::List data_list,
@@ -56,14 +56,17 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
   const auto mark(Rcpp::as<Rcpp::NumericVector>(data_list["mark"]));
 
   // A is going to contain the sum of G1 and G2 from Baddeley et al
+  // A_temp is a temporary matrix we use to avoid taking the sqrt of rho
   // S follows the notation of Baddeley et al
 
   // Start by initializing to 0
   arma::mat A(total_parameters, total_parameters);
+  arma::mat A_temp(total_parameters, total_parameters);
   arma::mat S(total_parameters, total_parameters);
   for(size_t k1(0); k1 < total_parameters; ++k1) {
     for(size_t k2(0); k2 < total_parameters; ++k2) {
       A(k1, k2) = 0.;
+      A_temp(k1, k2) = 0.;
       S(k1, k2) = 0.;
     }
   }
@@ -79,21 +82,27 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
     }
     const auto papangelou_value(std::exp(inner_product));
     papangelou[i] = papangelou_value;
-    kappa += 1. / (papangelou_value + rho);
+    kappa += 1. / (papangelou_value + rho[type[i] - 1]);
 
-    const auto constant(papangelou_value / ((papangelou_value + rho) * (papangelou_value + rho)));
+    const auto constant_1(papangelou_value / ((papangelou_value + rho[type[i] - 1]) * (papangelou_value + rho[type[i] - 1])));
+    const auto constant_2(-constant_1 / rho[type[i] - 1]);
     for(size_t k1(0); k1 < total_parameters; ++k1) {
-      const auto value(regressors(i, k1) * constant);
+      const auto value_1(regressors(i, k1) * constant_1);
+      const auto value_2(regressors(i, k1) * constant_2);
       for(size_t k2(0); k2 < total_parameters; ++k2) {
-        A(k1, k2) += value;
-        S(k1, k2) += value * regressors(i, k2);
+        S(k1, k2) += value_1 * regressors(i, k2);
+        A(k1, k2) += value_2;
+        A_temp(k2, k1) += value_1;
       }
     }
   }
-  A *= A.t();
-  A *= -1. / kappa;
+
+  // The line below should be equivalent to A = -A_temp * A_temp.t() / rho,
+  // these complications are to avoid taking the sqrt of rho when it's not uniform.
+  A *= A_temp / kappa;
+
   for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-    const auto constant(papangelou[i] * papangelou[i] / ((papangelou[i] + rho) * (papangelou[i] + rho) * (papangelou[i] + rho)));
+    const auto constant(papangelou[i] * papangelou[i] / ((papangelou[i] + rho[type[i] - 1]) * (papangelou[i] + rho[type[i] - 1]) * (papangelou[i] + rho[type[i] - 1])) / rho[type[i] - 1]);
     for(size_t k1(0); k1 < total_parameters; ++k1) {
       const auto value(regressors(i, k1) * constant);
       A(k1, k1) += value * regressors(i, k1);
@@ -103,11 +112,10 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
       }
     }
   }
-  A /= rho;
 
   // At this point, A is equal to G2. Next, add A1.
   for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
-    const auto constant(papangelou[i] / ((papangelou[i] + rho) * (papangelou[i] + rho) * (papangelou[i] + rho)));
+    const auto constant(papangelou[i] / ((papangelou[i] + rho[type[i] - 1]) * (papangelou[i] + rho[type[i] - 1]) * (papangelou[i] + rho[type[i] - 1])));
     for(size_t k1(0); k1 < total_parameters; ++k1) {
       A(k1, k1) += regressors(i, k1) * regressors(i, k1) * constant;
       for(size_t k2(k1 + 1); k2 < total_parameters; ++k2) {
@@ -238,14 +246,14 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
         }
         const auto papangelou_i(std::exp(inner_product_i));
         const auto papangelou_j(std::exp(inner_product_j));
-        const auto constant_1((papangelou_i / papangelou[i] - 1.) / ((papangelou_i + rho) * (papangelou_j + rho)));
-        const auto constant_2((papangelou_j / papangelou[j] - 1.) / ((papangelou_j + rho) * (papangelou_i + rho)));
+        const auto constant_1((papangelou_i / papangelou[i] - 1.) / ((papangelou_i + rho[ppjsdm::get_type(point_i)]) * (papangelou_j + rho[ppjsdm::get_type(point_j)])));
+        const auto constant_2((papangelou_j / papangelou[j] - 1.) / ((papangelou_j + rho[ppjsdm::get_type(point_j)]) * (papangelou_i + rho[ppjsdm::get_type(point_i)])));
         for(size_t k1(0); k1 < total_parameters; ++k1) {
           for(size_t k2(0); k2 < total_parameters; ++k2) {
             const auto A2_summand_1(t_i[k1] * t_j[k2] * constant_1);
             const auto A2_summand_2(t_j[k1] * t_i[k2] * constant_2);
-            const auto A3_summand_1((regressors(i, k1) / (papangelou[i] + rho) - t_i[k1] / (papangelou_i + rho)) * (regressors(j, k2) / (papangelou[j] + rho) - t_j[k2] / (papangelou_j + rho)));
-            const auto A3_summand_2((regressors(j, k1) / (papangelou[j] + rho) - t_j[k1] / (papangelou_j + rho)) * (regressors(i, k2) / (papangelou[i] + rho) - t_i[k2] / (papangelou_i + rho)));
+            const auto A3_summand_1((regressors(i, k1) / (papangelou[i] + rho[ppjsdm::get_type(point_i)]) - t_i[k1] / (papangelou_i + rho[ppjsdm::get_type(point_i)])) * (regressors(j, k2) / (papangelou[j] + rho[ppjsdm::get_type(point_j)]) - t_j[k2] / (papangelou_j + rho[ppjsdm::get_type(point_j)])));
+            const auto A3_summand_2((regressors(j, k1) / (papangelou[j] + rho[ppjsdm::get_type(point_j)]) - t_j[k1] / (papangelou_j + rho[ppjsdm::get_type(point_j)])) * (regressors(i, k2) / (papangelou[i] + rho[ppjsdm::get_type(point_i)]) - t_i[k2] / (papangelou_i + rho[ppjsdm::get_type(point_i)])));
             A(k1, k2) += A2_summand_1 + A2_summand_2 + A3_summand_1 + A3_summand_2;
           }
         }
@@ -274,7 +282,7 @@ Rcpp::NumericMatrix compute_vcov(SEXP configuration,
                                  Rcpp::NumericMatrix medium_range,
                                  Rcpp::NumericMatrix long_range,
                                  R_xlen_t saturation,
-                                 double rho,
+                                 Rcpp::NumericVector rho,
                                  Rcpp::NumericVector theta,
                                  Rcpp::NumericMatrix regressors,
                                  Rcpp::List data_list,
