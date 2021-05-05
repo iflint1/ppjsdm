@@ -24,7 +24,7 @@ vcov.gibbsm <- function(object, ...) {
                long_range = fits_coefficients$long_range,
                saturation = object$parameters$saturation,
                rho = exp(-object$data_list$shift[1]),
-               coefficients_vector = object$coefficients_vector,
+               theta = object$coefficients_vector,
                regressors = object$data_list$regressors,
                data_list = object$data_list,
                estimate_alpha = object$estimate_alpha,

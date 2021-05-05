@@ -33,8 +33,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // compute_vcov
-Rcpp::NumericMatrix compute_vcov(SEXP configuration, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::NumericMatrix short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, double rho, Rcpp::NumericVector coefficients_vector, Rcpp::NumericMatrix regressors, Rcpp::List data_list, Rcpp::LogicalMatrix estimate_alpha, Rcpp::LogicalMatrix estimate_gamma, int nthreads);
-RcppExport SEXP _ppjsdm_compute_vcov(SEXP configurationSEXP, SEXP covariatesSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP rhoSEXP, SEXP coefficients_vectorSEXP, SEXP regressorsSEXP, SEXP data_listSEXP, SEXP estimate_alphaSEXP, SEXP estimate_gammaSEXP, SEXP nthreadsSEXP) {
+Rcpp::NumericMatrix compute_vcov(SEXP configuration, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::NumericMatrix short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, double rho, Rcpp::NumericVector theta, Rcpp::NumericMatrix regressors, Rcpp::List data_list, Rcpp::LogicalMatrix estimate_alpha, Rcpp::LogicalMatrix estimate_gamma, int nthreads);
+RcppExport SEXP _ppjsdm_compute_vcov(SEXP configurationSEXP, SEXP covariatesSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP rhoSEXP, SEXP thetaSEXP, SEXP regressorsSEXP, SEXP data_listSEXP, SEXP estimate_alphaSEXP, SEXP estimate_gammaSEXP, SEXP nthreadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -47,13 +47,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type long_range(long_rangeSEXP);
     Rcpp::traits::input_parameter< R_xlen_t >::type saturation(saturationSEXP);
     Rcpp::traits::input_parameter< double >::type rho(rhoSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type coefficients_vector(coefficients_vectorSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta(thetaSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type regressors(regressorsSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type data_list(data_listSEXP);
     Rcpp::traits::input_parameter< Rcpp::LogicalMatrix >::type estimate_alpha(estimate_alphaSEXP);
     Rcpp::traits::input_parameter< Rcpp::LogicalMatrix >::type estimate_gamma(estimate_gammaSEXP);
     Rcpp::traits::input_parameter< int >::type nthreads(nthreadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(compute_vcov(configuration, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, rho, coefficients_vector, regressors, data_list, estimate_alpha, estimate_gamma, nthreads));
+    rcpp_result_gen = Rcpp::wrap(compute_vcov(configuration, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, rho, theta, regressors, data_list, estimate_alpha, estimate_gamma, nthreads));
     return rcpp_result_gen;
 END_RCPP
 }

@@ -35,7 +35,7 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
                                         const ppjsdm::Saturated_model& medium_dispersion_model,
                                         int number_types,
                                         double rho,
-                                        Rcpp::NumericVector coefficients_vector,
+                                        Rcpp::NumericVector theta,
                                         Rcpp::NumericMatrix regressors,
                                         Rcpp::List data_list,
                                         Rcpp::LogicalMatrix estimate_alpha,
@@ -74,8 +74,8 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
   // The lines below set A to G2 from Baddeley et al
   for(R_xlen_t i(0); i < regressors.nrow(); ++i) {
     double inner_product(0);
-    for(R_xlen_t j(0); j < coefficients_vector.size(); ++j) {
-      inner_product += coefficients_vector[j] * regressors(i, j);
+    for(R_xlen_t j(0); j < theta.size(); ++j) {
+      inner_product += theta[j] * regressors(i, j);
     }
     const auto papangelou_value(std::exp(inner_product));
     papangelou[i] = papangelou_value;
@@ -232,9 +232,9 @@ Rcpp::NumericMatrix compute_vcov_helper(const Configuration& configuration,
 
         double inner_product_i(0);
         double inner_product_j(0);
-        for(std::remove_cv_t<decltype(coefficients_vector.size())> k1(0); k1 < coefficients_vector.size(); ++k1) {
-          inner_product_i += coefficients_vector[k1] * t_i[k1];
-          inner_product_j += coefficients_vector[k1] * t_j[k1];
+        for(std::remove_cv_t<decltype(theta.size())> k1(0); k1 < theta.size(); ++k1) {
+          inner_product_i += theta[k1] * t_i[k1];
+          inner_product_j += theta[k1] * t_j[k1];
         }
         const auto papangelou_i(std::exp(inner_product_i));
         const auto papangelou_j(std::exp(inner_product_j));
@@ -275,7 +275,7 @@ Rcpp::NumericMatrix compute_vcov(SEXP configuration,
                                  Rcpp::NumericMatrix long_range,
                                  R_xlen_t saturation,
                                  double rho,
-                                 Rcpp::NumericVector coefficients_vector,
+                                 Rcpp::NumericVector theta,
                                  Rcpp::NumericMatrix regressors,
                                  Rcpp::List data_list,
                                  Rcpp::LogicalMatrix estimate_alpha,
@@ -301,7 +301,7 @@ Rcpp::NumericMatrix compute_vcov(SEXP configuration,
                              medium_range_dispersion,
                              number_types,
                              rho,
-                             coefficients_vector,
+                             theta,
                              regressors,
                              data_list,
                              estimate_alpha,
