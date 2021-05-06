@@ -13,6 +13,7 @@ Imports:
     glmnet,
     graphics,
     methods,
+    oem,
     Rcpp (>= 1.0.2),
     spatstat.geom,
     stats

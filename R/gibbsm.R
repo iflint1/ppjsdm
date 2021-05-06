@@ -1,4 +1,13 @@
-fit_gibbs <- function(gibbsm_data, fitting_package, use_aic, estimate_alpha, estimate_gamma, types_names, covariates_names, use_regularization, ...) {
+fit_gibbs <- function(gibbsm_data,
+                      fitting_package,
+                      use_aic,
+                      estimate_alpha,
+                      estimate_gamma,
+                      types_names,
+                      covariates_names,
+                      use_regularization,
+                      nthreads,
+                      ...) {
   regressors <- gibbsm_data$regressors
   if(any(is.na(regressors))) {
     max_indices <- 10
@@ -22,6 +31,8 @@ fit_gibbs <- function(gibbsm_data, fitting_package, use_aic, estimate_alpha, est
       regressors[1, startsWith(colnames(regressors), "beta0")] <- 1.001
     }
 
+    # We don't use an offset explicitely because the call to glmnet above returns nonsensical results or hangs.
+    # Instead, use a shift for all the beta0 regressors according to -log(rho).
     arguments <- list(x = regressors,
                       y = gibbsm_data$response,
                       intercept = FALSE,
@@ -29,18 +40,13 @@ fit_gibbs <- function(gibbsm_data, fitting_package, use_aic, estimate_alpha, est
                       penalty.factor = pfactor)
     user_supplied <- list(...)
 
-    if(!("alpha" %in% names(user_supplied))) {
-      arguments <- append(arguments, list(alpha = 1))
-    }
-
-    # We don't use an offset explicitely because the call to glmnet above returns nonsensical results or hangs.
-    # Instead, use a shift for all the beta0 regressors according to -log(rho).
     if(use_regularization) {
       arguments <- append(arguments, user_supplied)
       fit <- do.call(glmnet, arguments)
 
       shift <- gibbsm_data$shift
 
+      # Reference: https://stackoverflow.com/questions/40920051/r-getting-aic-bic-likelihood-from-glmnet
       tLL <- fit$nulldev - deviance(fit)
       k <- fit$df
       n <- fit$nobs
@@ -65,10 +71,12 @@ fit_gibbs <- function(gibbsm_data, fitting_package, use_aic, estimate_alpha, est
 
       shift <- gibbsm_data$shift
 
+      # Reference: https://stackoverflow.com/questions/40920051/r-getting-aic-bic-likelihood-from-glmnet
       tLL <- fit$nulldev - deviance(fit)
       k <- fit$df
       n <- fit$nobs
       aic <- -tLL + 2 * k + 2 * k * (k + 1) / (n - k - 1)
+
       aic <- aic[length(aic)]
       bic <- log(n) * k - tLL
       bic <- bic[length(bic)]
@@ -80,6 +88,100 @@ fit_gibbs <- function(gibbsm_data, fitting_package, use_aic, estimate_alpha, est
       coef[match(paste0("beta0_", i), names(coef))] <- coef[match(paste0("beta0_", i), names(coef))] - shift[i]
     }
     fit_algorithm <- "glmnet"
+  } else if(fitting_package == "oem") {
+    nregressors <- ncol(regressors)
+    pfactor <- rep(1, nregressors)
+    pfactor[startsWith(colnames(regressors), "beta0")] <- 0
+
+    # Avoid a bug in glmnet: if intercept = FALSE, and there's a column of ones, it gets ignored by glmnet
+    # even though its penalty factor is zero.
+    if(all(1 == regressors[, startsWith(colnames(regressors), "beta0")])) {
+      regressors[1, startsWith(colnames(regressors), "beta0")] <- 1.001
+    }
+
+    arguments <- list(x = regressors,
+                      y = gibbsm_data$response,
+                      intercept = FALSE,
+                      family = "binomial",
+                      penalty.factor = pfactor,
+                      ncores = nthreads)
+    user_supplied <- list(...)
+
+    if(!("compute.loss" %in% names(user_supplied))) {
+      arguments <- append(arguments, list(compute.loss = TRUE))
+    }
+
+    if(use_regularization) {
+      if(!("penalty" %in% names(user_supplied))) {
+        arguments <- append(arguments, list(penalty = "lasso"))
+      }
+      arguments <- append(arguments, user_supplied)
+      fit <- do.call(oem, arguments)
+
+      shift <- gibbsm_data$shift
+
+      coef <- fit$beta$lasso
+
+      # Reference: https://stackoverflow.com/questions/40920051/r-getting-aic-bic-likelihood-from-glmnet
+      k <- sapply(seq_len(ncol(coef)), function(col) sum(coef[, col] != 0.))
+      n <- fit$nobs
+      LL <- 2 * logLik(fit)
+      aic <- -LL + 2 * k + 2 * k * (k + 1) / (n - k - 1)
+      bic <- -LL + log(n) * k
+
+      if(use_aic) {
+        coef <- coef[, which.min(aic)]
+        aic <- min(aic)
+        bic <- bic[which.min(aic)]
+      } else {
+        coef <- coef[, which.min(bic)]
+        aic <- aic[which.min(bic)]
+        bic <- min(bic)
+      }
+
+      coef <- setNames(as.vector(coef), nm = names(coef))
+    } else {
+      # if(!("penalty" %in% names(user_supplied))) {
+      #   arguments <- append(arguments, list(penalty = "lasso"))
+      # }
+      # if(!("lambda" %in% names(user_supplied))) {
+      #   arguments <- append(arguments, list(lambda = rev(0:99)))
+      # }
+      # arguments <- append(arguments, user_supplied)
+      # fit <- do.call(oem, arguments)
+      #
+      # shift <- gibbsm_data$shift
+      #
+      # coef <- fit$beta$lasso
+      # coef <- coef[, ncol(coef)]
+      #
+      # # Reference: https://stackoverflow.com/questions/40920051/r-getting-aic-bic-likelihood-from-glmnet
+      # k <- fit$nvars
+      # n <- fit$nobs
+      # LL <- 2 * logLik(fit)
+      # LL <- LL[length(LL)]
+      # aic <- -LL + 2 * k + 2 * k * (k + 1) / (n - k - 1)
+      # bic <- -LL + log(n) * k
+      #
+      # coef <- setNames(as.vector(coef), nm = names(coef))
+      if(!("penalty" %in% names(user_supplied))) {
+        arguments <- append(arguments, list(penalty = "ols"))
+      }
+      arguments <- append(arguments, user_supplied)
+      fit <- do.call(oem, arguments)
+
+      shift <- gibbsm_data$shift
+
+      aic <- AIC(fit)
+      bic <- BIC(fit)
+      coef <- fit$beta$ols
+      coef <- setNames(as.vector(coef), nm = rownames(coef))
+    }
+    coef <- coef[-which(names(coef) == "(Intercept)")]
+    for(i in seq_len(number_types)) {
+      coef[match(paste0("beta0_", i), names(coef))] <- coef[match(paste0("beta0_", i), names(coef))] - shift[i]
+    }
+    fit_algorithm <- "oem"
   } else if(fitting_package == "glm") {
     fmla <- paste0("response ~ 0 + offset(offset) + ", paste0(colnames(regressors), collapse = ' + '))
     fmla <- as.formula(fmla)
@@ -163,18 +265,19 @@ fit_gibbs <- function(gibbsm_data, fitting_package, use_aic, estimate_alpha, est
 #' @param long_range Long range interaction radius. Filled with 0 by default.
 #' @param saturation Saturation parameter of the point process.
 #' @param print Print the fitted coefficients?
-#' @param fitting_package Choices are `glmnet` or `glm`?
+#' @param fitting_package Choices are `glmnet`, `oem` or `glm`.
 #' @param use_aic Use AIC instead of BIC for model fitting?
 #' @param max_dummy Maximum number of dummy points for each type. By default, follows the recommendation of Baddeley et al.
 #' @param min_dummy Minimum number of dummy points for each type. By default, follows the recommendation of Baddeley et al.
 #' @param dummy_factor How many more dummy points there are, compared to the points in the configuration. By default, follows the recommendation of Baddeley et al.
 #' @param nthreads Maximum number of threads for parallel computing.
-#' @param use_regularization Add option to use `glmnet` without regularization.
-#' @param ... Forwarded to GLM or glmnet.
-#' @importFrom glmnet glmnet cv.glmnet
-#' @importFrom stats AIC as.formula BIC binomial coefficients deviance glm lm setNames
-#' @importFrom spatstat.geom as.im as.owin
+#' @param use_regularization Use the fitting package without regularization.
+#' @param ... Forwarded to the fitting package.
 #' @importFrom GA ga
+#' @importFrom glmnet glmnet
+#' @importFrom oem oem
+#' @importFrom stats AIC as.formula BIC binomial coefficients deviance glm lm logLik setNames
+#' @importFrom spatstat.geom as.im as.owin
 #' @export
 gibbsm <- function(configuration_list,
                    window,
@@ -297,6 +400,7 @@ gibbsm <- function(configuration_list,
                        types_names = types_names,
                        covariates_names = covariates_names,
                        use_regularization = use_regularization,
+                       nthreads = nthreads,
                        ...)
       list(fit = fit, sh = sh, me = me, lo = lo)
     }
@@ -375,6 +479,7 @@ gibbsm <- function(configuration_list,
                         types_names = types_names,
                         covariates_names = covariates_names,
                         use_regularization = use_regularization,
+                        nthreads = nthreads,
                         ...)
   } else {
     short_range <- as.matrix(short_range)
@@ -421,6 +526,7 @@ gibbsm <- function(configuration_list,
                         types_names = types_names,
                         covariates_names = covariates_names,
                         use_regularization = use_regularization,
+                        nthreads = nthreads,
                         ...)
   }
   fits <-  fitted$fit

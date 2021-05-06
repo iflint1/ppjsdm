@@ -67,6 +67,7 @@ as.Configuration <- function(configuration) {
 }
 
 #' @method as.Configuration Configuration
+#' @export
 as.Configuration.Configuration <- function(configuration) {
   configuration
 }

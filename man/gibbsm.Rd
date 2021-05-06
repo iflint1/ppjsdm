@@ -46,7 +46,7 @@ gibbsm(
 
 \item{print}{Print the fitted coefficients?}
 
-\item{fitting_package}{Choices are `glmnet` or `glm`?}
+\item{fitting_package}{Choices are `glmnet`, `oem` or `glm`.}
 
 \item{use_aic}{Use AIC instead of BIC for model fitting?}
 
@@ -58,9 +58,9 @@ gibbsm(
 
 \item{nthreads}{Maximum number of threads for parallel computing.}
 
-\item{use_regularization}{Add option to use `glmnet` without regularization.}
+\item{use_regularization}{Use the fitting package without regularization.}
 
-\item{...}{Forwarded to GLM or glmnet.}
+\item{...}{Forwarded to the fitting package.}
 }
 \description{
 Fit a multivariate Gibbs model to a dataset.
