@@ -15,7 +15,7 @@ gibbsm(
   long_range,
   saturation,
   print = FALSE,
-  use_glmnet = TRUE,
+  fitting_package = "glmnet",
   use_aic = TRUE,
   max_dummy = 0,
   min_dummy = 0,
@@ -46,7 +46,7 @@ gibbsm(
 
 \item{print}{Print the fitted coefficients?}
 
-\item{use_glmnet}{Use `glmnet` instead of `glm`?}
+\item{fitting_package}{Choices are `glmnet` or `glm`?}
 
 \item{use_aic}{Use AIC instead of BIC for model fitting?}
 

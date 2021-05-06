@@ -1,4 +1,4 @@
-fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate_gamma, types_names, covariates_names, use_regularization, ...) {
+fit_gibbs <- function(gibbsm_data, fitting_package, use_aic, estimate_alpha, estimate_gamma, types_names, covariates_names, use_regularization, ...) {
   regressors <- gibbsm_data$regressors
   if(any(is.na(regressors))) {
     max_indices <- 10
@@ -11,7 +11,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
 
   number_types <- length(gibbsm_data$shift)
 
-  if(use_glmnet) {
+  if(fitting_package == "glmnet") {
     nregressors <- ncol(regressors)
     pfactor <- rep(1, nregressors)
     pfactor[startsWith(colnames(regressors), "beta0")] <- 0
@@ -80,7 +80,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
       coef[match(paste0("beta0_", i), names(coef))] <- coef[match(paste0("beta0_", i), names(coef))] - shift[i]
     }
     fit_algorithm <- "glmnet"
-  } else {
+  } else if(fitting_package == "glm") {
     fmla <- paste0("response ~ 0 + offset(offset) + ", paste0(colnames(regressors), collapse = ' + '))
     fmla <- as.formula(fmla)
     regressors <- as.data.frame(regressors)
@@ -94,6 +94,8 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
 
     coef <- coefficients(fit)
     fit_algorithm <- "glm"
+  } else {
+    stop("Supplied fitting package not recognized.")
   }
   beta0 <- vector(mode = "numeric", length = number_types)
   alpha <- matrix(0, number_types, number_types)
@@ -161,7 +163,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
 #' @param long_range Long range interaction radius. Filled with 0 by default.
 #' @param saturation Saturation parameter of the point process.
 #' @param print Print the fitted coefficients?
-#' @param use_glmnet Use `glmnet` instead of `glm`?
+#' @param fitting_package Choices are `glmnet` or `glm`?
 #' @param use_aic Use AIC instead of BIC for model fitting?
 #' @param max_dummy Maximum number of dummy points for each type. By default, follows the recommendation of Baddeley et al.
 #' @param min_dummy Minimum number of dummy points for each type. By default, follows the recommendation of Baddeley et al.
@@ -184,7 +186,7 @@ gibbsm <- function(configuration_list,
                    long_range,
                    saturation,
                    print = FALSE,
-                   use_glmnet = TRUE,
+                   fitting_package = "glmnet",
                    use_aic = TRUE,
                    max_dummy = 0,
                    min_dummy = 0,
@@ -288,7 +290,7 @@ gibbsm <- function(configuration_list,
                                               nthreads = nthreads)
 
       fit <- fit_gibbs(gibbsm_data_list,
-                       use_glmnet = FALSE,
+                       fitting_package = "glm",
                        use_aic = use_aic,
                        estimate_alpha = estimate_alpha,
                        estimate_gamma = estimate_gamma,
@@ -366,7 +368,7 @@ gibbsm <- function(configuration_list,
                                             nthreads = nthreads)
 
     fitted <- fit_gibbs(gibbsm_data_list,
-                        use_glmnet = use_glmnet,
+                        fitting_package = fitting_package,
                         use_aic = use_aic,
                         estimate_alpha = estimate_alpha,
                         estimate_gamma = estimate_gamma,
@@ -412,7 +414,7 @@ gibbsm <- function(configuration_list,
                                             nthreads = nthreads)
 
     fitted <- fit_gibbs(gibbsm_data_list,
-                        use_glmnet = use_glmnet,
+                        fitting_package = fitting_package,
                         use_aic = use_aic,
                         estimate_alpha = estimate_alpha,
                         estimate_gamma = estimate_gamma,
