@@ -21,7 +21,8 @@ gibbsm(
   min_dummy = 0,
   dummy_factor = 0,
   nthreads = 4,
-  use_regularization = FALSE
+  use_regularization = FALSE,
+  ...
 )
 }
 \arguments{
@@ -58,6 +59,8 @@ gibbsm(
 \item{nthreads}{Maximum number of threads for parallel computing.}
 
 \item{use_regularization}{Add option to use `glmnet` without regularization.}
+
+\item{...}{Forwarded to GLM or glmnet.}
 }
 \description{
 Fit a multivariate Gibbs model to a dataset.

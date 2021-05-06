@@ -1,4 +1,4 @@
-fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate_gamma, types_names, covariates_names, use_regularization) {
+fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate_gamma, types_names, covariates_names, use_regularization, ...) {
   regressors <- gibbsm_data$regressors
   if(any(is.na(regressors))) {
     max_indices <- 10
@@ -22,15 +22,22 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
       regressors[1, startsWith(colnames(regressors), "beta0")] <- 1.001
     }
 
+    arguments <- list(x = regressors,
+                      y = gibbsm_data$response,
+                      intercept = FALSE,
+                      family = "binomial",
+                      penalty.factor = pfactor)
+    user_supplied <- list(...)
+
+    if(!("alpha" %in% names(user_supplied))) {
+      arguments <- append(arguments, list(alpha = 1))
+    }
+
     # We don't use an offset explicitely because the call to glmnet above returns nonsensical results or hangs.
     # Instead, use a shift for all the beta0 regressors according to -log(rho).
     if(use_regularization) {
-      fit <- glmnet(x = regressors,
-                    y = gibbsm_data$response,
-                    alpha = 1,
-                    intercept = FALSE,
-                    family = "binomial",
-                    penalty.factor = pfactor)
+      arguments <- append(arguments, user_supplied)
+      fit <- do.call(glmnet, arguments)
 
       shift <- gibbsm_data$shift
 
@@ -50,23 +57,11 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
         bic <- min(bic)
       }
     } else {
-      # fit <- glmnet(x = regressors,
-      #               y = gibbsm_data$response,
-      #               alpha = 1,
-      #               intercept = FALSE,
-      #               family = "binomial",
-      #               penalty.factor = pfactor,
-      #               lambda = rev(0:99),
-      #               thresh = 1e-12,
-      #               maxit = 1e8)
-      fit <- glmnet(x = regressors,
-                    y = gibbsm_data$response,
-                    alpha = 1,
-                    intercept = FALSE,
-                    family = "binomial",
-                    penalty.factor = pfactor,
-                    lambda = rev(0:99))
-
+      if(!("lambda" %in% names(user_supplied))) {
+        arguments <- append(arguments, list(lambda = rev(0:99)))
+      }
+      arguments <- append(arguments, user_supplied)
+      fit <- do.call(glmnet, arguments)
 
       shift <- gibbsm_data$shift
 
@@ -91,7 +86,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
     regressors <- as.data.frame(regressors)
     regressors$offset <- gibbsm_data$offset
     regressors$response <- gibbsm_data$response
-    fit <- glm(fmla, family = binomial(), data = regressors)
+    fit <- glm(fmla, family = binomial(), data = regressors, ...)
     shift <- rep(0, length(gibbsm_data$shift))
 
     aic <- AIC(fit)
@@ -173,6 +168,7 @@ fit_gibbs <- function(gibbsm_data, use_glmnet, use_aic, estimate_alpha, estimate
 #' @param dummy_factor How many more dummy points there are, compared to the points in the configuration. By default, follows the recommendation of Baddeley et al.
 #' @param nthreads Maximum number of threads for parallel computing.
 #' @param use_regularization Add option to use `glmnet` without regularization.
+#' @param ... Forwarded to GLM or glmnet.
 #' @importFrom glmnet glmnet cv.glmnet
 #' @importFrom stats AIC as.formula BIC binomial coefficients deviance glm lm setNames
 #' @importFrom spatstat.geom as.im as.owin
@@ -194,7 +190,8 @@ gibbsm <- function(configuration_list,
                    min_dummy = 0,
                    dummy_factor = 0,
                    nthreads = 4,
-                   use_regularization = FALSE) {
+                   use_regularization = FALSE,
+                   ...) {
   # If we're given a single configuration, convert it to a list.
   if(inherits(configuration_list, "Configuration")) {
     configuration_list <- list(configuration_list)
@@ -297,7 +294,8 @@ gibbsm <- function(configuration_list,
                        estimate_gamma = estimate_gamma,
                        types_names = types_names,
                        covariates_names = covariates_names,
-                       use_regularization = use_regularization)
+                       use_regularization = use_regularization,
+                       ...)
       list(fit = fit, sh = sh, me = me, lo = lo)
     }
 
@@ -374,7 +372,8 @@ gibbsm <- function(configuration_list,
                         estimate_gamma = estimate_gamma,
                         types_names = types_names,
                         covariates_names = covariates_names,
-                        use_regularization = use_regularization)
+                        use_regularization = use_regularization,
+                        ...)
   } else {
     short_range <- as.matrix(short_range)
     medium_range <- as.matrix(medium_range)
@@ -419,7 +418,8 @@ gibbsm <- function(configuration_list,
                         estimate_gamma = estimate_gamma,
                         types_names = types_names,
                         covariates_names = covariates_names,
-                        use_regularization = use_regularization)
+                        use_regularization = use_regularization,
+                        ...)
   }
   fits <-  fitted$fit
   fits_coefficients <- fitted$coefficients
