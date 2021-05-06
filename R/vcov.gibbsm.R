@@ -5,7 +5,7 @@
 #' @export
 vcov.gibbsm <- function(object, ...) {
   if(object$used_regularization) {
-    stop("Can only compute VCOV matrix when no regularization was used.")
+    warning("Computing the Variance-Covariance matrix of a regularised fit.")
   }
   if(length(object$configuration_list) != 1) {
     stop("Cannot compute VCOV matrix for a fit obtained on a list of configurations.")
