@@ -3,6 +3,7 @@
 
 #include <Rcpp.h>
 
+#include <type_traits> // std::enable_if, std::is_same
 #include <vector> // std::vector
 
 namespace ppjsdm {
@@ -20,7 +21,8 @@ public:
   explicit Lightweight_matrix():
     Lightweight_matrix(static_cast<size_type>(0), static_cast<size_type>(0)) {}
 
-  explicit Lightweight_matrix(Rcpp::NumericMatrix matrix):
+  template<typename Matrix, std::enable_if_t<std::is_same<Matrix, Rcpp::NumericMatrix>::value || std::is_same<Matrix, Rcpp::LogicalMatrix>::value || std::is_same<Matrix, Rcpp::IntegerMatrix>::value>* = nullptr>
+  explicit Lightweight_matrix(Matrix matrix):
     Lightweight_matrix(matrix.nrow(), matrix.ncol()) {
     for(size_type i(0); i < rows_; ++i) {
       for(size_type j(0); j < columns_; ++j) {
@@ -64,7 +66,8 @@ public:
   explicit Lightweight_square_matrix():
     Lightweight_square_matrix(static_cast<size_type>(0)) {}
 
-  explicit Lightweight_square_matrix(Rcpp::NumericMatrix matrix):
+  template<typename Matrix, std::enable_if_t<std::is_same<Matrix, Rcpp::NumericMatrix>::value || std::is_same<Matrix, Rcpp::LogicalMatrix>::value || std::is_same<Matrix, Rcpp::IntegerMatrix>::value>* = nullptr>
+  explicit Lightweight_square_matrix(Matrix matrix):
     Lightweight_square_matrix(matrix.nrow()) {
     if(static_cast<size_type>(matrix.ncol()) != columns_) {
       Rcpp::stop("The matrix is not a square matrix.");

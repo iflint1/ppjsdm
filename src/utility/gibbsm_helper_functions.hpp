@@ -7,10 +7,11 @@
 
 namespace ppjsdm {
 
+template<typename BoolMatrix>
 inline auto get_number_parameters(int number_types,
                                   unsigned long long int covariates_size,
-                                  Rcpp::LogicalMatrix estimate_alpha,
-                                  Rcpp::LogicalMatrix estimate_gamma) {
+                                  const BoolMatrix& estimate_alpha,
+                                  const BoolMatrix& estimate_gamma) {
   using size_t = unsigned long long int;
   struct Number_parameters_struct {
     size_t index_start_gamma;
@@ -37,11 +38,12 @@ inline auto get_number_parameters(int number_types,
   return Number_parameters_struct{index_start_gamma, index_start_covariates, total_parameters};
 }
 
+template<typename BoolMatrix>
 inline auto make_model_coloumn_names(const Im_list_wrapper& covariates,
-                                     Rcpp::LogicalMatrix estimate_alpha,
-                                     Rcpp::LogicalMatrix estimate_gamma) {
+                                     const BoolMatrix& estimate_alpha,
+                                     const BoolMatrix& estimate_gamma) {
 
-  const auto number_types(estimate_alpha.nrow());
+  const R_xlen_t number_types(estimate_alpha.nrow());
 
   Rcpp::CharacterVector col_names(Rcpp::no_init(get_number_parameters(number_types,
                                                                       covariates.size(),
