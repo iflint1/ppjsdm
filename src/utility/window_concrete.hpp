@@ -47,6 +47,12 @@ public:
     return std::sqrt(square_diameter());
   }
 
+  // TODO: Test is_in here and in other window classes
+  template<typename Point>
+  bool is_in(const Point& point) const {
+    return get_x(point) >= x_0_ && get_x(point) <= x_0_ + delta_x_ && get_y(point) >= y_0_ && get_x(point) <= y_0_ + delta_y_;
+  }
+
 private:
   double x_0_;
   double delta_x_;
@@ -94,6 +100,11 @@ public:
     return 2 * radius_;
   }
 
+  template<typename Point>
+  bool is_in(const Point& point) const {
+    return (get_x(point) - x_) * (get_x(point) - x_) + (get_y(point) - y_) * (get_y(point) - y_) <= radius_ * radius_;
+  }
+
 private:
   double x_;
   double y_;
@@ -134,6 +145,11 @@ public:
 
   double diameter() const {
     return std::sqrt(square_diameter());
+  }
+
+  template<typename Point>
+  bool is_in(const Point& point) const {
+    return im_.is_in(get_x(point), get_y(point));
   }
 
 private:
@@ -206,7 +222,20 @@ public:
     return 1.;
   }
 
+  template<typename Point>
+  bool is_in(const Point& point) const {
+    const auto n(x_0_.size());
+    using size_t = decltype(x_0_.size());
+    for(size_t i(0); i < n; ++i) {
+      if(get_x(point) >= x_0_[i] && get_x(point) <= x_0_[i] + delta_x_[i] && get_y(point) >= y_0_[i] && get_x(point) <= y_0_[i] + delta_y_[i]) {
+        return true;
+      }
+    }
+    return false;
+  }
+
 private:
+  // TODO: Group all 4 vectors into a tuple so that you don't have to assume they have the same size
   std::vector<double> x_0_;
   std::vector<double> delta_x_;
   std::vector<double> y_0_;
