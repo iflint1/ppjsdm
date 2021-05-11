@@ -19,7 +19,7 @@ namespace detail {
 
 // Quick and dirty PRNG
 long discrete(long& l) {
-  const long m = 4294967296;
+  const long m = 65536; // 2^16
   const long a = 1103515245;
   const long c = 12345;
   l = (a * l + c) % m;
@@ -27,7 +27,7 @@ long discrete(long& l) {
 }
 
 double runif(long& l) {
-  const long m = 4294967296;
+  const long m = 65536; // 2^16
   const long a = 1103515245;
   const long c = 12345;
   l = (a * l + c) % m;
