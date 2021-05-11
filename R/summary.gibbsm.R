@@ -16,6 +16,7 @@ summary.gibbsm <- function(object, ...) {
   }
 
   vc <- compute_vcov(configuration = object$configuration_list[[1]],
+                     window = object$window,
                      covariates = object$parameters$covariates,
                      model = object$parameters$model,
                      medium_range_model = object$parameters$medium_range_model,
@@ -24,7 +25,6 @@ summary.gibbsm <- function(object, ...) {
                      long_range = object$coefficients$long_range,
                      saturation = object$parameters$saturation,
                      rho = exp(-object$data_list$shift),
-                     window_volume = area(object$window),
                      theta = object$coefficients_vector,
                      regressors = object$data_list$regressors,
                      data_list = object$data_list,
