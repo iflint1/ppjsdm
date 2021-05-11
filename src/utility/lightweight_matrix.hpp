@@ -14,6 +14,7 @@ private:
   using MatrixType = std::vector<T>;
 public:
   using size_type = typename MatrixType::size_type;
+  using value_type = T;
 
   explicit Lightweight_matrix(size_type rows, size_type columns):
   rows_(rows), columns_(columns), matrix_(rows * columns) {}
@@ -59,6 +60,7 @@ private:
   using MatrixType = std::vector<T>;
 public:
   using size_type = typename MatrixType::size_type;
+  using value_type = T;
 
   explicit Lightweight_square_matrix(size_type dim):
     columns_(dim), matrix_(dim * dim) {}
