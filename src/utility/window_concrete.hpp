@@ -48,9 +48,25 @@ public:
   }
 
   // TODO: Test is_in here and in other window classes
-  template<typename Point>
-  bool is_in(const Point& point) const {
-    return get_x(point) >= x_0_ && get_x(point) <= x_0_ + delta_x_ && get_y(point) >= y_0_ && get_x(point) <= y_0_ + delta_y_;
+  bool is_in(double x, double y) const {
+    return x >= x_0_ && x <= x_0_ + delta_x_ && y >= y_0_ && y <= y_0_ + delta_y_;
+  }
+
+  bool shrink_by_distance(double R) {
+    if(2 * R >= delta_x_ || 2 * R >= delta_y_) {
+      return false;
+    }
+    x_0_ += R;
+    delta_x_ -= 2 * R;
+
+    y_0_ += R;
+    delta_y_ -= 2 * R;
+
+    return true;
+  }
+
+  bool shrink_by_percent(double percent) {
+    return shrink_by_distance(0.25 * (delta_x_ + delta_y_ - std::sqrt((delta_x_ + delta_y_) * (delta_x_ + delta_y_) - 4 * percent * delta_x_ * delta_y_)));
   }
 
 private:
@@ -100,9 +116,22 @@ public:
     return 2 * radius_;
   }
 
-  template<typename Point>
-  bool is_in(const Point& point) const {
-    return (get_x(point) - x_) * (get_x(point) - x_) + (get_y(point) - y_) * (get_y(point) - y_) <= radius_ * radius_;
+  bool is_in(double x, double y) const {
+    return (x - x_) * (x - x_) + (y - y_) * (y - y_) <= radius_ * radius_;
+  }
+
+
+  bool shrink_by_distance(double R) {
+    if(radius_ < R) {
+      return false;
+    }
+    radius_ -= R;
+
+    return true;
+  }
+
+  bool shrink_by_percent(double percent) {
+    return shrink_by_distance(radius_ * (1 - std::sqrt(1 - percent)));
   }
 
 private:
@@ -147,9 +176,17 @@ public:
     return std::sqrt(square_diameter());
   }
 
-  template<typename Point>
-  bool is_in(const Point& point) const {
-    return im_.is_in(get_x(point), get_y(point));
+  bool is_in(double x, double y) const {
+    return im_.is_in(x, y);
+  }
+
+
+  bool shrink_by_distance(double) {
+    Rcpp::stop("Did not implement shrink_by_distance for im window.");
+  }
+
+  bool shrink_by_percent(double) {
+    Rcpp::stop("Did not implement shrink_by_percent for im window.");
   }
 
 private:
@@ -222,16 +259,49 @@ public:
     return 1.;
   }
 
-  template<typename Point>
-  bool is_in(const Point& point) const {
+  bool is_in(double x, double y) const {
     const auto n(x_0_.size());
     using size_t = decltype(x_0_.size());
     for(size_t i(0); i < n; ++i) {
-      if(get_x(point) >= x_0_[i] && get_x(point) <= x_0_[i] + delta_x_[i] && get_y(point) >= y_0_[i] && get_x(point) <= y_0_[i] + delta_y_[i]) {
+      if(x >= x_0_[i] && x <= x_0_[i] + delta_x_[i] && y >= y_0_[i] && y <= y_0_[i] + delta_y_[i]) {
         return true;
       }
     }
     return false;
+  }
+
+  bool shrink_by_distance(double R) {
+    const auto n(x_0_.size());
+    using size_t = decltype(x_0_.size());
+    for(size_t i(0); i < n; ++i) {
+      if(2 * R >= delta_x_[i] || 2 * R >= delta_y_[i]) {
+        return false;
+      }
+      x_0_[i] += R;
+      delta_x_[i] -= 2 * R;
+
+      y_0_[i] += R;
+      delta_y_[i] -= 2 * R;
+    }
+    return true;
+  }
+
+  // TODO: Might be possible to synchronize with function above
+  bool shrink_by_percent(double percent) {
+    const auto n(x_0_.size());
+    using size_t = decltype(x_0_.size());
+    for(size_t i(0); i < n; ++i) {
+      const auto R(0.25 * (delta_x_[i] + delta_y_[i] - std::sqrt((delta_x_[i] + delta_y_[i]) * (delta_x_[i] + delta_y_[i]) - 4 * percent * delta_x_[i] * delta_y_[i])));
+      if(2 * R >= delta_x_[i] || 2 * R >= delta_y_[i]) {
+        return false;
+      }
+      x_0_[i] += R;
+      delta_x_[i] -= 2 * R;
+
+      y_0_[i] += R;
+      delta_y_[i] -= 2 * R;
+    }
+    return true;
   }
 
 private:

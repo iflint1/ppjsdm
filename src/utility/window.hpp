@@ -16,8 +16,11 @@ namespace ppjsdm {
 
 class Window {
 public:
-  Window(SEXP window, Rcpp::NumericVector marked_range):
-  object_(make_window(window, marked_range)) {}
+  Window(SEXP window, Rcpp::NumericVector mark_range):
+  object_(make_window(window, mark_range)) {}
+
+  explicit Window(SEXP window):
+  Window(window, Rcpp::NumericVector::create(1, 1)) {}
 
   Marked_point sample(int type) const {
     return object_->sample(type);
@@ -35,6 +38,18 @@ public:
     return object_->diameter();
   }
 
+  bool is_in(double x, double y) const {
+    return object_->is_in(x, y);
+  }
+
+  bool shrink_by_distance(double R) {
+    return object_->shrink_by_distance(R);
+  }
+
+  bool shrink_by_percent(double percent) {
+    return object_->shrink_by_percent(percent);
+  }
+
 private:
   struct Concept {
     virtual ~Concept() {}
@@ -42,6 +57,9 @@ private:
     virtual double volume() const = 0;
     virtual double square_diameter() const = 0;
     virtual double diameter() const = 0;
+    virtual bool is_in(double x, double y) const = 0;
+    virtual bool shrink_by_distance(double R) = 0;
+    virtual bool shrink_by_percent(double R) = 0;
   };
 
   template<typename T>
@@ -66,11 +84,23 @@ private:
       return object_.diameter();
     }
 
+    bool is_in(double x, double y) const {
+      return object_.is_in(x, y);
+    }
+
+    bool shrink_by_distance(double R) {
+      return object_.shrink_by_distance(R);
+    }
+
+    bool shrink_by_percent(double percent) {
+      return object_.shrink_by_percent(percent);
+    }
+
   private:
     T object_;
   };
 
-  static std::shared_ptr<const Concept> make_window(SEXP window, Rcpp::NumericVector marked_range) {
+  static std::shared_ptr<Concept> make_window(SEXP window, Rcpp::NumericVector marked_range) {
     if(Rf_isNull(window)) {
       return std::make_shared<Concrete_window<detail::Rectangle_window>>(marked_range);
     }
@@ -90,7 +120,7 @@ private:
     }
   }
 
-  std::shared_ptr<const Concept> object_;
+  std::shared_ptr<Concept> object_;
 };
 
 } // namespace ppjsdm
