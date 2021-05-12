@@ -90,7 +90,7 @@ inline auto make_papangelou(const ppjsdm::Lightweight_matrix<double>& regressors
 
   std::vector<double> papangelou(regressors.nrow());
 
-#pragma omp parallel
+#pragma omp parallel default(none) shared(regressors, theta, papangelou)
 {
   decltype(papangelou) papangelou_private(regressors.nrow());
 #pragma omp for nowait
@@ -128,13 +128,13 @@ inline auto make_G2(const std::vector<double>& papangelou,
   const auto number_parameters(regressors.ncol());
 
   std::vector<computation_t> G2_vec(number_parameters);
+  ppjsdm::Lightweight_square_matrix<computation_t> G2(number_parameters);
   computation_t kappa(0.);
 
-  // Note: Strangely enough the two parallel sections below cannot be combined.
-  // I'm getting unexplained bugs involving NaN values when I try to.
-#pragma omp parallel
+#pragma omp parallel default(none) shared(papangelou, rho, regressors, type, kappa, G2, G2_vec)
 {
   decltype(G2_vec) G2_vec_private(number_parameters);
+  decltype(G2) G2_private(number_parameters);
   decltype(kappa) kappa_private(0.);
 #pragma omp for nowait
   for(size_t i = 0; i < regressors.nrow(); ++i) {
@@ -143,30 +143,11 @@ inline auto make_G2(const std::vector<double>& papangelou,
     const auto ratio(papangelou_value / papangelou_plus_rho);
     kappa_private += static_cast<computation_t>(rho[type[i] - 1]) * ratio;
 
-    const auto constant = ratio / papangelou_plus_rho;
-    for(size_t k1(0); k1 < number_parameters; ++k1) {
-      G2_vec_private[k1] += static_cast<computation_t>(regressors(i, k1)) * constant;
-    }
-  }
-#pragma omp critical
-  kappa += kappa_private;
-  for(size_t k1(0); k1 < number_parameters; ++k1) {
-    G2_vec[k1] += G2_vec_private[k1];
-  }
-}
-
-  ppjsdm::Lightweight_square_matrix<computation_t> G2(number_parameters);
-
-#pragma omp parallel
-{
-  decltype(G2) G2_private(number_parameters);
-#pragma omp for nowait
-  for(size_t i = 0; i < regressors.nrow(); ++i) {
-    const auto papangelou_value = static_cast<computation_t>(papangelou[i]);
-    const auto papangelou_plus_rho = papangelou_value + static_cast<computation_t>(rho[type[i] - 1]);
-    const auto ratio(papangelou_value / papangelou_plus_rho);
     const auto constant(ratio * ratio / papangelou_plus_rho / static_cast<computation_t>(rho[type[i] - 1]));
+    const auto constant_vec = ratio / papangelou_plus_rho;
     for(size_t k1(0); k1 < number_parameters; ++k1) {
+      G2_vec_private[k1] += static_cast<computation_t>(regressors(i, k1)) * constant_vec;
+
       const auto value = static_cast<computation_t>(regressors(i, k1)) * constant;
       for(size_t k2(k1); k2 < number_parameters; ++k2) {
         G2_private(k1, k2) += value * static_cast<computation_t>(regressors(i, k2));
@@ -174,10 +155,14 @@ inline auto make_G2(const std::vector<double>& papangelou,
     }
   }
 #pragma omp critical
+  {
+  kappa += kappa_private;
   for(size_t k1(0); k1 < number_parameters; ++k1) {
+    G2_vec[k1] += G2_vec_private[k1];
     for(size_t k2(k1); k2 < number_parameters; ++k2) {
       G2(k1, k2) += G2_private(k1, k2);
     }
+  }
   }
 }
 
@@ -218,7 +203,7 @@ inline auto make_S(const std::vector<double>& papangelou,
 
   ppjsdm::Lightweight_square_matrix<computation_t> S(number_parameters);
 
-#pragma omp parallel
+#pragma omp parallel default(none) shared(papangelou, rho, regressors, type, S)
 {
   decltype(S) S_private(number_parameters);
 #pragma omp for nowait
@@ -270,7 +255,7 @@ inline auto make_A1(const std::vector<double>& papangelou,
 
   ppjsdm::Lightweight_square_matrix<computation_t> A1(number_parameters);
 
-#pragma omp parallel
+#pragma omp parallel default(none) shared(papangelou, rho, regressors, type, A1)
 {
   decltype(A1) A1_private(number_parameters);
 #pragma omp for nowait
@@ -375,7 +360,10 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
     }
 
     const auto max_index(std::min<long long int>(filling + increment, static_cast<long long int>(ppjsdm::size(restricted_configuration)) * (static_cast<long long int>(ppjsdm::size(restricted_configuration)) - 1) / 2));
-#pragma omp parallel
+#pragma omp parallel default(none) \
+    shared(filling, regressors, compute_some_alphas, compute_some_gammas) \
+    shared(short_computation, medium_computation, estimate_alpha, estimate_gamma) \
+    shared(covariates, theta, papangelou, rho, mat)
 {
     decltype(mat) mat_private(number_parameters);
 #pragma omp for nowait

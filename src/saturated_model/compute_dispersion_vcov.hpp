@@ -111,9 +111,11 @@ struct generic_vcov_dispersion_computation {
       std::vector<DispersionType> dispersion_i(max_index - min_index);
       std::vector<DispersionType> dispersion_j(dispersion_i.size());
 
-#pragma omp parallel
+#pragma omp parallel default(none) shared(restricted_configuration) \
+      shared(min_index, max_index, count_vector, dispersion_i, dispersion_j) \
+      shared(number_types, index_in_configuration, varphi, sum_deltas)
 {
-      decltype(dispersion_i) dispersion_i_private(max_index - min_index);
+      decltype(dispersion_i) dispersion_i_private(dispersion_i.size());
       decltype(dispersion_j) dispersion_j_private(dispersion_i.size());
 #pragma omp for nowait
       for(std::remove_cv_t<decltype(dispersion_i.size())> index = min_index; index < max_index; ++index) {
