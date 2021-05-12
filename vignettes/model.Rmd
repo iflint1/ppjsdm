@@ -51,7 +51,8 @@ par(mar = c(5, 4, 4, 13) + 0.1)
 plot(configuration)
 ```
 
-Now, we can compute the Papangelou conditional intensity over the region.
+The Papangelou conditional intensity is the probability of finding a point at $(x,y)$, conditional on an existing configuration.
+We can compute the Papangelou conditional intensity over the region.
 
 ```{r}
 x_axis <- seq(from = 0, to = 1, by = 0.001)
@@ -65,7 +66,8 @@ z <- outer(x_axis, y_axis, function(x, y) {
 })
 ```
 
-In this case, the Papangelou conditional intensity is equal to the intensity over the whole region:
+The values of `z` contain the Papangelou conditional intensity over the whole region.
+In this case, the Papangelou conditional intensity is equal to the intensity everywhere:
 
 ```{r}
 all(z == exp(beta0))
