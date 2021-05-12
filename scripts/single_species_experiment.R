@@ -55,11 +55,10 @@ for(i in seq_len(nreplications)) {
   for(j in seq_len(ntypes)) {
     fit <- gibbsm(samples[[i]][j],
                   window = window,
-                  print = FALSE,
                   short_range = short_range,
                   medium_range = medium_range,
                   long_range = long_range,
-                  use_glmnet = FALSE,
+                  fitting_package = 'glm',
                   ndummy = ndummy,
                   model = model,
                   medium_range_model = medium_range_model,

@@ -65,7 +65,6 @@ tm <- Sys.time()
 for(i in seq_len(nreplications)) {
   fit1 <- gibbsm(samples[[i]][1],
                  window = window,
-                 print = FALSE,
                  short_range = short_range,
                  medium_range = medium_range,
                  long_range = long_range,
@@ -77,7 +76,6 @@ for(i in seq_len(nreplications)) {
                  saturation = saturation)
   fit2 <- gibbsm(samples[[i]][2],
                  window = window,
-                 print = FALSE,
                  short_range = short_range,
                  medium_range = medium_range,
                  long_range = long_range,

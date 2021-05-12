@@ -48,7 +48,6 @@ fit <- ppjsdm::gibbsm(configurations,
                       medium_range = medium_range,
                       long_range = long_range,
                       saturation = saturation,
-                      use_glmnet = FALSE,
-                      print = FALSE)
+                      use_glmnet = FALSE)
 coef <- fit$coefficients
 print(coef)

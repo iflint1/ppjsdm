@@ -68,7 +68,6 @@ tm <- Sys.time()
 for(i in seq_len(nreplications)) {
   fit <- gibbsm(samples[[i]],
                 window = window,
-                print = FALSE,
                 short_range = radius_range,
                 medium_range = c(0, 0),
                 long_range = c(0, 0),

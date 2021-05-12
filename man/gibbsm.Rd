@@ -14,7 +14,7 @@ gibbsm(
   medium_range,
   long_range,
   saturation,
-  print = FALSE,
+  debug = FALSE,
   fitting_package = "glmnet",
   use_aic = TRUE,
   max_dummy = 0,
@@ -44,7 +44,7 @@ gibbsm(
 
 \item{saturation}{Saturation parameter of the point process.}
 
-\item{print}{Print the fitted coefficients?}
+\item{debug}{Print debugging information?}
 
 \item{fitting_package}{Choices are `glmnet`, `oem` or `glm`.}
 

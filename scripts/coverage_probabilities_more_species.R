@@ -120,11 +120,10 @@ set.seed(seed)
 for(i in seq_len(nreplications)) {
   fit <- gibbsm(samples[[i]],
                 window = window,
-                print = FALSE,
                 short_range = short_range,
                 medium_range = medium_range,
                 long_range = long_range,
-                use_glmnet = FALSE,
+                fitting_package = 'glm',
                 max_dummy = max_dummy,
                 dummy_factor = dummy_factor,
                 model = model,

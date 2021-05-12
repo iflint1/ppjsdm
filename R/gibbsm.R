@@ -7,6 +7,7 @@ fit_gibbs <- function(gibbsm_data,
                       covariates_names,
                       use_regularization,
                       nthreads,
+                      debug,
                       ...) {
   regressors <- gibbsm_data$regressors
   if(any(is.na(regressors))) {
@@ -42,7 +43,15 @@ fit_gibbs <- function(gibbsm_data,
 
     if(use_regularization) {
       arguments <- append(arguments, user_supplied)
+      if(debug) {
+        tm <- Sys.time()
+        message("Calling glmnet...")
+      }
       fit <- do.call(glmnet, arguments)
+      if(debug) {
+        message("Finished call to glmnet.")
+        print(Sys.time() - tm)
+      }
 
       shift <- gibbsm_data$shift
 
@@ -67,7 +76,15 @@ fit_gibbs <- function(gibbsm_data,
         arguments <- append(arguments, list(lambda = rev(0:99)))
       }
       arguments <- append(arguments, user_supplied)
+      if(debug) {
+        tm <- Sys.time()
+        message("Calling glmnet...")
+      }
       fit <- do.call(glmnet, arguments)
+      if(debug) {
+        message("Finished call to glmnet.")
+        print(Sys.time() - tm)
+      }
 
       shift <- gibbsm_data$shift
 
@@ -116,7 +133,15 @@ fit_gibbs <- function(gibbsm_data,
         arguments <- append(arguments, list(penalty = "lasso"))
       }
       arguments <- append(arguments, user_supplied)
+      if(debug) {
+        tm <- Sys.time()
+        message("Calling oem...")
+      }
       fit <- do.call(oem, arguments)
+      if(debug) {
+        message("Finished call to oem.")
+        print(Sys.time() - tm)
+      }
 
       shift <- gibbsm_data$shift
 
@@ -168,7 +193,15 @@ fit_gibbs <- function(gibbsm_data,
         arguments <- append(arguments, list(penalty = "ols"))
       }
       arguments <- append(arguments, user_supplied)
+      if(debug) {
+        tm <- Sys.time()
+        message("Calling oem...")
+      }
       fit <- do.call(oem, arguments)
+      if(debug) {
+        message("Finished call to oem.")
+        print(Sys.time() - tm)
+      }
 
       shift <- gibbsm_data$shift
 
@@ -188,7 +221,17 @@ fit_gibbs <- function(gibbsm_data,
     regressors <- as.data.frame(regressors)
     regressors$offset <- gibbsm_data$offset
     regressors$response <- gibbsm_data$response
+
+    if(debug) {
+      tm <- Sys.time()
+      message("Calling glm...")
+    }
     fit <- glm(fmla, family = binomial(), data = regressors, ...)
+    if(debug) {
+      message("Finished call to glm.")
+      print(Sys.time() - tm)
+    }
+
     shift <- rep(0, length(gibbsm_data$shift))
 
     aic <- AIC(fit)
@@ -264,7 +307,7 @@ fit_gibbs <- function(gibbsm_data,
 #' @param medium_range Medium range interaction radius. Filled with 0 by default.
 #' @param long_range Long range interaction radius. Filled with 0 by default.
 #' @param saturation Saturation parameter of the point process.
-#' @param print Print the fitted coefficients?
+#' @param debug Print debugging information?
 #' @param fitting_package Choices are `glmnet`, `oem` or `glm`.
 #' @param use_aic Use AIC instead of BIC for model fitting?
 #' @param max_dummy Maximum number of dummy points for each type. By default, follows the recommendation of Baddeley et al.
@@ -288,7 +331,7 @@ gibbsm <- function(configuration_list,
                    medium_range,
                    long_range,
                    saturation,
-                   print = FALSE,
+                   debug = FALSE,
                    fitting_package = "glmnet",
                    use_aic = TRUE,
                    max_dummy = 0,
@@ -390,7 +433,8 @@ gibbsm <- function(configuration_list,
                                               dummy_factor = dummy_factor,
                                               estimate_alpha = estimate_alpha,
                                               estimate_gamma = estimate_gamma,
-                                              nthreads = nthreads)
+                                              nthreads = nthreads,
+                                              debug = debug)
 
       fit <- fit_gibbs(gibbsm_data_list,
                        fitting_package = "glm",
@@ -401,6 +445,7 @@ gibbsm <- function(configuration_list,
                        covariates_names = covariates_names,
                        use_regularization = use_regularization,
                        nthreads = nthreads,
+                       debug = debug,
                        ...)
       list(fit = fit, sh = sh, me = me, lo = lo)
     }
@@ -469,7 +514,8 @@ gibbsm <- function(configuration_list,
                                             dummy_factor = dummy_factor,
                                             estimate_alpha = estimate_alpha,
                                             estimate_gamma = estimate_gamma,
-                                            nthreads = nthreads)
+                                            nthreads = nthreads,
+                                            debug = debug)
 
     fitted <- fit_gibbs(gibbsm_data_list,
                         fitting_package = fitting_package,
@@ -480,6 +526,7 @@ gibbsm <- function(configuration_list,
                         covariates_names = covariates_names,
                         use_regularization = use_regularization,
                         nthreads = nthreads,
+                        debug = debug,
                         ...)
   } else {
     short_range <- as.matrix(short_range)
@@ -516,7 +563,8 @@ gibbsm <- function(configuration_list,
                                             dummy_factor = dummy_factor,
                                             estimate_alpha = estimate_alpha,
                                             estimate_gamma = estimate_gamma,
-                                            nthreads = nthreads)
+                                            nthreads = nthreads,
+                                            debug = debug)
 
     fitted <- fit_gibbs(gibbsm_data_list,
                         fitting_package = fitting_package,
@@ -527,16 +575,13 @@ gibbsm <- function(configuration_list,
                         covariates_names = covariates_names,
                         use_regularization = use_regularization,
                         nthreads = nthreads,
+                        debug = debug,
                         ...)
   }
   fits <-  fitted$fit
   fits_coefficients <- fitted$coefficients
   aic <- fitted$aic
   bic <- fitted$bic
-
-  if(print) {
-    print(fits_coefficients)
-  }
 
   ret <- list(complete = fits,
               configuration_list = configuration_list,

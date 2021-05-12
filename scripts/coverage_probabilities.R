@@ -61,7 +61,6 @@ set.seed(seed)
 for(i in seq_len(nreplications)) {
   fit <- gibbsm(samples[[i]],
                 window = window,
-                print = FALSE,
                 short_range = short_range,
                 medium_range = medium_range,
                 long_range = long_range,

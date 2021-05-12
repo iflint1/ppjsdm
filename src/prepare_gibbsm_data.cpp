@@ -23,6 +23,7 @@
 #include <iterator> // std::next
 #include <string> // std::string, std::to_string
 #include <sstream> // std::stringstream
+#include <chrono> // std::chrono::steady_clock::time_point
 #include <type_traits> // std::remove_cv_t
 #include <vector> // std::vector
 
@@ -49,10 +50,17 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
                                       Rcpp::LogicalMatrix estimate_alpha,
                                       Rcpp::LogicalMatrix estimate_gamma,
                                       int number_types,
-                                      int nthreads) {
+                                      int nthreads,
+                                      bool debug) {
 #ifdef _OPENMP
   omp_set_num_threads(nthreads);
 #endif
+
+  std::chrono::steady_clock::time_point begin;
+  if(debug) {
+    Rcpp::Rcout << "Starting computation of the regression matrix...\n";
+    begin = std::chrono::steady_clock::now();
+  }
 
   // Check if we actually need to compute alpha/gamma regressors
   bool need_to_compute_alpha(false);
@@ -124,6 +132,11 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   // Precompute short and medium range dispersions
   std::vector<std::vector<std::vector<double>>> dispersion_short(configuration_list.size());
   std::vector<std::vector<std::vector<double>>> dispersion_medium(configuration_list.size());
+  std::chrono::steady_clock::time_point begin_dispersion;
+  if(debug) {
+    Rcpp::Rcout << "Starting pre-computation of the dispersions to put into the regression matrix...\n";
+    begin_dispersion = std::chrono::steady_clock::now();
+  }
   for(size_t configuration_index(0); configuration_index < configuration_list.size(); ++configuration_index) {
     if(need_to_compute_alpha) {
       dispersion_short[configuration_index] = ppjsdm::compute_dispersion_for_fitting(dispersion_model,
@@ -135,6 +148,19 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
                                                                                       number_types,
                                                                                       configuration_list[configuration_index], D);
     }
+  }
+  if(debug) {
+    // TODO: Make this into function, here and below.
+    auto dur(std::chrono::steady_clock::now() - begin_dispersion);
+    const auto h(std::chrono::duration_cast<std::chrono::hours>(dur));
+    const auto m(std::chrono::duration_cast<std::chrono::minutes>(dur -= h));
+    const auto s(std::chrono::duration_cast<std::chrono::seconds>(dur -= m));
+    const auto ms(std::chrono::duration_cast<std::chrono::milliseconds>(dur -= s));
+    Rcpp::Rcout << "Finished computing the dispersions. Elapsed time = "
+                << h.count() << " hours, "
+                << m.count() << " minutes, "
+                << s.count() << " seconds, "
+                << ms.count() << " milliseconds.\n";
   }
 
   // Precompute how many of the points in the configuration we'll have to drop due to NA values on the covariates.
@@ -256,6 +282,19 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   const auto col_names(make_model_coloumn_names(covariates, estimate_alpha, estimate_gamma));
   Rcpp::colnames(regressors) = col_names;
 
+  if(debug) {
+    auto dur(std::chrono::steady_clock::now() - begin);
+    const auto h(std::chrono::duration_cast<std::chrono::hours>(dur));
+    const auto m(std::chrono::duration_cast<std::chrono::minutes>(dur -= h));
+    const auto s(std::chrono::duration_cast<std::chrono::seconds>(dur -= m));
+    const auto ms(std::chrono::duration_cast<std::chrono::milliseconds>(dur -= s));
+    Rcpp::Rcout << "Finished computing the regression matrix. Elapsed time = "
+                << h.count() << " hours, "
+                << m.count() << " minutes, "
+                << s.count() << " seconds, "
+                << ms.count() << " milliseconds.\n";
+  }
+
   return Rcpp::List::create(Rcpp::Named("response") = response,
                             Rcpp::Named("x") = x,
                             Rcpp::Named("y") = y,
@@ -283,7 +322,8 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
                                double dummy_factor,
                                Rcpp::LogicalMatrix estimate_alpha,
                                Rcpp::LogicalMatrix estimate_gamma,
-                               int nthreads) {
+                               int nthreads,
+                               bool debug) {
   // Construct std::vector of configurations.
   std::vector<std::vector<ppjsdm::Marked_point>> vector_configurations(configuration_list.size());
   for(R_xlen_t i(0); i < configuration_list.size(); ++i) {
@@ -313,5 +353,18 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
   }
   const auto dispersion(ppjsdm::Saturated_model(model, short_range, saturation));
   const auto medium_range_dispersion(ppjsdm::Saturated_model(medium_range_model, medium_range, long_range, saturation));
-  return prepare_gibbsm_data_helper(vector_configurations, cpp_window, ppjsdm::Im_list_wrapper(covariates), dispersion, medium_range_dispersion, max_points_by_type, max_dummy, min_dummy, dummy_factor, estimate_alpha, estimate_gamma, number_types, nthreads);
+  return prepare_gibbsm_data_helper(vector_configurations,
+                                    cpp_window,
+                                    ppjsdm::Im_list_wrapper(covariates),
+                                    dispersion,
+                                    medium_range_dispersion,
+                                    max_points_by_type,
+                                    max_dummy,
+                                    min_dummy,
+                                    dummy_factor,
+                                    estimate_alpha,
+                                    estimate_gamma,
+                                    number_types,
+                                    nthreads,
+                                    debug);
 }

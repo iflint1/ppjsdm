@@ -44,8 +44,7 @@ if(use_joint_pdf) {
              short_range = short_range,
              medium_range = medium_range,
              long_range = long_range,
-             print = FALSE,
-             use_glmnet = FALSE)
+             fitting_package = 'glm')
   estimate <- G$coefficients
 } else {
   G <-lapply(Z, function(z) gibbsm(z,
@@ -55,8 +54,7 @@ if(use_joint_pdf) {
                                    short_range = short_range,
                                    medium_range = medium_range,
                                    long_range = long_range,
-                                   print = FALSE,
-                                   use_glmnet = FALSE))
+                                   fitting_package = 'glm'))
   W <- lapply(G, function(g) g$coefficients)
   if(length(W) == 1) {
     estimate <- unlist(W)
