@@ -306,10 +306,13 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
                             int nthreads,
                             const ppjsdm::Im_list_wrapper& covariates,
                             double initial_window_volume,
-                            const ppjsdm::Window& restricted_window) {
+                            const ppjsdm::Window& restricted_window,
+                            bool debug) {
 #ifdef _OPENMP
   omp_set_num_threads(nthreads);
 #endif
+
+  ppjsdm::PreciseTimer timer{};
 
   const auto restricted_configuration(detail::restrict_configuration(restricted_window, configuration));
 
@@ -353,11 +356,21 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
     // Parallel computations done before adding A2 and A3
     using precomputation_t = decltype(ppjsdm::compute_dispersion_for_vcov(dispersion_model, number_types, configuration, restricted_configuration, 0, 0, 1));
     precomputation_t short_computation, medium_computation;
+
+    if(debug) {
+      timer.set_current();
+      Rcpp::Rcout << "Starting computation of batch of dispersions...\n";
+    }
     if(compute_some_alphas) {
       short_computation = ppjsdm::compute_dispersion_for_vcov(dispersion_model, number_types, configuration, restricted_configuration, filling, filling + increment, nthreads);
     }
     if(compute_some_gammas) {
       medium_computation = ppjsdm::compute_dispersion_for_vcov(medium_dispersion_model, number_types, configuration, restricted_configuration, filling, filling + increment, nthreads);
+    }
+    if(debug) {
+      Rcpp::Rcout << "Computed batch of dispersions. Elapsed time: " << timer.elapsed_time();
+      timer.set_current();
+      Rcpp::Rcout << "Filling the matrix...\n";
     }
 
     const auto max_index(std::min<long long int>(filling + increment, static_cast<long long int>(ppjsdm::size(restricted_configuration)) * (static_cast<long long int>(ppjsdm::size(restricted_configuration)) - 1) / 2));
@@ -494,6 +507,10 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
       }
     }
 }
+    if(debug) {
+      Rcpp::Rcout << "Finished filling matrix. Elapsed time: " << timer.elapsed_time();
+      timer.set_current();
+    }
   }
 
   arma::mat A(number_parameters, number_parameters);
@@ -582,7 +599,8 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
                                                 nthreads,
                                                 covariates,
                                                 initial_window_volume,
-                                                window));
+                                                window,
+                                                debug));
 
   if(debug) {
     Rcpp::Rcout << "Finished computation of A2 + A3. Time elapsed: " << timer.elapsed_time();
