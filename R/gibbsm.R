@@ -598,6 +598,7 @@ gibbsm <- function(configuration_list,
               window = window,
               fit_algorithm = fitted$fit_algorithm,
               used_regularization = use_regularization,
+              debug = debug,
               nthreads = nthreads)
 
   if(estimate_radii) {

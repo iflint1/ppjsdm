@@ -26,6 +26,7 @@ vcov.gibbsm <- function(object, ...) {
                      data_list = object$data_list,
                      estimate_alpha = object$estimate_alpha,
                      estimate_gamma = object$estimate_gamma,
+                     debug = object$debug,
                      nthreads = object$nthreads)
   vc$G1 + vc$G2
 }

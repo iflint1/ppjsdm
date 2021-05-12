@@ -30,6 +30,7 @@ summary.gibbsm <- function(object, ...) {
                      data_list = object$data_list,
                      estimate_alpha = object$estimate_alpha,
                      estimate_gamma = object$estimate_gamma,
+                     debug = object$debug,
                      nthreads = object$nthreads)
 
   se_statistical <- sqrt(diag(vc$G1))

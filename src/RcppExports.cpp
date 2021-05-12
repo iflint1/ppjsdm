@@ -33,8 +33,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // compute_vcov
-Rcpp::List compute_vcov(SEXP configuration, SEXP window, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::NumericMatrix short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, Rcpp::NumericVector rho, Rcpp::NumericVector theta, Rcpp::NumericMatrix regressors, Rcpp::List data_list, Rcpp::LogicalMatrix estimate_alpha, Rcpp::LogicalMatrix estimate_gamma, int nthreads);
-RcppExport SEXP _ppjsdm_compute_vcov(SEXP configurationSEXP, SEXP windowSEXP, SEXP covariatesSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP rhoSEXP, SEXP thetaSEXP, SEXP regressorsSEXP, SEXP data_listSEXP, SEXP estimate_alphaSEXP, SEXP estimate_gammaSEXP, SEXP nthreadsSEXP) {
+Rcpp::List compute_vcov(SEXP configuration, SEXP window, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::NumericMatrix short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, Rcpp::NumericVector rho, Rcpp::NumericVector theta, Rcpp::NumericMatrix regressors, Rcpp::List data_list, Rcpp::LogicalMatrix estimate_alpha, Rcpp::LogicalMatrix estimate_gamma, bool debug, int nthreads);
+RcppExport SEXP _ppjsdm_compute_vcov(SEXP configurationSEXP, SEXP windowSEXP, SEXP covariatesSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP rhoSEXP, SEXP thetaSEXP, SEXP regressorsSEXP, SEXP data_listSEXP, SEXP estimate_alphaSEXP, SEXP estimate_gammaSEXP, SEXP debugSEXP, SEXP nthreadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -53,8 +53,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::List >::type data_list(data_listSEXP);
     Rcpp::traits::input_parameter< Rcpp::LogicalMatrix >::type estimate_alpha(estimate_alphaSEXP);
     Rcpp::traits::input_parameter< Rcpp::LogicalMatrix >::type estimate_gamma(estimate_gammaSEXP);
+    Rcpp::traits::input_parameter< bool >::type debug(debugSEXP);
     Rcpp::traits::input_parameter< int >::type nthreads(nthreadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(compute_vcov(configuration, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, rho, theta, regressors, data_list, estimate_alpha, estimate_gamma, nthreads));
+    rcpp_result_gen = Rcpp::wrap(compute_vcov(configuration, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, rho, theta, regressors, data_list, estimate_alpha, estimate_gamma, debug, nthreads));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -199,7 +200,7 @@ RcppExport SEXP run_testthat_tests(SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ppjsdm_compute_papangelou_cpp", (DL_FUNC) &_ppjsdm_compute_papangelou_cpp, 16},
-    {"_ppjsdm_compute_vcov", (DL_FUNC) &_ppjsdm_compute_vcov, 16},
+    {"_ppjsdm_compute_vcov", (DL_FUNC) &_ppjsdm_compute_vcov, 17},
     {"_ppjsdm_has_duplicates", (DL_FUNC) &_ppjsdm_has_duplicates, 1},
     {"_ppjsdm_make_default_model_parameters", (DL_FUNC) &_ppjsdm_make_default_model_parameters, 10},
     {"_ppjsdm_prepare_gibbsm_data", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data, 17},

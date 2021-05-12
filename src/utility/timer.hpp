@@ -13,12 +13,12 @@ public:
   Timer():
   start_(Clock::now()) {}
 
-  template<typename Rep = typename Clock::duration::rep>
-  auto elapsed_time() const {
+  auto elapsed_time() {
     std::stringstream ss;
     ss << "Elapsed time: ";
     std::atomic_thread_fence(std::memory_order_relaxed);
-    auto dur(Clock::now() - start_);
+    const auto now(Clock::now());
+    auto dur(now - start_);
     std::atomic_thread_fence(std::memory_order_relaxed);
     const auto h(std::chrono::duration_cast<std::chrono::hours>(dur));
     const auto m(std::chrono::duration_cast<std::chrono::minutes>(dur -= h));
@@ -34,11 +34,12 @@ public:
       ss << s.count() << " seconds, ";
     }
     ss << ms.count() << " milliseconds.\n";
+    start_ = now;
     return ss.str();
   }
 
 private:
-  const typename Clock::time_point start_;
+  typename Clock::time_point start_;
 };
 
 using PreciseTimer = Timer<>;

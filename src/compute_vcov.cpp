@@ -20,6 +20,7 @@
 #include "utility/im_wrapper.hpp"
 #include "utility/is_symmetric_matrix.hpp"
 #include "utility/lightweight_matrix.hpp"
+#include "utility/timer.hpp"
 #include "utility/window.hpp"
 
 #include <algorithm> // std::remove_if
@@ -525,17 +526,42 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
                                Rcpp::List data_list,
                                const ppjsdm::Lightweight_square_matrix<bool>& estimate_alpha,
                                const ppjsdm::Lightweight_square_matrix<bool>& estimate_gamma,
+                               bool debug,
                                int nthreads) {
+  ppjsdm::PreciseTimer timer{};
+  if(debug) {
+    Rcpp::Rcout << "Starting computation of the Papangelou conditional intensity...\n";
+  }
   const auto papangelou(detail::make_papangelou(regressors, theta, nthreads));
+  if(debug) {
+    Rcpp::Rcout << "Finished computing the Papangelou conditional intensity. " << timer.elapsed_time();
+    Rcpp::Rcout << "Starting computation of S...\n";
+  }
   const auto S(detail::make_S(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), nthreads));
+  if(debug) {
+    Rcpp::Rcout << "Finished computing S. " << timer.elapsed_time();
+    Rcpp::Rcout << "Starting inversion of S...\n";
+  }
   if(S.has_nan()) {
     Rcpp::stop("Found NaN values in matrix S (in vcov computation).");
   }
   // arma::inv appears to be less risky than arma::inv_sympd,
   // especially in corner cases where S appears numerically to not be positive definite.
   const auto S_inv(arma::inv(S));
+  if(debug) {
+    Rcpp::Rcout << "Finished inversion of S. " << timer.elapsed_time();
+    Rcpp::Rcout << "Starting computation of G2...\n";
+  }
   const auto G2(detail::make_G2(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), initial_window_volume, nthreads));
+  if(debug) {
+    Rcpp::Rcout << "Finished computation of G2. " << timer.elapsed_time();
+    Rcpp::Rcout << "Starting computation of A1...\n";
+  }
   const auto A1(detail::make_A1(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), nthreads));
+  if(debug) {
+    Rcpp::Rcout << "Finished computation of A1. " << timer.elapsed_time();
+    Rcpp::Rcout << "Starting computation of A2 + A3...\n";
+  }
 
   detail::restrict_window(window, configuration, 2000, 0.05);
   const auto A2_plus_A3(detail::make_A2_plus_A3(papangelou,
@@ -553,6 +579,11 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
                                                 initial_window_volume,
                                                 window));
 
+  if(debug) {
+    Rcpp::Rcout << "Finished computation of A2 + A3. " << timer.elapsed_time();
+    Rcpp::Rcout << "Starting clean-up...\n";
+  }
+
   const auto col_names(make_model_coloumn_names(covariates, estimate_alpha, estimate_gamma));
 
   Rcpp::NumericMatrix G1_rcpp(Rcpp::wrap(S_inv * (A1 + A2_plus_A3) * S_inv));
@@ -562,6 +593,10 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
   Rcpp::rownames(G1_rcpp) = col_names;
   Rcpp::colnames(G2_rcpp) = col_names;
   Rcpp::rownames(G2_rcpp) = col_names;
+
+  if(debug) {
+    Rcpp::Rcout << "Finished computing the vcov matrix. " << timer.elapsed_time();
+  }
 
   return Rcpp::List::create(Rcpp::Named("G1") = G1_rcpp,
                             Rcpp::Named("G2") = G2_rcpp);
@@ -583,6 +618,7 @@ Rcpp::List compute_vcov(SEXP configuration,
                         Rcpp::List data_list,
                         Rcpp::LogicalMatrix estimate_alpha,
                         Rcpp::LogicalMatrix estimate_gamma,
+                        bool debug,
                         int nthreads) {
   // Convert the SEXP configuration to a C++ object.
   const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::wrap(configuration));
@@ -610,6 +646,7 @@ Rcpp::List compute_vcov(SEXP configuration,
                              data_list,
                              ppjsdm::Lightweight_square_matrix<bool>(estimate_alpha),
                              ppjsdm::Lightweight_square_matrix<bool>(estimate_gamma),
+                             debug,
                              nthreads);
 }
 
