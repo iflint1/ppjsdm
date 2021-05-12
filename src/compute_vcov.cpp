@@ -531,11 +531,13 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
   if(S.has_nan()) {
     Rcpp::stop("Found NaN values in matrix S (in vcov computation).");
   }
-  const auto S_inv(arma::inv_sympd(S));
+  // arma::inv appears to be less risky than arma::inv_sympd,
+  // especially in corner cases where S appears numerically to not be positive definite.
+  const auto S_inv(arma::inv(S));
   const auto G2(detail::make_G2(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), initial_window_volume, nthreads));
   const auto A1(detail::make_A1(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), nthreads));
 
-  detail::restrict_window(window, configuration, 1000, 0.05);
+  detail::restrict_window(window, configuration, 2000, 0.05);
   const auto A2_plus_A3(detail::make_A2_plus_A3(papangelou,
                                                 rho,
                                                 theta,
