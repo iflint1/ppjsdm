@@ -155,12 +155,11 @@ inline auto make_G2(const std::vector<double>& papangelou,
   }
 }
 
-  // TODO: Square matrix instead
-  ppjsdm::Lightweight_matrix<computation_t> G2(number_parameters, number_parameters);
+  ppjsdm::Lightweight_square_matrix<computation_t> G2(number_parameters);
 
 #pragma omp parallel
 {
-  decltype(G2) G2_private(number_parameters, number_parameters);
+  decltype(G2) G2_private(number_parameters);
 #pragma omp for nowait
   for(size_t i = 0; i < regressors.nrow(); ++i) {
     const auto papangelou_value = static_cast<computation_t>(papangelou[i]);
@@ -217,11 +216,11 @@ inline auto make_S(const std::vector<double>& papangelou,
 
   const auto number_parameters(regressors.ncol());
 
-  ppjsdm::Lightweight_matrix<computation_t> S(number_parameters, number_parameters);
+  ppjsdm::Lightweight_square_matrix<computation_t> S(number_parameters);
 
 #pragma omp parallel
 {
-  decltype(S) S_private(number_parameters, number_parameters);
+  decltype(S) S_private(number_parameters);
 #pragma omp for nowait
   for(size_t row = 0; row < regressors.nrow(); ++row) {
     const auto papangelou_value(static_cast<computation_t>(papangelou[row]));
@@ -269,11 +268,11 @@ inline auto make_A1(const std::vector<double>& papangelou,
 
   const auto number_parameters(regressors.ncol());
 
-  ppjsdm::Lightweight_matrix<computation_t> A1(number_parameters, number_parameters);
+  ppjsdm::Lightweight_square_matrix<computation_t> A1(number_parameters);
 
 #pragma omp parallel
 {
-  decltype(A1) A1_private(number_parameters, number_parameters);
+  decltype(A1) A1_private(number_parameters);
 #pragma omp for nowait
   for(size_t row = 0; row < regressors.nrow(); ++row) {
     const auto papangelou_value = static_cast<computation_t>(papangelou[row]);
@@ -313,8 +312,8 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
                             const std::vector<double>& theta,
                             const ppjsdm::Lightweight_matrix<double>& regressors,
                             Rcpp::List data_list,
-                            const ppjsdm::Lightweight_matrix<bool>& estimate_alpha,
-                            const ppjsdm::Lightweight_matrix<bool>& estimate_gamma,
+                            const ppjsdm::Lightweight_square_matrix<bool>& estimate_alpha,
+                            const ppjsdm::Lightweight_square_matrix<bool>& estimate_gamma,
                             const ppjsdm::Saturated_model& dispersion_model,
                             const ppjsdm::Saturated_model& medium_dispersion_model,
                             const Configuration& configuration,
@@ -344,7 +343,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
   using size_t = decltype(ppjsdm::size(configuration));
 
   // Automatically initialized to zeros
-  ppjsdm::Lightweight_matrix<computation_t> mat(number_parameters, number_parameters);
+  ppjsdm::Lightweight_square_matrix<computation_t> mat(number_parameters);
 
   // Do you need to compute some of the alphas/gammas?
   bool compute_some_alphas(false);
@@ -378,7 +377,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
     const auto max_index(std::min<long long int>(filling + increment, static_cast<long long int>(ppjsdm::size(restricted_configuration)) * (static_cast<long long int>(ppjsdm::size(restricted_configuration)) - 1) / 2));
 #pragma omp parallel
 {
-    decltype(mat) mat_private(number_parameters, number_parameters);
+    decltype(mat) mat_private(number_parameters);
 #pragma omp for nowait
     for(long long int index_in_computation = filling; index_in_computation < max_index; ++index_in_computation) {
       const auto pr(ppjsdm::decode_linear(index_in_computation, ppjsdm::size(restricted_configuration)));
@@ -536,8 +535,8 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
                                const std::vector<double>& theta,
                                const ppjsdm::Lightweight_matrix<double>& regressors,
                                Rcpp::List data_list,
-                               const ppjsdm::Lightweight_matrix<bool>& estimate_alpha,
-                               const ppjsdm::Lightweight_matrix<bool>& estimate_gamma,
+                               const ppjsdm::Lightweight_square_matrix<bool>& estimate_alpha,
+                               const ppjsdm::Lightweight_square_matrix<bool>& estimate_gamma,
                                int nthreads) {
   const auto papangelou(detail::make_papangelou(regressors, theta, nthreads));
   const auto S(detail::make_S(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), nthreads));
@@ -619,8 +618,8 @@ Rcpp::List compute_vcov(SEXP configuration,
                              Rcpp::as<std::vector<double>>(theta),
                              ppjsdm::Lightweight_matrix<double>(regressors),
                              data_list,
-                             ppjsdm::Lightweight_matrix<bool>(estimate_alpha),
-                             ppjsdm::Lightweight_matrix<bool>(estimate_gamma),
+                             ppjsdm::Lightweight_square_matrix<bool>(estimate_alpha),
+                             ppjsdm::Lightweight_square_matrix<bool>(estimate_gamma),
                              nthreads);
 }
 
