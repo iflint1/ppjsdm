@@ -350,7 +350,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
   const long long int increment(1000000);
   for(long long int filling(0); filling < static_cast<long long int>(ppjsdm::size(restricted_configuration)) * (static_cast<long long int>(ppjsdm::size(restricted_configuration)) - 1) / 2; filling += increment) {
     // Parallel computations done before adding A2 and A3
-    using precomputation_t = decltype(ppjsdm::compute_dispersion_for_vcov(dispersion_model, number_types, configuration, nthreads));
+    using precomputation_t = decltype(ppjsdm::compute_dispersion_for_vcov(dispersion_model, number_types, configuration, restricted_configuration, 0, 0, 1));
     precomputation_t short_computation, medium_computation;
     if(compute_some_alphas) {
       short_computation = ppjsdm::compute_dispersion_for_vcov(dispersion_model, number_types, configuration, restricted_configuration, filling, filling + increment, nthreads);

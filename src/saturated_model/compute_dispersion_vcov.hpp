@@ -123,7 +123,7 @@ struct generic_vcov_dispersion_computation {
         const size_t i(pr.first);
         const size_t j(pr.second);
 
-        // At this point, we have i < j < configuration_size
+        // At this point, we have i < j < restricted_configuration_size
         if(get_type(restricted_configuration[i]) == get_type(restricted_configuration[j])) {
           dispersion_i_private[index - min_index] = DispersionType(number_types);
           dispersion_j_private[index - min_index] = DispersionType(number_types);
@@ -160,7 +160,6 @@ struct generic_vcov_dispersion_computation {
 
 } // namespace detail
 
-// TODO: Temp organisation of the three functions
 template<typename Configuration>
 inline auto compute_dispersion_for_vcov(const Saturated_model& model,
                                         R_xlen_t number_types,
@@ -176,18 +175,8 @@ template<typename Configuration>
 inline auto compute_dispersion_for_vcov(const Saturated_model& model,
                                         R_xlen_t number_types,
                                         const Configuration& configuration,
-                                        typename Configuration::size_type min_index,
-                                        typename Configuration::size_type max_index,
                                         int nthreads = 1) {
-  return compute_dispersion_for_vcov(model, number_types, configuration, configuration, min_index, max_index, nthreads);
-}
-
-template<typename Configuration>
-inline auto compute_dispersion_for_vcov(const Saturated_model& model,
-                                        R_xlen_t number_types,
-                                        const Configuration& configuration,
-                                        int nthreads = 1) {
-  return compute_dispersion_for_vcov(model, number_types, configuration, 0, size(configuration) * (size(configuration) - 1) / 2, nthreads);
+  return compute_dispersion_for_vcov(model, number_types, configuration, configuration, 0, size(configuration) * (size(configuration) - 1) / 2, nthreads);
 }
 
 } // namespace ppjsdm
