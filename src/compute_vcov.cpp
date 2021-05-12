@@ -127,59 +127,75 @@ inline auto make_G2(const std::vector<double>& papangelou,
 
   const auto number_parameters(regressors.ncol());
 
-  std::vector<computation_t> G2(number_parameters);
-  std::vector<computation_t> G2_over_rho(number_parameters);
-  ppjsdm::Lightweight_matrix<computation_t> G(number_parameters, number_parameters);
+  std::vector<computation_t> G2_vec(number_parameters);
   computation_t kappa(0.);
 
+  // Note: Strangely enough the two parallel sections below cannot be combined.
+  // I'm getting unexplained bugs involving NaN values when I try to.
 #pragma omp parallel
 {
-  decltype(G2) G2_private(number_parameters);
-  decltype(G2_over_rho) G2_over_rho_private(number_parameters);
-  decltype(G) G_private(number_parameters, number_parameters);
+  decltype(G2_vec) G2_vec_private(number_parameters);
   decltype(kappa) kappa_private(0.);
 #pragma omp for nowait
   for(size_t i = 0; i < regressors.nrow(); ++i) {
     const auto papangelou_value = static_cast<computation_t>(papangelou[i]);
     const auto papangelou_plus_rho = papangelou_value + static_cast<computation_t>(rho[type[i] - 1]);
     const auto ratio(papangelou_value / papangelou_plus_rho);
-    kappa_private += ratio;
+    kappa_private += static_cast<computation_t>(rho[type[i] - 1]) * ratio;
 
-    const auto constant_1 = ratio / papangelou_plus_rho;
-    const auto constant_2 = constant_1 / static_cast<computation_t>(rho[type[i] - 1]);
-    const auto constant(constant_2 * ratio);
+    const auto constant = ratio / papangelou_plus_rho;
     for(size_t k1(0); k1 < number_parameters; ++k1) {
-      G2_private[k1] += static_cast<computation_t>(regressors(i, k1)) * constant_2;
-      G2_over_rho_private[k1] += static_cast<computation_t>(regressors(i, k1)) * constant_1;
-      const auto value = static_cast<computation_t>(regressors(i, k1)) * constant;
-      for(size_t k2(k1); k2 < number_parameters; ++k2) {
-        G_private(k1, k2) += value * static_cast<computation_t>(regressors(i, k2));
-      }
+      G2_vec_private[k1] += static_cast<computation_t>(regressors(i, k1)) * constant;
     }
   }
 #pragma omp critical
   kappa += kappa_private;
   for(size_t k1(0); k1 < number_parameters; ++k1) {
-    G2[k1] += G2_private[k1];
-    G2_over_rho[k1] += G2_over_rho_private[k1];
+    G2_vec[k1] += G2_vec_private[k1];
+  }
+}
+
+  // TODO: Square matrix instead
+  ppjsdm::Lightweight_matrix<computation_t> G2(number_parameters, number_parameters);
+
+#pragma omp parallel
+{
+  decltype(G2) G2_private(number_parameters, number_parameters);
+#pragma omp for nowait
+  for(size_t i = 0; i < regressors.nrow(); ++i) {
+    const auto papangelou_value = static_cast<computation_t>(papangelou[i]);
+    const auto papangelou_plus_rho = papangelou_value + static_cast<computation_t>(rho[type[i] - 1]);
+    const auto ratio(papangelou_value / papangelou_plus_rho);
+    const auto constant(ratio * ratio / papangelou_plus_rho / static_cast<computation_t>(rho[type[i] - 1]));
+    for(size_t k1(0); k1 < number_parameters; ++k1) {
+      const auto value = static_cast<computation_t>(regressors(i, k1)) * constant;
+      for(size_t k2(k1); k2 < number_parameters; ++k2) {
+        G2_private(k1, k2) += value * static_cast<computation_t>(regressors(i, k2));
+      }
+    }
+  }
+#pragma omp critical
+  for(size_t k1(0); k1 < number_parameters; ++k1) {
     for(size_t k2(k1); k2 < number_parameters; ++k2) {
-      G(k1, k2) += G_private(k1, k2);
+      G2(k1, k2) += G2_private(k1, k2);
     }
   }
 }
 
+  const auto a = static_cast<computation_t>(window_volume) * static_cast<computation_t>(number_parameters) / kappa;
   for(size_t k1(0); k1 < number_parameters; ++k1) {
+    const auto b = a * G2_vec[k1];
     for(size_t k2(k1); k2 < number_parameters; ++k2) {
-      G(k1, k2) -= static_cast<computation_t>(window_volume) * static_cast<computation_t>(number_parameters) * G2[k1] * G2_over_rho[k2] / kappa;
+      G2(k1, k2) -= b * G2_vec[k2];
     }
   }
 
   // Construct the return object
   arma::mat A(number_parameters, number_parameters);
   for(size_t k1(0); k1 < number_parameters; ++k1) {
-    A(k1, k1) = static_cast<typename decltype(A)::value_type>(G(k1, k1));
+    A(k1, k1) = static_cast<typename decltype(A)::value_type>(G2(k1, k1));
     for(size_t k2(k1 + 1); k2 < number_parameters; ++k2) {
-      A(k1, k2) = static_cast<typename decltype(A)::value_type>(G(k1, k2));
+      A(k1, k2) = static_cast<typename decltype(A)::value_type>(G2(k1, k2));
       A(k2, k1) = A(k1, k2);
     }
   }
@@ -529,8 +545,7 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
     Rcpp::stop("Found NaN values in matrix S (in vcov computation).");
   }
   const auto S_inv(arma::inv_sympd(S));
-  // TODO: Getting issues with nthreads != 1, why?
-  const auto G2(detail::make_G2(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), initial_window_volume, 1));
+  const auto G2(detail::make_G2(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), initial_window_volume, nthreads));
   const auto A1(detail::make_A1(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), nthreads));
 
   detail::restrict_window(window, configuration, 1000, 0.05);
