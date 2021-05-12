@@ -11,15 +11,34 @@ template<typename Clock = std::chrono::high_resolution_clock>
 class Timer {
 public:
   Timer():
-  start_(Clock::now()) {}
+  start_(Clock::now()),
+  current_(start_) {}
 
-  auto elapsed_time() {
-    std::stringstream ss;
-    ss << "Elapsed time: ";
+  void set_current() {
+    current_ = get_current_time();
+  }
+
+  auto elapsed_time() const {
+    return make_printing_string(get_current_time() - current_);
+  }
+
+  auto total_time() const {
+    return make_printing_string(get_current_time() - start_);
+  }
+
+private:
+  const typename Clock::time_point start_;
+  typename Clock::time_point current_;
+
+  auto get_current_time() const {
     std::atomic_thread_fence(std::memory_order_relaxed);
     const auto now(Clock::now());
-    auto dur(now - start_);
     std::atomic_thread_fence(std::memory_order_relaxed);
+    return now;
+  }
+
+  auto make_printing_string(decltype(current_ - start_) dur) const {
+    std::stringstream ss;
     const auto h(std::chrono::duration_cast<std::chrono::hours>(dur));
     const auto m(std::chrono::duration_cast<std::chrono::minutes>(dur -= h));
     const auto s(std::chrono::duration_cast<std::chrono::seconds>(dur -= m));
@@ -34,12 +53,8 @@ public:
       ss << s.count() << " seconds, ";
     }
     ss << ms.count() << " milliseconds.\n";
-    start_ = now;
     return ss.str();
   }
-
-private:
-  typename Clock::time_point start_;
 };
 
 using PreciseTimer = Timer<>;

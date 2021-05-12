@@ -56,7 +56,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   omp_set_num_threads(nthreads);
 #endif
 
-  ppjsdm::PreciseTimer function_timer{};
+  ppjsdm::PreciseTimer timer{};
   if(debug) {
     Rcpp::Rcout << "Starting computation of the regression matrix...\n";
   }
@@ -131,8 +131,8 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   // Precompute short and medium range dispersions
   std::vector<std::vector<std::vector<double>>> dispersion_short(configuration_list.size());
   std::vector<std::vector<std::vector<double>>> dispersion_medium(configuration_list.size());
-  ppjsdm::PreciseTimer dispersion_timer{};
   if(debug) {
+    timer.set_current();
     Rcpp::Rcout << "Starting pre-computation of the dispersions to put into the regression matrix...\n";
   }
   for(size_t configuration_index(0); configuration_index < configuration_list.size(); ++configuration_index) {
@@ -148,7 +148,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     }
   }
   if(debug) {
-    Rcpp::Rcout << "Finished computing the dispersions. " << dispersion_timer.elapsed_time();
+    Rcpp::Rcout << "Finished computing the dispersions. Time elapsed: " << timer.elapsed_time();
   }
 
   // Precompute how many of the points in the configuration we'll have to drop due to NA values on the covariates.
@@ -271,7 +271,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   Rcpp::colnames(regressors) = col_names;
 
   if(debug) {
-    Rcpp::Rcout << "Finished computing the regression matrix. " << function_timer.elapsed_time();
+    Rcpp::Rcout << "Finished computing the regression matrix. Time elapsed: " << timer.total_time();
   }
 
   return Rcpp::List::create(Rcpp::Named("response") = response,

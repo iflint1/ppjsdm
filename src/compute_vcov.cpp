@@ -534,12 +534,14 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
   }
   const auto papangelou(detail::make_papangelou(regressors, theta, nthreads));
   if(debug) {
-    Rcpp::Rcout << "Finished computing the Papangelou conditional intensity. " << timer.elapsed_time();
+    Rcpp::Rcout << "Finished computing the Papangelou conditional intensity. Time elapsed: " << timer.elapsed_time();
+    timer.set_current();
     Rcpp::Rcout << "Starting computation of S...\n";
   }
   const auto S(detail::make_S(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), nthreads));
   if(debug) {
-    Rcpp::Rcout << "Finished computing S. " << timer.elapsed_time();
+    Rcpp::Rcout << "Finished computing S. Time elapsed: " << timer.elapsed_time();
+    timer.set_current();
     Rcpp::Rcout << "Starting inversion of S...\n";
   }
   if(S.has_nan()) {
@@ -549,17 +551,20 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
   // especially in corner cases where S appears numerically to not be positive definite.
   const auto S_inv(arma::inv(S));
   if(debug) {
-    Rcpp::Rcout << "Finished inversion of S. " << timer.elapsed_time();
+    Rcpp::Rcout << "Finished inversion of S. Time elapsed: " << timer.elapsed_time();
+    timer.set_current();
     Rcpp::Rcout << "Starting computation of G2...\n";
   }
   const auto G2(detail::make_G2(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), initial_window_volume, nthreads));
   if(debug) {
-    Rcpp::Rcout << "Finished computation of G2. " << timer.elapsed_time();
+    Rcpp::Rcout << "Finished computation of G2. Time elapsed: " << timer.elapsed_time();
+    timer.set_current();
     Rcpp::Rcout << "Starting computation of A1...\n";
   }
   const auto A1(detail::make_A1(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), nthreads));
   if(debug) {
-    Rcpp::Rcout << "Finished computation of A1. " << timer.elapsed_time();
+    Rcpp::Rcout << "Finished computation of A1. Time elapsed: " << timer.elapsed_time();
+    timer.set_current();
     Rcpp::Rcout << "Starting computation of A2 + A3...\n";
   }
 
@@ -580,7 +585,8 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
                                                 window));
 
   if(debug) {
-    Rcpp::Rcout << "Finished computation of A2 + A3. " << timer.elapsed_time();
+    Rcpp::Rcout << "Finished computation of A2 + A3. Time elapsed: " << timer.elapsed_time();
+    timer.set_current();
     Rcpp::Rcout << "Starting clean-up...\n";
   }
 
@@ -595,7 +601,8 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
   Rcpp::rownames(G2_rcpp) = col_names;
 
   if(debug) {
-    Rcpp::Rcout << "Finished computing the vcov matrix. " << timer.elapsed_time();
+    Rcpp::Rcout << "Finished computing the vcov matrix. Time elapsed: " << timer.elapsed_time();
+    Rcpp::Rcout << "Total time taken to compute vcov matrix: " << timer.total_time();
   }
 
   return Rcpp::List::create(Rcpp::Named("G1") = G1_rcpp,
