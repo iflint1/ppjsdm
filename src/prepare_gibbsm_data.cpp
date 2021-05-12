@@ -16,6 +16,7 @@
 #include "utility/im_wrapper.hpp"
 #include "utility/is_symmetric_matrix.hpp"
 #include "utility/lightweight_matrix.hpp"
+#include "utility/timer.hpp"
 #include "utility/window.hpp"
 
 #include <algorithm> // std::remove_if, std::max_element, std::fill
@@ -23,7 +24,6 @@
 #include <iterator> // std::next
 #include <string> // std::string, std::to_string
 #include <sstream> // std::stringstream
-#include <chrono> // std::chrono::steady_clock::time_point
 #include <type_traits> // std::remove_cv_t
 #include <vector> // std::vector
 
@@ -56,10 +56,9 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   omp_set_num_threads(nthreads);
 #endif
 
-  std::chrono::steady_clock::time_point begin;
+  ppjsdm::PreciseTimer function_timer{};
   if(debug) {
     Rcpp::Rcout << "Starting computation of the regression matrix...\n";
-    begin = std::chrono::steady_clock::now();
   }
 
   // Check if we actually need to compute alpha/gamma regressors
@@ -132,10 +131,9 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   // Precompute short and medium range dispersions
   std::vector<std::vector<std::vector<double>>> dispersion_short(configuration_list.size());
   std::vector<std::vector<std::vector<double>>> dispersion_medium(configuration_list.size());
-  std::chrono::steady_clock::time_point begin_dispersion;
+  ppjsdm::PreciseTimer dispersion_timer{};
   if(debug) {
     Rcpp::Rcout << "Starting pre-computation of the dispersions to put into the regression matrix...\n";
-    begin_dispersion = std::chrono::steady_clock::now();
   }
   for(size_t configuration_index(0); configuration_index < configuration_list.size(); ++configuration_index) {
     if(need_to_compute_alpha) {
@@ -150,17 +148,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     }
   }
   if(debug) {
-    // TODO: Make this into function, here and below.
-    auto dur(std::chrono::steady_clock::now() - begin_dispersion);
-    const auto h(std::chrono::duration_cast<std::chrono::hours>(dur));
-    const auto m(std::chrono::duration_cast<std::chrono::minutes>(dur -= h));
-    const auto s(std::chrono::duration_cast<std::chrono::seconds>(dur -= m));
-    const auto ms(std::chrono::duration_cast<std::chrono::milliseconds>(dur -= s));
-    Rcpp::Rcout << "Finished computing the dispersions. Elapsed time = "
-                << h.count() << " hours, "
-                << m.count() << " minutes, "
-                << s.count() << " seconds, "
-                << ms.count() << " milliseconds.\n";
+    Rcpp::Rcout << "Finished computing the dispersions. " << dispersion_timer.elapsed_time();
   }
 
   // Precompute how many of the points in the configuration we'll have to drop due to NA values on the covariates.
@@ -283,16 +271,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   Rcpp::colnames(regressors) = col_names;
 
   if(debug) {
-    auto dur(std::chrono::steady_clock::now() - begin);
-    const auto h(std::chrono::duration_cast<std::chrono::hours>(dur));
-    const auto m(std::chrono::duration_cast<std::chrono::minutes>(dur -= h));
-    const auto s(std::chrono::duration_cast<std::chrono::seconds>(dur -= m));
-    const auto ms(std::chrono::duration_cast<std::chrono::milliseconds>(dur -= s));
-    Rcpp::Rcout << "Finished computing the regression matrix. Elapsed time = "
-                << h.count() << " hours, "
-                << m.count() << " minutes, "
-                << s.count() << " seconds, "
-                << ms.count() << " milliseconds.\n";
+    Rcpp::Rcout << "Finished computing the regression matrix. " << function_timer.elapsed_time();
   }
 
   return Rcpp::List::create(Rcpp::Named("response") = response,
