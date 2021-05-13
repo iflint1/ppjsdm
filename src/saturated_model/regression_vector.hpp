@@ -24,7 +24,7 @@ inline auto make_regression_vector(typename std::vector<ComputationType>::size_t
 
   // Fill covariates
   for(decltype(covariates.size()) covariate_index(0); covariate_index < covariates.size(); ++covariate_index) {
-    regression_vector[index_start_covariates + covariate_index * number_types + type_index] = covariates[covariate_index];
+    regression_vector[index_start_covariates + covariate_index * number_types + type_index] = static_cast<ComputationType>(covariates[covariate_index]);
   }
 
   // Fill alpha & gamma
@@ -34,17 +34,17 @@ inline auto make_regression_vector(typename std::vector<ComputationType>::size_t
     for(size_t k(j); k < number_types; ++k) {
       if(estimate_alpha(j, k)) {
         if(j == type_index) {
-          regression_vector[number_types + index_alpha] = dispersion_short[k];
+          regression_vector[number_types + index_alpha] = static_cast<ComputationType>(dispersion_short[k]);
         } else if(k == type_index) {
-          regression_vector[number_types + index_alpha] = dispersion_short[j];
+          regression_vector[number_types + index_alpha] = static_cast<ComputationType>(dispersion_short[j]);
         }
         ++index_alpha;
       }
       if(estimate_gamma(j, k)) {
         if(j == type_index) {
-          regression_vector[index_start_gamma + index_gamma] = dispersion_medium[k];
+          regression_vector[index_start_gamma + index_gamma] = static_cast<ComputationType>(dispersion_medium[k]);
         } else if(k == type_index) {
-          regression_vector[index_start_gamma + index_gamma] = dispersion_medium[j];
+          regression_vector[index_start_gamma + index_gamma] = static_cast<ComputationType>(dispersion_medium[j]);
         }
         ++index_gamma;
       }
