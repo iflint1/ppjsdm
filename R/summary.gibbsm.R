@@ -33,7 +33,6 @@ summary.gibbsm <- function(object, ...) {
                      debug = object$debug,
                      nthreads = object$nthreads)
 
-  se_statistical <- sqrt(diag(vc$G1))
   se_numerical <- sqrt(diag(vc$G2))
   se <- sqrt(diag(vc$G1 + vc$G2))
 
