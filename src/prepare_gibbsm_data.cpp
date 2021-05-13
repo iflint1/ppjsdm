@@ -8,6 +8,7 @@
 #include "point/point_manipulation.hpp"
 
 #include "saturated_model/compute_dispersion_fitting.hpp"
+#include "saturated_model/regression_vector.hpp"
 
 #include "simulation/rppp_single.hpp"
 
@@ -232,37 +233,21 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
       // fill rho
       rho_offset[filling] = -std::log(static_cast<double>(rho_times_volume[type_index]) / volume);
 
-      // fill beta0
-      regressors(filling, type_index) = 1.;
-
-      // fill covariates
-      for(size_t covariate_index(0); covariate_index < static_cast<size_t>(covariates.size()); ++covariate_index) {
-        regressors(filling, index_start_covariates + covariate_index * number_types + type_index) = covariates_values[covariate_index];
+      // Fill regressors
+      const auto regression_vector(ppjsdm::make_regression_vector<double>(type_index,
+                                                                          number_types,
+                                                                          regressors.ncol(),
+                                                                          index_start_covariates,
+                                                                          index_start_gamma,
+                                                                          covariates_values,
+                                                                          dispersion_short[configuration_index][point_index],
+                                                                          dispersion_medium[configuration_index][point_index],
+                                                                          estimate_alpha,
+                                                                          estimate_gamma));
+      for(decltype(regression_vector.size()) k(0); k < regression_vector.size(); ++k) {
+        regressors(filling, k) = regression_vector[k];
       }
 
-      // fill alpha & gamma
-      size_t index_alpha(0);
-      size_t index_gamma(0);
-      for(int j(0); j < number_types; ++j) {
-        for(int k(j); k < number_types; ++k) {
-          if(estimate_alpha(j, k)) {
-            if(j == type_index) {
-              regressors(filling, number_types + index_alpha) = dispersion_short[configuration_index][point_index][k];
-            } else if(k == type_index) {
-              regressors(filling, number_types + index_alpha) = dispersion_short[configuration_index][point_index][j];
-            }
-            ++index_alpha;
-          }
-          if(estimate_gamma(j, k)) {
-            if(j == type_index) {
-              regressors(filling, index_start_gamma + index_gamma) = dispersion_medium[configuration_index][point_index][k];
-            } else if(k == type_index) {
-              regressors(filling, index_start_gamma + index_gamma) = dispersion_medium[configuration_index][point_index][j];
-            }
-            ++index_gamma;
-          }
-        }
-      }
       ++filling;
     }
   }

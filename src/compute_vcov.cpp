@@ -10,6 +10,7 @@
 
 #include "saturated_model/compute_dispersion_vcov.hpp"
 #include "saturated_model/exponential_family_model.hpp"
+#include "saturated_model/regression_vector.hpp"
 #include "saturated_model/saturated_model.hpp"
 
 #include "simulation/rbinomialpp_single.hpp"
@@ -110,7 +111,7 @@ inline auto make_papangelou(const ppjsdm::Lightweight_matrix<double>& regressors
   }
 }
 
-  return papangelou;
+return papangelou;
 }
 
 inline auto make_G2(const std::vector<double>& papangelou,
@@ -156,7 +157,7 @@ inline auto make_G2(const std::vector<double>& papangelou,
     }
   }
 #pragma omp critical
-  {
+{
   kappa += kappa_private;
   for(size_t k1(0); k1 < number_parameters; ++k1) {
     G2_vec[k1] += G2_vec_private[k1];
@@ -164,28 +165,28 @@ inline auto make_G2(const std::vector<double>& papangelou,
       G2(k1, k2) += G2_private(k1, k2);
     }
   }
+}
+}
+
+const auto a = static_cast<computation_t>(window_volume) * static_cast<computation_t>(number_parameters) / kappa;
+for(size_t k1(0); k1 < number_parameters; ++k1) {
+  const auto b = a * G2_vec[k1];
+  for(size_t k2(k1); k2 < number_parameters; ++k2) {
+    G2(k1, k2) -= b * G2_vec[k2];
   }
 }
 
-  const auto a = static_cast<computation_t>(window_volume) * static_cast<computation_t>(number_parameters) / kappa;
-  for(size_t k1(0); k1 < number_parameters; ++k1) {
-    const auto b = a * G2_vec[k1];
-    for(size_t k2(k1); k2 < number_parameters; ++k2) {
-      G2(k1, k2) -= b * G2_vec[k2];
-    }
+// Construct the return object
+arma::mat A(number_parameters, number_parameters);
+for(size_t k1(0); k1 < number_parameters; ++k1) {
+  A(k1, k1) = static_cast<typename decltype(A)::value_type>(G2(k1, k1));
+  for(size_t k2(k1 + 1); k2 < number_parameters; ++k2) {
+    A(k1, k2) = static_cast<typename decltype(A)::value_type>(G2(k1, k2));
+    A(k2, k1) = A(k1, k2);
   }
+}
 
-  // Construct the return object
-  arma::mat A(number_parameters, number_parameters);
-  for(size_t k1(0); k1 < number_parameters; ++k1) {
-    A(k1, k1) = static_cast<typename decltype(A)::value_type>(G2(k1, k1));
-    for(size_t k2(k1 + 1); k2 < number_parameters; ++k2) {
-      A(k1, k2) = static_cast<typename decltype(A)::value_type>(G2(k1, k2));
-      A(k2, k1) = A(k1, k2);
-    }
-  }
-
-  return A;
+return A;
 }
 
 inline auto make_S(const std::vector<double>& papangelou,
@@ -227,17 +228,17 @@ inline auto make_S(const std::vector<double>& papangelou,
   }
 }
 
-  // Construct the return object
-  arma::mat A(number_parameters, number_parameters);
-  for(size_t k1(0); k1 < number_parameters; ++k1) {
-    A(k1, k1) = static_cast<typename decltype(A)::value_type>(S(k1, k1));
-    for(size_t k2(k1 + 1); k2 < number_parameters; ++k2) {
-      A(k1, k2) = static_cast<typename decltype(A)::value_type>(S(k1, k2));
-      A(k2, k1) = A(k1, k2);
-    }
+// Construct the return object
+arma::mat A(number_parameters, number_parameters);
+for(size_t k1(0); k1 < number_parameters; ++k1) {
+  A(k1, k1) = static_cast<typename decltype(A)::value_type>(S(k1, k1));
+  for(size_t k2(k1 + 1); k2 < number_parameters; ++k2) {
+    A(k1, k2) = static_cast<typename decltype(A)::value_type>(S(k1, k2));
+    A(k2, k1) = A(k1, k2);
   }
+}
 
-  return A;
+return A;
 }
 
 inline auto make_A1(const std::vector<double>& papangelou,
@@ -279,17 +280,17 @@ inline auto make_A1(const std::vector<double>& papangelou,
   }
 }
 
-  // Construct the return object
-  arma::mat A(number_parameters, number_parameters);
-  for(size_t k1(0); k1 < number_parameters; ++k1) {
-    A(k1, k1) = static_cast<typename decltype(A)::value_type>(A1(k1, k1));
-    for(size_t k2(k1 + 1); k2 < number_parameters; ++k2) {
-      A(k1, k2) = static_cast<typename decltype(A)::value_type>(A1(k1, k2));
-      A(k2, k1) = A(k1, k2);
-    }
+// Construct the return object
+arma::mat A(number_parameters, number_parameters);
+for(size_t k1(0); k1 < number_parameters; ++k1) {
+  A(k1, k1) = static_cast<typename decltype(A)::value_type>(A1(k1, k1));
+  for(size_t k2(k1 + 1); k2 < number_parameters; ++k2) {
+    A(k1, k2) = static_cast<typename decltype(A)::value_type>(A1(k1, k2));
+    A(k2, k1) = A(k1, k2);
   }
+}
 
-  return A;
+return A;
 }
 
 template<typename Configuration>
@@ -312,29 +313,31 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
   omp_set_num_threads(nthreads);
 #endif
 
+  // Timer used to print debugging information
   ppjsdm::PreciseTimer timer{};
 
+  // A2 and A3 are going to be computed with only points from the restricted window.
   const auto restricted_configuration(detail::restrict_configuration(restricted_window, configuration));
 
+  // Extract some values relating to the number of parameters and how they're ordered
   const int number_types(rho.size());
   const auto number_parameters_struct(ppjsdm::get_number_parameters(number_types, covariates.size(), estimate_alpha, estimate_gamma));
   const auto index_start_gamma(number_parameters_struct.index_start_gamma);
   const auto index_start_covariates(number_parameters_struct.index_start_covariates);
   const auto number_parameters(number_parameters_struct.total_parameters);
 
+  // We're given an R List containing the following vectors, convert them to thread-safe C++ containers
   const auto response(Rcpp::as<std::vector<int>>(data_list["response"]));
   const auto x(Rcpp::as<std::vector<double>>(data_list["x"]));
   const auto y(Rcpp::as<std::vector<double>>(data_list["y"]));
   const auto type(Rcpp::as<std::vector<int>>(data_list["type"]));
   const auto mark(Rcpp::as<std::vector<double>>(data_list["mark"]));
 
+  // A few useful typedefs
   using computation_t = long double;
   using size_t = decltype(ppjsdm::size(configuration));
 
-  // Automatically initialized to zeros
-  ppjsdm::Lightweight_square_matrix<computation_t> mat(number_parameters);
-
-  // Do you need to compute some of the alphas/gammas?
+  // Do you need to compute some of the alphas/gammas? If not, we can skip some of the dispersion computations
   bool compute_some_alphas(false);
   bool compute_some_gammas(false);
   for(int i(0); i < number_types; ++i) {
@@ -347,6 +350,32 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
       }
     }
   }
+
+  // In the main loop, we need to compute papangelou[i] and regressors[i, *] / (rho + papangelou[i])
+  // for indices i that correspond to points in the restricted configuration. Precompute this here.
+  std::vector<std::vector<computation_t>> regressors_over_papangelou_plus_rho(ppjsdm::size(restricted_configuration));
+  std::vector<computation_t> restricted_papangelou(ppjsdm::size(restricted_configuration));
+  for(size_t i = 0; i < ppjsdm::size(restricted_configuration); ++i) {
+    regressors_over_papangelou_plus_rho[i] = typename decltype(regressors_over_papangelou_plus_rho)::value_type(number_parameters);
+
+    typename decltype(x)::size_type index{};
+    for(typename decltype(x)::size_type l(0); l < x.size(); ++l) {
+      if(ppjsdm::is_equal(restricted_configuration[i], ppjsdm::Marked_point(x[l], y[l], type[l] - 1, mark[l]))) {
+        index = l;
+        break;
+      }
+    }
+    const auto pap = static_cast<computation_t>(papangelou[index]);
+    const auto r = static_cast<computation_t>(rho[ppjsdm::get_type(restricted_configuration[i])]);
+    restricted_papangelou[i] = pap;
+    for(size_t k1(0); k1 < number_parameters; ++k1) {
+      const auto reg = static_cast<computation_t>(regressors(index, k1));
+      regressors_over_papangelou_plus_rho[i][k1] = reg / (pap + r);
+    }
+  }
+
+  // Automatically initialized to zeros
+  ppjsdm::Lightweight_square_matrix<computation_t> mat(number_parameters);
 
   // Add A2 and A3 by using precomputed values above.
   // TODO: This depends on memory
@@ -374,139 +403,97 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
     }
 
     const auto max_index(std::min<long long int>(filling + increment, static_cast<long long int>(ppjsdm::size(restricted_configuration)) * (static_cast<long long int>(ppjsdm::size(restricted_configuration)) - 1) / 2));
-#pragma omp parallel default(none) \
-    shared(filling, regressors, compute_some_alphas, compute_some_gammas) \
-    shared(short_computation, medium_computation, estimate_alpha, estimate_gamma) \
-    shared(covariates, theta, papangelou, rho, mat)
-{
-    decltype(mat) mat_private(number_parameters);
+#pragma omp parallel default(none)                                                  \
+    shared(filling, regressors, compute_some_alphas, compute_some_gammas)           \
+      shared(short_computation, medium_computation, estimate_alpha, estimate_gamma) \
+      shared(covariates, theta, papangelou, rho, mat, restricted_papangelou, regressors_over_papangelou_plus_rho)
+      {
+        decltype(mat) mat_private(number_parameters);
 #pragma omp for nowait
-    for(long long int index_in_computation = filling; index_in_computation < max_index; ++index_in_computation) {
-      const auto pr(ppjsdm::decode_linear(index_in_computation, ppjsdm::size(restricted_configuration)));
-      const size_t i(pr.first);
-      const size_t j(pr.second);
-      const auto point_i(restricted_configuration[i]);
-      const auto point_j(restricted_configuration[j]);
-      long long int i_index_regressors{};
-      for(decltype(regressors.nrow()) l(0); l < regressors.nrow(); ++l) {
-        if(ppjsdm::is_equal(point_i, ppjsdm::Marked_point(x[l], y[l], type[l] - 1, mark[l]))) {
-          i_index_regressors = l;
-          break;
-        }
-      }
-      long long int j_index_regressors{};
-      for(decltype(regressors.nrow()) l(0); l < regressors.nrow(); ++l) {
-        if(ppjsdm::is_equal(point_j, ppjsdm::Marked_point(x[l], y[l], type[l] - 1, mark[l]))) {
-          j_index_regressors = l;
-          break;
-        }
-      }
+        for(long long int index_in_computation = filling; index_in_computation < max_index; ++index_in_computation) {
+          const auto pr(ppjsdm::decode_linear(index_in_computation, ppjsdm::size(restricted_configuration)));
+          const size_t i(pr.first);
+          const size_t j(pr.second);
+          const auto point_i(restricted_configuration[i]);
+          const auto point_j(restricted_configuration[j]);
 
-      // Recover the precomputed short and medium range dispersions
-      using dispersion_t = std::remove_cv_t<std::remove_reference_t<decltype(short_computation.first[0])>>;
-      dispersion_t short_i, medium_i, short_j, medium_j;
-      if(compute_some_alphas) {
-        short_i = short_computation.first[index_in_computation - filling];
-        short_j = short_computation.second[index_in_computation - filling];
-      }
-      if(compute_some_gammas) {
-        medium_i = medium_computation.first[index_in_computation - filling];
-        medium_j = medium_computation.second[index_in_computation - filling];
-      }
+          // Recover the precomputed short and medium range dispersions
+          using dispersion_t = std::remove_cv_t<std::remove_reference_t<decltype(short_computation.first[0])>>;
+          dispersion_t short_i, medium_i, short_j, medium_j;
+          if(compute_some_alphas) {
+            short_i = short_computation.first[index_in_computation - filling];
+            short_j = short_computation.second[index_in_computation - filling];
+          }
+          if(compute_some_gammas) {
+            medium_i = medium_computation.first[index_in_computation - filling];
+            medium_j = medium_computation.second[index_in_computation - filling];
+          }
 
+          std::vector<double> covariates_i(covariates.size());
+          std::vector<double> covariates_j(covariates.size());
+          for(decltype(covariates.size()) k2(0); k2 < covariates.size(); ++k2) {
+            covariates_i[k2] = covariates[k2](point_i);
+            covariates_j[k2] = covariates[k2](point_j);
+          }
 
-      // TODO: Might want to write a function synchronized with prepare_gibbsm_data
-      // that constructs the two vectors below.
-      std::vector<computation_t> t_i(number_parameters);
-      std::vector<computation_t> t_j(number_parameters);
+          const auto t_i(ppjsdm::make_regression_vector<computation_t>(ppjsdm::get_type(point_i),
+                                                                       number_types,
+                                                                       number_parameters,
+                                                                       index_start_covariates,
+                                                                       index_start_gamma,
+                                                                       covariates_i,
+                                                                       short_i,
+                                                                       medium_i,
+                                                                       estimate_alpha,
+                                                                       estimate_gamma));
+          const auto t_j(ppjsdm::make_regression_vector<computation_t>(ppjsdm::get_type(point_j),
+                                                                       number_types,
+                                                                       number_parameters,
+                                                                       index_start_covariates,
+                                                                       index_start_gamma,
+                                                                       covariates_j,
+                                                                       short_j,
+                                                                       medium_j,
+                                                                       estimate_alpha,
+                                                                       estimate_gamma));
 
-      t_i[ppjsdm::get_type(point_i)] = static_cast<computation_t>(1.);
-      t_j[ppjsdm::get_type(point_j)] = static_cast<computation_t>(1.);
-
-      for(int k2(0); k2 < covariates.size(); ++k2) {
-        t_i[index_start_covariates + k2 * number_types + ppjsdm::get_type(point_i)] = static_cast<computation_t>(covariates[k2](point_i));
-        t_j[index_start_covariates + k2 * number_types + ppjsdm::get_type(point_j)] = static_cast<computation_t>(covariates[k2](point_j));
-      }
-
-      size_t current_index_alpha(0);
-      size_t current_index_gamma(0);
-      for(int k1(0); k1 < number_types; ++k1) {
-        if(k1 == ppjsdm::get_type(point_i)) {
-          for(int k2(k1); k2 < number_types; ++k2) {
-            if(estimate_alpha(k1, k2)) {
-              t_i[number_types + current_index_alpha + k2 - k1] = static_cast<computation_t>(short_i[k2]);
+          computation_t inner_product_i(0);
+          computation_t inner_product_j(0);
+          for(size_t k1(0); k1 < number_parameters; ++k1) {
+            inner_product_i += static_cast<computation_t>(theta[k1]) * t_i[k1];
+            inner_product_j += static_cast<computation_t>(theta[k1]) * t_j[k1];
+          }
+          const auto papangelou_i(std::exp(inner_product_i));
+          const auto papangelou_j(std::exp(inner_product_j));
+          const auto x1 = papangelou_i / restricted_papangelou[i] - static_cast<computation_t>(1.);
+          const auto x2 = (papangelou_i + static_cast<computation_t>(rho[ppjsdm::get_type(point_i)])) * (papangelou_j + static_cast<computation_t>(rho[ppjsdm::get_type(point_j)]));
+          const auto x3 = papangelou_j / restricted_papangelou[j] - static_cast<computation_t>(1.);
+          const auto constant_1 = x1 / x2;
+          const auto constant_2 = x3 / x2;
+          for(size_t k1(0); k1 < number_parameters; ++k1) {
+            const auto a1 = regressors_over_papangelou_plus_rho[i][k1];
+            const auto a2 = t_i[k1] / (papangelou_i + static_cast<computation_t>(rho[ppjsdm::get_type(point_i)]));
+            const auto b1 = regressors_over_papangelou_plus_rho[j][k1];
+            const auto b2 = t_j[k1] / (papangelou_j + static_cast<computation_t>(rho[ppjsdm::get_type(point_j)]));
+            for(size_t k2(k1); k2 < number_parameters; ++k2) {
+              mat_private(k1, k2) += t_i[k1] * t_j[k2] * constant_1;
+              mat_private(k1, k2) += t_j[k1] * t_i[k2] * constant_2;
+              const auto c1 = regressors_over_papangelou_plus_rho[j][k2];
+              const auto c2 = t_j[k2] / (papangelou_j + static_cast<computation_t>(rho[ppjsdm::get_type(point_j)]));
+              mat_private(k1, k2) += (a1 - a2) * (c1 - c2);
+              const auto d1 = regressors_over_papangelou_plus_rho[i][k2];
+              const auto d2 = t_i[k2] / (papangelou_i + static_cast<computation_t>(rho[ppjsdm::get_type(point_i)]));
+              mat_private(k1, k2) += (b1 - b2) * (d1 - d2);
             }
-            if(estimate_gamma(k1, k2)) {
-              t_i[index_start_gamma + current_index_gamma + k2 - k1] = static_cast<computation_t>(medium_i[k2]);
-            }
-          }
-        } else if(k1 < ppjsdm::get_type(point_i)) {
-          if(estimate_alpha(k1, ppjsdm::get_type(point_i))) {
-            t_i[number_types + current_index_alpha + ppjsdm::get_type(point_i) - k1] = static_cast<computation_t>(short_i[k1]);
-          }
-          if(estimate_gamma(k1, ppjsdm::get_type(point_i))) {
-            t_i[index_start_gamma + current_index_gamma + ppjsdm::get_type(point_i) - k1] = static_cast<computation_t>(medium_i[k1]);
           }
         }
-
-        if(k1 == ppjsdm::get_type(point_j)) {
-          for(int k2(k1); k2 < number_types; ++k2) {
-            if(estimate_alpha(k1, k2)) {
-              t_j[number_types + current_index_alpha + k2 - k1] = static_cast<computation_t>(short_j[k2]);
-            }
-            if(estimate_gamma(k1, k2)) {
-              t_j[index_start_gamma + current_index_gamma + k2 - k1] = static_cast<computation_t>(medium_j[k2]);
-            }
-          }
-        } else if(k1 < ppjsdm::get_type(point_j)) {
-          if(estimate_alpha(k1, ppjsdm::get_type(point_j))) {
-            t_j[number_types + current_index_alpha + ppjsdm::get_type(point_j) - k1] = static_cast<computation_t>(short_j[k1]);
-          }
-          if(estimate_gamma(k1, ppjsdm::get_type(point_j))) {
-            t_j[index_start_gamma + current_index_gamma + ppjsdm::get_type(point_j) - k1] = static_cast<computation_t>(medium_j[k1]);
-          }
-        }
-        current_index_alpha += number_types - k1;
-        current_index_gamma += number_types - k1;
-      }
-
-      computation_t inner_product_i(0);
-      computation_t inner_product_j(0);
-      for(std::remove_cv_t<decltype(theta.size())> k1(0); k1 < theta.size(); ++k1) {
-        inner_product_i += static_cast<computation_t>(theta[k1]) * t_i[k1];
-        inner_product_j += static_cast<computation_t>(theta[k1]) * t_j[k1];
-      }
-      const auto papangelou_i(std::exp(inner_product_i));
-      const auto papangelou_j(std::exp(inner_product_j));
-      const auto a1 = papangelou_i / static_cast<computation_t>(papangelou[i_index_regressors]) - static_cast<computation_t>(1.);
-      const auto a2 = (papangelou_i + static_cast<computation_t>(rho[ppjsdm::get_type(point_i)])) * (papangelou_j + static_cast<computation_t>(rho[ppjsdm::get_type(point_j)]));
-      const auto a3 = papangelou_j / static_cast<computation_t>(papangelou[j_index_regressors]) - static_cast<computation_t>(1.);
-      const auto constant_1 = a1 / a2;
-      const auto constant_2 = a3 / a2;
-      for(size_t k1(0); k1 < number_parameters; ++k1) {
-        const auto a1 = static_cast<computation_t>(regressors(i_index_regressors, k1)) / (static_cast<computation_t>(papangelou[i_index_regressors]) + static_cast<computation_t>(rho[ppjsdm::get_type(point_i)]));
-        const auto a2 = t_i[k1] / (papangelou_i + static_cast<computation_t>(rho[ppjsdm::get_type(point_i)]));
-        const auto c1 = static_cast<computation_t>(regressors(j_index_regressors, k1)) / (static_cast<computation_t>(papangelou[j_index_regressors]) + static_cast<computation_t>(rho[ppjsdm::get_type(point_j)]));
-        const auto c2 = t_j[k1] / (papangelou_j + static_cast<computation_t>(rho[ppjsdm::get_type(point_j)]));
-        for(size_t k2(k1); k2 < number_parameters; ++k2) {
-          mat_private(k1, k2) += t_i[k1] * t_j[k2] * constant_1;
-          mat_private(k1, k2) += t_j[k1] * t_i[k2] * constant_2;
-          const auto b1 = static_cast<computation_t>(regressors(j_index_regressors, k2)) / (static_cast<computation_t>(papangelou[j_index_regressors]) + static_cast<computation_t>(rho[ppjsdm::get_type(point_j)]));
-          const auto b2 = t_j[k2] / (papangelou_j + static_cast<computation_t>(rho[ppjsdm::get_type(point_j)]));
-          mat_private(k1, k2) += (a1 - a2) * (b1 - b2);
-          const auto d1 = static_cast<computation_t>(regressors(i_index_regressors, k2)) / (static_cast<computation_t>(papangelou[i_index_regressors]) + static_cast<computation_t>(rho[ppjsdm::get_type(point_i)]));
-          const auto d2 = t_i[k2] / (papangelou_i + static_cast<computation_t>(rho[ppjsdm::get_type(point_i)]));
-          mat_private(k1, k2) += (c1 - c2) * (d1 - d2);
-        }
-      }
-    }
 #pragma omp critical
-    for(size_t k1(0); k1 < number_parameters; ++k1) {
-      for(size_t k2(k1); k2 < number_parameters; ++k2) {
-        mat(k1, k2) += mat_private(k1, k2);
+        for(size_t k1(0); k1 < number_parameters; ++k1) {
+          for(size_t k2(k1); k2 < number_parameters; ++k2) {
+            mat(k1, k2) += mat_private(k1, k2);
+          }
+        }
       }
-    }
-}
     if(debug) {
       Rcpp::Rcout << "Finished filling matrix. Elapsed time: " << timer.elapsed_time();
       timer.set_current();
@@ -674,4 +661,3 @@ Rcpp::List compute_vcov(SEXP configuration,
                              debug,
                              nthreads);
 }
-
