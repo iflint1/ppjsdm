@@ -168,7 +168,7 @@ inline auto make_G2(const std::vector<double>& papangelou,
 }
 }
 
-const auto a = static_cast<computation_t>(window_volume) * static_cast<computation_t>(number_parameters) / kappa;
+const auto a = static_cast<computation_t>(number_parameters) / kappa / static_cast<computation_t>(window_volume);
 for(size_t k1(0); k1 < number_parameters; ++k1) {
   const auto b = a * G2_vec[k1];
   for(size_t k2(k1); k2 < number_parameters; ++k2) {
