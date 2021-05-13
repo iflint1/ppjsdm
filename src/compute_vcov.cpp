@@ -293,7 +293,7 @@ for(size_t k1(0); k1 < number_parameters; ++k1) {
 return A;
 }
 
-template<typename Configuration>
+template<typename Configuration, typename FloatType>
 inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
                             const std::vector<double>& rho,
                             const std::vector<double>& theta,
@@ -301,8 +301,8 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
                             Rcpp::List data_list,
                             const ppjsdm::Lightweight_square_matrix<bool>& estimate_alpha,
                             const ppjsdm::Lightweight_square_matrix<bool>& estimate_gamma,
-                            const ppjsdm::Saturated_model& dispersion_model,
-                            const ppjsdm::Saturated_model& medium_dispersion_model,
+                            const ppjsdm::Saturated_model<FloatType>& dispersion_model,
+                            const ppjsdm::Saturated_model<FloatType>& medium_dispersion_model,
                             const Configuration& configuration,
                             int nthreads,
                             const ppjsdm::Im_list_wrapper& covariates,
@@ -517,12 +517,12 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
 
 } // namespace detail
 
-template<typename Configuration>
+template<typename Configuration, typename FloatType>
 Rcpp::List compute_vcov_helper(const Configuration& configuration,
                                ppjsdm::Window& window,
                                const ppjsdm::Im_list_wrapper& covariates,
-                               const ppjsdm::Saturated_model& dispersion_model,
-                               const ppjsdm::Saturated_model& medium_dispersion_model,
+                               const ppjsdm::Saturated_model<FloatType>& dispersion_model,
+                               const ppjsdm::Saturated_model<FloatType>& medium_dispersion_model,
                                const std::vector<double>& rho,
                                double initial_window_volume,
                                const std::vector<double>& theta,
@@ -649,8 +649,8 @@ Rcpp::List compute_vcov(SEXP configuration,
   return compute_vcov_helper(vector_configuration,
                              cpp_window,
                              ppjsdm::Im_list_wrapper(covariates),
-                             ppjsdm::Saturated_model(model, short_range, saturation),
-                             ppjsdm::Saturated_model(medium_range_model, medium_range, long_range, saturation),
+                             ppjsdm::Saturated_model<double>(model, short_range, saturation),
+                             ppjsdm::Saturated_model<double>(medium_range_model, medium_range, long_range, saturation),
                              Rcpp::as<std::vector<double>>(rho),
                              cpp_window.volume(),
                              Rcpp::as<std::vector<double>>(theta),

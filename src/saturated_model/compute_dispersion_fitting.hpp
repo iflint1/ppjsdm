@@ -15,15 +15,15 @@ namespace detail {
 
 template<typename AbstractDispersion>
 struct dispersion_computation_fitting {
-  template<typename Configuration, typename OtherConfiguration>
-  auto operator()(const Saturated_model& varphi,
+  template<typename Configuration, typename FloatType, typename OtherConfiguration>
+  auto operator()(const Saturated_model<FloatType>& varphi,
                 R_xlen_t number_types,
                 bool compute_on_configuration,
                 const Configuration& configuration,
                 const OtherConfiguration& other_configuration) const {
     using ValueType = typename AbstractDispersion::ValueType;
     using CountType = std::vector<ValueType>;
-    using DispersionType = std::vector<double>;
+    using DispersionType = std::vector<FloatType>;
 
     const auto configuration_size(size(configuration));
     using size_t = std::remove_cv_t<decltype(size(configuration))>;
@@ -101,10 +101,11 @@ struct dispersion_computation_fitting {
 
 } // namespace detail
 
-template<bool ComputeOnConfiguration = true, typename... Configurations>
-inline auto compute_dispersion_for_fitting(const Saturated_model& model,
+template<bool ComputeOnConfiguration = true, typename FloatType, typename... Configurations>
+inline auto compute_dispersion_for_fitting(const Saturated_model<FloatType>& model,
                                            R_xlen_t number_types,
                                            Configurations&&... configurations) {
+  // TODO: Figure out how to add ComputationType template param to this function
   // TODO: Try to make ComputeOnConfiguration a template parameter, didn't figure out how w/ current version of dispatch
   return detail::dispatch_model<detail::dispersion_computation_fitting>(model, number_types, ComputeOnConfiguration, std::forward<Configurations>(configurations)...);
 }

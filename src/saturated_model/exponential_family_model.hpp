@@ -22,7 +22,7 @@ namespace detail {
 
 template<typename Point, typename Beta, typename Covariates>
 inline auto compute_beta_dot_covariates(const Point& point, const Beta& beta, const Covariates& covariates) {
-  double sum(0);
+  decltype(beta(0, 0) * covariates[0](point)) sum(0);
   const auto number_covariates(covariates.size());
   using size_t = std::remove_cv_t<decltype(covariates.size())>;
   for(size_t i(0); i < number_covariates; ++i) {
@@ -40,7 +40,7 @@ inline auto compute_beta_dot_covariates_maximum(int type, const Beta& beta, cons
 template<typename Beta, typename Covariates>
 inline auto compute_beta_dot_covariates_maximum(const Beta& beta, const Covariates& covariates) {
   const auto number_covariates(beta.nrow());
-  std::vector<double> result(number_covariates);
+  std::vector<decltype(compute_beta_dot_covariates_maximum(0, beta, covariates))> result(number_covariates);
   if(covariates.size() > 0) {
     using size_t = std::remove_cv_t<decltype(number_covariates)>;
     for(size_t i(0); i < number_covariates; ++i) {
@@ -87,7 +87,7 @@ public:
   }
 
   template<typename Point, typename Configuration>
-  double compute_papangelou(const Point& point, const Configuration& configuration) const {
+  auto compute_papangelou(const Point& point, const Configuration& configuration) const {
     return std::exp(beta0_[get_type(point)] +
                     compute_total_dispersion(point, configuration) +
                     detail::compute_beta_dot_covariates(point, beta_, covariates_));
@@ -98,8 +98,8 @@ public:
   }
 
 protected:
-  Saturated_model dispersion_;
-  Saturated_model medium_range_dispersion_;
+  Saturated_model<double> dispersion_;
+  Saturated_model<double> medium_range_dispersion_;
   Lambda beta0_;
   Rcpp::NumericMatrix alpha_;
   Rcpp::NumericMatrix beta_;
@@ -177,10 +177,11 @@ private:
 
   template<typename D>
   auto get_dispersion_maximum(const D& dispersion) const {
+    using float_t = decltype(dispersion.get_maximum());
     if(dispersion.is_nonincreasing_after_lower_endpoint()) {
-      return 6 * dispersion.get_maximum();
+      return static_cast<float_t>(6.) * dispersion.get_maximum();
     } else {
-      return std::numeric_limits<double>::infinity();
+      return std::numeric_limits<float_t>::infinity();
     }
   }
 public:
@@ -202,13 +203,13 @@ public:
     dot_dispersion_maximum_(positive_matrix_times_vector(alpha, get_dispersion_maximum(Model::dispersion_))) {
     const auto gamma_dot_dispersion_maximum(positive_matrix_times_vector(gamma, get_dispersion_maximum(Model::medium_range_dispersion_)));
     std::transform(dot_dispersion_maximum_.begin(), dot_dispersion_maximum_.end(), gamma_dot_dispersion_maximum.begin(),
-                   dot_dispersion_maximum_.begin(), std::plus<double>());
+                   dot_dispersion_maximum_.begin(), std::plus<typename decltype(dot_dispersion_maximum_)::value_type>());
   }
 
   template<typename Point>
   auto get_log_normalized_bounding_intensity(const Point& point) const {
-    double beta_covariates_maximum(beta_dot_covariates_maximum_[get_type(point)]);
-    double beta_covariates(detail::compute_beta_dot_covariates(point, Model::beta_, Model::covariates_));
+    auto beta_covariates_maximum(beta_dot_covariates_maximum_[get_type(point)]);
+    auto beta_covariates(detail::compute_beta_dot_covariates(point, Model::beta_, Model::covariates_));
     return beta_covariates - beta_covariates_maximum;
   }
 
@@ -218,7 +219,7 @@ public:
     const auto number_types(Model::get_number_types());
     using size_t = std::remove_cv_t<decltype(number_types)>;
     for(size_t type(0); type < number_types; ++type) {
-      integral += Model::covariates_.get_integral_of_dot(window_, [type, this](double x) {
+      integral += Model::covariates_.get_integral_of_dot(window_, [type, this](auto x) {
         return std::exp(x + Model::beta0_[type] + dot_dispersion_maximum_[type]);
       }, Model::beta_(type, Rcpp::_));
     }
@@ -238,7 +239,7 @@ public:
 
   auto get_upper_bound_approximate_ppp_intensity() const {
     const auto number_types(Model::get_number_types());
-    std::vector<double> upper_bound(number_types);
+    std::vector<decltype(Model::beta0_[0] + beta_dot_covariates_maximum_[0])> upper_bound(number_types);
     using size_t = std::remove_cv_t<decltype(number_types)>;
     for(size_t type(0); type < number_types; ++type) {
       const auto value(std::exp(Model::beta0_[type] + beta_dot_covariates_maximum_[type]));
@@ -254,7 +255,7 @@ public:
 
   auto get_upper_bound() const {
     const auto number_types(Model::get_number_types());
-    std::vector<double> upper_bound(number_types);
+    std::vector<decltype(Model::beta0_[0] + beta_dot_covariates_maximum_[0])> upper_bound(number_types);
     using size_t = std::remove_cv_t<decltype(number_types)>;
     for(size_t type(0); type < number_types; ++type) {
       const auto value(std::exp(Model::beta0_[type] + dot_dispersion_maximum_[type] + beta_dot_covariates_maximum_[type]));
@@ -329,9 +330,9 @@ public:
     }
   }
 
-  double compute_log_alpha_min_lower_bound(R_xlen_t type) const {
-    double sum_alpha(0.);
-    double sum_gamma(0.);
+  auto compute_log_alpha_min_lower_bound(R_xlen_t type) const {
+    decltype(std::abs(Model::alpha_(0, 0))) sum_alpha(0.);
+    decltype(std::abs(Model::gamma_(0, 0))) sum_gamma(0.);
     for(decltype(Model::alpha_.ncol()) other_type(0); other_type < Model::alpha_.ncol(); ++other_type) {
       sum_alpha -= std::abs(Model::alpha_(type, other_type));
       sum_gamma -= std::abs(Model::gamma_(type, other_type));

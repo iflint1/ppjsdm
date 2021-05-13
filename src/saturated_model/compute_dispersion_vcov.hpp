@@ -21,8 +21,8 @@ namespace detail {
 
 template<typename AbstractDispersion>
 struct generic_vcov_dispersion_computation {
-  template<typename Configuration>
-  auto operator()(const Saturated_model& varphi,
+  template<typename Configuration, typename FloatType>
+  auto operator()(const Saturated_model<FloatType>& varphi,
                 R_xlen_t number_types,
                 const Configuration& configuration,
                 const Configuration& restricted_configuration,
@@ -39,7 +39,7 @@ struct generic_vcov_dispersion_computation {
 
     using ValueType = typename AbstractDispersion::ValueType;
     using CountType = std::vector<ValueType>;
-    using DispersionType = std::vector<double>;
+    using DispersionType = std::vector<FloatType>;
 
     const auto restricted_configuration_size(size(restricted_configuration));
     const auto configuration_size(size(configuration));
@@ -160,8 +160,8 @@ struct generic_vcov_dispersion_computation {
 
 } // namespace detail
 
-template<typename Configuration>
-inline auto compute_dispersion_for_vcov(const Saturated_model& model,
+template<typename Configuration, typename FloatType>
+inline auto compute_dispersion_for_vcov(const Saturated_model<FloatType>& model,
                                         R_xlen_t number_types,
                                         const Configuration& configuration,
                                         const Configuration& restricted_configuration,
@@ -171,8 +171,8 @@ inline auto compute_dispersion_for_vcov(const Saturated_model& model,
   return detail::dispatch_model<detail::generic_vcov_dispersion_computation>(model, number_types, configuration, restricted_configuration, min_index, max_index, nthreads);
 }
 
-template<typename Configuration>
-inline auto compute_dispersion_for_vcov(const Saturated_model& model,
+template<typename Configuration, typename FloatType>
+inline auto compute_dispersion_for_vcov(const Saturated_model<FloatType>& model,
                                         R_xlen_t number_types,
                                         const Configuration& configuration,
                                         int nthreads = 1) {

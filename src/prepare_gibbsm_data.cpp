@@ -38,12 +38,12 @@ inline void add_to_formula(std::string& formula, Rcpp::CharacterVector names) {
   }
 }
 
-template<typename Configuration, typename Vector>
+template<typename Configuration, typename FloatType, typename Vector>
 Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configuration_list,
                                       const ppjsdm::Window& window,
                                       const ppjsdm::Im_list_wrapper& covariates,
-                                      const ppjsdm::Saturated_model& dispersion_model,
-                                      const ppjsdm::Saturated_model& medium_dispersion_model,
+                                      const ppjsdm::Saturated_model<FloatType>& dispersion_model,
+                                      const ppjsdm::Saturated_model<FloatType>& medium_dispersion_model,
                                       const Vector& max_points_by_type,
                                       R_xlen_t max_dummy,
                                       R_xlen_t min_dummy,
@@ -214,7 +214,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
                                  configuration_list[configuration_index][point_index] :
                                  D[point_index - ppjsdm::size(configuration_list[configuration_index])]);
       // Check if the points generates any NA values, move on if so
-      std::vector<double> covariates_values(covariates.size());
+      std::vector<decltype(covariates[0](current_point))> covariates_values(covariates.size());
       bool found_na_point(false);
       for(size_t covariate_index(0); covariate_index < static_cast<size_t>(covariates.size()); ++covariate_index) {
         const auto covariate(covariates[covariate_index](current_point));
@@ -329,8 +329,8 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
       }
     }
   }
-  const auto dispersion(ppjsdm::Saturated_model(model, short_range, saturation));
-  const auto medium_range_dispersion(ppjsdm::Saturated_model(medium_range_model, medium_range, long_range, saturation));
+  const auto dispersion(ppjsdm::Saturated_model<double>(model, short_range, saturation));
+  const auto medium_range_dispersion(ppjsdm::Saturated_model<double>(medium_range_model, medium_range, long_range, saturation));
   return prepare_gibbsm_data_helper(vector_configurations,
                                     cpp_window,
                                     ppjsdm::Im_list_wrapper(covariates),

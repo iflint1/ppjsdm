@@ -16,15 +16,15 @@ namespace detail {
 
 template<typename AbstractDispersion>
 struct generic_dispersion_computation {
-  template<typename Point, typename... Configurations>
-  auto operator()(const Saturated_model& varphi,
+  template<typename Point, typename FloatType, typename... Configurations>
+  auto operator()(const Saturated_model<FloatType>& varphi,
                 const Point& point,
                 R_xlen_t number_types,
                 Configurations&... configurations) const {
     // TODO: The max size of the heap I'm using is always the saturation; reserve.
     using ValueType = typename AbstractDispersion::ValueType;
     using CountType = std::vector<ValueType>;
-    using DispersionType = std::vector<double>;
+    using DispersionType = std::vector<FloatType>;
 
     CountType count_vector(number_types);
     DispersionType dispersion(number_types);
@@ -60,8 +60,8 @@ struct generic_dispersion_computation {
 
 } // namespace detail
 
-template<typename Point, typename... Configurations>
-inline auto compute_dispersion(const Saturated_model& model,
+template<typename Point, typename FloatType, typename... Configurations>
+inline auto compute_dispersion(const Saturated_model<FloatType>& model,
                                const Point& point,
                                R_xlen_t number_types,
                                Configurations&&... configurations) {

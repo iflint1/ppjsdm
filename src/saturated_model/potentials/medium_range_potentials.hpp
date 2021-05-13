@@ -16,12 +16,15 @@ namespace ppjsdm {
 namespace potentials {
 
 // Note: Public inheritance in order to inherit member variables if they exist in Varphi.
-template<typename Varphi>
-class Medium_range_potential: public Varphi, public Potential {
+template<template<class> class Varphi, typename FloatType>
+class Medium_range_potential: public Varphi<FloatType>, public Potential<FloatType> {
 private:
-  Lightweight_square_matrix<double> medium_;
-  Lightweight_square_matrix<double> long_;
+  // These matrices might store some elaborate function of the radii, and therefore might need
+  // to store in FloatType for extra precision.
+  Lightweight_square_matrix<FloatType> medium_;
+  Lightweight_square_matrix<FloatType> long_;
   using size_t = typename decltype(medium_)::size_type;
+  using V = Varphi<FloatType>;
 public:
   Medium_range_potential(Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range):
   medium_(medium_range.nrow()),
@@ -36,291 +39,319 @@ public:
       for(size_t j(0); j < static_cast<size_t>(medium_dim); ++j) {
         const auto med(medium_range(i, j));
         const auto lng(long_range(i, j));
-        medium_(i, j) = Varphi::set_lower(med, lng);
-        long_(i, j) = Varphi::set_upper(med, lng);
+        medium_(i, j) = V::set_lower(med, lng);
+        long_(i, j) = V::set_upper(med, lng);
       }
     }
   }
 
-  double apply(double normalized_square_distance, int i, int j) const override {
-    return Varphi::apply(normalized_square_distance, medium_(i, j), long_(i, j));
+  FloatType apply(FloatType normalized_square_distance, int i, int j) const override {
+    return V::apply(normalized_square_distance, medium_(i, j), long_(i, j));
   }
 
-  double get_square_lower_endpoint(int i, int j) const override {
-    return Varphi::get_square_lower_endpoint(medium_(i, j));
+  FloatType get_square_lower_endpoint(int i, int j) const override {
+    return V::get_square_lower_endpoint(medium_(i, j));
   }
 
   bool is_nonincreasing_after_lower_endpoint() const override {
-    return Varphi::is_nonincreasing_after_lower_endpoint;
+    return V::is_nonincreasing_after_lower_endpoint;
   }
   bool is_two_valued() const override {
-    return Varphi::is_two_valued;
+    return V::is_two_valued;
   }
 };
 
+template<typename FloatType>
 struct Half_square_exponential_implementation {
   static constexpr bool is_nonincreasing_after_lower_endpoint = true;
   static constexpr bool is_two_valued = false;
 
-  static double set_lower(double lower, double) {
-    return lower;
+  static FloatType set_lower(double lower, double) {
+    return static_cast<FloatType>(lower);
   }
 
-  static double set_upper(double lower, double upper) {
-    const auto delta(upper - lower);
-    if(delta > 0) {
-      return -std::log(2) / (delta * delta);
+  static FloatType set_upper(double lower, double upper) {
+    const auto delta = static_cast<FloatType>(upper) - static_cast<FloatType>(lower);
+    if(delta > 0.) {
+      return -std::log(static_cast<FloatType>(2)) / (delta * delta);
     } else {
-      return -std::numeric_limits<double>::infinity();
+      return -std::numeric_limits<FloatType>::infinity();
     }
   }
 
-  static double get_square_lower_endpoint(double lower) {
-    return lower * lower;
+  static FloatType get_square_lower_endpoint(FloatType lower) {
+    return static_cast<FloatType>(lower) * static_cast<FloatType>(lower);
   }
 
-  static double apply(double square_distance, double lower, double upper) {
+  static FloatType apply(FloatType square_distance, FloatType lower, FloatType upper) {
     if(square_distance >= lower * lower) {
       const auto distance(std::sqrt(square_distance) - lower);
       return std::exp(upper * distance * distance);
     } else {
-      return 0.;
+      return static_cast<FloatType>(0.);
     }
   }
 };
 
+template<typename FloatType>
 struct Half_exponential_implementation {
   static constexpr bool is_nonincreasing_after_lower_endpoint = true;
   static constexpr bool is_two_valued = false;
 
-  static double set_lower(double lower, double) {
-    return lower;
+  static FloatType set_lower(double lower, double) {
+    return static_cast<FloatType>(lower);
   }
 
-  static double set_upper(double lower, double upper) {
-    const auto delta(upper - lower);
-    if(delta > 0) {
-      return -std::log(2) / delta;
+  static FloatType set_upper(double lower, double upper) {
+    const auto delta = static_cast<FloatType>(upper) - static_cast<FloatType>(lower);
+    if(delta > 0.) {
+      return -std::log(static_cast<FloatType>(2)) / delta;
     } else {
-      return -std::numeric_limits<double>::infinity();
+      return -std::numeric_limits<FloatType>::infinity();
     }
   }
 
-  static double get_square_lower_endpoint(double lower) {
-    return lower * lower;
+  static FloatType get_square_lower_endpoint(FloatType lower) {
+    return static_cast<FloatType>(lower) * static_cast<FloatType>(lower);
   }
 
-  static double apply(double square_distance, double lower, double upper) {
+  static FloatType apply(FloatType square_distance, FloatType lower, FloatType upper) {
     if(square_distance >= lower * lower) {
       const auto distance(std::sqrt(square_distance) - lower);
       return std::exp(upper * distance);
     } else {
-      return 0.;
+      return static_cast<FloatType>(0.);
     }
   }
 };
 
+template<typename FloatType>
 struct Two_sided_square_exponential_implementation {
   static constexpr bool is_nonincreasing_after_lower_endpoint = false;
   static constexpr bool is_two_valued = false;
 
-  static double set_lower(double lower, double upper) {
-    return (lower + upper ) / 2.;
+  static FloatType set_lower(double lower, double upper) {
+    return (static_cast<FloatType>(lower) + static_cast<FloatType>(upper)) / static_cast<FloatType>(2.);
   }
 
-  static double set_upper(double lower, double upper) {
-    const auto delta(upper - lower);
+  static FloatType set_upper(double lower, double upper) {
+    const auto delta = static_cast<FloatType>(upper) - static_cast<FloatType>(lower);
     if(delta > 0) {
-      return -4 * std::log(2) / (delta * delta);
+      return -static_cast<FloatType>(4) * std::log(static_cast<FloatType>(2)) / (delta * delta);
     } else {
-      return -std::numeric_limits<double>::infinity();
+      return -std::numeric_limits<FloatType>::infinity();
     }
   }
 
-  static double get_square_lower_endpoint(double) {
-    return 0.;
+  static FloatType get_square_lower_endpoint(FloatType) {
+    return static_cast<FloatType>(0.);
   }
 
-  static double apply(double square_distance, double lower, double upper) {
+  static FloatType apply(FloatType square_distance, FloatType lower, FloatType upper) {
     const auto distance(std::sqrt(square_distance) - lower);
     return std::exp(upper * distance * distance);
   }
 };
 
+template<typename FloatType>
 struct Two_sided_exponential_implementation {
   static constexpr bool is_nonincreasing_after_lower_endpoint = false;
   static constexpr bool is_two_valued = false;
 
-  static double set_lower(double lower, double upper) {
-    return (lower + upper ) / 2.;
+  static FloatType set_lower(double lower, double upper) {
+    return (static_cast<FloatType>(lower) + static_cast<FloatType>(upper)) / static_cast<FloatType>(2.);
   }
 
-  static double set_upper(double lower, double upper) {
-    const auto delta(upper - lower);
-    if(delta > 0) {
-      return -2 * std::log(2) / delta;
+  static FloatType set_upper(double lower, double upper) {
+    const auto delta = static_cast<FloatType>(upper - lower);
+    if(delta > 0.) {
+      return -static_cast<FloatType>(2) * std::log(static_cast<FloatType>(2)) / delta;
     } else {
-      return -std::numeric_limits<double>::infinity();
+      return -std::numeric_limits<FloatType>::infinity();
     }
   }
 
-  static double get_square_lower_endpoint(double) {
-    return 0.;
+  static FloatType get_square_lower_endpoint(FloatType) {
+    return static_cast<FloatType>(0.);
   }
 
-  static double apply(double square_distance, double lower, double upper) {
+  static FloatType apply(FloatType square_distance, FloatType lower, FloatType upper) {
     const auto distance(std::abs(std::sqrt(square_distance) - lower));
     return std::exp(upper * distance);
   }
 };
 
+template<typename FloatType>
 struct Two_sided_bump_implementation {
   static constexpr bool is_nonincreasing_after_lower_endpoint = false;
   static constexpr bool is_two_valued = false;
 
-  static double set_lower(double lower, double upper) {
-    return (lower + upper ) / 2.;
+  static FloatType set_lower(double lower, double upper) {
+    return (static_cast<FloatType>(lower) + static_cast<FloatType>(upper)) / static_cast<FloatType>(2.);
   }
 
-  static double set_upper(double lower, double upper) {
-    return -0.5 * std::log(2) * (upper - lower);
+  static FloatType set_upper(double lower, double upper) {
+    return -static_cast<FloatType>(0.5) * std::log(static_cast<FloatType>(2)) * (static_cast<FloatType>(upper) - static_cast<FloatType>(lower));
   }
 
-  static double get_square_lower_endpoint(double) {
-    return 0.;
+  static FloatType get_square_lower_endpoint(FloatType) {
+    return static_cast<FloatType>(0.);
   }
 
-  static double apply(double square_distance, double lower, double upper) {
+  static FloatType apply(FloatType square_distance, FloatType lower, FloatType upper) {
     const auto distance(std::sqrt(square_distance));
     if(distance == lower) {
-      return 1.0;
+      return static_cast<FloatType>(1.);
     } else if(distance < lower) {
-      return 1.0 - std::exp(upper / (lower - distance));
+      return static_cast<FloatType>(1.) - std::exp(upper / (lower - distance));
     } else {
-      return 1.0 - std::exp(upper / (distance - lower));
+      return static_cast<FloatType>(1.) - std::exp(upper / (distance - lower));
     }
   }
 };
 
+template<typename FloatType>
 struct Two_sided_square_bump_implementation {
   static constexpr bool is_nonincreasing_after_lower_endpoint = false;
   static constexpr bool is_two_valued = false;
 
-  static double set_lower(double lower, double upper) {
-    return (lower + upper ) / 2.;
+  static FloatType set_lower(double lower, double upper) {
+    return (static_cast<FloatType>(lower) + static_cast<FloatType>(upper)) / static_cast<FloatType>(2.);
   }
 
-  static double set_upper(double lower, double upper) {
-    return -0.25 * std::log(2) * (upper - lower) * (upper - lower);
+  static FloatType set_upper(double lower, double upper) {
+    const auto delta = static_cast<FloatType>(upper) - static_cast<FloatType>(lower);
+    return -static_cast<FloatType>(0.25) * std::log(static_cast<FloatType>(2)) * delta * delta;
   }
 
-  static double get_square_lower_endpoint(double) {
-    return 0.;
+  static FloatType get_square_lower_endpoint(FloatType) {
+    return static_cast<FloatType>(0.);
   }
 
-  static double apply(double square_distance, double lower, double upper) {
+  static FloatType apply(FloatType square_distance, FloatType lower, FloatType upper) {
     const auto distance(std::sqrt(square_distance));
     if(distance == lower) {
-      return 1.0;
+      return static_cast<FloatType>(1.);
     } else {
-      return 1.0 - std::exp(upper / ((distance - lower) * (distance - lower)));
+      const auto delta = static_cast<FloatType>(upper) - static_cast<FloatType>(lower);
+      return static_cast<FloatType>(1.) - std::exp(upper / (delta * delta));
     }
   }
 };
 
+template<typename FloatType>
 struct Two_sided_Strauss_implementation {
   static constexpr bool is_nonincreasing_after_lower_endpoint = false;
   static constexpr bool is_two_valued = true;
 
-  static double set_lower(double lower, double) {
-    return lower * lower;
+  static FloatType set_lower(double lower, double) {
+    return static_cast<FloatType>(lower) * static_cast<FloatType>(lower);
   }
 
-  static double set_upper(double, double upper) {
-    return upper * upper;
+  static FloatType set_upper(double, double upper) {
+    return static_cast<FloatType>(upper) * static_cast<FloatType>(upper);
   }
 
-  static double get_square_lower_endpoint(double) {
-    return 0.;
+  static FloatType get_square_lower_endpoint(FloatType) {
+    return static_cast<FloatType>(0.);
   }
 
-  static double apply(double square_distance, double lower, double upper) {
+  static FloatType apply(FloatType square_distance, FloatType lower, FloatType upper) {
     if(square_distance >= lower && square_distance <= upper) {
-      return 1.;
+      return static_cast<FloatType>(1.);
     } else {
-      return 0.;
+      return static_cast<FloatType>(0.);
     }
   }
 };
 
+template<typename FloatType>
 struct Two_sided_linear_implementation {
   static constexpr bool is_nonincreasing_after_lower_endpoint = false;
   static constexpr bool is_two_valued = false;
 
-  static double set_lower(double lower, double) {
-    return lower;
+  static FloatType set_lower(double lower, double) {
+    return static_cast<FloatType>(lower);
   }
 
-  static double set_upper(double, double upper) {
-    return upper;
+  static FloatType set_upper(double, double upper) {
+    return static_cast<FloatType>(upper);
   }
 
-  static double get_square_lower_endpoint(double) {
-    return 0.;
+  static FloatType get_square_lower_endpoint(FloatType) {
+    return static_cast<FloatType>(0.);
   }
 
-  static double apply(double square_distance, double lower, double upper) {
+  static FloatType apply(FloatType square_distance, FloatType lower, FloatType upper) {
     const auto distance(std::sqrt(square_distance));
     if(2 * distance <= (lower + upper)) {
       if(distance <= lower || upper == lower) {
-        return 0.;
+        return static_cast<FloatType>(0.);
       } else {
-        return 2. / (upper - lower) * (distance - lower);
+        return static_cast<FloatType>(2.) / (upper - lower) * (distance - lower);
       }
     } else {
       if(distance >= upper || upper == lower) {
-        return 0.;
+        return static_cast<FloatType>(0.);
       } else {
-        return 2. / (upper - lower) * (upper - distance);
+        return static_cast<FloatType>(2.) / (upper - lower) * (upper - distance);
       }
     }
   }
 };
 
+template<typename FloatType>
 struct Tanh_implementation {
   static constexpr bool is_nonincreasing_after_lower_endpoint = false;
   static constexpr bool is_two_valued = false;
-  static constexpr const double lambda = 5;
-  static constexpr const double constant = 0.50678365490630417067308144397; // Computed as 1 / (2 * tanh(lambda / 2))
+  static constexpr const FloatType lambda = 5.;
+  static constexpr const FloatType constant = 0.50678365490630417067308144397L; // Computed as 1 / (2 * tanh(lambda / 2))
 
-  static double set_lower(double lower, double) {
-    return lower;
+  static FloatType set_lower(double lower, double) {
+    return static_cast<FloatType>(lower);
   }
 
-  static double set_upper(double, double upper) {
-    return upper;
+  static FloatType set_upper(double, double upper) {
+    return static_cast<FloatType>(upper);
   }
 
-  static double get_square_lower_endpoint(double) {
-    return 0.;
+  static FloatType get_square_lower_endpoint(FloatType) {
+    return static_cast<FloatType>(0.);
   }
 
-  static double apply(double square_distance, double lower, double upper) {
+  static FloatType apply(FloatType square_distance, FloatType lower, FloatType upper) {
     const auto distance(std::sqrt(square_distance));
-    const double factor(lambda / (upper - lower));
+    const auto factor(lambda / (upper - lower));
     return constant * (std::tanh(factor * (distance - lower)) + std::tanh(factor * (upper - distance)));
   }
 };
 
-using Medium_range_square_exponential = Medium_range_potential<Two_sided_square_exponential_implementation>;
-using Medium_range_half_square_exponential = Medium_range_potential<Half_square_exponential_implementation>;
-using Medium_range_Geyer = Medium_range_potential<Two_sided_Strauss_implementation>;
-using Medium_range_linear = Medium_range_potential<Two_sided_linear_implementation>;
-using Medium_range_half_exponential = Medium_range_potential<Half_exponential_implementation>;
-using Medium_range_exponential = Medium_range_potential<Two_sided_exponential_implementation>;
-using Medium_range_bump = Medium_range_potential<Two_sided_bump_implementation>;
-using Medium_range_square_bump = Medium_range_potential<Two_sided_square_bump_implementation>;
-using Medium_range_tanh = Medium_range_potential<Tanh_implementation>;
+template<typename FloatType>
+using Medium_range_square_exponential = Medium_range_potential<Two_sided_square_exponential_implementation, FloatType>;
+
+template<typename FloatType>
+using Medium_range_half_square_exponential = Medium_range_potential<Half_square_exponential_implementation, FloatType>;
+
+template<typename FloatType>
+using Medium_range_Geyer = Medium_range_potential<Two_sided_Strauss_implementation, FloatType>;
+
+template<typename FloatType>
+using Medium_range_linear = Medium_range_potential<Two_sided_linear_implementation, FloatType>;
+
+template<typename FloatType>
+using Medium_range_half_exponential = Medium_range_potential<Half_exponential_implementation, FloatType>;
+
+template<typename FloatType>
+using Medium_range_exponential = Medium_range_potential<Two_sided_exponential_implementation, FloatType>;
+
+template<typename FloatType>
+using Medium_range_bump = Medium_range_potential<Two_sided_bump_implementation, FloatType>;
+
+template<typename FloatType>
+using Medium_range_square_bump = Medium_range_potential<Two_sided_square_bump_implementation, FloatType>;
+
+template<typename FloatType>
+using Medium_range_tanh = Medium_range_potential<Tanh_implementation, FloatType>;
 
 } // namespace potentials
 
@@ -336,28 +367,29 @@ const constexpr char* const medium_range_models[] = {
   "tanh"
 };
 
-inline std::shared_ptr<const Potential> make_medium_range_object(Rcpp::CharacterVector model,
-                                                                 Rcpp::NumericMatrix medium_range,
-                                                                 Rcpp::NumericMatrix long_range) {
+template<typename FloatType>
+inline std::shared_ptr<const Potential<FloatType>> make_medium_range_object(Rcpp::CharacterVector model,
+                                                                            Rcpp::NumericMatrix medium_range,
+                                                                            Rcpp::NumericMatrix long_range) {
   const auto model_string(model[0]);
   if(model_string == medium_range_models[0]) {
-    return std::make_shared<potentials::Medium_range_square_exponential>(medium_range, long_range);
+    return std::make_shared<potentials::Medium_range_square_exponential<FloatType>>(medium_range, long_range);
   } else if(model_string == medium_range_models[1]) {
-    return std::make_shared<potentials::Medium_range_half_square_exponential>(medium_range, long_range);
+    return std::make_shared<potentials::Medium_range_half_square_exponential<FloatType>>(medium_range, long_range);
   } else if(model_string == medium_range_models[2]) {
-    return std::make_shared<potentials::Medium_range_Geyer>(medium_range, long_range);
+    return std::make_shared<potentials::Medium_range_Geyer<FloatType>>(medium_range, long_range);
   } else if(model_string == medium_range_models[3]) {
-    return std::make_shared<potentials::Medium_range_linear>(medium_range, long_range);
+    return std::make_shared<potentials::Medium_range_linear<FloatType>>(medium_range, long_range);
   } else if(model_string == medium_range_models[4]) {
-    return std::make_shared<potentials::Medium_range_half_exponential>(medium_range, long_range);
+    return std::make_shared<potentials::Medium_range_half_exponential<FloatType>>(medium_range, long_range);
   } else if(model_string == medium_range_models[5]) {
-    return std::make_shared<potentials::Medium_range_exponential>(medium_range, long_range);
+    return std::make_shared<potentials::Medium_range_exponential<FloatType>>(medium_range, long_range);
   } else if(model_string == medium_range_models[6]) {
-    return std::make_shared<potentials::Medium_range_bump>(medium_range, long_range);
+    return std::make_shared<potentials::Medium_range_bump<FloatType>>(medium_range, long_range);
   } else if(model_string == medium_range_models[7]) {
-    return std::make_shared<potentials::Medium_range_square_bump>(medium_range, long_range);
+    return std::make_shared<potentials::Medium_range_square_bump<FloatType>>(medium_range, long_range);
   } else if(model_string == medium_range_models[8]) {
-    return std::make_shared<potentials::Medium_range_tanh>(medium_range, long_range);
+    return std::make_shared<potentials::Medium_range_tanh<FloatType>>(medium_range, long_range);
   } else {
     Rcpp::stop("Incorrect model entered. A call to show_medium_range_models() will show you the available choices.\n");
   }
