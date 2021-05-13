@@ -56,7 +56,11 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 #ifdef _OPENMP
   omp_set_num_threads(nthreads);
 #endif
+  // A few typedefs for later
+  using computation_t = long double;
+  using size_t = ppjsdm::size_t<Configuration>;
 
+  // Set up timer for debugging purposes
   ppjsdm::PreciseTimer timer{};
   if(debug) {
     Rcpp::Rcout << "Starting computation of the regression matrix...\n";
@@ -64,23 +68,27 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 
   // Check if we actually need to compute alpha/gamma regressors
   bool need_to_compute_alpha(false);
-  bool need_to_compute_gamma(false);
-  for(R_xlen_t i(0); i < estimate_alpha.nrow(); ++i) {
-    for(R_xlen_t j(0); j < estimate_alpha.ncol(); ++j) {
+  for(decltype(estimate_alpha.nrow()) i(0); i < estimate_alpha.nrow(); ++i) {
+    for(decltype(estimate_alpha.ncol()) j(0); j < estimate_alpha.ncol(); ++j) {
       if(estimate_alpha(i, j)) {
         need_to_compute_alpha = true;
+        break;
       }
+    }
+  }
+  bool need_to_compute_gamma(false);
+  for(decltype(estimate_alpha.nrow()) i(0); i < estimate_gamma.nrow(); ++i) {
+    for(decltype(estimate_alpha.ncol()) j(0); j < estimate_gamma.ncol(); ++j) {
       if(estimate_gamma(i, j)) {
         need_to_compute_gamma = true;
+        break;
       }
     }
   }
 
-  using size_t = ppjsdm::size_t<Configuration>;
-
   // This choice of intensity of dummy points rho is the guideline from the Baddeley et al. paper, see p. 8 therein.
   if(max_dummy == 0) {
-    max_dummy = 10000;
+    max_dummy = 100000;
   }
   if(min_dummy == 0) {
     min_dummy = 500;
@@ -90,21 +98,22 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   }
 
   // Sample the dummy points D.
-  std::vector<double> rho_times_volume(number_types);
+  using big_int_t = long long int;
+  std::vector<big_int_t> rho_times_volume(number_types);
   size_t length_D(0);
   for(typename decltype(rho_times_volume)::size_type i(0); i < rho_times_volume.size(); ++i) {
-    const auto factor_times_max_points_in_type(dummy_factor * static_cast<double>(max_points_by_type[i]));
-    if(factor_times_max_points_in_type < static_cast<double>(max_dummy)) {
-      if(factor_times_max_points_in_type > static_cast<double>(min_dummy)) {
+    const auto factor_times_max_points_in_type = static_cast<big_int_t>(dummy_factor) * static_cast<big_int_t>(max_points_by_type[i]);
+    if(factor_times_max_points_in_type < static_cast<big_int_t>(max_dummy)) {
+      if(factor_times_max_points_in_type > static_cast<big_int_t>(min_dummy)) {
         rho_times_volume[i] = factor_times_max_points_in_type;
         length_D += static_cast<size_t>(factor_times_max_points_in_type);
       } else {
-        rho_times_volume[i] = min_dummy;
-        length_D += min_dummy;
+        rho_times_volume[i] = static_cast<big_int_t>(min_dummy);
+        length_D += static_cast<size_t>(min_dummy);
       }
     } else {
-      rho_times_volume[i] = max_dummy;
-      length_D += max_dummy;
+      rho_times_volume[i] = static_cast<big_int_t>(max_dummy);
+      length_D += static_cast<size_t>(max_dummy);
     }
   }
   auto D(ppjsdm::rbinomialpp_single<std::vector<ppjsdm::Marked_point>>(window, rho_times_volume, number_types, length_D));
@@ -124,28 +133,31 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 
   // Make shift vector
   Rcpp::NumericVector shift(Rcpp::no_init(number_types));
-  const auto volume(window.volume());
+  const auto volume = static_cast<computation_t>(window.volume());
   for(int j(0); j < number_types; ++j) {
-    shift[j] = -std::log(static_cast<double>(rho_times_volume[j]) / volume);
+    shift[j] = static_cast<double>(-std::log(static_cast<computation_t>(rho_times_volume[j]) / volume));
   }
 
   // Precompute short and medium range dispersions
-  std::vector<std::vector<std::vector<double>>> dispersion_short(configuration_list.size());
-  std::vector<std::vector<std::vector<double>>> dispersion_medium(configuration_list.size());
+  using vec_dispersion_t = std::vector<decltype(ppjsdm::compute_dispersion_for_fitting(dispersion_model, 1, configuration_list[0], D))>;
+  vec_dispersion_t dispersion_short(configuration_list.size());
+  vec_dispersion_t dispersion_medium(configuration_list.size());
   if(debug) {
     timer.set_current();
     Rcpp::Rcout << "Starting pre-computation of the dispersions to put into the regression matrix...\n";
   }
-  for(size_t configuration_index(0); configuration_index < configuration_list.size(); ++configuration_index) {
+  for(decltype(configuration_list.size()) i(0); i < configuration_list.size(); ++i) {
     if(need_to_compute_alpha) {
-      dispersion_short[configuration_index] = ppjsdm::compute_dispersion_for_fitting(dispersion_model,
-                                                                                     number_types,
-                                                                                     configuration_list[configuration_index], D);
+      const auto d = ppjsdm::compute_dispersion_for_fitting(dispersion_model,
+                                                            number_types,
+                                                            configuration_list[i], D);
+      dispersion_short[i] = d;
     }
     if(need_to_compute_gamma) {
-      dispersion_medium[configuration_index] = ppjsdm::compute_dispersion_for_fitting(medium_dispersion_model,
-                                                                                      number_types,
-                                                                                      configuration_list[configuration_index], D);
+      const auto d = ppjsdm::compute_dispersion_for_fitting(medium_dispersion_model,
+                                                            number_types,
+                                                            configuration_list[i], D);
+      dispersion_medium[i] = d;
     }
   }
   if(debug) {
@@ -153,13 +165,13 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   }
 
   // Precompute how many of the points in the configuration we'll have to drop due to NA values on the covariates.
-  unsigned long long int total_configuration_length(0);
+  size_t total_configuration_length(0);
   size_t total_removed_points(0);
-  for(size_t configuration_index(0); configuration_index < configuration_list.size(); ++configuration_index) {
-    total_configuration_length += ppjsdm::size(configuration_list[configuration_index]);
-    for(size_t point_index(0); point_index < ppjsdm::size(configuration_list[configuration_index]); ++point_index) {
-      for(std::remove_cv_t<decltype(covariates.size())> covariate_index(0); covariate_index < covariates.size(); ++covariate_index) {
-        const auto covariate(covariates[covariate_index](configuration_list[configuration_index][point_index]));
+  for(size_t i(0); i < configuration_list.size(); ++i) {
+    total_configuration_length += ppjsdm::size(configuration_list[i]);
+    for(size_t point_index(0); point_index < ppjsdm::size(configuration_list[i]); ++point_index) {
+      for(std::remove_cv_t<decltype(covariates.size())> k(0); k < covariates.size(); ++k) {
+        const auto covariate(covariates[k](configuration_list[i][point_index]));
         if(R_IsNA(covariate)) {
           ++total_removed_points;
           break;
@@ -231,17 +243,19 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
       type[filling] = type_index + 1;
 
       // fill rho
-      rho_offset[filling] = -std::log(static_cast<double>(rho_times_volume[type_index]) / volume);
+      rho_offset[filling] = shift[type_index];
 
       // Fill regressors
+      const auto current_short(dispersion_short[configuration_index][point_index]);
+      const auto current_medium(dispersion_medium[configuration_index][point_index]);
       const auto regression_vector(ppjsdm::make_regression_vector<double>(type_index,
                                                                           number_types,
                                                                           regressors.ncol(),
                                                                           index_start_covariates,
                                                                           index_start_gamma,
                                                                           covariates_values,
-                                                                          dispersion_short[configuration_index][point_index],
-                                                                          dispersion_medium[configuration_index][point_index],
+                                                                          current_short,
+                                                                          current_medium,
                                                                           estimate_alpha,
                                                                           estimate_gamma));
       for(decltype(regression_vector.size()) k(0); k < regression_vector.size(); ++k) {
@@ -308,10 +322,10 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
 
   using size_t = typename decltype(vector_configurations)::size_type;
   for(size_t i(0); i < vector_configurations.size(); ++i) {
-    const auto new_points_by_type(ppjsdm::get_number_points(vector_configurations[i]));
-    for(size_t j(0); j < max_points_by_type.size(); ++j) {
-      if(max_points_by_type[j] < new_points_by_type[j]) {
-        max_points_by_type[j] = new_points_by_type[j];
+    const auto current_points_by_type(ppjsdm::get_number_points(vector_configurations[i]));
+    for(decltype(max_points_by_type.size()) j(0); j < number_types; ++j) {
+      if(max_points_by_type[j] < current_points_by_type[j]) {
+        max_points_by_type[j] = current_points_by_type[j];
       }
     }
   }
