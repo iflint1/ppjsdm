@@ -67,6 +67,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   }
 
   // Check if we actually need to compute alpha/gamma regressors
+  // TODO: Clean up this code, the break; isn't helping much
   bool need_to_compute_alpha(false);
   for(decltype(estimate_alpha.nrow()) i(0); i < estimate_alpha.nrow(); ++i) {
     for(decltype(estimate_alpha.ncol()) j(0); j < estimate_alpha.ncol(); ++j) {
@@ -77,8 +78,8 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     }
   }
   bool need_to_compute_gamma(false);
-  for(decltype(estimate_alpha.nrow()) i(0); i < estimate_gamma.nrow(); ++i) {
-    for(decltype(estimate_alpha.ncol()) j(0); j < estimate_gamma.ncol(); ++j) {
+  for(decltype(estimate_gamma.nrow()) i(0); i < estimate_gamma.nrow(); ++i) {
+    for(decltype(estimate_gamma.ncol()) j(0); j < estimate_gamma.ncol(); ++j) {
       if(estimate_gamma(i, j)) {
         need_to_compute_gamma = true;
         break;
@@ -246,8 +247,14 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
       rho_offset[filling] = shift[type_index];
 
       // Fill regressors
-      const auto current_short(dispersion_short[configuration_index][point_index]);
-      const auto current_medium(dispersion_medium[configuration_index][point_index]);
+      using current_dispersion_t = std::remove_cv_t<std::remove_reference_t<decltype(dispersion_short[0][0])>>;
+      current_dispersion_t current_short, current_medium;
+      if(need_to_compute_alpha) {
+        current_short = dispersion_short[configuration_index][point_index];
+      }
+      if(need_to_compute_gamma) {
+        current_medium = dispersion_medium[configuration_index][point_index];
+      }
       const auto regression_vector(ppjsdm::make_regression_vector<double>(type_index,
                                                                           number_types,
                                                                           regressors.ncol(),
