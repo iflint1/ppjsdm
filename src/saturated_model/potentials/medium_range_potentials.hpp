@@ -233,7 +233,7 @@ struct Two_sided_square_bump_implementation {
     if(distance == lower) {
       return static_cast<FloatType>(1.);
     } else {
-      const auto delta = static_cast<FloatType>(upper) - static_cast<FloatType>(lower);
+      const auto delta = static_cast<FloatType>(distance) - static_cast<FloatType>(lower);
       return static_cast<FloatType>(1.) - std::exp(upper / (delta * delta));
     }
   }
