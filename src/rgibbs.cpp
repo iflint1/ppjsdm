@@ -75,8 +75,8 @@ SEXP rgibbs_cpp(SEXP window,
   using Configuration_type = std::vector<ppjsdm::Marked_point>;
 
   const auto cpp_window(ppjsdm::Window(window, mark_range));
-  const ppjsdm::Truncated_exponential_family_model_over_window<std::vector<double>> exponential_model(cpp_window,
-                                                                                                      Rcpp::as<std::vector<double>>(beta0),
+  const ppjsdm::Truncated_exponential_family_model_over_window<Rcpp::NumericVector> exponential_model(cpp_window,
+                                                                                                      beta0,
                                                                                                       model,
                                                                                                       medium_range_model,
                                                                                                       alpha,

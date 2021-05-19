@@ -219,8 +219,8 @@ public:
     const auto number_types(Model::get_number_types());
     using size_t = std::remove_cv_t<decltype(number_types)>;
     for(size_t type(0); type < number_types; ++type) {
-      integral += Model::covariates_.get_integral_of_dot(window_, [type, this](auto x) {
-        return std::exp(x + Model::beta0_[type] + dot_dispersion_maximum_[type]);
+      integral += Model::covariates_.get_integral_of_dot(window_, [beta0 = Model::beta0_[type], dot = dot_dispersion_maximum_[type]](auto x) {
+        return std::exp(x + beta0 + dot);
       }, Model::beta_(type, Rcpp::_));
     }
     return integral;
