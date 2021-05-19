@@ -228,7 +228,11 @@ public:
 
   auto sample_point_from_bounding_intensity() const {
     // Sample type proportionally to the exp(beta0_i).
-    const auto random_type(Rcpp::sample(Model::beta0_.size(), 1, false, Rcpp::sugar::probs_t(Rcpp::exp(Model::beta0_)), false)[0]);
+    Rcpp::NumericVector exp_beta0(Model::beta0_.size());
+    for(decltype(Model::beta0_.size()) i(0); i < Model::beta0_.size(); ++i) {
+      exp_beta0[i] = std::exp(Model::beta0_[i]);
+    }
+    const auto random_type(Rcpp::sample(Model::beta0_.size(), 1, false, Rcpp::sugar::probs_t(exp_beta0)  , false)[0]);
     while(true) {
       const auto sample(window_.sample(random_type));
       if(exp_rand() + get_log_normalized_bounding_intensity(sample) >= 0) {
