@@ -12,6 +12,7 @@ Imports:
     ggplot2,
     glmnet,
     graphics,
+    Matrix,
     methods,
     oem,
     Rcpp (>= 1.0.2),

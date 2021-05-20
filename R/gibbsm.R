@@ -34,8 +34,8 @@ fit_gibbs <- function(gibbsm_data,
 
     # We don't use an offset explicitely because the call to glmnet above returns nonsensical results or hangs.
     # Instead, use a shift for all the beta0 regressors according to -log(rho).
-    arguments <- list(x = regressors,
-                      y = gibbsm_data$response,
+    arguments <- list(x = Matrix(regressors, sparse = TRUE),
+                      y = Matrix(gibbsm_data$response, sparse = TRUE),
                       intercept = FALSE,
                       family = "binomial",
                       penalty.factor = pfactor)
@@ -318,6 +318,7 @@ fit_gibbs <- function(gibbsm_data,
 #' @param ... Forwarded to the fitting package.
 #' @importFrom GA ga
 #' @importFrom glmnet glmnet
+#' @importFrom Matrix Matrix
 #' @importFrom oem oem
 #' @importFrom stats AIC as.formula BIC binomial coefficients deviance glm lm logLik setNames
 #' @importFrom spatstat.geom as.im as.owin
