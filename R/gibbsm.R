@@ -215,6 +215,57 @@ fit_gibbs <- function(gibbsm_data,
       coef[match(paste0("beta0_", i), names(coef))] <- coef[match(paste0("beta0_", i), names(coef))] - shift[i]
     }
     fit_algorithm <- "oem"
+  } else if(fitting_package == "h2o") {
+    h2o.init(nthreads = nthreads)
+
+    nregressors <- ncol(regressors)
+    pfactor <- rep(1, nregressors)
+    pfactor[startsWith(colnames(regressors), "beta0")] <- 0
+
+    if(all(1 == regressors[, startsWith(colnames(regressors), "beta0")])) {
+      regressors[1, startsWith(colnames(regressors), "beta0")] <- 1.001
+    }
+    regressors <- as.data.frame(regressors)
+    regressors$response <- gibbsm_data$response
+    regressors$offset <- gibbsm_data$offset
+
+    arguments <- list(training_frame = as.h2o(regressors),
+                      y = 'response',
+                      intercept = FALSE,
+                      family = "binomial",
+                      offset_column = 'offset',
+                      standardize = FALSE,
+                      link = 'logit')
+    user_supplied <- list(...)
+
+    if(use_regularization) {
+      stop("Not implemented yet")
+    } else {
+      if(!("lambda" %in% names(user_supplied))) {
+        arguments <- append(arguments, list(lambda = 0))
+      }
+      arguments <- append(arguments, user_supplied)
+      if(debug) {
+        tm <- Sys.time()
+        message("Calling h2o")
+      }
+      fit <- do.call(h2o.glm, arguments)
+      if(debug) {
+        message("Finished call to h2o")
+        print(Sys.time() - tm)
+      }
+
+      shift <- gibbsm_data$shift
+
+      aic <- NA
+      bic <- NA
+      coef <- h2o.coef(fit)
+    }
+    coef <- coef[-which(names(coef) == "Intercept")]
+    for(i in seq_len(number_types)) {
+      coef[match(paste0("beta0_", i), names(coef))] <- coef[match(paste0("beta0_", i), names(coef))] - shift[i]
+    }
+    fit_algorithm <- "h2o"
   } else if(fitting_package == "glm") {
     fmla <- paste0("response ~ 0 + offset(offset) + ", paste0(colnames(regressors), collapse = ' + '))
     fmla <- as.formula(fmla)
@@ -318,6 +369,7 @@ fit_gibbs <- function(gibbsm_data,
 #' @param ... Forwarded to the fitting package.
 #' @importFrom GA ga
 #' @importFrom glmnet glmnet
+#' @importFrom h2o as.h2o h2o.coef h2o.glm h2o.init
 #' @importFrom Matrix Matrix
 #' @importFrom oem oem
 #' @importFrom stats AIC as.formula BIC binomial coefficients deviance glm lm logLik setNames

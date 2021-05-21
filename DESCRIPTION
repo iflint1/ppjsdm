@@ -12,6 +12,7 @@ Imports:
     ggplot2,
     glmnet,
     graphics,
+    h2o,
     Matrix,
     methods,
     oem,
