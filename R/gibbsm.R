@@ -389,6 +389,7 @@ fit_gibbs <- function(gibbsm_data,
 #' @param dummy_factor How many more dummy points there are, compared to the points in the configuration. By default, follows the recommendation of Baddeley et al.
 #' @param nthreads Maximum number of threads for parallel computing.
 #' @param use_regularization Use the fitting package without regularization.
+#' @param return_raw_fitting_data Return the raw fitting data, before calling the GLM fitting package. Mostly used for debugging purposes on large datasets.
 #' @param ... Forwarded to the fitting package.
 #' @importFrom GA ga
 #' @importFrom glmnet glmnet
@@ -415,6 +416,7 @@ gibbsm <- function(configuration_list,
                    dummy_factor = 0,
                    nthreads = 4,
                    use_regularization = FALSE,
+                   return_raw_fitting_data = FALSE,
                    ...) {
   # If we're given a single configuration, convert it to a list.
   if(inherits(configuration_list, "Configuration")) {
@@ -593,6 +595,10 @@ gibbsm <- function(configuration_list,
                                             nthreads = nthreads,
                                             debug = debug)
 
+    if(return_raw_fitting_data) {
+      return(gibbsm_data_list)
+    }
+
     fitted <- fit_gibbs(gibbsm_data_list,
                         fitting_package = fitting_package,
                         use_aic = use_aic,
@@ -641,6 +647,10 @@ gibbsm <- function(configuration_list,
                                             estimate_gamma = estimate_gamma,
                                             nthreads = nthreads,
                                             debug = debug)
+
+    if(return_raw_fitting_data) {
+      return(gibbsm_data_list)
+    }
 
     fitted <- fit_gibbs(gibbsm_data_list,
                         fitting_package = fitting_package,

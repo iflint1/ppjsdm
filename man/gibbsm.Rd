@@ -22,6 +22,7 @@ gibbsm(
   dummy_factor = 0,
   nthreads = 4,
   use_regularization = FALSE,
+  return_raw_fitting_data = FALSE,
   ...
 )
 }
@@ -59,6 +60,8 @@ gibbsm(
 \item{nthreads}{Maximum number of threads for parallel computing.}
 
 \item{use_regularization}{Use the fitting package without regularization.}
+
+\item{return_raw_fitting_data}{Return the raw fitting data, before calling the GLM fitting package. Mostly used for debugging purposes on large datasets.}
 
 \item{...}{Forwarded to the fitting package.}
 }
