@@ -16,7 +16,7 @@ gibbsm(
   saturation,
   debug = FALSE,
   fitting_package = "glmnet",
-  use_aic = TRUE,
+  which_lambda = "AIC",
   max_dummy = 0,
   min_dummy = 0,
   dummy_factor = 0,
@@ -49,7 +49,7 @@ gibbsm(
 
 \item{fitting_package}{Choices are `glmnet`, `oem` or `glm`.}
 
-\item{use_aic}{Use AIC instead of BIC for model fitting?}
+\item{which_lambda}{Which lambda to choose in the regularised fit? Choices are "AIC" (lambda that minimises AIC), "BIC" (lambda that minimises BIC) or "smallest" (smallest lambda).}
 
 \item{max_dummy}{Maximum number of dummy points for each type. By default, follows the recommendation of Baddeley et al.}
 

@@ -1,6 +1,6 @@
 fit_gibbs <- function(gibbsm_data,
                       fitting_package,
-                      use_aic,
+                      which_lambda,
                       estimate_alpha,
                       estimate_gamma,
                       types_names,
@@ -67,14 +67,21 @@ fit_gibbs <- function(gibbsm_data,
       bic <- log(n) * k - tLL
 
       # Choose lambda that minimizes AIC or BIC.
-      if(use_aic) {
+      if(which_lambda == "AIC") {
         coef <- coefficients(fit)[, which.min(aic)]
         aic <- min(aic)
         bic <- bic[which.min(aic)]
-      } else {
+      } else if(which_lambda == "BIC") {
         coef <- coefficients(fit)[, which.min(bic)]
         aic <- aic[which.min(bic)]
         bic <- min(bic)
+      } else if(which_lambda == "best") {
+        coef <- coefficients(fit)
+        coef <- coef[, which.min(fit$lambda)]
+        aic <- aic[length(aic)]
+        bic <- bic[length(bic)]
+      } else {
+        stop("Unrecognised option for which_lambda, should be one of 'AIC', 'BIC' or 'best'.")
       }
     } else {
       # Call glmnet with a decreasing sequence of lambdas
@@ -166,14 +173,20 @@ fit_gibbs <- function(gibbsm_data,
       bic <- -LL + log(n) * k
 
       # Choose lambda that minimizes AIC or BIC
-      if(use_aic) {
+      if(which_lambda == "AIC") {
         coef <- coef[, which.min(aic)]
         aic <- min(aic)
         bic <- bic[which.min(aic)]
-      } else {
+      } else if(which_lambda == "BIC") {
         coef <- coef[, which.min(bic)]
         aic <- aic[which.min(bic)]
         bic <- min(bic)
+      } else if(which_lambda == "best") {
+        coef <- coef[, ncol(coef)]
+        aic <- aic[length(aic)]
+        bic <- bic[length(bic)]
+      } else {
+        stop("Unrecognised option for which_lambda, should be one of 'AIC', 'BIC' or 'best'.")
       }
 
       # Put coef in correct format
@@ -383,7 +396,7 @@ fit_gibbs <- function(gibbsm_data,
 #' @param saturation Saturation parameter of the point process.
 #' @param debug Print debugging information?
 #' @param fitting_package Choices are `glmnet`, `oem` or `glm`.
-#' @param use_aic Use AIC instead of BIC for model fitting?
+#' @param which_lambda Which lambda to choose in the regularised fit? Choices are "AIC" (lambda that minimises AIC), "BIC" (lambda that minimises BIC) or "smallest" (smallest lambda).
 #' @param max_dummy Maximum number of dummy points for each type. By default, follows the recommendation of Baddeley et al.
 #' @param min_dummy Minimum number of dummy points for each type. By default, follows the recommendation of Baddeley et al.
 #' @param dummy_factor How many more dummy points there are, compared to the points in the configuration. By default, follows the recommendation of Baddeley et al.
@@ -410,7 +423,7 @@ gibbsm <- function(configuration_list,
                    saturation,
                    debug = FALSE,
                    fitting_package = "glmnet",
-                   use_aic = TRUE,
+                   which_lambda = "AIC",
                    max_dummy = 0,
                    min_dummy = 0,
                    dummy_factor = 0,
@@ -516,7 +529,7 @@ gibbsm <- function(configuration_list,
 
       fit <- fit_gibbs(gibbsm_data_list,
                        fitting_package = "glm",
-                       use_aic = use_aic,
+                       which_lambda = which_lambda,
                        estimate_alpha = estimate_alpha,
                        estimate_gamma = estimate_gamma,
                        types_names = types_names,
@@ -532,10 +545,10 @@ gibbsm <- function(configuration_list,
       out <- tryCatch(
       {
         fit <- get_fit(v)$fit
-        if(use_aic) {
-          average <- fit$aic
-        } else {
+        if(which_lambda == "BIC") {
           average <- fit$bic
+        } else {
+          average <- fit$aic
         }
         average
       },
@@ -601,7 +614,7 @@ gibbsm <- function(configuration_list,
 
     fitted <- fit_gibbs(gibbsm_data_list,
                         fitting_package = fitting_package,
-                        use_aic = use_aic,
+                        which_lambda = which_lambda,
                         estimate_alpha = estimate_alpha,
                         estimate_gamma = estimate_gamma,
                         types_names = types_names,
@@ -654,7 +667,7 @@ gibbsm <- function(configuration_list,
 
     fitted <- fit_gibbs(gibbsm_data_list,
                         fitting_package = fitting_package,
-                        use_aic = use_aic,
+                        which_lambda = which_lambda,
                         estimate_alpha = estimate_alpha,
                         estimate_gamma = estimate_gamma,
                         types_names = types_names,
