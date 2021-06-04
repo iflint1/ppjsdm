@@ -75,13 +75,13 @@ fit_gibbs <- function(gibbsm_data,
         coef <- coefficients(fit)[, which.min(bic)]
         aic <- aic[which.min(bic)]
         bic <- min(bic)
-      } else if(which_lambda == "best") {
+      } else if(which_lambda == "smallest") {
         coef <- coefficients(fit)
         coef <- coef[, which.min(fit$lambda)]
         aic <- aic[length(aic)]
         bic <- bic[length(bic)]
       } else {
-        stop("Unrecognised option for which_lambda, should be one of 'AIC', 'BIC' or 'best'.")
+        stop("Unrecognised option for which_lambda, should be one of 'AIC', 'BIC' or 'smallest'.")
       }
     } else {
       # Call glmnet with a decreasing sequence of lambdas
@@ -181,12 +181,12 @@ fit_gibbs <- function(gibbsm_data,
         coef <- coef[, which.min(bic)]
         aic <- aic[which.min(bic)]
         bic <- min(bic)
-      } else if(which_lambda == "best") {
+      } else if(which_lambda == "smallest") {
         coef <- coef[, ncol(coef)]
         aic <- aic[length(aic)]
         bic <- bic[length(bic)]
       } else {
-        stop("Unrecognised option for which_lambda, should be one of 'AIC', 'BIC' or 'best'.")
+        stop("Unrecognised option for which_lambda, should be one of 'AIC', 'BIC' or 'smallest'.")
       }
 
       # Put coef in correct format
