@@ -59,28 +59,26 @@ fit_gibbs <- function(gibbsm_data,
         print(Sys.time() - tm)
       }
       if(refit_glmnet > 0) {
-        for(refit_index in seq_len(refit_glmnet)) {
-          lambda_seq <- fit$lambda
-          N <- 2 * length(lambda_seq)
-          lambda_new <- vector(mode = 'numeric', length = N)
-          lambda_new[1] <- lambda_seq[1]
-          by <- (lambda_seq[1] - lambda_seq[2]) / lambda_seq[1]
-          for(i in 2:N) {
-            lambda_new[i] <- (1 - by) * lambda_new[i - 1]
-          }
+        lambda_seq <- fit$lambda
+        N <- (1 + refit_glmnet) * length(lambda_seq)
+        lambda_new <- vector(mode = 'numeric', length = N)
+        lambda_new[1] <- lambda_seq[1]
+        by <- (lambda_seq[1] - lambda_seq[2]) / lambda_seq[1]
+        for(i in 2:N) {
+          lambda_new[i] <- (1 - by) * lambda_new[i - 1]
+        }
 
-          arguments$lambda <- lambda_new
-          arguments$nlambda <- length(lambda_new)
+        arguments$lambda <- lambda_new
+        arguments$nlambda <- length(lambda_new)
 
-          if(debug) {
-            tm <- Sys.time()
-            message(paste0("Calling glmnet... (Call number ", refit_index + 1, ".)"))
-          }
-          fit <- do.call(glmnet, arguments)
-          if(debug) {
-            message("Finished call to glmnet.")
-            print(Sys.time() - tm)
-          }
+        if(debug) {
+          tm <- Sys.time()
+          message("Calling glmnet again...")
+        }
+        fit <- do.call(glmnet, arguments)
+        if(debug) {
+          message("Finished call to glmnet.")
+          print(Sys.time() - tm)
         }
       }
 
@@ -429,7 +427,7 @@ fit_gibbs <- function(gibbsm_data,
 #' @param nthreads Maximum number of threads for parallel computing.
 #' @param use_regularization Use the fitting package without regularization.
 #' @param return_raw_fitting_data Return the raw fitting data, before calling the GLM fitting package. Mostly used for debugging purposes on large datasets.
-#' @param refit_glmnet How many times to re-run glmnet, each time doubling the length of the lambda sequence (currently only used with fitting_package = glmnet).
+#' @param refit_glmnet How many times more lambdas to use on a re-run of glmnet (currently only used with fitting_package = glmnet). For example, refit_glmnet = 0.5 re-runs the fitting procedure with a 50\% longer lambda sequence.
 #' @param ... Forwarded to the fitting package.
 #' @importFrom GA ga
 #' @importFrom glmnet glmnet

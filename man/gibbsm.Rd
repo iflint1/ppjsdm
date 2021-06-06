@@ -64,7 +64,7 @@ gibbsm(
 
 \item{return_raw_fitting_data}{Return the raw fitting data, before calling the GLM fitting package. Mostly used for debugging purposes on large datasets.}
 
-\item{refit_glmnet}{How many times to re-run glmnet, each time doubling the length of the lambda sequence (currently only used with fitting_package = glmnet).}
+\item{refit_glmnet}{How many times more lambdas to use on a re-run of glmnet (currently only used with fitting_package = glmnet). For example, refit_glmnet = 0.5 re-runs the fitting procedure with a 50\% longer lambda sequence.}
 
 \item{...}{Forwarded to the fitting package.}
 }
