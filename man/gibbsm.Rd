@@ -23,6 +23,7 @@ gibbsm(
   nthreads = 4,
   use_regularization = FALSE,
   return_raw_fitting_data = FALSE,
+  refit_glmnet = 0,
   ...
 )
 }
@@ -33,9 +34,9 @@ gibbsm(
 
 \item{covariates}{Environmental covariates driving the intensity.}
 
-\item{model}{String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_short_range_models()`.}
+\item{model}{String to represent the model we're calibrating. You can check the currently authorised models with a call to show_short_range_models().}
 
-\item{medium_range_model}{String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_medium_range_models()`.}
+\item{medium_range_model}{String to represent the model we're calibrating. You can check the currently authorised models with a call to show_medium_range_models().}
 
 \item{short_range}{Short range interaction radius. Filled with 0.1 by default.}
 
@@ -47,7 +48,7 @@ gibbsm(
 
 \item{debug}{Print debugging information?}
 
-\item{fitting_package}{Choices are `glmnet`, `oem` or `glm`.}
+\item{fitting_package}{Choices are glmnet, oem or glm.}
 
 \item{which_lambda}{Which lambda to choose in the regularised fit? Choices are "AIC" (lambda that minimises AIC), "BIC" (lambda that minimises BIC) or "smallest" (smallest lambda).}
 
@@ -62,6 +63,8 @@ gibbsm(
 \item{use_regularization}{Use the fitting package without regularization.}
 
 \item{return_raw_fitting_data}{Return the raw fitting data, before calling the GLM fitting package. Mostly used for debugging purposes on large datasets.}
+
+\item{refit_glmnet}{How many times to re-run glmnet, each time doubling the length of the lambda sequence (currently only used with fitting_package = glmnet).}
 
 \item{...}{Forwarded to the fitting package.}
 }

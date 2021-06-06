@@ -7,6 +7,7 @@ fit_gibbs <- function(gibbsm_data,
                       covariates_names,
                       use_regularization,
                       nthreads,
+                      refit_glmnet,
                       debug,
                       ...) {
   # Extract a few useful quantities used in most regressions
@@ -56,6 +57,31 @@ fit_gibbs <- function(gibbsm_data,
       if(debug) {
         message("Finished call to glmnet.")
         print(Sys.time() - tm)
+      }
+      if(refit_glmnet > 0) {
+        for(refit_index in seq_len(refit_glmnet)) {
+          lambda_seq <- fit$lambda
+          N <- 2 * length(lambda_seq)
+          lambda_new <- vector(mode = 'numeric', length = N)
+          lambda_new[1] <- lambda_seq[1]
+          by <- (lambda_seq[1] - lambda_seq[2]) / lambda_seq[1]
+          for(i in 2:N) {
+            lambda_new[i] <- (1 - by) * lambda_new[i - 1]
+          }
+
+          arguments$lambda <- lambda_new
+          arguments$nlambda <- length(lambda_new)
+
+          if(debug) {
+            tm <- Sys.time()
+            message(paste0("Calling glmnet... (Call number ", refit_index + 1, ".)"))
+          }
+          fit <- do.call(glmnet, arguments)
+          if(debug) {
+            message("Finished call to glmnet.")
+            print(Sys.time() - tm)
+          }
+        }
       }
 
       # Compute AIC or BIC for the vector of lambdas
@@ -388,14 +414,14 @@ fit_gibbs <- function(gibbsm_data,
 #' @param configuration_list A single configuration or a list of configurations assumed to be drawn from the multivariate Gibbs.
 #' @param window Observation window.
 #' @param covariates Environmental covariates driving the intensity.
-#' @param model String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_short_range_models()`.
-#' @param medium_range_model String to represent the model we're calibrating. You can check the currently authorised models with a call to `show_medium_range_models()`.
+#' @param model String to represent the model we're calibrating. You can check the currently authorised models with a call to show_short_range_models().
+#' @param medium_range_model String to represent the model we're calibrating. You can check the currently authorised models with a call to show_medium_range_models().
 #' @param short_range Short range interaction radius. Filled with 0.1 by default.
 #' @param medium_range Medium range interaction radius. Filled with 0 by default.
 #' @param long_range Long range interaction radius. Filled with 0 by default.
 #' @param saturation Saturation parameter of the point process.
 #' @param debug Print debugging information?
-#' @param fitting_package Choices are `glmnet`, `oem` or `glm`.
+#' @param fitting_package Choices are glmnet, oem or glm.
 #' @param which_lambda Which lambda to choose in the regularised fit? Choices are "AIC" (lambda that minimises AIC), "BIC" (lambda that minimises BIC) or "smallest" (smallest lambda).
 #' @param max_dummy Maximum number of dummy points for each type. By default, follows the recommendation of Baddeley et al.
 #' @param min_dummy Minimum number of dummy points for each type. By default, follows the recommendation of Baddeley et al.
@@ -403,6 +429,7 @@ fit_gibbs <- function(gibbsm_data,
 #' @param nthreads Maximum number of threads for parallel computing.
 #' @param use_regularization Use the fitting package without regularization.
 #' @param return_raw_fitting_data Return the raw fitting data, before calling the GLM fitting package. Mostly used for debugging purposes on large datasets.
+#' @param refit_glmnet How many times to re-run glmnet, each time doubling the length of the lambda sequence (currently only used with fitting_package = glmnet).
 #' @param ... Forwarded to the fitting package.
 #' @importFrom GA ga
 #' @importFrom glmnet glmnet
@@ -430,7 +457,13 @@ gibbsm <- function(configuration_list,
                    nthreads = 4,
                    use_regularization = FALSE,
                    return_raw_fitting_data = FALSE,
+                   refit_glmnet = 0,
                    ...) {
+  # refit_glmnet only has an effect with glmnet at the moment, do a quick check.
+  if(refit_glmnet > 0 & fitting_package != "glmnet") {
+    warning("refit_glmnet currently has no effect if the fitting package is not glmnet.")
+  }
+
   # If we're given a single configuration, convert it to a list.
   if(inherits(configuration_list, "Configuration")) {
     configuration_list <- list(configuration_list)
@@ -536,6 +569,7 @@ gibbsm <- function(configuration_list,
                        covariates_names = covariates_names,
                        use_regularization = use_regularization,
                        nthreads = nthreads,
+                       refit_glmnet = refit_glmnet,
                        debug = debug,
                        ...)
       list(fit = fit, sh = sh, me = me, lo = lo)
@@ -621,6 +655,7 @@ gibbsm <- function(configuration_list,
                         covariates_names = covariates_names,
                         use_regularization = use_regularization,
                         nthreads = nthreads,
+                        refit_glmnet = refit_glmnet,
                         debug = debug,
                         ...)
   } else {
@@ -674,6 +709,7 @@ gibbsm <- function(configuration_list,
                         covariates_names = covariates_names,
                         use_regularization = use_regularization,
                         nthreads = nthreads,
+                        refit_glmnet = refit_glmnet,
                         debug = debug,
                         ...)
   }
