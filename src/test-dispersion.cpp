@@ -79,6 +79,7 @@ context("Dispersion") {
           const ppjsdm::Saturated_model<double> model(ppjsdm::medium_range_models[medium_range_index], medium_range, long_range, saturation);
           const auto fitting_dispersion(ppjsdm::compute_dispersion_for_fitting(model,
                                                                                ntypes,
+                                                                               1,
                                                                                configuration,
                                                                                other_configuration));
           const auto vcov_dispersion(ppjsdm::compute_dispersion_for_vcov(model,

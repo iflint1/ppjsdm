@@ -53,9 +53,6 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
                                       int number_types,
                                       int nthreads,
                                       bool debug) {
-#ifdef _OPENMP
-  omp_set_num_threads(nthreads);
-#endif
   // A few typedefs for later
   using computation_t = long double;
   using size_t = ppjsdm::size_t<Configuration>;
@@ -140,7 +137,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   }
 
   // Precompute short and medium range dispersions
-  using vec_dispersion_t = std::vector<decltype(ppjsdm::compute_dispersion_for_fitting(dispersion_model, 1, configuration_list[0], D))>;
+  using vec_dispersion_t = std::vector<decltype(ppjsdm::compute_dispersion_for_fitting(dispersion_model, 1, 1, configuration_list[0], D))>;
   vec_dispersion_t dispersion_short(configuration_list.size());
   vec_dispersion_t dispersion_medium(configuration_list.size());
   if(debug) {
@@ -151,12 +148,14 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     if(need_to_compute_alpha) {
       const auto d = ppjsdm::compute_dispersion_for_fitting(dispersion_model,
                                                             number_types,
+                                                            nthreads,
                                                             configuration_list[i], D);
       dispersion_short[i] = d;
     }
     if(need_to_compute_gamma) {
       const auto d = ppjsdm::compute_dispersion_for_fitting(medium_dispersion_model,
                                                             number_types,
+                                                            nthreads,
                                                             configuration_list[i], D);
       dispersion_medium[i] = d;
     }

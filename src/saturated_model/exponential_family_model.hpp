@@ -141,13 +141,14 @@ protected:
 
     // Precompute dispersion if required
     const auto number_types(get_number_types());
-    using dispersion_t = decltype(compute_dispersion_for_fitting<true>(dispersion_, number_types, configuration, points));
+    // TODO: Add a nthreads argument instead of 1
+    using dispersion_t = decltype(compute_dispersion_for_fitting<true>(dispersion_, number_types, 1, configuration, points));
     dispersion_t short_range_dispersion, medium_range_dispersion;
     if(is_any_alpha_nonzero) {
-      short_range_dispersion = compute_dispersion_for_fitting<true>(dispersion_, number_types, configuration, points);
+      short_range_dispersion = compute_dispersion_for_fitting<true>(dispersion_, number_types, 1, configuration, points);
     }
     if(is_any_gamma_nonzero) {
-      medium_range_dispersion = compute_dispersion_for_fitting<true>(medium_range_dispersion_, number_types, configuration, points);
+      medium_range_dispersion = compute_dispersion_for_fitting<true>(medium_range_dispersion_, number_types, 1, configuration, points);
     }
 
     // Fill in the returned vector
