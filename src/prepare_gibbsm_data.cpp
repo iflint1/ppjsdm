@@ -28,16 +28,6 @@
 #include <type_traits> // std::remove_cv_t
 #include <vector> // std::vector
 
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-
-inline void add_to_formula(std::string& formula, Rcpp::CharacterVector names) {
-  for(const auto& name: names) {
-    formula += std::string(" + ") + Rcpp::as<std::string>(name);
-  }
-}
-
 template<typename Configuration, typename FloatType, typename Vector>
 Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configuration_list,
                                       const ppjsdm::Window& window,
@@ -64,23 +54,18 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   }
 
   // Check if we actually need to compute alpha/gamma regressors
-  // TODO: Clean up this code, the break; isn't helping much
-  bool need_to_compute_alpha(false);
+  bool need_to_compute_alpha(false), need_to_compute_gamma(false);
   for(decltype(estimate_alpha.nrow()) i(0); i < estimate_alpha.nrow(); ++i) {
-    for(decltype(estimate_alpha.ncol()) j(0); j < estimate_alpha.ncol(); ++j) {
+    for(decltype(estimate_alpha.ncol()) j(i); j < estimate_alpha.ncol(); ++j) {
       if(estimate_alpha(i, j)) {
         need_to_compute_alpha = true;
-        break;
       }
-    }
-  }
-  bool need_to_compute_gamma(false);
-  for(decltype(estimate_gamma.nrow()) i(0); i < estimate_gamma.nrow(); ++i) {
-    for(decltype(estimate_gamma.ncol()) j(0); j < estimate_gamma.ncol(); ++j) {
       if(estimate_gamma(i, j)) {
         need_to_compute_gamma = true;
-        break;
       }
+    }
+    if(need_to_compute_alpha && need_to_compute_gamma) {
+      break;
     }
   }
 
@@ -138,26 +123,23 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 
   // Precompute short and medium range dispersions
   using vec_dispersion_t = std::vector<decltype(ppjsdm::compute_dispersion_for_fitting(dispersion_model, 1, 1, configuration_list[0], D))>;
-  vec_dispersion_t dispersion_short(configuration_list.size());
-  vec_dispersion_t dispersion_medium(configuration_list.size());
+  vec_dispersion_t dispersion_short(configuration_list.size()), dispersion_medium(configuration_list.size());
   if(debug) {
     timer.set_current();
     Rcpp::Rcout << "Starting pre-computation of the dispersions to put into the regression matrix...\n";
   }
   for(decltype(configuration_list.size()) i(0); i < configuration_list.size(); ++i) {
     if(need_to_compute_alpha) {
-      const auto d = ppjsdm::compute_dispersion_for_fitting(dispersion_model,
-                                                            number_types,
-                                                            nthreads,
-                                                            configuration_list[i], D);
-      dispersion_short[i] = d;
+      dispersion_short[i] = ppjsdm::compute_dispersion_for_fitting(dispersion_model,
+                                                                   number_types,
+                                                                   nthreads,
+                                                                   configuration_list[i], D);
     }
     if(need_to_compute_gamma) {
-      const auto d = ppjsdm::compute_dispersion_for_fitting(medium_dispersion_model,
-                                                            number_types,
-                                                            nthreads,
-                                                            configuration_list[i], D);
-      dispersion_medium[i] = d;
+      dispersion_medium[i] = ppjsdm::compute_dispersion_for_fitting(medium_dispersion_model,
+                                                                    number_types,
+                                                                    nthreads,
+                                                                    configuration_list[i], D);
     }
   }
   if(debug) {
@@ -165,8 +147,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   }
 
   // Precompute how many of the points in the configuration we'll have to drop due to NA values on the covariates.
-  size_t total_configuration_length(0);
-  size_t total_removed_points(0);
+  size_t total_configuration_length(0), total_removed_points(0);
   for(size_t i(0); i < configuration_list.size(); ++i) {
     total_configuration_length += ppjsdm::size(configuration_list[i]);
     for(size_t point_index(0); point_index < ppjsdm::size(configuration_list[i]); ++point_index) {
