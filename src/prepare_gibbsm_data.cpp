@@ -86,7 +86,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 
   // This choice of intensity of dummy points rho is the guideline from the Baddeley et al. paper, see p. 8 therein.
   if(max_dummy == 0) {
-    max_dummy = 100000;
+    max_dummy = 1000000;
   }
   if(min_dummy == 0) {
     min_dummy = 500;
