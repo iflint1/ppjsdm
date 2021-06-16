@@ -1,9 +1,10 @@
 #' Calculate Variance-Covariance Matrix for a Fitted Gibbs point process.
 #'
 #' @param object A fitted model object.
+#' @param npoints Target number of points in the restricted window that the vcov matrix is computed on. Computation is slower for larger values, but the vcov matrix is then better approximated.
 #' @param ... Ignored.
 #' @export
-vcov.gibbsm <- function(object, ...) {
+vcov.gibbsm <- function(object, npoints = 2000, ...) {
   if(object$used_regularization) {
     warning("Computing the Variance-Covariance matrix of a regularised fit.")
   }
@@ -27,6 +28,7 @@ vcov.gibbsm <- function(object, ...) {
                      estimate_alpha = object$estimate_alpha,
                      estimate_gamma = object$estimate_gamma,
                      debug = object$debug,
-                     nthreads = object$nthreads)
+                     nthreads = object$nthreads,
+                     npoints = npoints)
   vc$G1 + vc$G2
 }

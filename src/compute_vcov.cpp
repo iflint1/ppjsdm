@@ -531,7 +531,8 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
                                const ppjsdm::Lightweight_square_matrix<bool>& estimate_alpha,
                                const ppjsdm::Lightweight_square_matrix<bool>& estimate_gamma,
                                bool debug,
-                               int nthreads) {
+                               int nthreads,
+                               int npoints) {
   ppjsdm::PreciseTimer timer{};
   if(debug) {
     Rcpp::Rcout << "Starting computation of the Papangelou conditional intensity...\n";
@@ -572,7 +573,7 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
     Rcpp::Rcout << "Starting computation of A2 + A3...\n";
   }
 
-  detail::restrict_window(window, configuration, 2000, 0.05);
+  detail::restrict_window(window, configuration, npoints, 0.05);
   const auto A2_plus_A3(detail::make_A2_plus_A3(papangelou,
                                                 rho,
                                                 theta,
@@ -631,7 +632,8 @@ Rcpp::List compute_vcov(SEXP configuration,
                         Rcpp::LogicalMatrix estimate_alpha,
                         Rcpp::LogicalMatrix estimate_gamma,
                         bool debug,
-                        int nthreads) {
+                        int nthreads,
+                        int npoints) {
   // Convert the SEXP configuration to a C++ object.
   const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::wrap(configuration));
   const auto length_configuration(ppjsdm::size(wrapped_configuration));
@@ -659,5 +661,6 @@ Rcpp::List compute_vcov(SEXP configuration,
                              ppjsdm::Lightweight_square_matrix<bool>(estimate_alpha),
                              ppjsdm::Lightweight_square_matrix<bool>(estimate_gamma),
                              debug,
-                             nthreads);
+                             nthreads,
+                             npoints);
 }

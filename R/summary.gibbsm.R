@@ -1,10 +1,11 @@
 #' Summary of a Fitted Gibbs point process.
 #'
 #' @param object A fitted model object.
+#' @param npoints Target number of points in the restricted window that the vcov matrix is computed on. Computation is slower for larger values, but the vcov matrix is then better approximated.
 #' @param ... Ignored.
 #' @importFrom stats pnorm qnorm
 #' @export
-summary.gibbsm <- function(object, ...) {
+summary.gibbsm <- function(object, npoints = 2000, ...) {
   y <- list()
   class(y) <- "summary_gibbsm"
 
@@ -31,7 +32,8 @@ summary.gibbsm <- function(object, ...) {
                      estimate_alpha = object$estimate_alpha,
                      estimate_gamma = object$estimate_gamma,
                      debug = object$debug,
-                     nthreads = object$nthreads)
+                     nthreads = object$nthreads,
+                     npoints = npoints)
 
   se_numerical <- sqrt(diag(vc$G2))
   se <- sqrt(diag(vc$G1 + vc$G2))

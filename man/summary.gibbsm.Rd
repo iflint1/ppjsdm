@@ -4,10 +4,12 @@
 \alias{summary.gibbsm}
 \title{Summary of a Fitted Gibbs point process.}
 \usage{
-\method{summary}{gibbsm}(object, ...)
+\method{summary}{gibbsm}(object, npoints = 2000, ...)
 }
 \arguments{
 \item{object}{A fitted model object.}
+
+\item{npoints}{Target number of points in the restricted window that the vcov matrix is computed on. Computation is slower for larger values, but the vcov matrix is then better approximated.}
 
 \item{...}{Ignored.}
 }
