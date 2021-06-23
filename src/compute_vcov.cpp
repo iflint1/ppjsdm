@@ -334,7 +334,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
   const auto mark(Rcpp::as<std::vector<double>>(data_list["mark"]));
 
   // A few useful typedefs
-  using computation_t = long double;
+  using computation_t = double;
   using size_t = decltype(ppjsdm::size(configuration));
 
   // Do you need to compute some of the alphas/gammas? If not, we can skip some of the dispersion computations
@@ -380,7 +380,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
   // Add A2 and A3 by using precomputed values above.
   // TODO: This depends on memory
   // TODO: Clean up code below, new technique
-  const long long int increment(1000000);
+  const long long int increment(10000000);
   for(long long int filling(0); filling < static_cast<long long int>(ppjsdm::size(restricted_configuration)) * (static_cast<long long int>(ppjsdm::size(restricted_configuration)) - 1) / 2; filling += increment) {
     // Parallel computations done before adding A2 and A3
     using precomputation_t = decltype(ppjsdm::compute_dispersion_for_vcov(dispersion_model, number_types, configuration, restricted_configuration, 0, 0, 1));
@@ -465,25 +465,27 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
           }
           const auto papangelou_i(std::exp(inner_product_i));
           const auto papangelou_j(std::exp(inner_product_j));
+          const auto papangelou_i_plus_rho(papangelou_i + static_cast<computation_t>(rho[ppjsdm::get_type(point_i)]));
+          const auto papangelou_j_plus_rho(papangelou_j + static_cast<computation_t>(rho[ppjsdm::get_type(point_j)]));
+
+          // Precompute delta
+          std::vector<computation_t> delta_i(number_parameters), delta_j(number_parameters);
+          for(size_t k1(0); k1 < number_parameters; ++k1) {
+            delta_i[k1] = regressors_over_papangelou_plus_rho[i][k1] - t_i[k1] / papangelou_i_plus_rho;
+            delta_j[k1] = regressors_over_papangelou_plus_rho[j][k1] - t_j[k1] / papangelou_j_plus_rho;
+          }
+
           const auto x1 = papangelou_i / restricted_papangelou[i] - static_cast<computation_t>(1.);
-          const auto x2 = (papangelou_i + static_cast<computation_t>(rho[ppjsdm::get_type(point_i)])) * (papangelou_j + static_cast<computation_t>(rho[ppjsdm::get_type(point_j)]));
+          const auto x2 = papangelou_i_plus_rho * papangelou_j_plus_rho;
           const auto x3 = papangelou_j / restricted_papangelou[j] - static_cast<computation_t>(1.);
           const auto constant_1 = x1 / x2;
           const auto constant_2 = x3 / x2;
           for(size_t k1(0); k1 < number_parameters; ++k1) {
-            const auto a1 = regressors_over_papangelou_plus_rho[i][k1];
-            const auto a2 = t_i[k1] / (papangelou_i + static_cast<computation_t>(rho[ppjsdm::get_type(point_i)]));
-            const auto b1 = regressors_over_papangelou_plus_rho[j][k1];
-            const auto b2 = t_j[k1] / (papangelou_j + static_cast<computation_t>(rho[ppjsdm::get_type(point_j)]));
             for(size_t k2(k1); k2 < number_parameters; ++k2) {
               mat_private(k1, k2) += t_i[k1] * t_j[k2] * constant_1;
               mat_private(k1, k2) += t_j[k1] * t_i[k2] * constant_2;
-              const auto c1 = regressors_over_papangelou_plus_rho[j][k2];
-              const auto c2 = t_j[k2] / (papangelou_j + static_cast<computation_t>(rho[ppjsdm::get_type(point_j)]));
-              mat_private(k1, k2) += (a1 - a2) * (c1 - c2);
-              const auto d1 = regressors_over_papangelou_plus_rho[i][k2];
-              const auto d2 = t_i[k2] / (papangelou_i + static_cast<computation_t>(rho[ppjsdm::get_type(point_i)]));
-              mat_private(k1, k2) += (b1 - b2) * (d1 - d2);
+              mat_private(k1, k2) += delta_i[k1] * delta_j[k2];
+              mat_private(k1, k2) += delta_j[k1] * delta_i[k2];
             }
           }
         }

@@ -217,8 +217,7 @@ plot.Configuration <- function(x, window, ...) {
     } else {
       g <- g + geom_point(aes_string(x = 'x', y = 'y', colour = 'Types', shape = 'Types'))
     }
-    g +
-      xlim(x_range[1], x_range[2]) +
+    g + xlim(x_range[1], x_range[2]) +
       ylim(y_range[1], y_range[2]) +
       scale_color_manual(values = rep(c("#FF0000", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6"), nlevels(df$Types))) +
       scale_shape_manual(values = rep(15:17, nlevels(df$Types))) +
