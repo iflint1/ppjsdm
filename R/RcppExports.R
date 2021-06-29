@@ -39,6 +39,10 @@ rppp_cpp <- function(window, lambda, nsim, types, drop, mark_range) {
     .Call(`_ppjsdm_rppp_cpp`, window, lambda, nsim, types, drop, mark_range)
 }
 
+rstratpp_cpp <- function(window, nx, ny, nsim, types, drop, mark_range) {
+    .Call(`_ppjsdm_rstratpp_cpp`, window, nx, ny, nsim, types, drop, mark_range)
+}
+
 #' Show the authorised short range models.
 #'
 #' @export
