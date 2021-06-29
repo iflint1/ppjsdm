@@ -47,6 +47,22 @@ public:
     return std::sqrt(square_diameter());
   }
 
+  double xmin() const {
+    return x_0_;
+  }
+
+  double xmax() const {
+    return x_0_ + delta_x_;
+  }
+
+  double ymin() const {
+    return y_0_;
+  }
+
+  double ymax() const {
+    return y_0_ + delta_y_;
+  }
+
   // TODO: Test is_in here and in other window classes
   bool is_in(double x, double y) const {
     return x >= x_0_ && x <= x_0_ + delta_x_ && y >= y_0_ && y <= y_0_ + delta_y_;
@@ -116,6 +132,22 @@ public:
     return 2 * radius_;
   }
 
+  double xmin() const {
+    return x_ - radius_;
+  }
+
+  double xmax() const {
+    return x_ + radius_;
+  }
+
+  double ymin() const {
+    return y_ - radius_;
+  }
+
+  double ymax() const {
+    return y_ + radius_;
+  }
+
   bool is_in(double x, double y) const {
     return (x - x_) * (x - x_) + (y - y_) * (y - y_) <= radius_ * radius_;
   }
@@ -176,10 +208,25 @@ public:
     return std::sqrt(square_diameter());
   }
 
+  double xmin() const {
+    return im_.x_min();
+  }
+
+  double xmax() const {
+    return im_.x_min() + im_.delta_x();
+  }
+
+  double ymin() const {
+    return im_.y_min();
+  }
+
+  double ymax() const {
+    return im_.y_min() + im_.delta_y();
+  }
+
   bool is_in(double x, double y) const {
     return im_.is_in(x, y);
   }
-
 
   bool shrink_by_distance(double) {
     Rcpp::stop("Did not implement shrink_by_distance for im window.");
@@ -257,6 +304,50 @@ public:
   double diameter() const {
     // TODO: I suspect I don't need this function here and in other windows
     return 1.;
+  }
+
+  double xmin() const {
+    double xmin(std::numeric_limits<double>::infinity());
+    using size_t = decltype(x_0_.size());
+    for(size_t i(0); i < x_0_.size(); ++i) {
+      if(x_0_[i] < xmin) {
+        xmin = x_0_[i];
+      }
+    }
+    return xmin;
+  }
+
+  double xmax() const {
+    double xmax(-std::numeric_limits<double>::infinity());
+    using size_t = decltype(x_0_.size());
+    for(size_t i(0); i < x_0_.size(); ++i) {
+      if(x_0_[i] + delta_x_[i] > xmax) {
+        xmax = x_0_[i] + delta_x_[i];
+      }
+    }
+    return xmax;
+  }
+
+  double ymin() const {
+    double ymin(std::numeric_limits<double>::infinity());
+    using size_t = decltype(y_0_.size());
+    for(size_t i(0); i < y_0_.size(); ++i) {
+      if(y_0_[i] < ymin) {
+        ymin = y_0_[i];
+      }
+    }
+    return ymin;
+  }
+
+  double ymax() const {
+    double ymax(-std::numeric_limits<double>::infinity());
+    using size_t = decltype(y_0_.size());
+    for(size_t i(0); i < y_0_.size(); ++i) {
+      if(y_0_[i] + delta_y_[i] > ymax) {
+        ymax = y_0_[i] + delta_y_[i];
+      }
+    }
+    return ymax;
   }
 
   bool is_in(double x, double y) const {

@@ -38,6 +38,22 @@ public:
     return object_->diameter();
   }
 
+  double xmin() const {
+    return object_->xmin();
+  }
+
+  double xmax() const {
+    return object_->xmax();
+  }
+
+  double ymin() const {
+    return object_->ymin();
+  }
+
+  double ymax() const {
+    return object_->ymax();
+  }
+
   bool is_in(double x, double y) const {
     return object_->is_in(x, y);
   }
@@ -57,6 +73,10 @@ private:
     virtual double volume() const = 0;
     virtual double square_diameter() const = 0;
     virtual double diameter() const = 0;
+    virtual double xmin() const = 0;
+    virtual double xmax() const = 0;
+    virtual double ymin() const = 0;
+    virtual double ymax() const = 0;
     virtual bool is_in(double x, double y) const = 0;
     virtual bool shrink_by_distance(double R) = 0;
     virtual bool shrink_by_percent(double R) = 0;
@@ -82,6 +102,22 @@ private:
 
     double diameter() const {
       return object_.diameter();
+    }
+
+    double xmin() const {
+      return object_.xmin();
+    }
+
+    double xmax() const {
+      return object_.xmax();
+    }
+
+    double ymin() const {
+      return object_.ymin();
+    }
+
+    double ymax() const {
+      return object_.ymax();
     }
 
     bool is_in(double x, double y) const {
