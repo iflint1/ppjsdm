@@ -35,6 +35,10 @@ public:
     return Marked_point(x_0_ + unif_rand() * delta_x_,  y_0_ + unif_rand() * delta_y_, type, mark_lower_ + delta_mark_ * unif_rand());
   }
 
+  double draw_mark() const {
+    return mark_lower_ + delta_mark_ * unif_rand();
+  }
+
   double volume() const {
     return delta_x_ * delta_y_;
   }
@@ -120,6 +124,10 @@ public:
     }
   }
 
+  double draw_mark() const {
+    return mark_lower_ + delta_mark_ * unif_rand();
+  }
+
   double volume() const {
     return M_PI * radius_ * radius_;
   }
@@ -194,6 +202,10 @@ public:
         return Marked_point(x,  y, type, mark_lower_ + delta_mark_ * unif_rand());
       }
     }
+  }
+
+  double draw_mark() const {
+    return mark_lower_ + delta_mark_ * unif_rand();
   }
 
   double volume() const {
@@ -294,6 +306,10 @@ public:
                         y_0_[index] + unif_rand() * delta_y_[index],
                                                             type,
                                                             mark_lower_ + delta_mark_ * unif_rand());
+  }
+
+  double draw_mark() const {
+    return mark_lower_ + delta_mark_ * unif_rand();
   }
 
   double square_diameter() const {

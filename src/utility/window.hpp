@@ -26,6 +26,10 @@ public:
     return object_->sample(type);
   }
 
+  double draw_mark() const {
+    return object_->draw_mark();
+  }
+
   double volume() const {
     return object_->volume();
   }
@@ -70,6 +74,7 @@ private:
   struct Concept {
     virtual ~Concept() {}
     virtual Marked_point sample(int type) const = 0;
+    virtual double draw_mark() const = 0;
     virtual double volume() const = 0;
     virtual double square_diameter() const = 0;
     virtual double diameter() const = 0;
@@ -90,6 +95,10 @@ private:
 
     Marked_point sample(int type) const {
       return object_.sample(type);
+    }
+
+    double draw_mark() const {
+      return object_.draw_mark();
     }
 
     double volume() const {
