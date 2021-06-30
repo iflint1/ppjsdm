@@ -179,19 +179,19 @@ BEGIN_RCPP
 END_RCPP
 }
 // rstratpp_cpp
-SEXP rstratpp_cpp(SEXP window, SEXP nx, SEXP ny, R_xlen_t nsim, SEXP types, bool drop, Rcpp::NumericVector mark_range);
-RcppExport SEXP _ppjsdm_rstratpp_cpp(SEXP windowSEXP, SEXP nxSEXP, SEXP nySEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP dropSEXP, SEXP mark_rangeSEXP) {
+SEXP rstratpp_cpp(SEXP window, SEXP delta_x, SEXP delta_y, R_xlen_t nsim, SEXP types, bool drop, Rcpp::NumericVector mark_range);
+RcppExport SEXP _ppjsdm_rstratpp_cpp(SEXP windowSEXP, SEXP delta_xSEXP, SEXP delta_ySEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP dropSEXP, SEXP mark_rangeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type window(windowSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type nx(nxSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type ny(nySEXP);
+    Rcpp::traits::input_parameter< SEXP >::type delta_x(delta_xSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type delta_y(delta_ySEXP);
     Rcpp::traits::input_parameter< R_xlen_t >::type nsim(nsimSEXP);
     Rcpp::traits::input_parameter< SEXP >::type types(typesSEXP);
     Rcpp::traits::input_parameter< bool >::type drop(dropSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type mark_range(mark_rangeSEXP);
-    rcpp_result_gen = Rcpp::wrap(rstratpp_cpp(window, nx, ny, nsim, types, drop, mark_range));
+    rcpp_result_gen = Rcpp::wrap(rstratpp_cpp(window, delta_x, delta_y, nsim, types, drop, mark_range));
     return rcpp_result_gen;
 END_RCPP
 }

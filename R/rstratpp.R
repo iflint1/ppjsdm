@@ -1,9 +1,9 @@
 #' Sample a stratified binomial point processes
 #'
 #' @param window Simulation window. Default is a Rectangle window [0, 1]^2.
-#' @param nx A vector representing the number of tiles in each column, for each type.
+#' @param nx A vector representing the distance between tiles along the x axis, for each type.
 #' Default is a vector of same size as types, filled with ones.
-#' @param ny A vector representing the number of tiles in each row, for each type.
+#' @param ny A vector representing the distance between tiles along the y axis, for each type.
 #' Default is to set it to nx.
 #' @param nsim Number of samples to generate. Default is 1.
 #' @param types Types of the points. Default is a vector (type1, type2, ...) of same size as n.
@@ -12,24 +12,24 @@
 #' @param mark_range Range of additional marks to give to the points.
 #' @export
 rstratpp <- function(window = Rectangle_window(),
-                     nx = NULL,
-                     ny = NULL,
+                     delta_x = NULL,
+                     delta_y = NULL,
                      nsim = 1,
                      types = NULL,
                      drop = TRUE,
                      mark_range = c(1.0, 1.0)) {
-  if(is.list(nx)) {
-    nx <- unlist(nx)
+  if(is.list(delta_x)) {
+    delta_x <- unlist(delta_x)
   }
-  if(is.list(ny)) {
-    ny <- unlist(ny)
+  if(is.list(delta_y)) {
+    delta_y <- unlist(delta_y)
   }
 
   rstratpp_cpp(window,
-                  nx,
-                  ny,
-                  nsim,
-                  types,
-                  drop,
-                  mark_range)
+               delta_x,
+               delta_y,
+               nsim,
+               types,
+               drop,
+               mark_range)
 }
