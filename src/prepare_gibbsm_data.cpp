@@ -4,6 +4,7 @@
 #include "configuration/configuration_manipulation.hpp"
 #include "configuration/configuration_wrapper.hpp"
 #include "configuration/get_number_points.hpp"
+#include "configuration/make_R_configuration.hpp"
 
 #include "point/point_manipulation.hpp"
 
@@ -44,7 +45,8 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
                                       int number_types,
                                       int nthreads,
                                       bool debug,
-                                      std::string dummy_distribution) {
+                                      std::string dummy_distribution,
+                                      Rcpp::CharacterVector type_names) {
   // A few typedefs for later
   using computation_t = long double;
   using size_t = ppjsdm::size_t<Configuration>;
@@ -288,7 +290,8 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
                             Rcpp::Named("type") = type,
                             Rcpp::Named("offset") = rho_offset,
                             Rcpp::Named("regressors") = regressors,
-                            Rcpp::Named("shift") = shift
+                            Rcpp::Named("shift") = shift,
+                            Rcpp::Named("dummy") = ppjsdm::make_R_configuration(D, type_names)
   );
 }
 
@@ -310,7 +313,8 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
                                Rcpp::LogicalMatrix estimate_gamma,
                                int nthreads,
                                bool debug,
-                               std::string dummy_distribution) {
+                               std::string dummy_distribution,
+                               Rcpp::CharacterVector type_names) {
   // Construct std::vector of configurations.
   std::vector<std::vector<ppjsdm::Marked_point>> vector_configurations(configuration_list.size());
   for(R_xlen_t i(0); i < configuration_list.size(); ++i) {
@@ -354,5 +358,6 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
                                     number_types,
                                     nthreads,
                                     debug,
-                                    dummy_distribution);
+                                    dummy_distribution,
+                                    type_names);
 }

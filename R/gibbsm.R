@@ -642,7 +642,8 @@ gibbsm <- function(configuration_list,
                                             estimate_gamma = estimate_gamma,
                                             nthreads = nthreads,
                                             debug = debug,
-                                            dummy_distribution = dummy_distribution)
+                                            dummy_distribution = dummy_distribution,
+                                            type_names = types_names)
 
     if(return_raw_fitting_data) {
       return(gibbsm_data_list)
@@ -697,7 +698,8 @@ gibbsm <- function(configuration_list,
                                             estimate_gamma = estimate_gamma,
                                             nthreads = nthreads,
                                             debug = debug,
-                                            dummy_distribution = dummy_distribution)
+                                            dummy_distribution = dummy_distribution,
+                                            type_names = types_names)
 
     if(return_raw_fitting_data) {
       return(gibbsm_data_list)
@@ -738,7 +740,8 @@ gibbsm <- function(configuration_list,
               used_regularization = use_regularization,
               debug = debug,
               nthreads = nthreads,
-              dummy_distribution = dummy_distribution)
+              dummy_distribution = dummy_distribution,
+              type_names = types_names)
 
   if(estimate_radii) {
     short_range <- best_short

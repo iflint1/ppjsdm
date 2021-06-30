@@ -23,8 +23,8 @@ make_default_model_parameters <- function(alpha, beta0, covariates, beta, gamma,
     .Call(`_ppjsdm_make_default_model_parameters`, alpha, beta0, covariates, beta, gamma, short_range, medium_range, long_range, types, default_number_types)
 }
 
-prepare_gibbsm_data <- function(configuration_list, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, max_dummy, min_dummy, dummy_factor, estimate_alpha, estimate_gamma, nthreads, debug, dummy_distribution) {
-    .Call(`_ppjsdm_prepare_gibbsm_data`, configuration_list, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, max_dummy, min_dummy, dummy_factor, estimate_alpha, estimate_gamma, nthreads, debug, dummy_distribution)
+prepare_gibbsm_data <- function(configuration_list, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, max_dummy, min_dummy, dummy_factor, estimate_alpha, estimate_gamma, nthreads, debug, dummy_distribution, type_names) {
+    .Call(`_ppjsdm_prepare_gibbsm_data`, configuration_list, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, max_dummy, min_dummy, dummy_factor, estimate_alpha, estimate_gamma, nthreads, debug, dummy_distribution, type_names)
 }
 
 rbinomialpp_cpp <- function(window, n, nsim, types, drop, mark_range) {
