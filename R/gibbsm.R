@@ -428,6 +428,7 @@ fit_gibbs <- function(gibbsm_data,
 #' @param use_regularization Use the fitting package without regularization.
 #' @param return_raw_fitting_data Return the raw fitting data, before calling the GLM fitting package. Mostly used for debugging purposes on large datasets.
 #' @param refit_glmnet How many times more lambdas to use on a re-run of glmnet (currently only used with fitting_package = glmnet). For example, refit_glmnet = 0.5 re-runs the fitting procedure with a 50\% longer lambda sequence.
+#' @param dummy_distribution How should the dummy distribution be drawn? Choices are "binomial" or "stratified".
 #' @param ... Forwarded to the fitting package.
 #' @importFrom GA ga
 #' @importFrom glmnet glmnet
@@ -456,6 +457,7 @@ gibbsm <- function(configuration_list,
                    use_regularization = FALSE,
                    return_raw_fitting_data = FALSE,
                    refit_glmnet = 0,
+                   dummy_distribution = "binomial",
                    ...) {
   # refit_glmnet only has an effect with glmnet at the moment, do a quick check.
   if(refit_glmnet > 0 & fitting_package != "glmnet") {
@@ -556,7 +558,8 @@ gibbsm <- function(configuration_list,
                                               estimate_alpha = estimate_alpha,
                                               estimate_gamma = estimate_gamma,
                                               nthreads = nthreads,
-                                              debug = debug)
+                                              debug = debug,
+                                              dummy_distribution = dummy_distribution)
 
       fit <- fit_gibbs(gibbsm_data_list,
                        fitting_package = "glm",
@@ -638,7 +641,8 @@ gibbsm <- function(configuration_list,
                                             estimate_alpha = estimate_alpha,
                                             estimate_gamma = estimate_gamma,
                                             nthreads = nthreads,
-                                            debug = debug)
+                                            debug = debug,
+                                            dummy_distribution = dummy_distribution)
 
     if(return_raw_fitting_data) {
       return(gibbsm_data_list)
@@ -692,7 +696,8 @@ gibbsm <- function(configuration_list,
                                             estimate_alpha = estimate_alpha,
                                             estimate_gamma = estimate_gamma,
                                             nthreads = nthreads,
-                                            debug = debug)
+                                            debug = debug,
+                                            dummy_distribution = dummy_distribution)
 
     if(return_raw_fitting_data) {
       return(gibbsm_data_list)
@@ -732,7 +737,8 @@ gibbsm <- function(configuration_list,
               fit_algorithm = fitted$fit_algorithm,
               used_regularization = use_regularization,
               debug = debug,
-              nthreads = nthreads)
+              nthreads = nthreads,
+              dummy_distribution = dummy_distribution)
 
   if(estimate_radii) {
     short_range <- best_short

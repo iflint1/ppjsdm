@@ -10,7 +10,8 @@
 #include "saturated_model/compute_dispersion_fitting.hpp"
 #include "saturated_model/regression_vector.hpp"
 
-#include "simulation/rppp_single.hpp"
+#include "simulation/rbinomialpp_single.hpp"
+#include "simulation/rstrat_single.hpp"
 
 #include "utility/construct_if_missing.hpp"
 #include "utility/gibbsm_helper_functions.hpp"
@@ -42,7 +43,8 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
                                       Rcpp::LogicalMatrix estimate_gamma,
                                       int number_types,
                                       int nthreads,
-                                      bool debug) {
+                                      bool debug,
+                                      std::string dummy_distribution) {
   // A few typedefs for later
   using computation_t = long double;
   using size_t = ppjsdm::size_t<Configuration>;
@@ -80,26 +82,46 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     dummy_factor = 4.;
   }
 
+  // Compute volume.
+  const auto volume = static_cast<computation_t>(window.volume());
+
   // Sample the dummy points D.
   using big_int_t = long long int;
   std::vector<big_int_t> rho_times_volume(number_types);
+  std::vector<computation_t> rho(number_types);
   size_t length_D(0);
   for(typename decltype(rho_times_volume)::size_type i(0); i < rho_times_volume.size(); ++i) {
-    const auto factor_times_max_points_in_type = static_cast<big_int_t>(dummy_factor) * static_cast<big_int_t>(max_points_by_type[i]);
-    if(factor_times_max_points_in_type < static_cast<big_int_t>(max_dummy)) {
-      if(factor_times_max_points_in_type > static_cast<big_int_t>(min_dummy)) {
-        rho_times_volume[i] = factor_times_max_points_in_type;
+    const auto factor_times_max_points_in_type = static_cast<computation_t>(dummy_factor) * static_cast<computation_t>(max_points_by_type[i]);
+    if(static_cast<big_int_t>(factor_times_max_points_in_type) < static_cast<big_int_t>(max_dummy)) {
+      if(static_cast<big_int_t>(factor_times_max_points_in_type) > static_cast<big_int_t>(min_dummy)) {
+        rho_times_volume[i] = static_cast<big_int_t>(factor_times_max_points_in_type);
+        rho[i] = factor_times_max_points_in_type / volume;
         length_D += static_cast<size_t>(factor_times_max_points_in_type);
       } else {
         rho_times_volume[i] = static_cast<big_int_t>(min_dummy);
+        rho[i] = static_cast<computation_t>(factor_times_max_points_in_type) / volume;
         length_D += static_cast<size_t>(min_dummy);
       }
     } else {
       rho_times_volume[i] = static_cast<big_int_t>(max_dummy);
+      rho[i] = static_cast<computation_t>(max_dummy) / volume;
       length_D += static_cast<size_t>(max_dummy);
     }
   }
-  auto D(ppjsdm::rbinomialpp_single<std::vector<ppjsdm::Marked_point>>(window, rho_times_volume, number_types, length_D));
+  using dummy_configuration_t = std::vector<ppjsdm::Marked_point>;
+  dummy_configuration_t D;
+  if(dummy_distribution == std::string("binomial")) {
+    // TODO: Don't precompute length_D, instead make it a paremeter of rbinomialpp
+    D = ppjsdm::rbinomialpp_single<dummy_configuration_t>(window, rho_times_volume, number_types, length_D);
+  } else if(dummy_distribution == std::string("stratified")) {
+    decltype(rho) delta(rho);
+    for(auto& r: delta) {
+      r = 1 / std::sqrt(r);
+    }
+    D = ppjsdm::rstratpp_single<dummy_configuration_t>(window, delta, delta);
+  } else {
+    Rcpp::stop("Unexpected dummy_distribution parameter.");
+  }
 
   // Remove points in D which generate NA values for one of the regressors.
   D.erase(std::remove_if(D.begin(), D.end(),
@@ -116,9 +138,8 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 
   // Make shift vector
   Rcpp::NumericVector shift(Rcpp::no_init(number_types));
-  const auto volume = static_cast<computation_t>(window.volume());
   for(int j(0); j < number_types; ++j) {
-    shift[j] = static_cast<double>(-std::log(static_cast<computation_t>(rho_times_volume[j]) / volume));
+    shift[j] = static_cast<double>(-std::log(rho[j]));
   }
 
   // Precompute short and medium range dispersions
@@ -288,7 +309,8 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
                                Rcpp::LogicalMatrix estimate_alpha,
                                Rcpp::LogicalMatrix estimate_gamma,
                                int nthreads,
-                               bool debug) {
+                               bool debug,
+                               std::string dummy_distribution) {
   // Construct std::vector of configurations.
   std::vector<std::vector<ppjsdm::Marked_point>> vector_configurations(configuration_list.size());
   for(R_xlen_t i(0); i < configuration_list.size(); ++i) {
@@ -331,5 +353,6 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
                                     estimate_gamma,
                                     number_types,
                                     nthreads,
-                                    debug);
+                                    debug,
+                                    dummy_distribution);
 }
