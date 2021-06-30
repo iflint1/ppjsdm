@@ -27,10 +27,10 @@ inline auto rstratpp_single(const Window& window,
   const auto y2(window.ymax());
 
   auto iterator(configuration.begin());
-  using filling_t = std::remove_cv_t<std::remove_reference_t<decltype(delta_x[0])>>;
+  using filling_t = decltype(delta_x.size());
   for(decltype(delta_x.size()) type(0); type < number_types; ++type) {
-    const auto nx((x2 - x1) / delta_x[type]);
-    const auto ny((y2 - y1) / delta_y[type]);
+    const auto nx = static_cast<filling_t>((x2 - x1) / delta_x[type]);
+    const auto ny = static_cast<filling_t>((y2 - y1) / delta_y[type]);
 
     for(filling_t filling_x(0); filling_x < nx; ++filling_x) {
       for(filling_t filling_y(0); filling_y < ny; ++filling_y) {
