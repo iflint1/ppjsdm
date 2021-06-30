@@ -118,7 +118,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   } else if(dummy_distribution == std::string("stratified")) {
     decltype(rho) delta(rho);
     for(auto& r: delta) {
-      r = 1 / std::sqrt(r);
+      r = static_cast<computation_t>(1.) / std::sqrt(r);
     }
     D = ppjsdm::rstratpp_single<dummy_configuration_t>(window, delta, delta);
   } else {

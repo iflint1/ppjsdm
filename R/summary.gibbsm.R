@@ -17,6 +17,7 @@ summary.gibbsm <- function(object, npoints = 2000, ...) {
   }
 
   vc <- compute_vcov(configuration = object$configuration_list[[1]],
+                     dummy = object$data_list$dummy,
                      window = object$window,
                      covariates = object$parameters$covariates,
                      model = object$parameters$model,
@@ -33,7 +34,9 @@ summary.gibbsm <- function(object, npoints = 2000, ...) {
                      estimate_gamma = object$estimate_gamma,
                      debug = object$debug,
                      nthreads = object$nthreads,
-                     npoints = npoints)
+                     npoints = npoints,
+                     dummy_distribution = object$dummy_distribution,
+                     mark_range = object$mark_range)
 
   se_numerical <- sqrt(diag(vc$G2))
   se <- sqrt(diag(vc$G1 + vc$G2))

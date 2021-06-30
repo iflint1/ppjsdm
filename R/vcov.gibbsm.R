@@ -13,6 +13,7 @@ vcov.gibbsm <- function(object, npoints = 2000, ...) {
   }
 
   vc <- compute_vcov(configuration = object$configuration_list[[1]],
+                     dummy = object$data_list$dummy,
                      window = object$window,
                      covariates = object$parameters$covariates,
                      model = object$parameters$model,
@@ -29,6 +30,8 @@ vcov.gibbsm <- function(object, npoints = 2000, ...) {
                      estimate_gamma = object$estimate_gamma,
                      debug = object$debug,
                      nthreads = object$nthreads,
-                     npoints = npoints)
+                     npoints = npoints,
+                     dummy_distribution = object$dummy_distribution,
+                     mark_range = object$mark_range)
   vc$G1 + vc$G2
 }

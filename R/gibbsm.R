@@ -741,7 +741,8 @@ gibbsm <- function(configuration_list,
               debug = debug,
               nthreads = nthreads,
               dummy_distribution = dummy_distribution,
-              type_names = types_names)
+              type_names = types_names,
+              mark_range = mark_range)
 
   if(estimate_radii) {
     short_range <- best_short

@@ -13,7 +13,7 @@
 #include "saturated_model/regression_vector.hpp"
 #include "saturated_model/saturated_model.hpp"
 
-#include "simulation/rbinomialpp_single.hpp"
+#include "simulation/rstrat_single.hpp"
 
 #include "utility/construct_if_missing.hpp"
 #include "utility/flatten_strict_upper_triangular.hpp"
@@ -114,12 +114,12 @@ inline auto make_papangelou(const ppjsdm::Lightweight_matrix<double>& regressors
 return papangelou;
 }
 
-inline auto make_G2(const std::vector<double>& papangelou,
-                    const std::vector<double>& rho,
-                    const ppjsdm::Lightweight_matrix<double>& regressors,
-                    const std::vector<int>& type,
-                    double window_volume,
-                    int nthreads) {
+inline auto make_G2_binomial(const std::vector<double>& papangelou,
+                             const std::vector<double>& rho,
+                             const ppjsdm::Lightweight_matrix<double>& regressors,
+                             const std::vector<int>& type,
+                             double window_volume,
+                             int nthreads) {
   using computation_t = long double;
   using size_t = decltype(regressors.ncol());
 
@@ -187,6 +187,168 @@ for(size_t k1(0); k1 < number_parameters; ++k1) {
 }
 
 return A;
+}
+
+template<typename Configuration, typename FloatType>
+inline auto make_G2_stratified(const Configuration& configuration,
+                               const Configuration& dummy,
+                               const ppjsdm::Window& window,
+                               const std::vector<double>& theta,
+                               const std::vector<double>& rho,
+                               const ppjsdm::Lightweight_matrix<double>& regressors,
+                               const ppjsdm::Lightweight_square_matrix<bool>& estimate_alpha,
+                               const ppjsdm::Lightweight_square_matrix<bool>& estimate_gamma,
+                               const ppjsdm::Saturated_model<FloatType>& dispersion_model,
+                               const ppjsdm::Saturated_model<FloatType>& medium_dispersion_model,
+                               const ppjsdm::Im_list_wrapper& covariates,
+                               int nthreads) {
+  using computation_t = long double;
+  using size_t = decltype(regressors.ncol());
+
+  // Extract some values relating to the number of parameters and how they're ordered
+  const int number_types(rho.size());
+  const auto number_parameters_struct(ppjsdm::get_number_parameters(number_types, covariates.size(), estimate_alpha, estimate_gamma));
+  const auto index_start_gamma(number_parameters_struct.index_start_gamma);
+  const auto index_start_covariates(number_parameters_struct.index_start_covariates);
+  const auto number_parameters(number_parameters_struct.total_parameters);
+
+#ifdef _OPENMP
+  omp_set_num_threads(nthreads);
+#endif
+
+  // Construct other stratified point process
+  std::vector<computation_t> delta(rho.size());
+  for(decltype(rho.size()) i(0); i < rho.size(); ++i) {
+    delta[i] = static_cast<computation_t>(1.) / std::sqrt(static_cast<computation_t>(rho[i]));
+  }
+  const auto other_stratified(ppjsdm::rstratpp_single<Configuration>(window, delta, delta));
+
+  if(ppjsdm::size(dummy) != ppjsdm::size(other_stratified)) {
+    Rcpp::Rcout << "Size dummy: " << ppjsdm::size(dummy) << " and size new stratified: " << ppjsdm::size(other_stratified) << ".\n";
+    Rcpp::stop("The dummy points and the independent draw of a stratified binomial point process should have the same number of points.");
+  }
+
+  ppjsdm::Lightweight_square_matrix<computation_t> G2(number_parameters);
+
+  // Do you need to compute some of the alphas/gammas? If not, we can skip some of the dispersion computations
+  bool compute_some_alphas(false);
+  bool compute_some_gammas(false);
+  for(int i(0); i < number_types; ++i) {
+    for(int j(i); j < number_types; ++j) {
+      if(estimate_alpha(i, j)) {
+        compute_some_alphas = true;
+      }
+      if(estimate_gamma(i, j)) {
+        compute_some_gammas = true;
+      }
+    }
+  }
+
+  // Precompute dispersions
+  using precomputation_t = decltype(ppjsdm::compute_dispersion_for_fitting<false>(dispersion_model, 1, 1, configuration, dummy));
+  precomputation_t short_computation_dummy, short_computation_other, medium_computation_dummy, medium_computation_other;
+
+  if(compute_some_alphas) {
+    short_computation_dummy = ppjsdm::compute_dispersion_for_fitting<false>(dispersion_model, number_types, nthreads, configuration, dummy);
+    short_computation_other = ppjsdm::compute_dispersion_for_fitting<false>(dispersion_model, number_types, nthreads, configuration, other_stratified);
+  }
+  if(compute_some_gammas) {
+    medium_computation_dummy = ppjsdm::compute_dispersion_for_fitting<false>(medium_dispersion_model, number_types, nthreads, configuration, dummy);
+    medium_computation_other = ppjsdm::compute_dispersion_for_fitting<false>(medium_dispersion_model, number_types, nthreads, configuration, other_stratified);
+  }
+
+  // Compute G2
+#pragma omp parallel default(none) shared(G2, dummy, short_computation_dummy, short_computation_other) \
+  shared(medium_computation_dummy, medium_computation_other, compute_some_alphas, compute_some_gammas) \
+  shared(covariates, estimate_alpha, estimate_gamma, theta, rho)
+{
+  decltype(G2) G2_private(number_parameters);
+#pragma omp for nowait
+  for(decltype(ppjsdm::size(dummy)) i = 0; i < ppjsdm::size(dummy); ++i) {
+    // Recover the precomputed short and medium range dispersions
+    using dispersion_t = std::remove_cv_t<std::remove_reference_t<decltype(short_computation_dummy[0])>>;
+    dispersion_t short_dummy, medium_dummy, short_other, medium_other;
+    if(compute_some_alphas) {
+      short_dummy = short_computation_dummy[i];
+      short_other = short_computation_other[i];
+    }
+    if(compute_some_gammas) {
+      medium_dummy = medium_computation_dummy[i];
+      medium_other = medium_computation_other[i];
+    }
+
+    std::vector<double> dummy_covariates(covariates.size());
+    std::vector<double> other_covariates(covariates.size());
+    for(decltype(covariates.size()) k2(0); k2 < covariates.size(); ++k2) {
+      dummy_covariates[k2] = covariates[k2](dummy[i]);
+      other_covariates[k2] = covariates[k2](other_stratified[i]);
+    }
+
+    const auto t_dummy(ppjsdm::make_regression_vector<computation_t>(ppjsdm::get_type(dummy[i]),
+                                                                     number_types,
+                                                                     number_parameters,
+                                                                     index_start_covariates,
+                                                                     index_start_gamma,
+                                                                     dummy_covariates,
+                                                                     short_dummy,
+                                                                     medium_dummy,
+                                                                     estimate_alpha,
+                                                                     estimate_gamma));
+    const auto t_other(ppjsdm::make_regression_vector<computation_t>(ppjsdm::get_type(other_stratified[i]),
+                                                                     number_types,
+                                                                     number_parameters,
+                                                                     index_start_covariates,
+                                                                     index_start_gamma,
+                                                                     other_covariates,
+                                                                     short_other,
+                                                                     medium_other,
+                                                                     estimate_alpha,
+                                                                     estimate_gamma));
+
+    computation_t inner_product_dummy(0);
+    computation_t inner_product_other(0);
+    for(size_t k1(0); k1 < number_parameters; ++k1) {
+      inner_product_dummy += static_cast<computation_t>(theta[k1]) * t_dummy[k1];
+      inner_product_other += static_cast<computation_t>(theta[k1]) * t_other[k1];
+    }
+    const auto papangelou_dummy(std::exp(inner_product_dummy));
+    const auto papangelou_other(std::exp(inner_product_other));
+    const auto papangelou_dummy_plus_rho(papangelou_dummy + static_cast<computation_t>(rho[ppjsdm::get_type(dummy[i])]));
+    const auto papangelou_other_plus_rho(papangelou_other + static_cast<computation_t>(rho[ppjsdm::get_type(other_stratified[i])]));
+
+    std::vector<computation_t> values(number_parameters);
+    for(size_t k1(0); k1 < number_parameters; ++k1) {
+      values[k1] = t_dummy[k1] * papangelou_dummy / papangelou_dummy_plus_rho - t_other[k1] * papangelou_other / papangelou_other_plus_rho;
+    }
+
+    const auto one_over_rho_squared(static_cast<computation_t>(1.) / static_cast<computation_t>(rho[ppjsdm::get_type(dummy[i])]) / static_cast<computation_t>(rho[ppjsdm::get_type(dummy[i])]));
+    for(size_t k1(0); k1 < number_parameters; ++k1) {
+      for(size_t k2(k1); k2 < number_parameters; ++k2) {
+        G2_private(k1, k2) += values[k1] * values[k2] * one_over_rho_squared;
+      }
+    }
+  }
+#pragma omp critical
+{
+  for(size_t k1(0); k1 < number_parameters; ++k1) {
+    for(size_t k2(k1); k2 < number_parameters; ++k2) {
+      G2(k1, k2) += G2_private(k1, k2);
+    }
+  }
+}
+}
+
+  // Construct the return object
+  arma::mat A(number_parameters, number_parameters);
+  for(size_t k1(0); k1 < number_parameters; ++k1) {
+    A(k1, k1) = static_cast<typename decltype(A)::value_type>(static_cast<computation_t>(0.5) * G2(k1, k1));
+    for(size_t k2(k1 + 1); k2 < number_parameters; ++k2) {
+      A(k1, k2) = static_cast<typename decltype(A)::value_type>(static_cast<computation_t>(0.5) * G2(k1, k2));
+      A(k2, k1) = A(k1, k2);
+    }
+  }
+
+  return A;
 }
 
 inline auto make_S(const std::vector<double>& papangelou,
@@ -521,6 +683,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
 
 template<typename Configuration, typename FloatType>
 Rcpp::List compute_vcov_helper(const Configuration& configuration,
+                               const Configuration& dummy,
                                ppjsdm::Window& window,
                                const ppjsdm::Im_list_wrapper& covariates,
                                const ppjsdm::Saturated_model<FloatType>& dispersion_model,
@@ -534,7 +697,8 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
                                const ppjsdm::Lightweight_square_matrix<bool>& estimate_gamma,
                                bool debug,
                                int nthreads,
-                               int npoints) {
+                               int npoints,
+                               std::string dummy_distribution) {
   ppjsdm::PreciseTimer timer{};
   if(debug) {
     Rcpp::Rcout << "Starting computation of the Papangelou conditional intensity...\n";
@@ -562,7 +726,15 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
     timer.set_current();
     Rcpp::Rcout << "Starting computation of G2...\n";
   }
-  const auto G2(detail::make_G2(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), initial_window_volume, nthreads));
+  using g2_t = decltype(detail::make_G2_binomial(papangelou, rho, regressors, std::vector<int>{}, 1., 1));
+  g2_t G2;
+  if(dummy_distribution == std::string("binomial")) {
+    G2 = detail::make_G2_binomial(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), initial_window_volume, nthreads);
+  } else if(dummy_distribution == std::string("stratified")) {
+    G2 = detail::make_G2_stratified(configuration, dummy, window, theta, rho, regressors, estimate_alpha, estimate_gamma, dispersion_model, medium_dispersion_model, covariates, nthreads);
+  } else {
+    Rcpp::stop("Unknown dummy_distribution parameter.");
+  }
   if(debug) {
     Rcpp::Rcout << "Finished computation of G2. Time elapsed: " << timer.elapsed_time();
     timer.set_current();
@@ -619,6 +791,7 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
 
 // [[Rcpp::export]]
 Rcpp::List compute_vcov(SEXP configuration,
+                        SEXP dummy,
                         SEXP window,
                         Rcpp::List covariates,
                         Rcpp::CharacterVector model,
@@ -635,22 +808,35 @@ Rcpp::List compute_vcov(SEXP configuration,
                         Rcpp::LogicalMatrix estimate_gamma,
                         bool debug,
                         int nthreads,
-                        int npoints) {
+                        int npoints,
+                        std::string dummy_distribution,
+                        Rcpp::NumericVector mark_range) {
   // Convert the SEXP configuration to a C++ object.
   const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::wrap(configuration));
-  const auto length_configuration(ppjsdm::size(wrapped_configuration));
 
   // Convert configuration to std::vector in order for parallelised version to work.
+  const auto length_configuration(ppjsdm::size(wrapped_configuration));
   std::vector<ppjsdm::Marked_point> vector_configuration(length_configuration);
   for(decltype(ppjsdm::size(wrapped_configuration)) j(0); j < length_configuration; ++j) {
     vector_configuration[j] = wrapped_configuration[j];
   }
 
+  // Convert the SEXP dummy to a C++ object.
+  const ppjsdm::Configuration_wrapper wrapped_dummy(Rcpp::wrap(dummy));
+
+  // Convert configuration to std::vector in order for parallelised version to work.
+  const auto length_dummy(ppjsdm::size(wrapped_dummy));
+  std::vector<ppjsdm::Marked_point> vector_dummy(length_dummy);
+  for(decltype(ppjsdm::size(wrapped_dummy)) j(0); j < length_dummy; ++j) {
+    vector_dummy[j] = wrapped_dummy[j];
+  }
+
   // Convert the SEXP window to a C++ object.
-  ppjsdm::Window cpp_window(window);
+  ppjsdm::Window cpp_window(window, mark_range);
 
   // Call the main function.
   return compute_vcov_helper(vector_configuration,
+                             vector_dummy,
                              cpp_window,
                              ppjsdm::Im_list_wrapper(covariates),
                              ppjsdm::Saturated_model<double>(model, short_range, saturation),
@@ -664,5 +850,6 @@ Rcpp::List compute_vcov(SEXP configuration,
                              ppjsdm::Lightweight_square_matrix<bool>(estimate_gamma),
                              debug,
                              nthreads,
-                             npoints);
+                             npoints,
+                             dummy_distribution);
 }
