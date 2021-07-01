@@ -101,7 +101,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
         length_D += static_cast<size_t>(factor_times_max_points_in_type);
       } else {
         rho_times_volume[i] = static_cast<big_int_t>(min_dummy);
-        rho[i] = static_cast<computation_t>(factor_times_max_points_in_type) / volume;
+        rho[i] = static_cast<computation_t>(min_dummy) / volume;
         length_D += static_cast<size_t>(min_dummy);
       }
     } else {
