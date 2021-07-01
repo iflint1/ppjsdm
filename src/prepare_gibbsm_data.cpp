@@ -207,7 +207,6 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   Rcpp::NumericVector y(total_points);
   Rcpp::NumericVector mark(total_points);
   Rcpp::IntegerVector type(total_points);
-  Rcpp::NumericVector rho_offset(total_points);
   Rcpp::NumericMatrix regressors(total_points, total_parameters);
 
   // Fill the regressors, response, offset and shift with what we precomputed.
@@ -245,9 +244,6 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
       // fill type
       const int type_index(ppjsdm::get_type(current_point));
       type[filling] = type_index + 1;
-
-      // fill rho
-      rho_offset[filling] = shift[type_index];
 
       // Fill regressors
       using current_dispersion_t = std::remove_cv_t<std::remove_reference_t<decltype(dispersion_short[0][0])>>;
@@ -288,7 +284,6 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
                             Rcpp::Named("y") = y,
                             Rcpp::Named("mark") = mark,
                             Rcpp::Named("type") = type,
-                            Rcpp::Named("offset") = rho_offset,
                             Rcpp::Named("regressors") = regressors,
                             Rcpp::Named("shift") = shift,
                             Rcpp::Named("dummy") = ppjsdm::make_R_configuration(D, type_names)

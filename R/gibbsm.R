@@ -260,7 +260,7 @@ fit_gibbs <- function(gibbsm_data,
     # Put everything into a unique data.frame
     regressors <- as.data.frame(regressors)
     regressors$response <- gibbsm_data$response
-    regressors$offset <- gibbsm_data$offset
+    regressors$offset <- gibbsm_data$shift[gibbsm_data$type]
 
     arguments <- list(training_frame = as.h2o(regressors),
                       y = 'response',
@@ -321,7 +321,7 @@ fit_gibbs <- function(gibbsm_data,
 
     # Put all the required vectors into a data.frame to send to glm
     regressors <- as.data.frame(regressors)
-    regressors$offset <- gibbsm_data$offset
+    regressors$offset <- gibbsm_data$shift[gibbsm_data$type]
     regressors$response <- gibbsm_data$response
 
     # Call GLM
@@ -722,6 +722,8 @@ gibbsm <- function(configuration_list,
   fits_coefficients <- fitted$coefficients
   aic <- fitted$aic
   bic <- fitted$bic
+
+  gibbsm_data_list$regressors <- Matrix(gibbsm_data_list$regressors, sparse = TRUE)
 
   ret <- list(complete = fits,
               configuration_list = configuration_list,
