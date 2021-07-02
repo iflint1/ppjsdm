@@ -841,6 +841,165 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
                             Rcpp::Named("G2") = G2_rcpp);
 }
 
+template<typename Configuration, typename FloatType>
+Rcpp::List compute_S_helper(const Configuration& configuration,
+                            const Configuration& dummy,
+                            ppjsdm::Window& window,
+                            const ppjsdm::Im_list_wrapper& covariates,
+                            const ppjsdm::Saturated_model<FloatType>& dispersion_model,
+                            const ppjsdm::Saturated_model<FloatType>& medium_dispersion_model,
+                            const std::vector<double>& rho,
+                            double initial_window_volume,
+                            const std::vector<double>& theta,
+                            const ppjsdm::Lightweight_matrix<double>& regressors,
+                            Rcpp::List data_list,
+                            const ppjsdm::Lightweight_square_matrix<bool>& estimate_alpha,
+                            const ppjsdm::Lightweight_square_matrix<bool>& estimate_gamma,
+                            bool debug,
+                            int nthreads,
+                            int npoints,
+                            bool multiple_windows,
+                            std::string dummy_distribution,
+                            Rcpp::NumericVector mark_range) {
+  // Extract some values relating to the number of parameters and how they're ordered
+  const auto number_parameters(ppjsdm::get_number_parameters(rho.size(), covariates.size(), estimate_alpha, estimate_gamma).total_parameters);
+
+  ppjsdm::PreciseTimer timer{};
+  if(debug) {
+    Rcpp::Rcout << "Starting computation of the Papangelou conditional intensity...\n";
+  }
+  const auto papangelou(detail::make_papangelou(regressors, theta, nthreads));
+  if(debug) {
+    Rcpp::Rcout << "Finished computing the Papangelou conditional intensity. Time elapsed: " << timer.elapsed_time();
+    timer.set_current();
+    Rcpp::Rcout << "Starting computation of S...\n";
+  }
+  const auto S(detail::make_S(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), nthreads));
+  if(debug) {
+    Rcpp::Rcout << "Finished computing S. Time elapsed: " << timer.elapsed_time();
+    timer.set_current();
+    Rcpp::Rcout << "Starting inversion of S...\n";
+  }
+  if(S.has_nan()) {
+    Rcpp::stop("Found NaN values in matrix S (in vcov computation).");
+  }
+  // arma::inv appears to be less risky than arma::inv_sympd,
+  // especially in corner cases where S appears numerically to not be positive definite.
+  const auto S_inv(arma::inv(S));
+  if(debug) {
+    Rcpp::Rcout << "Finished inversion of S. Time elapsed: " << timer.elapsed_time();
+    timer.set_current();
+    Rcpp::Rcout << "Starting computation of G2...\n";
+  }
+  using g2_t = decltype(detail::make_G2_binomial(papangelou, rho, regressors, std::vector<int>{}, 1., 1));
+  g2_t G2;
+  if(dummy_distribution == std::string("binomial")) {
+    G2 = detail::make_G2_binomial(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), initial_window_volume, nthreads);
+  } else if(dummy_distribution == std::string("stratified")) {
+    G2 = detail::make_G2_stratified(configuration, dummy, window, theta, rho, regressors, estimate_alpha, estimate_gamma, dispersion_model, medium_dispersion_model, covariates, nthreads);
+  } else {
+    Rcpp::stop("Unknown dummy_distribution parameter.");
+  }
+  if(debug) {
+    Rcpp::Rcout << "Finished computation of G2. Time elapsed: " << timer.elapsed_time();
+    timer.set_current();
+    Rcpp::Rcout << "Starting computation of A1...\n";
+  }
+  const auto A1(detail::make_A1(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), nthreads));
+  if(debug) {
+    Rcpp::Rcout << "Finished computation of A1. Time elapsed: " << timer.elapsed_time();
+    timer.set_current();
+    Rcpp::Rcout << "Starting computation of A2 + A3...\n";
+  }
+
+  arma::mat A2_plus_A3;
+  if(multiple_windows) {
+    A2_plus_A3 = arma::mat(number_parameters, number_parameters, arma::fill::zeros);
+
+    const auto delta_x(window.xmax() - window.xmin());
+    const auto delta_y(window.ymax() - window.ymin());
+    int nx, ny;
+    if(delta_x >= delta_y) {
+      const auto r(delta_y / delta_x);
+      nx = std::max<int>(1, static_cast<int>(std::ceil(std::sqrt(static_cast<double>(ppjsdm::size(configuration)) / (r * static_cast<double>(npoints))))));
+      ny = static_cast<int>(std::ceil(r * nx));
+    } else {
+      const auto r(delta_x / delta_y);
+      ny = std::max<int>(1, static_cast<int>(std::ceil(std::sqrt(static_cast<double>(ppjsdm::size(configuration)) / (r * static_cast<double>(npoints))))));
+      nx = static_cast<int>(std::ceil(r * ny));
+    }
+
+    Rcpp::Rcout << nx << '\n';
+    Rcpp::Rcout << ny << '\n';
+    for(int i(0); i < nx; ++i) {
+      for(int j(0); j < ny; ++j) {
+        const ppjsdm::detail::Rectangle_window restricted_window(window.xmin() + static_cast<double>(i) * delta_x / static_cast<double>(nx),
+                                                                 window.xmin() + static_cast<double>(i + 1) * delta_x / static_cast<double>(nx),
+                                                                 window.ymin() + static_cast<double>(j) * delta_y / static_cast<double>(ny),
+                                                                 window.ymin() + static_cast<double>(j + 1) * delta_y / static_cast<double>(ny),
+                                                                 mark_range);
+        A2_plus_A3 += detail::make_A2_plus_A3(papangelou,
+                                              rho,
+                                              theta,
+                                              regressors,
+                                              data_list,
+                                              estimate_alpha,
+                                              estimate_gamma,
+                                              dispersion_model,
+                                              medium_dispersion_model,
+                                              configuration,
+                                              nthreads,
+                                              covariates,
+                                              initial_window_volume,
+                                              restricted_window,
+                                              debug);
+      }
+    }
+    A2_plus_A3 /= (nx * ny);
+  } else {
+    detail::restrict_window(window, configuration, npoints, 0.05);
+    A2_plus_A3 = detail::make_A2_plus_A3(papangelou,
+                                         rho,
+                                         theta,
+                                         regressors,
+                                         data_list,
+                                         estimate_alpha,
+                                         estimate_gamma,
+                                         dispersion_model,
+                                         medium_dispersion_model,
+                                         configuration,
+                                         nthreads,
+                                         covariates,
+                                         initial_window_volume,
+                                         window,
+                                         debug);
+  }
+
+  if(debug) {
+    Rcpp::Rcout << "Finished computation of A2 + A3. Time elapsed: " << timer.elapsed_time();
+    timer.set_current();
+    Rcpp::Rcout << "Starting clean-up...\n";
+  }
+
+  const auto col_names(make_model_coloumn_names(covariates, estimate_alpha, estimate_gamma));
+
+  Rcpp::NumericMatrix G1_rcpp(Rcpp::wrap(S_inv * (A1 + A2_plus_A3) * S_inv));
+  Rcpp::NumericMatrix G2_rcpp(Rcpp::wrap(S_inv * G2 * S_inv));
+
+  Rcpp::colnames(G1_rcpp) = col_names;
+  Rcpp::rownames(G1_rcpp) = col_names;
+  Rcpp::colnames(G2_rcpp) = col_names;
+  Rcpp::rownames(G2_rcpp) = col_names;
+
+  if(debug) {
+    Rcpp::Rcout << "Finished computing the vcov matrix. Time elapsed: " << timer.elapsed_time();
+    Rcpp::Rcout << "Total time taken to compute vcov matrix: " << timer.total_time();
+  }
+
+  return Rcpp::List::create(Rcpp::Named("G1") = G1_rcpp,
+                            Rcpp::Named("G2") = G2_rcpp);
+}
+
 // [[Rcpp::export]]
 Rcpp::List compute_vcov(SEXP configuration,
                         SEXP dummy,
@@ -907,4 +1066,19 @@ Rcpp::List compute_vcov(SEXP configuration,
                              multiple_windows,
                              dummy_distribution,
                              mark_range);
+}
+
+// [[Rcpp::export]]
+Rcpp::NumericMatrix compute_S_cpp(Rcpp::NumericVector rho,
+                                  Rcpp::NumericVector theta,
+                                  Rcpp::NumericMatrix regressors,
+                                  Rcpp::IntegerVector type,
+                                  int nthreads) {
+  // Construct papangelou intensity
+  const auto papangelou(detail::make_papangelou(ppjsdm::Lightweight_matrix<double>(regressors), Rcpp::as<std::vector<double>>(theta), nthreads));
+
+  // Compute and return S
+  const auto S(detail::make_S(papangelou, Rcpp::as<std::vector<double>>(rho), ppjsdm::Lightweight_matrix<double>(regressors), Rcpp::as<std::vector<int>>(type), nthreads));
+
+  return Rcpp::wrap(S);
 }

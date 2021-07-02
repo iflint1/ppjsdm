@@ -9,6 +9,10 @@ compute_vcov <- function(configuration, dummy, window, covariates, model, medium
     .Call(`_ppjsdm_compute_vcov`, configuration, dummy, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, rho, theta, regressors, data_list, estimate_alpha, estimate_gamma, debug, nthreads, npoints, multiple_windows, dummy_distribution, mark_range)
 }
 
+compute_S_cpp <- function(rho, theta, regressors, type, nthreads) {
+    .Call(`_ppjsdm_compute_S_cpp`, rho, theta, regressors, type, nthreads)
+}
+
 #' Check if a configuration contains duplicates.
 #'
 #' @param configuration Configuration.

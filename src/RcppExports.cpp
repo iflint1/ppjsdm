@@ -64,6 +64,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// compute_S_cpp
+Rcpp::NumericMatrix compute_S_cpp(Rcpp::NumericVector rho, Rcpp::NumericVector theta, Rcpp::NumericMatrix regressors, Rcpp::IntegerVector type, int nthreads);
+RcppExport SEXP _ppjsdm_compute_S_cpp(SEXP rhoSEXP, SEXP thetaSEXP, SEXP regressorsSEXP, SEXP typeSEXP, SEXP nthreadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type rho(rhoSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type regressors(regressorsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type type(typeSEXP);
+    Rcpp::traits::input_parameter< int >::type nthreads(nthreadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(compute_S_cpp(rho, theta, regressors, type, nthreads));
+    return rcpp_result_gen;
+END_RCPP
+}
 // has_duplicates
 bool has_duplicates(Rcpp::List configuration);
 RcppExport SEXP _ppjsdm_has_duplicates(SEXP configurationSEXP) {
@@ -225,6 +240,7 @@ RcppExport SEXP run_testthat_tests(SEXP);
 static const R_CallMethodDef CallEntries[] = {
     {"_ppjsdm_compute_papangelou_cpp", (DL_FUNC) &_ppjsdm_compute_papangelou_cpp, 16},
     {"_ppjsdm_compute_vcov", (DL_FUNC) &_ppjsdm_compute_vcov, 22},
+    {"_ppjsdm_compute_S_cpp", (DL_FUNC) &_ppjsdm_compute_S_cpp, 5},
     {"_ppjsdm_has_duplicates", (DL_FUNC) &_ppjsdm_has_duplicates, 1},
     {"_ppjsdm_make_default_model_parameters", (DL_FUNC) &_ppjsdm_make_default_model_parameters, 10},
     {"_ppjsdm_prepare_gibbsm_data", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data, 19},
