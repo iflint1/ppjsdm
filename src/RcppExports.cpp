@@ -123,6 +123,35 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// compute_G2_cpp
+Rcpp::NumericMatrix compute_G2_cpp(SEXP configuration, SEXP dummy, SEXP window, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::NumericMatrix short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, Rcpp::IntegerVector type, R_xlen_t saturation, Rcpp::NumericVector rho, Rcpp::NumericVector theta, Rcpp::NumericMatrix regressors, Rcpp::LogicalMatrix estimate_alpha, Rcpp::LogicalMatrix estimate_gamma, int nthreads, std::string dummy_distribution, Rcpp::NumericVector mark_range);
+RcppExport SEXP _ppjsdm_compute_G2_cpp(SEXP configurationSEXP, SEXP dummySEXP, SEXP windowSEXP, SEXP covariatesSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP typeSEXP, SEXP saturationSEXP, SEXP rhoSEXP, SEXP thetaSEXP, SEXP regressorsSEXP, SEXP estimate_alphaSEXP, SEXP estimate_gammaSEXP, SEXP nthreadsSEXP, SEXP dummy_distributionSEXP, SEXP mark_rangeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type configuration(configurationSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type dummy(dummySEXP);
+    Rcpp::traits::input_parameter< SEXP >::type window(windowSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type covariates(covariatesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type model(modelSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type medium_range_model(medium_range_modelSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type short_range(short_rangeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type medium_range(medium_rangeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type long_range(long_rangeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type type(typeSEXP);
+    Rcpp::traits::input_parameter< R_xlen_t >::type saturation(saturationSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type rho(rhoSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type regressors(regressorsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::LogicalMatrix >::type estimate_alpha(estimate_alphaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::LogicalMatrix >::type estimate_gamma(estimate_gammaSEXP);
+    Rcpp::traits::input_parameter< int >::type nthreads(nthreadsSEXP);
+    Rcpp::traits::input_parameter< std::string >::type dummy_distribution(dummy_distributionSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type mark_range(mark_rangeSEXP);
+    rcpp_result_gen = Rcpp::wrap(compute_G2_cpp(configuration, dummy, window, covariates, model, medium_range_model, short_range, medium_range, long_range, type, saturation, rho, theta, regressors, estimate_alpha, estimate_gamma, nthreads, dummy_distribution, mark_range));
+    return rcpp_result_gen;
+END_RCPP
+}
 // has_duplicates
 bool has_duplicates(Rcpp::List configuration);
 RcppExport SEXP _ppjsdm_has_duplicates(SEXP configurationSEXP) {
@@ -287,6 +316,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ppjsdm_compute_S_cpp", (DL_FUNC) &_ppjsdm_compute_S_cpp, 5},
     {"_ppjsdm_compute_A1_cpp", (DL_FUNC) &_ppjsdm_compute_A1_cpp, 5},
     {"_ppjsdm_compute_A2_plus_A3_cpp", (DL_FUNC) &_ppjsdm_compute_A2_plus_A3_cpp, 19},
+    {"_ppjsdm_compute_G2_cpp", (DL_FUNC) &_ppjsdm_compute_G2_cpp, 19},
     {"_ppjsdm_has_duplicates", (DL_FUNC) &_ppjsdm_has_duplicates, 1},
     {"_ppjsdm_make_default_model_parameters", (DL_FUNC) &_ppjsdm_make_default_model_parameters, 10},
     {"_ppjsdm_prepare_gibbsm_data", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data, 19},

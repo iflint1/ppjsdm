@@ -770,8 +770,6 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
       nx = static_cast<int>(std::ceil(r * ny));
     }
 
-    Rcpp::Rcout << nx << '\n';
-    Rcpp::Rcout << ny << '\n';
     for(int i(0); i < nx; ++i) {
       for(int j(0); j < ny; ++j) {
         const ppjsdm::detail::Rectangle_window restricted_window(window.xmin() + static_cast<double>(i) * delta_x / static_cast<double>(nx),
@@ -1208,4 +1206,83 @@ Rcpp::NumericMatrix compute_A2_plus_A3_cpp(SEXP configuration,
   }
 
   return Rcpp::wrap(A2_plus_A3);
+}
+
+// [[Rcpp::export]]
+Rcpp::NumericMatrix compute_G2_cpp(SEXP configuration,
+                                   SEXP dummy,
+                                   SEXP window,
+                                   Rcpp::List covariates,
+                                   Rcpp::CharacterVector model,
+                                   Rcpp::CharacterVector medium_range_model,
+                                   Rcpp::NumericMatrix short_range,
+                                   Rcpp::NumericMatrix medium_range,
+                                   Rcpp::NumericMatrix long_range,
+                                   Rcpp::IntegerVector type,
+                                   R_xlen_t saturation,
+                                   Rcpp::NumericVector rho,
+                                   Rcpp::NumericVector theta,
+                                   Rcpp::NumericMatrix regressors,
+                                   Rcpp::LogicalMatrix estimate_alpha,
+                                   Rcpp::LogicalMatrix estimate_gamma,
+                                   int nthreads,
+                                   std::string dummy_distribution,
+                                   Rcpp::NumericVector mark_range) {
+  // Convert the SEXP configuration to a C++ object.
+  const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::wrap(configuration));
+
+  // Convert configuration to std::vector in order for parallelised version to work.
+  const auto length_configuration(ppjsdm::size(wrapped_configuration));
+  std::vector<ppjsdm::Marked_point> vector_configuration(length_configuration);
+  for(decltype(ppjsdm::size(wrapped_configuration)) j(0); j < length_configuration; ++j) {
+    vector_configuration[j] = wrapped_configuration[j];
+  }
+
+  // Convert the SEXP dummy to a C++ object.
+  const ppjsdm::Configuration_wrapper wrapped_dummy(Rcpp::wrap(dummy));
+
+  // Convert configuration to std::vector in order for parallelised version to work.
+  const auto length_dummy(ppjsdm::size(wrapped_dummy));
+  std::vector<ppjsdm::Marked_point> vector_dummy(length_dummy);
+  for(decltype(ppjsdm::size(wrapped_dummy)) j(0); j < length_dummy; ++j) {
+    vector_dummy[j] = wrapped_dummy[j];
+  }
+
+  // Convert the SEXP window to a C++ object.
+  ppjsdm::Window cpp_window(window, mark_range);
+
+  // Construct papangelou intensity
+  const auto papangelou(detail::make_papangelou(ppjsdm::Lightweight_matrix<double>(regressors), Rcpp::as<std::vector<double>>(theta), nthreads));
+
+  // Compute and return G2
+  using g2_t = decltype(detail::make_G2_binomial(papangelou,
+                                                 Rcpp::as<std::vector<double>>(rho),
+                                                 ppjsdm::Lightweight_matrix<double>(regressors),
+                                                 std::vector<int>{}, 1., 1));
+  g2_t G2;
+  if(dummy_distribution == std::string("binomial")) {
+    G2 = detail::make_G2_binomial(papangelou,
+                                  Rcpp::as<std::vector<double>>(rho),
+                                  ppjsdm::Lightweight_matrix<double>(regressors),
+                                  Rcpp::as<std::vector<int>>(type),
+                                  cpp_window.volume(),
+                                  nthreads);
+  } else if(dummy_distribution == std::string("stratified")) {
+    G2 = detail::make_G2_stratified(wrapped_configuration,
+                                    wrapped_dummy,
+                                    cpp_window,
+                                    Rcpp::as<std::vector<double>>(theta),
+                                    Rcpp::as<std::vector<double>>(rho),
+                                    ppjsdm::Lightweight_matrix<double>(regressors),
+                                    ppjsdm::Lightweight_square_matrix<bool>(estimate_alpha),
+                                    ppjsdm::Lightweight_square_matrix<bool>(estimate_gamma),
+                                    ppjsdm::Saturated_model<double>(model, short_range, saturation),
+                                    ppjsdm::Saturated_model<double>(medium_range_model, medium_range, long_range, saturation),
+                                    ppjsdm::Im_list_wrapper(covariates),
+                                    nthreads);
+  } else {
+    Rcpp::stop("Unknown dummy_distribution parameter.");
+  }
+
+  return Rcpp::wrap(G2);
 }

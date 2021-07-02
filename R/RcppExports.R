@@ -21,6 +21,10 @@ compute_A2_plus_A3_cpp <- function(configuration, window, covariates, model, med
     .Call(`_ppjsdm_compute_A2_plus_A3_cpp`, configuration, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, rho, theta, regressors, data_list, estimate_alpha, estimate_gamma, nthreads, npoints, multiple_windows, mark_range)
 }
 
+compute_G2_cpp <- function(configuration, dummy, window, covariates, model, medium_range_model, short_range, medium_range, long_range, type, saturation, rho, theta, regressors, estimate_alpha, estimate_gamma, nthreads, dummy_distribution, mark_range) {
+    .Call(`_ppjsdm_compute_G2_cpp`, configuration, dummy, window, covariates, model, medium_range_model, short_range, medium_range, long_range, type, saturation, rho, theta, regressors, estimate_alpha, estimate_gamma, nthreads, dummy_distribution, mark_range)
+}
+
 #' Check if a configuration contains duplicates.
 #'
 #' @param configuration Configuration.
