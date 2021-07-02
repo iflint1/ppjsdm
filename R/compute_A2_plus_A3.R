@@ -2,12 +2,17 @@
 #' The function can be supplied multiple fits, in which case the aggregate estimator is computed.
 #' This is an internal function used when you want to compute the vcov matrix in multiple steps (useful for large datasets).
 #'
-#' @param ... A list of fit objects.
+#' @param ... A sequence of fit objects.
+#' @param list List of fits.
 #' @param npoints Target number of points in the restricted window that the vcov matrix is computed on. Computation is slower for larger values, but the vcov matrix is then better approximated.
 #' @param multiple_windows Compute A2 and A3 on a lot of small windows and which are then averaged out, or only on a single restricted window?
 #' @export
 compute_A2_plus_A3 <- function(..., npoints = 1000, multiple_windows = TRUE) {
-  fits <- list(...)
+  if(missing(list)) {
+    fits <- list(...)
+  } else {
+    fits <- list
+  }
 
   theta <- setNames(sapply(seq_len(length(fits[[1]]$coefficients_vector)), function(i) mean(sapply(fits, function(fit) fit$coefficients_vector[i]), na.rm = TRUE)), nm = names(fits[[1]]$coefficients_vector))
 
