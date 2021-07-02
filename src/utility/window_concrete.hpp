@@ -19,6 +19,14 @@ public:
   mark_lower_(marked_range[0]),
   delta_mark_(marked_range[1] - marked_range[0]) {}
 
+  explicit Rectangle_window(double x_0, double x_1, double y_0, double y_1, Rcpp::NumericVector marked_range):
+    x_0_(x_0),
+    delta_x_(x_1 - x_0),
+    y_0_(y_0),
+    delta_y_(y_1 - y_0),
+    mark_lower_(marked_range[0]),
+    delta_mark_(marked_range[1] - marked_range[0]) {}
+
   explicit Rectangle_window(Rcpp::List window, Rcpp::NumericVector marked_range):
   mark_lower_(marked_range[0]),
   delta_mark_(marked_range[1] - marked_range[0]) {

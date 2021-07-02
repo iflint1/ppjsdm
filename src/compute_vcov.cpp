@@ -23,6 +23,7 @@
 #include "utility/lightweight_matrix.hpp"
 #include "utility/timer.hpp"
 #include "utility/window.hpp"
+#include "utility/window_concrete.hpp"
 
 #include <algorithm> // std::remove_if
 #include <cmath> // std::floor, std::log, std::sqrt
@@ -60,8 +61,8 @@ inline void restrict_window(ppjsdm::Window& window, const Configuration& configu
   }
 }
 
-template<typename Configuration>
-inline auto restrict_configuration(const ppjsdm::Window& restricted_window, const Configuration& configuration) {
+template<typename Configuration, typename Window>
+inline auto restrict_configuration(const Window& restricted_window, const Configuration& configuration) {
   // Create object to return and reserve
   Configuration restricted_configuration;
   restricted_configuration.reserve(ppjsdm::size(configuration));
@@ -455,7 +456,7 @@ for(size_t k1(0); k1 < number_parameters; ++k1) {
 return A;
 }
 
-template<typename Configuration, typename FloatType>
+template<typename Configuration, typename FloatType, typename Window>
 inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
                             const std::vector<double>& rho,
                             const std::vector<double>& theta,
@@ -469,7 +470,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
                             int nthreads,
                             const ppjsdm::Im_list_wrapper& covariates,
                             double initial_window_volume,
-                            const ppjsdm::Window& restricted_window,
+                            const Window& restricted_window,
                             bool debug) {
 #ifdef _OPENMP
   omp_set_num_threads(nthreads);
@@ -698,7 +699,12 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
                                bool debug,
                                int nthreads,
                                int npoints,
-                               std::string dummy_distribution) {
+                               bool multiple_windows,
+                               std::string dummy_distribution,
+                               Rcpp::NumericVector mark_range) {
+  // Extract some values relating to the number of parameters and how they're ordered
+  const auto number_parameters(ppjsdm::get_number_parameters(rho.size(), covariates.size(), estimate_alpha, estimate_gamma).total_parameters);
+
   ppjsdm::PreciseTimer timer{};
   if(debug) {
     Rcpp::Rcout << "Starting computation of the Papangelou conditional intensity...\n";
@@ -747,22 +753,68 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
     Rcpp::Rcout << "Starting computation of A2 + A3...\n";
   }
 
-  detail::restrict_window(window, configuration, npoints, 0.05);
-  const auto A2_plus_A3(detail::make_A2_plus_A3(papangelou,
-                                                rho,
-                                                theta,
-                                                regressors,
-                                                data_list,
-                                                estimate_alpha,
-                                                estimate_gamma,
-                                                dispersion_model,
-                                                medium_dispersion_model,
-                                                configuration,
-                                                nthreads,
-                                                covariates,
-                                                initial_window_volume,
-                                                window,
-                                                debug));
+  arma::mat A2_plus_A3;
+  if(multiple_windows) {
+    A2_plus_A3 = arma::mat(number_parameters, number_parameters, arma::fill::zeros);
+
+    const auto delta_x(window.xmax() - window.xmin());
+    const auto delta_y(window.ymax() - window.ymin());
+    int nx, ny;
+    if(delta_x >= delta_y) {
+      const auto r(delta_y / delta_x);
+      nx = std::max<int>(1, static_cast<int>(std::ceil(std::sqrt(static_cast<double>(ppjsdm::size(configuration)) / (r * static_cast<double>(npoints))))));
+      ny = static_cast<int>(std::ceil(r * nx));
+    } else {
+      const auto r(delta_x / delta_y);
+      ny = std::max<int>(1, static_cast<int>(std::ceil(std::sqrt(static_cast<double>(ppjsdm::size(configuration)) / (r * static_cast<double>(npoints))))));
+      nx = static_cast<int>(std::ceil(r * ny));
+    }
+
+    Rcpp::Rcout << nx << '\n';
+    Rcpp::Rcout << ny << '\n';
+    for(int i(0); i < nx; ++i) {
+      for(int j(0); j < ny; ++j) {
+        const ppjsdm::detail::Rectangle_window restricted_window(window.xmin() + static_cast<double>(i) * delta_x / static_cast<double>(nx),
+                                                                 window.xmin() + static_cast<double>(i + 1) * delta_x / static_cast<double>(nx),
+                                                                 window.ymin() + static_cast<double>(j) * delta_y / static_cast<double>(ny),
+                                                                 window.ymin() + static_cast<double>(j + 1) * delta_y / static_cast<double>(ny),
+                                                                 mark_range);
+        A2_plus_A3 += detail::make_A2_plus_A3(papangelou,
+                                              rho,
+                                              theta,
+                                              regressors,
+                                              data_list,
+                                              estimate_alpha,
+                                              estimate_gamma,
+                                              dispersion_model,
+                                              medium_dispersion_model,
+                                              configuration,
+                                              nthreads,
+                                              covariates,
+                                              initial_window_volume,
+                                              restricted_window,
+                                              debug);
+      }
+    }
+    A2_plus_A3 /= (nx * ny);
+  } else {
+    detail::restrict_window(window, configuration, npoints, 0.05);
+    A2_plus_A3 = detail::make_A2_plus_A3(papangelou,
+                                         rho,
+                                         theta,
+                                         regressors,
+                                         data_list,
+                                         estimate_alpha,
+                                         estimate_gamma,
+                                         dispersion_model,
+                                         medium_dispersion_model,
+                                         configuration,
+                                         nthreads,
+                                         covariates,
+                                         initial_window_volume,
+                                         window,
+                                         debug);
+  }
 
   if(debug) {
     Rcpp::Rcout << "Finished computation of A2 + A3. Time elapsed: " << timer.elapsed_time();
@@ -809,6 +861,7 @@ Rcpp::List compute_vcov(SEXP configuration,
                         bool debug,
                         int nthreads,
                         int npoints,
+                        bool multiple_windows,
                         std::string dummy_distribution,
                         Rcpp::NumericVector mark_range) {
   // Convert the SEXP configuration to a C++ object.
@@ -851,5 +904,7 @@ Rcpp::List compute_vcov(SEXP configuration,
                              debug,
                              nthreads,
                              npoints,
-                             dummy_distribution);
+                             multiple_windows,
+                             dummy_distribution,
+                             mark_range);
 }

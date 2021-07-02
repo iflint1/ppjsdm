@@ -2,9 +2,10 @@
 #'
 #' @param object A fitted model object.
 #' @param npoints Target number of points in the restricted window that the vcov matrix is computed on. Computation is slower for larger values, but the vcov matrix is then better approximated.
+#' @param multiple_windows Compute A2 and A3 on a lot of small windows and which are then averaged out, or only on a single restricted window?
 #' @param ... Ignored.
 #' @export
-vcov.gibbsm <- function(object, npoints = 2000, ...) {
+vcov.gibbsm <- function(object, npoints = 1000, multiple_windows = TRUE, ...) {
   if(object$used_regularization) {
     warning("Computing the Variance-Covariance matrix of a regularised fit.")
   }
@@ -31,6 +32,7 @@ vcov.gibbsm <- function(object, npoints = 2000, ...) {
                      debug = object$debug,
                      nthreads = object$nthreads,
                      npoints = npoints,
+                     multiple_windows = multiple_windows,
                      dummy_distribution = object$dummy_distribution,
                      mark_range = object$mark_range)
   vc$G1 + vc$G2

@@ -2,10 +2,11 @@
 #'
 #' @param object A fitted model object.
 #' @param npoints Target number of points in the restricted window that the vcov matrix is computed on. Computation is slower for larger values, but the vcov matrix is then better approximated.
+#' @param multiple_windows Compute A2 and A3 on a lot of small windows and which are then averaged out, or only on a single restricted window?
 #' @param ... Ignored.
 #' @importFrom stats pnorm qnorm
 #' @export
-summary.gibbsm <- function(object, npoints = 2000, ...) {
+summary.gibbsm <- function(object, npoints = 1000, multiple_windows = TRUE, ...) {
   y <- list()
   class(y) <- "summary_gibbsm"
 
@@ -35,6 +36,7 @@ summary.gibbsm <- function(object, npoints = 2000, ...) {
                      debug = object$debug,
                      nthreads = object$nthreads,
                      npoints = npoints,
+                     multiple_windows = multiple_windows,
                      dummy_distribution = object$dummy_distribution,
                      mark_range = object$mark_range)
 
