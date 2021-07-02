@@ -4,35 +4,49 @@
 #'
 #' @param ... A sequence of fit objects.
 #' @param list List of fits.
+#' @param nthreads (optional) number of threads to use.
+#' @param debug Display debug information?
 #' @param npoints Target number of points in the restricted window that the vcov matrix is computed on. Computation is slower for larger values, but the vcov matrix is then better approximated.
 #' @param multiple_windows Compute A2 and A3 on a lot of small windows and which are then averaged out, or only on a single restricted window?
 #' @export
-compute_A2_plus_A3 <- function(..., npoints = 1000, multiple_windows = TRUE) {
+compute_A2_plus_A3 <- function(..., list, nthreads, debug = FALSE, npoints = 1000, multiple_windows = TRUE) {
   if(missing(list)) {
-    fits <- list(...)
+    fits <- base::list(...)
   } else {
     fits <- list
   }
 
   theta <- setNames(sapply(seq_len(length(fits[[1]]$coefficients_vector)), function(i) mean(sapply(fits, function(fit) fit$coefficients_vector[i]), na.rm = TRUE)), nm = names(fits[[1]]$coefficients_vector))
 
-  compute_A2_plus_A3_cpp(configuration = fits[[1]]$configuration_list[[1]],
-                         window = fits[[1]]$window,
-                         covariates = fits[[1]]$parameters$covariates,
-                         model = fits[[1]]$parameters$model,
-                         medium_range_model = fits[[1]]$parameters$medium_range_model,
-                         short_range = fits[[1]]$coefficients$short_range,
-                         medium_range = fits[[1]]$coefficients$medium_range,
-                         long_range = fits[[1]]$coefficients$long_range,
-                         saturation = fits[[1]]$parameters$saturation,
-                         rho = exp(-fits[[1]]$data_list$shift),
-                         theta = theta,
-                         regressors = as.matrix(fits[[1]]$data_list$regressors),
-                         data_list = fits[[1]]$data_list,
-                         estimate_alpha = fits[[1]]$estimate_alpha,
-                         estimate_gamma = fits[[1]]$estimate_gamma,
-                         nthreads = fits[[1]]$nthreads,
-                         npoints = npoints,
-                         multiple_windows = multiple_windows,
-                         mark_range = fits[[1]]$mark_range)
+  if(missing(nthreads)) {
+    nthreads <- fits[[1]]$nthreads
+  }
+  if(debug) {
+    cat(paste0("Starting computation of A2 + A3.\n"))
+    tm <- Sys.time()
+  }
+  A2_plus_A3 <- compute_A2_plus_A3_cpp(configuration = fits[[1]]$configuration_list[[1]],
+                                       window = fits[[1]]$window,
+                                       covariates = fits[[1]]$parameters$covariates,
+                                       model = fits[[1]]$parameters$model,
+                                       medium_range_model = fits[[1]]$parameters$medium_range_model,
+                                       short_range = fits[[1]]$coefficients$short_range,
+                                       medium_range = fits[[1]]$coefficients$medium_range,
+                                       long_range = fits[[1]]$coefficients$long_range,
+                                       saturation = fits[[1]]$parameters$saturation,
+                                       rho = exp(-fits[[1]]$data_list$shift),
+                                       theta = theta,
+                                       regressors = as.matrix(fits[[1]]$data_list$regressors),
+                                       data_list = fits[[1]]$data_list,
+                                       estimate_alpha = fits[[1]]$estimate_alpha,
+                                       estimate_gamma = fits[[1]]$estimate_gamma,
+                                       nthreads = nthreads,
+                                       npoints = npoints,
+                                       multiple_windows = multiple_windows,
+                                       mark_range = fits[[1]]$mark_range)
+  if(debug) {
+    cat("End of computation. ")
+    print(Sys.time() - tm)
+  }
+  A2_plus_A3
 }

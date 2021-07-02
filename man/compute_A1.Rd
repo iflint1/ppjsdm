@@ -6,10 +6,16 @@
 The function can be supplied multiple fits, in which case the aggregate estimator is computed.
 This is an internal function used when you want to compute the vcov matrix in multiple steps (useful for large datasets).}
 \usage{
-compute_A1(...)
+compute_A1(..., list)
 }
 \arguments{
-\item{...}{A list of fit objects.}
+\item{...}{A sequence of fit objects.}
+
+\item{list}{List of fits.}
+
+\item{nthreads}{(optional) number of threads to use.}
+
+\item{debug}{Display debug information?}
 }
 \description{
 Calculate the matrix A1 used to compute the Variance-Covariance Matrix for a Fitted Gibbs point process.

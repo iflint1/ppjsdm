@@ -4,22 +4,41 @@
 #'
 #' @param ... A sequence of fit objects.
 #' @param list List of fits.
+#' @param nthreads (optional) number of threads to use.
+#' @param debug Display debug information?
 #' @export
-compute_S <- function(..., list) {
+compute_S <- function(..., list, nthreads, debug = FALSE) {
   if(missing(list)) {
-    fits <- list(...)
+    fits <- base::list(...)
   } else {
     fits <- list
   }
 
   theta <- setNames(sapply(seq_len(length(fits[[1]]$coefficients_vector)), function(i) mean(sapply(fits, function(fit) fit$coefficients_vector[i]), na.rm = TRUE)), nm = names(fits[[1]]$coefficients_vector))
 
+  if(missing(nthreads)) {
+    nthreads <- NULL
+  }
   S <- lapply(fits, function(fit) {
-    compute_S_cpp(rho = exp(-fit$data_list$shift),
-                  theta = theta,
-                  regressors = as.matrix(fit$data_list$regressors),
-                  type = fit$data_list$type,
-                  nthreads = fit$nthreads)
+    if(is.null(nthreads)) {
+      nt <- fit$nthreads
+    } else {
+      nt <- nthreads
+    }
+    if(debug) {
+      cat(paste0("Starting computation of S.\n"))
+      tm <- Sys.time()
+    }
+    S <- compute_S_cpp(rho = exp(-fit$data_list$shift),
+                       theta = theta,
+                       regressors = as.matrix(fit$data_list$regressors),
+                       type = fit$data_list$type,
+                       nthreads = nt)
+    if(debug) {
+      cat("End of computation. ")
+      print(Sys.time() - tm)
+    }
+    S
   })
 
   Reduce("+", S) / length(S)
