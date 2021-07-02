@@ -929,8 +929,6 @@ Rcpp::List compute_S_helper(const Configuration& configuration,
       nx = static_cast<int>(std::ceil(r * ny));
     }
 
-    Rcpp::Rcout << nx << '\n';
-    Rcpp::Rcout << ny << '\n';
     for(int i(0); i < nx; ++i) {
       for(int j(0); j < ny; ++j) {
         const ppjsdm::detail::Rectangle_window restricted_window(window.xmin() + static_cast<double>(i) * delta_x / static_cast<double>(nx),
@@ -1078,7 +1076,30 @@ Rcpp::NumericMatrix compute_S_cpp(Rcpp::NumericVector rho,
   const auto papangelou(detail::make_papangelou(ppjsdm::Lightweight_matrix<double>(regressors), Rcpp::as<std::vector<double>>(theta), nthreads));
 
   // Compute and return S
-  const auto S(detail::make_S(papangelou, Rcpp::as<std::vector<double>>(rho), ppjsdm::Lightweight_matrix<double>(regressors), Rcpp::as<std::vector<int>>(type), nthreads));
+  const auto S(detail::make_S(papangelou,
+                              Rcpp::as<std::vector<double>>(rho),
+                              ppjsdm::Lightweight_matrix<double>(regressors),
+                              Rcpp::as<std::vector<int>>(type),
+                              nthreads));
 
   return Rcpp::wrap(S);
+}
+
+// [[Rcpp::export]]
+Rcpp::NumericMatrix compute_A1_cpp(Rcpp::NumericVector rho,
+                                   Rcpp::NumericVector theta,
+                                   Rcpp::NumericMatrix regressors,
+                                   Rcpp::IntegerVector type,
+                                   int nthreads) {
+  // Construct papangelou intensity
+  const auto papangelou(detail::make_papangelou(ppjsdm::Lightweight_matrix<double>(regressors), Rcpp::as<std::vector<double>>(theta), nthreads));
+
+  // Compute and return A1
+  const auto A1(detail::make_A1(papangelou,
+                                Rcpp::as<std::vector<double>>(rho),
+                                ppjsdm::Lightweight_matrix<double>(regressors),
+                                Rcpp::as<std::vector<int>>(type),
+                                nthreads));
+
+  return Rcpp::wrap(A1);
 }

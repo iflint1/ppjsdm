@@ -13,6 +13,10 @@ compute_S_cpp <- function(rho, theta, regressors, type, nthreads) {
     .Call(`_ppjsdm_compute_S_cpp`, rho, theta, regressors, type, nthreads)
 }
 
+compute_A1_cpp <- function(rho, theta, regressors, type, nthreads) {
+    .Call(`_ppjsdm_compute_A1_cpp`, rho, theta, regressors, type, nthreads)
+}
+
 #' Check if a configuration contains duplicates.
 #'
 #' @param configuration Configuration.
