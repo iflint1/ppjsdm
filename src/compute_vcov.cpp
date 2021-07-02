@@ -1103,3 +1103,109 @@ Rcpp::NumericMatrix compute_A1_cpp(Rcpp::NumericVector rho,
 
   return Rcpp::wrap(A1);
 }
+
+
+// [[Rcpp::export]]
+Rcpp::NumericMatrix compute_A2_plus_A3_cpp(SEXP configuration,
+                                           SEXP window,
+                                           Rcpp::List covariates,
+                                           Rcpp::CharacterVector model,
+                                           Rcpp::CharacterVector medium_range_model,
+                                           Rcpp::NumericMatrix short_range,
+                                           Rcpp::NumericMatrix medium_range,
+                                           Rcpp::NumericMatrix long_range,
+                                           R_xlen_t saturation,
+                                           Rcpp::NumericVector rho,
+                                           Rcpp::NumericVector theta,
+                                           Rcpp::NumericMatrix regressors,
+                                           Rcpp::List data_list,
+                                           Rcpp::LogicalMatrix estimate_alpha,
+                                           Rcpp::LogicalMatrix estimate_gamma,
+                                           int nthreads,
+                                           int npoints,
+                                           bool multiple_windows,
+                                           Rcpp::NumericVector mark_range) {
+  const auto number_parameters(ppjsdm::get_number_parameters(rho.size(), covariates.size(), estimate_alpha, estimate_gamma).total_parameters);
+
+  // Convert the SEXP configuration to a C++ object.
+  const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::wrap(configuration));
+
+  // Convert configuration to std::vector in order for parallelised version to work.
+  const auto length_configuration(ppjsdm::size(wrapped_configuration));
+  std::vector<ppjsdm::Marked_point> vector_configuration(length_configuration);
+  for(decltype(ppjsdm::size(wrapped_configuration)) j(0); j < length_configuration; ++j) {
+    vector_configuration[j] = wrapped_configuration[j];
+  }
+
+  // Convert the SEXP window to a C++ object.
+  ppjsdm::Window cpp_window(window, mark_range);
+
+  const auto initial_window_volume(cpp_window.volume());
+
+  // Construct papangelou intensity
+  const auto papangelou(detail::make_papangelou(ppjsdm::Lightweight_matrix<double>(regressors), Rcpp::as<std::vector<double>>(theta), nthreads));
+
+  // Compute and return A2 + A3
+  arma::mat A2_plus_A3;
+  if(multiple_windows) {
+    A2_plus_A3 = arma::mat(number_parameters, number_parameters, arma::fill::zeros);
+
+    const auto delta_x(cpp_window.xmax() - cpp_window.xmin());
+    const auto delta_y(cpp_window.ymax() - cpp_window.ymin());
+    int nx, ny;
+    if(delta_x >= delta_y) {
+      const auto r(delta_y / delta_x);
+      nx = std::max<int>(1, static_cast<int>(std::ceil(std::sqrt(static_cast<double>(ppjsdm::size(vector_configuration)) / (r * static_cast<double>(npoints))))));
+      ny = static_cast<int>(std::ceil(r * nx));
+    } else {
+      const auto r(delta_x / delta_y);
+      ny = std::max<int>(1, static_cast<int>(std::ceil(std::sqrt(static_cast<double>(ppjsdm::size(vector_configuration)) / (r * static_cast<double>(npoints))))));
+      nx = static_cast<int>(std::ceil(r * ny));
+    }
+
+    for(int i(0); i < nx; ++i) {
+      for(int j(0); j < ny; ++j) {
+        const ppjsdm::detail::Rectangle_window restricted_window(cpp_window.xmin() + static_cast<double>(i) * delta_x / static_cast<double>(nx),
+                                                                 cpp_window.xmin() + static_cast<double>(i + 1) * delta_x / static_cast<double>(nx),
+                                                                 cpp_window.ymin() + static_cast<double>(j) * delta_y / static_cast<double>(ny),
+                                                                 cpp_window.ymin() + static_cast<double>(j + 1) * delta_y / static_cast<double>(ny),
+                                                                 mark_range);
+        A2_plus_A3 += detail::make_A2_plus_A3(papangelou,
+                                              Rcpp::as<std::vector<double>>(rho),
+                                              Rcpp::as<std::vector<double>>(theta),
+                                              ppjsdm::Lightweight_matrix<double>(regressors),
+                                              data_list,
+                                              ppjsdm::Lightweight_square_matrix<bool>(estimate_alpha),
+                                              ppjsdm::Lightweight_square_matrix<bool>(estimate_gamma),
+                                              ppjsdm::Saturated_model<double>(model, short_range, saturation),
+                                              ppjsdm::Saturated_model<double>(medium_range_model, medium_range, long_range, saturation),
+                                              vector_configuration,
+                                              nthreads,
+                                              ppjsdm::Im_list_wrapper(covariates),
+                                              initial_window_volume,
+                                              restricted_window,
+                                              false);
+      }
+    }
+    A2_plus_A3 /= (nx * ny);
+  } else {
+    detail::restrict_window(cpp_window, vector_configuration, npoints, 0.05);
+    A2_plus_A3 = detail::make_A2_plus_A3(papangelou,
+                                         Rcpp::as<std::vector<double>>(rho),
+                                         Rcpp::as<std::vector<double>>(theta),
+                                         ppjsdm::Lightweight_matrix<double>(regressors),
+                                         data_list,
+                                         ppjsdm::Lightweight_square_matrix<bool>(estimate_alpha),
+                                         ppjsdm::Lightweight_square_matrix<bool>(estimate_gamma),
+                                         ppjsdm::Saturated_model<double>(model, short_range, saturation),
+                                         ppjsdm::Saturated_model<double>(medium_range_model, medium_range, long_range, saturation),
+                                         vector_configuration,
+                                         nthreads,
+                                         ppjsdm::Im_list_wrapper(covariates),
+                                         initial_window_volume,
+                                         cpp_window,
+                                         false);
+  }
+
+  return Rcpp::wrap(A2_plus_A3);
+}
