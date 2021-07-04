@@ -16,24 +16,12 @@ compute_S <- function(..., list, nthreads, debug = FALSE) {
 
   theta <- setNames(sapply(seq_len(length(fits[[1]]$coefficients_vector)), function(i) mean(sapply(fits, function(fit) fit$coefficients_vector[i]), na.rm = TRUE)), nm = names(fits[[1]]$coefficients_vector))
 
-  # Get rid of everything superfluous to facilitate working with large matrices
-  fits <- lapply(fits, function(fit) {
-    base::list(rho = exp(-fit$data_list$shift),
-               regressors = fit$data_list$regressors,
-               type = fit$data_list$type,
-               nthreads = fit$nthreads)
-  })
-  gc()
-
   if(missing(nthreads)) {
     nthreads <- NULL
   }
-
-  S <- vector(mode = 'list', length = length(fits))
-  for(i in seq_len(length(fits))) {
-    gc()
+  S <- lapply(fits, function(fit) {
     if(is.null(nthreads)) {
-      nt <- fits[[i]]$nthreads
+      nt <- fit$nthreads
     } else {
       nt <- nthreads
     }
@@ -41,16 +29,17 @@ compute_S <- function(..., list, nthreads, debug = FALSE) {
       cat(paste0("Starting computation of S.\n"))
       tm <- Sys.time()
     }
-    S[[i]] <- compute_S_cpp(rho = fits[[i]]$rho,
-                            theta = theta,
-                            regressors = as.matrix(fits[[i]]$regressors),
-                            type = fits[[i]]$type,
-                            nthreads = nt)
+    S <- compute_S_cpp(rho = exp(-fit$data_list$shift),
+                       theta = theta,
+                       regressors = as.matrix(fit$data_list$regressors),
+                       type = fit$data_list$type,
+                       nthreads = nt)
     if(debug) {
       cat("End of computation. ")
       print(Sys.time() - tm)
     }
-  }
+    S
+  })
 
   Reduce("+", S) / length(S)
 }
