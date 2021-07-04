@@ -21,6 +21,32 @@ compute_A2_plus_A3 <- function(..., list, nthreads, debug = FALSE, npoints = 100
   if(missing(nthreads)) {
     nthreads <- fits[[1]]$nthreads
   }
+
+  tt <- tryCatch({
+    regressors <- as.matrix(fits[[1]]$data_list$regressors)
+  }, error = function(e) e, warning = function(w) w)
+
+  # If we don't have enough RAM to call Matrix::as.matrix.Matrix, use custom function instead.
+  if(is(tt, "error")) {
+    # Ref: https://programmerah.com/the-sparse-matrix-of-r-language-is-too-large-to-be-used-as-matrix-8856/
+    as_matrix <- function(mat) {
+      tmp <- matrix(data = 0L, nrow = mat@Dim[1], ncol = mat@Dim[2])
+
+      row_pos <- mat@i + 1
+      col_pos <- findInterval(seq(mat@x) - 1, mat@p[-1]) + 1
+      val <- mat@x
+
+      for(i in seq_along(val)) {
+        tmp[row_pos[i], col_pos[i]] <- val[i]
+      }
+
+      row.names(tmp) <- mat@Dimnames[[1]]
+      colnames(tmp) <- mat@Dimnames[[2]]
+      tmp
+    }
+    regressors <- as_matrix(fits[[1]]$data_list$regressors)
+  }
+
   if(debug) {
     cat(paste0("Starting computation of A2 + A3.\n"))
     tm <- Sys.time()
@@ -36,7 +62,7 @@ compute_A2_plus_A3 <- function(..., list, nthreads, debug = FALSE, npoints = 100
                                        saturation = fits[[1]]$parameters$saturation,
                                        rho = exp(-fits[[1]]$data_list$shift),
                                        theta = theta,
-                                       regressors = as.matrix(fits[[1]]$data_list$regressors),
+                                       regressors = regressors,
                                        data_list = fits[[1]]$data_list,
                                        estimate_alpha = fits[[1]]$estimate_alpha,
                                        estimate_gamma = fits[[1]]$estimate_gamma,

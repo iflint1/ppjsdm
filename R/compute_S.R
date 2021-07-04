@@ -25,10 +25,6 @@ compute_S <- function(..., list, nthreads, debug = FALSE) {
     } else {
       nt <- nthreads
     }
-    if(debug) {
-      cat(paste0("Starting computation of S.\n"))
-      tm <- Sys.time()
-    }
 
     tt <- tryCatch({
       regressors <- as.matrix(fit$data_list$regressors)
@@ -55,6 +51,10 @@ compute_S <- function(..., list, nthreads, debug = FALSE) {
       regressors <- as_matrix(fit$data_list$regressors)
     }
 
+    if(debug) {
+      cat(paste0("Starting computation of S.\n"))
+      tm <- Sys.time()
+    }
     S <- compute_S_cpp(rho = exp(-fit$data_list$shift),
                        theta = theta,
                        regressors = regressors,
