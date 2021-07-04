@@ -6,7 +6,7 @@
 The function can be supplied multiple fits, in which case the aggregate estimator is computed.
 This is an internal function used when you want to compute the vcov matrix in multiple steps (useful for large datasets).}
 \usage{
-compute_G2(..., list)
+compute_G2(..., list, nthreads, debug = FALSE)
 }
 \arguments{
 \item{...}{A sequence of fit objects.}
