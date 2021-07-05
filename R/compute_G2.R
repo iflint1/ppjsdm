@@ -81,5 +81,10 @@ compute_G2 <- function(..., list, nthreads, debug = FALSE) {
     G2
   })
 
-  Reduce("+", G2) / length(G2) / length(G2)
+  G2 <- Reduce("+", G2) / length(G2) / length(G2)
+
+  rownames(G2) <- names(theta)
+  colnames(G2) <- names(theta)
+
+  G2
 }

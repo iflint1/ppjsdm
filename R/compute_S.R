@@ -67,5 +67,10 @@ compute_S <- function(..., list, nthreads, debug = FALSE) {
     S
   })
 
-  Reduce("+", S) / length(S)
+  S <- Reduce("+", S) / length(S)
+
+  rownames(S) <- names(theta)
+  colnames(S) <- names(theta)
+
+  S
 }

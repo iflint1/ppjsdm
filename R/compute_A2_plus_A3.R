@@ -75,5 +75,8 @@ compute_A2_plus_A3 <- function(..., list, nthreads, debug = FALSE, npoints = 100
     cat("End of computation. ")
     print(Sys.time() - tm)
   }
+
+  rownames(A2_plus_A3) <- names(theta)
+  colnames(A2_plus_A3) <- names(theta)
   A2_plus_A3
 }

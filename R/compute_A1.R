@@ -67,5 +67,10 @@ compute_A1 <- function(..., list, nthreads, debug = FALSE) {
     A1
   })
 
-  Reduce("+", A1) / length(A1)
+  A1 <- Reduce("+", A1) / length(A1)
+
+  rownames(A1) <- names(theta)
+  colnames(A1) <- names(theta)
+
+  A1
 }
