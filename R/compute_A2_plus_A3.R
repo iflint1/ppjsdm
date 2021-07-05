@@ -69,7 +69,8 @@ compute_A2_plus_A3 <- function(..., list, nthreads, debug = FALSE, npoints = 100
                                        nthreads = nthreads,
                                        npoints = npoints,
                                        multiple_windows = multiple_windows,
-                                       mark_range = fits[[1]]$mark_range)
+                                       mark_range = fits[[1]]$mark_range,
+                                       debug = debug)
   if(debug) {
     cat("End of computation. ")
     print(Sys.time() - tm)

@@ -95,8 +95,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // compute_A2_plus_A3_cpp
-Rcpp::NumericMatrix compute_A2_plus_A3_cpp(SEXP configuration, SEXP window, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::NumericMatrix short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, Rcpp::NumericVector rho, Rcpp::NumericVector theta, Rcpp::NumericMatrix regressors, Rcpp::List data_list, Rcpp::LogicalMatrix estimate_alpha, Rcpp::LogicalMatrix estimate_gamma, int nthreads, int npoints, bool multiple_windows, Rcpp::NumericVector mark_range);
-RcppExport SEXP _ppjsdm_compute_A2_plus_A3_cpp(SEXP configurationSEXP, SEXP windowSEXP, SEXP covariatesSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP rhoSEXP, SEXP thetaSEXP, SEXP regressorsSEXP, SEXP data_listSEXP, SEXP estimate_alphaSEXP, SEXP estimate_gammaSEXP, SEXP nthreadsSEXP, SEXP npointsSEXP, SEXP multiple_windowsSEXP, SEXP mark_rangeSEXP) {
+Rcpp::NumericMatrix compute_A2_plus_A3_cpp(SEXP configuration, SEXP window, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::NumericMatrix short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, Rcpp::NumericVector rho, Rcpp::NumericVector theta, Rcpp::NumericMatrix regressors, Rcpp::List data_list, Rcpp::LogicalMatrix estimate_alpha, Rcpp::LogicalMatrix estimate_gamma, int nthreads, int npoints, bool multiple_windows, Rcpp::NumericVector mark_range, bool debug);
+RcppExport SEXP _ppjsdm_compute_A2_plus_A3_cpp(SEXP configurationSEXP, SEXP windowSEXP, SEXP covariatesSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP rhoSEXP, SEXP thetaSEXP, SEXP regressorsSEXP, SEXP data_listSEXP, SEXP estimate_alphaSEXP, SEXP estimate_gammaSEXP, SEXP nthreadsSEXP, SEXP npointsSEXP, SEXP multiple_windowsSEXP, SEXP mark_rangeSEXP, SEXP debugSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -119,7 +119,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type npoints(npointsSEXP);
     Rcpp::traits::input_parameter< bool >::type multiple_windows(multiple_windowsSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type mark_range(mark_rangeSEXP);
-    rcpp_result_gen = Rcpp::wrap(compute_A2_plus_A3_cpp(configuration, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, rho, theta, regressors, data_list, estimate_alpha, estimate_gamma, nthreads, npoints, multiple_windows, mark_range));
+    Rcpp::traits::input_parameter< bool >::type debug(debugSEXP);
+    rcpp_result_gen = Rcpp::wrap(compute_A2_plus_A3_cpp(configuration, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, rho, theta, regressors, data_list, estimate_alpha, estimate_gamma, nthreads, npoints, multiple_windows, mark_range, debug));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -315,7 +316,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ppjsdm_compute_vcov", (DL_FUNC) &_ppjsdm_compute_vcov, 22},
     {"_ppjsdm_compute_S_cpp", (DL_FUNC) &_ppjsdm_compute_S_cpp, 5},
     {"_ppjsdm_compute_A1_cpp", (DL_FUNC) &_ppjsdm_compute_A1_cpp, 5},
-    {"_ppjsdm_compute_A2_plus_A3_cpp", (DL_FUNC) &_ppjsdm_compute_A2_plus_A3_cpp, 19},
+    {"_ppjsdm_compute_A2_plus_A3_cpp", (DL_FUNC) &_ppjsdm_compute_A2_plus_A3_cpp, 20},
     {"_ppjsdm_compute_G2_cpp", (DL_FUNC) &_ppjsdm_compute_G2_cpp, 19},
     {"_ppjsdm_has_duplicates", (DL_FUNC) &_ppjsdm_has_duplicates, 1},
     {"_ppjsdm_make_default_model_parameters", (DL_FUNC) &_ppjsdm_make_default_model_parameters, 10},

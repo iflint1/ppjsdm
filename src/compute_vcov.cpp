@@ -1122,7 +1122,8 @@ Rcpp::NumericMatrix compute_A2_plus_A3_cpp(SEXP configuration,
                                            int nthreads,
                                            int npoints,
                                            bool multiple_windows,
-                                           Rcpp::NumericVector mark_range) {
+                                           Rcpp::NumericVector mark_range,
+                                           bool debug) {
   const auto number_parameters(ppjsdm::get_number_parameters(rho.size(), covariates.size(), estimate_alpha, estimate_gamma).total_parameters);
 
   // Convert the SEXP configuration to a C++ object.
@@ -1182,7 +1183,7 @@ Rcpp::NumericMatrix compute_A2_plus_A3_cpp(SEXP configuration,
                                               ppjsdm::Im_list_wrapper(covariates),
                                               initial_window_volume,
                                               restricted_window,
-                                              false);
+                                              debug);
       }
     }
     A2_plus_A3 /= (nx * ny);
@@ -1202,7 +1203,7 @@ Rcpp::NumericMatrix compute_A2_plus_A3_cpp(SEXP configuration,
                                          ppjsdm::Im_list_wrapper(covariates),
                                          initial_window_volume,
                                          cpp_window,
-                                         false);
+                                         debug);
   }
 
   return Rcpp::wrap(A2_plus_A3);
