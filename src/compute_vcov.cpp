@@ -1123,7 +1123,8 @@ Rcpp::NumericMatrix compute_A2_plus_A3_cpp(SEXP configuration,
                                            int npoints,
                                            bool multiple_windows,
                                            Rcpp::NumericVector mark_range,
-                                           bool debug) {
+                                           bool debug,
+                                           int max_executions) {
   const auto number_parameters(ppjsdm::get_number_parameters(rho.size(), covariates.size(), estimate_alpha, estimate_gamma).total_parameters);
 
   // Convert the SEXP configuration to a C++ object.
@@ -1161,32 +1162,39 @@ Rcpp::NumericMatrix compute_A2_plus_A3_cpp(SEXP configuration,
       ny = std::max<int>(1, static_cast<int>(std::ceil(std::sqrt(static_cast<double>(ppjsdm::size(vector_configuration)) / (r * static_cast<double>(npoints))))));
       nx = static_cast<int>(std::ceil(r * ny));
     }
-
+    int total_executions(0);
+    const auto random_rows(Rcpp::sample(nx, nx, false, R_NilValue, false));
+    const auto random_cols(Rcpp::sample(ny, ny, false, R_NilValue, false));
     for(int i(0); i < nx; ++i) {
       for(int j(0); j < ny; ++j) {
-        const ppjsdm::detail::Rectangle_window restricted_window(cpp_window.xmin() + static_cast<double>(i) * delta_x / static_cast<double>(nx),
-                                                                 cpp_window.xmin() + static_cast<double>(i + 1) * delta_x / static_cast<double>(nx),
-                                                                 cpp_window.ymin() + static_cast<double>(j) * delta_y / static_cast<double>(ny),
-                                                                 cpp_window.ymin() + static_cast<double>(j + 1) * delta_y / static_cast<double>(ny),
-                                                                 mark_range);
-        A2_plus_A3 += detail::make_A2_plus_A3(papangelou,
-                                              Rcpp::as<std::vector<double>>(rho),
-                                              Rcpp::as<std::vector<double>>(theta),
-                                              ppjsdm::Lightweight_matrix<double>(regressors),
-                                              data_list,
-                                              ppjsdm::Lightweight_square_matrix<bool>(estimate_alpha),
-                                              ppjsdm::Lightweight_square_matrix<bool>(estimate_gamma),
-                                              ppjsdm::Saturated_model<double>(model, short_range, saturation),
-                                              ppjsdm::Saturated_model<double>(medium_range_model, medium_range, long_range, saturation),
-                                              vector_configuration,
-                                              nthreads,
-                                              ppjsdm::Im_list_wrapper(covariates),
-                                              initial_window_volume,
-                                              restricted_window,
-                                              debug);
+        if(total_executions < max_executions) {
+          const auto random_row(random_rows[i]);
+          const auto random_col(random_cols[j]);
+          const ppjsdm::detail::Rectangle_window restricted_window(cpp_window.xmin() + static_cast<double>(random_row) * delta_x / static_cast<double>(nx),
+                                                                   cpp_window.xmin() + static_cast<double>(random_row + 1) * delta_x / static_cast<double>(nx),
+                                                                   cpp_window.ymin() + static_cast<double>(random_col) * delta_y / static_cast<double>(ny),
+                                                                   cpp_window.ymin() + static_cast<double>(random_col + 1) * delta_y / static_cast<double>(ny),
+                                                                   mark_range);
+          A2_plus_A3 += detail::make_A2_plus_A3(papangelou,
+                                                Rcpp::as<std::vector<double>>(rho),
+                                                Rcpp::as<std::vector<double>>(theta),
+                                                ppjsdm::Lightweight_matrix<double>(regressors),
+                                                data_list,
+                                                ppjsdm::Lightweight_square_matrix<bool>(estimate_alpha),
+                                                ppjsdm::Lightweight_square_matrix<bool>(estimate_gamma),
+                                                ppjsdm::Saturated_model<double>(model, short_range, saturation),
+                                                ppjsdm::Saturated_model<double>(medium_range_model, medium_range, long_range, saturation),
+                                                vector_configuration,
+                                                nthreads,
+                                                ppjsdm::Im_list_wrapper(covariates),
+                                                initial_window_volume,
+                                                restricted_window,
+                                                debug);
+          ++total_executions;
+        }
       }
     }
-    A2_plus_A3 /= (nx * ny);
+    A2_plus_A3 /= total_executions;
   } else {
     detail::restrict_window(cpp_window, vector_configuration, npoints, 0.05);
     A2_plus_A3 = detail::make_A2_plus_A3(papangelou,

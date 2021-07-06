@@ -17,8 +17,8 @@ compute_A1_cpp <- function(rho, theta, regressors, type, nthreads) {
     .Call(`_ppjsdm_compute_A1_cpp`, rho, theta, regressors, type, nthreads)
 }
 
-compute_A2_plus_A3_cpp <- function(configuration, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, rho, theta, regressors, data_list, estimate_alpha, estimate_gamma, nthreads, npoints, multiple_windows, mark_range, debug) {
-    .Call(`_ppjsdm_compute_A2_plus_A3_cpp`, configuration, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, rho, theta, regressors, data_list, estimate_alpha, estimate_gamma, nthreads, npoints, multiple_windows, mark_range, debug)
+compute_A2_plus_A3_cpp <- function(configuration, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, rho, theta, regressors, data_list, estimate_alpha, estimate_gamma, nthreads, npoints, multiple_windows, mark_range, debug, max_executions) {
+    .Call(`_ppjsdm_compute_A2_plus_A3_cpp`, configuration, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, rho, theta, regressors, data_list, estimate_alpha, estimate_gamma, nthreads, npoints, multiple_windows, mark_range, debug, max_executions)
 }
 
 compute_G2_cpp <- function(configuration, dummy, window, covariates, model, medium_range_model, short_range, medium_range, long_range, type, saturation, rho, theta, regressors, estimate_alpha, estimate_gamma, nthreads, dummy_distribution, mark_range) {

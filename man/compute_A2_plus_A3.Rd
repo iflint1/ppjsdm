@@ -12,7 +12,8 @@ compute_A2_plus_A3(
   nthreads,
   debug = FALSE,
   npoints = 1000,
-  multiple_windows = TRUE
+  multiple_windows = TRUE,
+  time_limit
 )
 }
 \arguments{
@@ -27,6 +28,8 @@ compute_A2_plus_A3(
 \item{npoints}{Target number of points in the restricted window that the vcov matrix is computed on. Computation is slower for larger values, but the vcov matrix is then better approximated.}
 
 \item{multiple_windows}{Compute A2 and A3 on a lot of small windows and which are then averaged out, or only on a single restricted window?}
+
+\item{time_limit}{Time limit in hours that can be spent running this function.}
 }
 \description{
 Calculate the matrix A_2 + A3 used to compute the Variance-Covariance Matrix for a Fitted Gibbs point process.
