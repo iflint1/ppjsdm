@@ -48,6 +48,8 @@ summary.gibbsm <- function(object, npoints = 1000, multiple_windows = TRUE, ...)
   one_ninetysix <- qnorm(0.975)
   lo <- coefficients - one_ninetysix * se
   hi <- coefficients + one_ninetysix * se
+  lo_numerical <- coefficients - one_ninetysix * se_numerical
+  hi_numerical <- coefficients + one_ninetysix * se_numerical
   zval <- coefficients / se
   pval <- 2 * pnorm(abs(zval), lower.tail = FALSE)
   psig <- cut(pval,
@@ -64,6 +66,43 @@ summary.gibbsm <- function(object, npoints = 1000, multiple_windows = TRUE, ...)
                                Pval = pval,
                                Zval = zval,
                                se_numerical_proportion = se_numerical_proportion)
+
+  y$se <- format_coefficient_vector(coefficient_vector = se,
+                                    number_types = nlevels(types(object$configuration_list[[1]])),
+                                    types_names = levels(types(object$configuration_list[[1]])),
+                                    covariates_names = names(object$parameters$covariates),
+                                    estimate_alpha = object$estimate_alpha,
+                                    estimate_gamma = object$estimate_gamma)
+  y$se_numerical <- format_coefficient_vector(coefficient_vector = se_numerical,
+                                              number_types = nlevels(types(object$configuration_list[[1]])),
+                                              types_names = levels(types(object$configuration_list[[1]])),
+                                              covariates_names = names(object$parameters$covariates),
+                                              estimate_alpha = object$estimate_alpha,
+                                              estimate_gamma = object$estimate_gamma)
+  y$lo <- format_coefficient_vector(coefficient_vector = lo,
+                                    number_types = nlevels(types(object$configuration_list[[1]])),
+                                    types_names = levels(types(object$configuration_list[[1]])),
+                                    covariates_names = names(object$parameters$covariates),
+                                    estimate_alpha = object$estimate_alpha,
+                                    estimate_gamma = object$estimate_gamma)
+  y$hi <- format_coefficient_vector(coefficient_vector = hi,
+                                    number_types = nlevels(types(object$configuration_list[[1]])),
+                                    types_names = levels(types(object$configuration_list[[1]])),
+                                    covariates_names = names(object$parameters$covariates),
+                                    estimate_alpha = object$estimate_alpha,
+                                    estimate_gamma = object$estimate_gamma)
+  y$lo_numerical <- format_coefficient_vector(coefficient_vector = lo_numerical,
+                                              number_types = nlevels(types(object$configuration_list[[1]])),
+                                              types_names = levels(types(object$configuration_list[[1]])),
+                                              covariates_names = names(object$parameters$covariates),
+                                              estimate_alpha = object$estimate_alpha,
+                                              estimate_gamma = object$estimate_gamma)
+  y$hi_numerical <- format_coefficient_vector(coefficient_vector = hi_numerical,
+                                              number_types = nlevels(types(object$configuration_list[[1]])),
+                                              types_names = levels(types(object$configuration_list[[1]])),
+                                              covariates_names = names(object$parameters$covariates),
+                                              estimate_alpha = object$estimate_alpha,
+                                              estimate_gamma = object$estimate_gamma)
   y
 }
 
