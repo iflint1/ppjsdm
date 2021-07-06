@@ -346,60 +346,14 @@ fit_gibbs <- function(gibbsm_data,
     stop("Supplied fitting package not recognized.")
   }
 
-  # Construct coefficients in matrix form
-  beta0 <- vector(mode = "numeric", length = number_types)
-  alpha <- matrix(0, number_types, number_types)
-  gamma <- matrix(0, number_types, number_types)
-
-  # Environmental covariates in vector form
-  beta_vector <- coef[!(startsWith(names(coef), "beta0") | startsWith(names(coef), "alpha") | startsWith(names(coef), "gamma") | ("(Intercept)" == names(coef)))]
-
-  # Environmental covariates matrix
-  beta <- matrix(NA, nrow = number_types, ncol = length(beta_vector) / number_types)
-
-  # Fill all the coefficients
-  for(i in seq_len(number_types)) {
-    beta0[i] <- coef[match(paste0("beta0_", i), names(coef))]
-    if(length(beta_vector) != 0) {
-      beta[i, ] <- beta_vector[endsWith(names(beta_vector), paste0("_", i))]
-    }
-    if(estimate_alpha[i, i]) {
-      alpha[i, i] <- coef[match(paste0("alpha_", i, "_", i), names(coef))]
-    }
-    if(estimate_gamma[i, i]) {
-      gamma[i, i] <- coef[match(paste0("gamma_", i, "_", i), names(coef))]
-    }
-    if(i < number_types) {
-      for(j in (i + 1):number_types) {
-        if(estimate_alpha[i, j]) {
-          alpha[i, j] <- alpha[j, i] <- coef[match(paste0("alpha_", i, "_", j), names(coef))]
-        }
-        if(estimate_gamma[i, j]) {
-          gamma[i, j] <- gamma[j, i] <- coef[match(paste0("gamma_", i, "_", j), names(coef))]
-        }
-      }
-    }
-  }
-
-  # Fill names
-  if(!missing(types_names)) {
-    names(beta0) <- types_names
-    rownames(beta) <- types_names
-    rownames(alpha) <- types_names
-    colnames(alpha) <- types_names
-    rownames(gamma) <- types_names
-    colnames(gamma) <- types_names
-  }
-  if(!missing(covariates_names)) {
-    colnames(beta) <- covariates_names
-  }
-
   # Clean up
   list(fit = fit,
-       coefficients = list(beta0 = beta0,
-                           alpha = alpha,
-                           gamma = gamma,
-                           beta = beta),
+       coefficients = format_coefficient_vector(coefficient_vector = coef,
+                                                number_types = number_types,
+                                                types_names = types_names,
+                                                covariates_names = covariates_names,
+                                                estimate_alpha = estimate_alpha,
+                                                estimate_gamma = estimate_gamma),
        coefficients_vector = coef,
        aic = aic,
        bic = bic,
