@@ -76,32 +76,6 @@ compute_A2_plus_A3 <- function(..., list, nthreads, debug = FALSE, npoints = 100
                                          max_executions = 1e5)
   } else {
     start <- Sys.time()
-    compute_A2_plus_A3_cpp(configuration = fits[[1]]$configuration_list[[1]],
-                           window = fits[[1]]$window,
-                           covariates = fits[[1]]$parameters$covariates,
-                           model = fits[[1]]$parameters$model,
-                           medium_range_model = fits[[1]]$parameters$medium_range_model,
-                           short_range = fits[[1]]$coefficients$short_range,
-                           medium_range = fits[[1]]$coefficients$medium_range,
-                           long_range = fits[[1]]$coefficients$long_range,
-                           saturation = fits[[1]]$parameters$saturation,
-                           rho = exp(-fits[[1]]$data_list$shift),
-                           theta = theta,
-                           regressors = regressors,
-                           data_list = fits[[1]]$data_list,
-                           estimate_alpha = fits[[1]]$estimate_alpha,
-                           estimate_gamma = fits[[1]]$estimate_gamma,
-                           nthreads = nthreads,
-                           npoints = npoints,
-                           multiple_windows = multiple_windows,
-                           mark_range = fits[[1]]$mark_range,
-                           debug = debug,
-                           max_executions = 1)
-    single_execution_time <- as.numeric(Sys.time() - start, unit = "hours")
-    max_executions <- max(0, floor(time_limit / single_execution_time - 1.))
-    if(debug) {
-      cat(paste0("Going to divide the window into a maximum of ", max_executions, " subregions to approximate A2 + A3.\n"))
-    }
     A2_plus_A3 <- compute_A2_plus_A3_cpp(configuration = fits[[1]]$configuration_list[[1]],
                                          window = fits[[1]]$window,
                                          covariates = fits[[1]]$parameters$covariates,
@@ -122,7 +96,35 @@ compute_A2_plus_A3 <- function(..., list, nthreads, debug = FALSE, npoints = 100
                                          multiple_windows = multiple_windows,
                                          mark_range = fits[[1]]$mark_range,
                                          debug = debug,
-                                         max_executions = max_executions)
+                                         max_executions = 1)
+    single_execution_time <- as.numeric(Sys.time() - start, unit = "hours")
+    max_executions <- max(0, floor(time_limit / single_execution_time - 1.))
+    if(debug) {
+      cat(paste0("Going to divide the window into a maximum of ", max_executions, " subregions to approximate A2 + A3.\n"))
+    }
+    if(multiple_windows & max_executions > 1) {
+      A2_plus_A3 <- compute_A2_plus_A3_cpp(configuration = fits[[1]]$configuration_list[[1]],
+                                           window = fits[[1]]$window,
+                                           covariates = fits[[1]]$parameters$covariates,
+                                           model = fits[[1]]$parameters$model,
+                                           medium_range_model = fits[[1]]$parameters$medium_range_model,
+                                           short_range = fits[[1]]$coefficients$short_range,
+                                           medium_range = fits[[1]]$coefficients$medium_range,
+                                           long_range = fits[[1]]$coefficients$long_range,
+                                           saturation = fits[[1]]$parameters$saturation,
+                                           rho = exp(-fits[[1]]$data_list$shift),
+                                           theta = theta,
+                                           regressors = regressors,
+                                           data_list = fits[[1]]$data_list,
+                                           estimate_alpha = fits[[1]]$estimate_alpha,
+                                           estimate_gamma = fits[[1]]$estimate_gamma,
+                                           nthreads = nthreads,
+                                           npoints = npoints,
+                                           multiple_windows = multiple_windows,
+                                           mark_range = fits[[1]]$mark_range,
+                                           debug = debug,
+                                           max_executions = max_executions)
+    }
   }
   if(debug) {
     cat("End of computation. ")
