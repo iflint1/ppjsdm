@@ -518,22 +518,27 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
   // for indices i that correspond to points in the restricted configuration. Precompute this here.
   std::vector<std::vector<computation_t>> regressors_over_papangelou_plus_rho(ppjsdm::size(restricted_configuration));
   std::vector<computation_t> restricted_papangelou(ppjsdm::size(restricted_configuration));
-  for(size_t i = 0; i < ppjsdm::size(restricted_configuration); ++i) {
+  for(size_t i(0); i < ppjsdm::size(restricted_configuration); ++i) {
     regressors_over_papangelou_plus_rho[i] = typename decltype(regressors_over_papangelou_plus_rho)::value_type(number_parameters);
 
-    typename decltype(x)::size_type index{};
-    for(typename decltype(x)::size_type l(0); l < x.size(); ++l) {
+    using x_size_t = typename decltype(x)::size_type;
+    x_size_t index(-1);
+    for(x_size_t l(0); l < x.size(); ++l) {
       if(ppjsdm::is_equal(restricted_configuration[i], ppjsdm::Marked_point(x[l], y[l], type[l] - 1, mark[l]))) {
         index = l;
         break;
       }
     }
-    const auto pap = static_cast<computation_t>(papangelou[index]);
+    if(index == static_cast<x_size_t>(-1)) {
+      Rcpp::Rcout << index << '\n';
+      Rcpp::stop("Did not find an element of the restricted configuration in the complete configuration.");
+    }
+
     const auto r = static_cast<computation_t>(rho[ppjsdm::get_type(restricted_configuration[i])]);
-    restricted_papangelou[i] = pap;
+    restricted_papangelou[i] = static_cast<computation_t>(papangelou[index]);
     for(size_t k1(0); k1 < number_parameters; ++k1) {
       const auto reg = static_cast<computation_t>(regressors(index, k1));
-      regressors_over_papangelou_plus_rho[i][k1] = reg / (pap + r);
+      regressors_over_papangelou_plus_rho[i][k1] = reg / (restricted_papangelou[i] + r);
     }
   }
 
@@ -570,7 +575,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
     shared(filling, regressors, compute_some_alphas, compute_some_gammas)           \
       shared(short_computation, medium_computation, estimate_alpha, estimate_gamma) \
       shared(covariates, theta, papangelou, rho, mat, restricted_papangelou, regressors_over_papangelou_plus_rho)
-      {
+{
         decltype(mat) mat_private(number_parameters);
 #pragma omp for nowait
         for(long long int index_in_computation = filling; index_in_computation < max_index; ++index_in_computation) {
@@ -640,15 +645,11 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
 
           const auto x1 = papangelou_i / restricted_papangelou[i] - static_cast<computation_t>(1.);
           const auto x2 = papangelou_i_plus_rho * papangelou_j_plus_rho;
-          const auto x3 = papangelou_j / restricted_papangelou[j] - static_cast<computation_t>(1.);
-          const auto constant_1 = x1 / x2;
-          const auto constant_2 = x3 / x2;
+          const auto constant = x1 / x2;
           for(size_t k1(0); k1 < number_parameters; ++k1) {
             for(size_t k2(k1); k2 < number_parameters; ++k2) {
-              mat_private(k1, k2) += t_i[k1] * t_j[k2] * constant_1;
-              mat_private(k1, k2) += t_j[k1] * t_i[k2] * constant_2;
-              mat_private(k1, k2) += delta_i[k1] * delta_j[k2];
-              mat_private(k1, k2) += delta_j[k1] * delta_i[k2];
+              mat_private(k1, k2) += (t_i[k1] * t_j[k2] + t_j[k1] * t_i[k2]) * constant;
+              mat_private(k1, k2) += delta_i[k1] * delta_j[k2] + delta_j[k1] * delta_i[k2];
             }
           }
         }
@@ -658,7 +659,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
             mat(k1, k2) += mat_private(k1, k2);
           }
         }
-      }
+}
     if(debug) {
       Rcpp::Rcout << "Finished filling matrix. Elapsed time: " << timer.elapsed_time();
       timer.set_current();

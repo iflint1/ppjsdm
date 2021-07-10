@@ -55,6 +55,7 @@ context("Dispersion") {
         for(int medium_range_index(0); medium_range_index < nmedium; ++medium_range_index) {
           Configuration configuration(i);
           Configuration other_configuration(i);
+          Configuration configuration_subset(i / 2);
           for(int j(0); j < i; ++j) {
             configuration[j] = ppjsdm::Marked_point(detail::runif(state),
                                                     detail::runif(state),
@@ -64,6 +65,9 @@ context("Dispersion") {
                                                           detail::runif(state),
                                                           detail::discrete(state) % ntypes,
                                                           1.0);
+          }
+          for(decltype(configuration_subset.size()) j(0); j < configuration_subset.size(); ++j) {
+            configuration_subset[j] = configuration[j];
           }
           Rcpp::NumericMatrix medium_range(ntypes, ntypes);
           Rcpp::NumericMatrix long_range(ntypes, ntypes);
@@ -118,6 +122,32 @@ context("Dispersion") {
                                                                                ntypes,
                                                                                configuration_minus)[type]);
                 expect_true(exp(dispersion2) == Approx(exp(vcov_dispersion.second[ppjsdm::encode_linear(k1, k2, configuration.size())][type])));
+              }
+            }
+
+            const auto other_vcov_dispersion(ppjsdm::compute_dispersion_for_vcov(model,
+                                                                                 ntypes,
+                                                                                 configuration,
+                                                                                 configuration_subset,
+                                                                                 0,
+                                                                                 ppjsdm::size(configuration_subset) * (ppjsdm::size(configuration_subset) - 1) / 2));
+
+            for(Configuration::size_type k1(0); k1 < configuration_subset.size(); ++k1) {
+              for(Configuration::size_type k2(k1 + 1); k2 < configuration_subset.size(); ++k2) {
+                Configuration configuration_minus(configuration);
+                ppjsdm::remove_point(configuration_minus, configuration[k1]);
+                ppjsdm::remove_point(configuration_minus, configuration[k2]);
+                const auto dispersion1(ppjsdm::compute_dispersion(model,
+                                                                  configuration[k1],
+                                                                               ntypes,
+                                                                               configuration_minus)[type]);
+                expect_true(exp(dispersion1) == Approx(exp(other_vcov_dispersion.first[ppjsdm::encode_linear(k1, k2, configuration_subset.size())][type])));
+
+                const auto dispersion2(ppjsdm::compute_dispersion(model,
+                                                                  configuration[k2],
+                                                                               ntypes,
+                                                                               configuration_minus)[type]);
+                expect_true(exp(dispersion2) == Approx(exp(other_vcov_dispersion.second[ppjsdm::encode_linear(k1, k2, configuration_subset.size())][type])));
               }
             }
           }

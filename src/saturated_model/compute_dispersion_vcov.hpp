@@ -96,7 +96,7 @@ struct generic_vcov_dispersion_computation {
       }
 
       std::vector<DispersionType> sum_deltas;
-      if(number_types > 1) {
+      if(number_types > 1) { // If condition not satisfied, sum_deltas is never used
         sum_deltas = std::vector<DispersionType>(configuration_size);
         for(size_t i(0); i < configuration_size; ++i) {
           sum_deltas[i] = DispersionType(number_types);
@@ -111,7 +111,7 @@ struct generic_vcov_dispersion_computation {
       std::vector<DispersionType> dispersion_i(max_index - min_index);
       std::vector<DispersionType> dispersion_j(dispersion_i.size());
 
-#pragma omp parallel default(none) shared(restricted_configuration) \
+#pragma omp parallel default(none) shared(restricted_configuration, configuration) \
       shared(min_index, max_index, count_vector, dispersion_i, dispersion_j) \
       shared(number_types, index_in_configuration, varphi, sum_deltas)
 {
@@ -127,10 +127,11 @@ struct generic_vcov_dispersion_computation {
         if(get_type(restricted_configuration[i]) == get_type(restricted_configuration[j])) {
           dispersion_i_private[index - min_index] = DispersionType(number_types);
           dispersion_j_private[index - min_index] = DispersionType(number_types);
-          for(size_t l(0); l < restricted_configuration_size; ++l) {
-            if(l != i && l != j) {
-              dispersion_i_private[index - min_index][get_type(restricted_configuration[l])] += AbstractDispersion::template delta_discarding<2, true>(varphi, count_vector[index_in_configuration[l]][get_type(restricted_configuration[i])], restricted_configuration[l], restricted_configuration[i], restricted_configuration[j]);
-              dispersion_j_private[index - min_index][get_type(restricted_configuration[l])] += AbstractDispersion::template delta_discarding<2, true>(varphi, count_vector[index_in_configuration[l]][get_type(restricted_configuration[j])], restricted_configuration[l], restricted_configuration[j], restricted_configuration[i]);
+          for(size_t l(0); l < configuration_size; ++l) {
+            // TODO: Might be faster than the code below, first fix of a long-standing bug
+            if(!is_equal(configuration[l], restricted_configuration[i]) && !is_equal(configuration[l], restricted_configuration[j])) {
+              dispersion_i_private[index - min_index][get_type(configuration[l])] += AbstractDispersion::template delta_discarding<2, true>(varphi, count_vector[l][get_type(restricted_configuration[i])], configuration[l], restricted_configuration[i], restricted_configuration[j]);
+              dispersion_j_private[index - min_index][get_type(configuration[l])] += AbstractDispersion::template delta_discarding<2, true>(varphi, count_vector[l][get_type(restricted_configuration[j])], configuration[l], restricted_configuration[j], restricted_configuration[i]);
             }
           }
         } else {
