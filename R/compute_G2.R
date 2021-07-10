@@ -6,8 +6,9 @@
 #' @param list List of fits.
 #' @param nthreads (optional) number of threads to use.
 #' @param debug Display debug information?
+#' @param time_limit Time limit in hours that can be spent running this function.
 #' @export
-compute_G2 <- function(..., list, nthreads, debug = FALSE) {
+compute_G2 <- function(..., list, nthreads, debug = FALSE, time_limit) {
   if(missing(list)) {
     fits <- base::list(...)
   } else {
@@ -19,7 +20,7 @@ compute_G2 <- function(..., list, nthreads, debug = FALSE) {
   if(missing(nthreads)) {
     nthreads <- NULL
   }
-  G2 <- lapply(fits, function(fit) {
+  compute_G2_on_fit <- function(fit) {
     if(is.null(nthreads)) {
       nt <- fit$nthreads
     } else {
@@ -79,9 +80,21 @@ compute_G2 <- function(..., list, nthreads, debug = FALSE) {
       print(Sys.time() - tm)
     }
     G2
-  })
+  }
 
-  G2 <- Reduce("+", G2) / length(G2) / length(G2)
+  if(missing(time_limit)) {
+    G2 <- lapply(fits, compute_G2_on_fit)
+  } else {
+    start <- Sys.time()
+    G2 <- lapply(fits[1], compute_G2_on_fit)
+    single_execution_time <- as.numeric(Sys.time() - start, unit = "hours")
+    max_executions <- max(0, floor(time_limit / single_execution_time - 1.))
+    if(length(fits) > 1 & max_executions > 0) {
+      G2 <- append(G2, lapply(fits[2:min(length(fits), max_executions + 1)], compute_G2_on_fit))
+    }
+  }
+
+  G2 <- Reduce("+", G2) / length(G2) / length(fits)
 
   rownames(G2) <- names(theta)
   colnames(G2) <- names(theta)

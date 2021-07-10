@@ -6,8 +6,9 @@
 #' @param list List of fits.
 #' @param nthreads (optional) number of threads to use.
 #' @param debug Display debug information?
+#' @param time_limit Time limit in hours that can be spent running this function.
 #' @export
-compute_A1 <- function(..., list, nthreads, debug = FALSE) {
+compute_A1 <- function(..., list, nthreads, debug = FALSE, time_limit) {
   if(missing(list)) {
     fits <- base::list(...)
   } else {
@@ -19,7 +20,7 @@ compute_A1 <- function(..., list, nthreads, debug = FALSE) {
   if(missing(nthreads)) {
     nthreads <- NULL
   }
-  A1 <- lapply(fits, function(fit) {
+  compute_A1_on_fit <- function(fit) {
     if(is.null(nthreads)) {
       nt <- fit$nthreads
     } else {
@@ -65,7 +66,19 @@ compute_A1 <- function(..., list, nthreads, debug = FALSE) {
       print(Sys.time() - tm)
     }
     A1
-  })
+  }
+
+  if(missing(time_limit)) {
+    A1 <- lapply(fits, compute_A1_on_fit)
+  } else {
+    start <- Sys.time()
+    A1 <- lapply(fits[1], compute_A1_on_fit)
+    single_execution_time <- as.numeric(Sys.time() - start, unit = "hours")
+    max_executions <- max(0, floor(time_limit / single_execution_time - 1.))
+    if(length(fits) > 1 & max_executions > 0) {
+      A1 <- append(A1, lapply(fits[2:min(length(fits), max_executions + 1)], compute_A1_on_fit))
+    }
+  }
 
   A1 <- Reduce("+", A1) / length(A1)
 
