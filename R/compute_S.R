@@ -71,13 +71,28 @@ compute_S <- function(..., list, nthreads, debug = FALSE, time_limit) {
   if(missing(time_limit)) {
     S <- lapply(fits, compute_S_on_fit)
   } else {
-    start <- Sys.time()
-    S <- lapply(fits[1], compute_S_on_fit)
-    single_execution_time <- as.numeric(Sys.time() - start, unit = "hours")
-    max_executions <- max(0, floor(time_limit / single_execution_time - 1.))
-    if(length(fits) > 1 & max_executions > 0) {
-      S <- append(S, lapply(fits[2:min(length(fits), max_executions + 1)], compute_S_on_fit))
+    S <- vector(mode = 'list', length = length(fits))
+    execution_times <- c()
+    time_left <- time_limit
+    for(i in seq_len(length(fits))) {
+      if(length(execution_times) > 0) {
+        if(length(execution_times) > 1) {
+          max_time <- mean(execution_times) + 4 * sd(execution_times)
+        } else {
+          max_time <- 2 * mean(execution_times)
+        }
+      } else {
+        max_time <- 0
+      }
+      if(max_time < time_left) {
+        start <- Sys.time()
+        S[[i]] <- compute_S_on_fit(fits[[i]])
+        execution_time <- as.numeric(Sys.time() - start, unit = "hours")
+        execution_times <- c(execution_times, execution_time)
+        time_left <- time_left - execution_time
+      }
     }
+    S <- S[sapply(S, function(s) !is.null(s))]
   }
 
   S <- Reduce("+", S) / length(S)
