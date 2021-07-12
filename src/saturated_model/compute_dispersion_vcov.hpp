@@ -128,8 +128,7 @@ struct generic_vcov_dispersion_computation {
           dispersion_i_private[index - min_index] = DispersionType(number_types);
           dispersion_j_private[index - min_index] = DispersionType(number_types);
           for(size_t l(0); l < configuration_size; ++l) {
-            // TODO: Might be faster than the code below, first fix of a long-standing bug
-            if(!is_equal(configuration[l], restricted_configuration[i]) && !is_equal(configuration[l], restricted_configuration[j])) {
+            if(l != index_in_configuration[i] && l != index_in_configuration[j]) {
               dispersion_i_private[index - min_index][get_type(configuration[l])] += AbstractDispersion::template delta_discarding<2, true>(varphi, count_vector[l][get_type(restricted_configuration[i])], configuration[l], restricted_configuration[i], restricted_configuration[j]);
               dispersion_j_private[index - min_index][get_type(configuration[l])] += AbstractDispersion::template delta_discarding<2, true>(varphi, count_vector[l][get_type(restricted_configuration[j])], configuration[l], restricted_configuration[j], restricted_configuration[i]);
             }
