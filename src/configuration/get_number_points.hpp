@@ -4,6 +4,7 @@
 #include "../configuration/configuration_manipulation.hpp"
 #include "../point/point_manipulation.hpp"
 
+#include <algorithm> // std::max, std::max_element
 #include <vector> // std::vector
 
 namespace ppjsdm {
@@ -35,8 +36,24 @@ inline auto get_number_points(const Configuration& configuration) {
 }
 
 template<typename Configuration>
+inline auto get_number_points_in_most_numerous_type(const Configuration& configuration) {
+  const auto points_by_type(get_number_points(configuration));
+  if(!points_by_type.empty()) {
+    const auto max(*std::max_element(points_by_type.begin(), points_by_type.end()));
+    return max;
+  } else {
+    return static_cast<typename decltype(points_by_type)::value_type>(0);
+  }
+}
+
+template<typename Configuration, typename... Configurations>
+inline auto get_number_points_in_most_numerous_type(const Configuration& configuration, Configurations&... configurations) {
+  return std::max(get_number_points_in_most_numerous_type(configuration), get_number_points_in_most_numerous_type(configurations...));
+}
+
+template<typename Configuration>
 inline auto get_number_types(const Configuration& configuration) {
-  int max_type(-1);
+  decltype(get_type(*configuration.begin())) max_type(-1);
   for(const auto& point: configuration) {
     const auto type(get_type(point));
     if(type > max_type) {

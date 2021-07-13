@@ -5,6 +5,7 @@
 
 #include "compute_dispersion_implementation.hpp"
 #include "saturated_model.hpp"
+#include "../configuration/get_number_points.hpp"
 #include "../utility/flatten_strict_upper_triangular.hpp"
 
 #include <tuple> // std::pair
@@ -56,8 +57,10 @@ struct generic_vcov_dispersion_computation {
       }
     }
 
-    // TODO: In fact, we can also run this case when saturation >= max(size_by_type)
-    if(static_cast<decltype(size(configuration))>(varphi.get_saturation()) >= configuration_size) {
+    // If the saturation parameter is sufficiently large, we are guaranteed to never saturate.
+    // In that case, a more efficient algorithm is available.
+    const auto max_points_by_type(get_number_points_in_most_numerous_type(configuration));
+    if(static_cast<decltype(max_points_by_type)>(varphi.get_saturation()) >= max_points_by_type + 1) {
       for(size_t i(0); i < configuration_size; ++i) {
         count_vector[i] = CountType(number_types);
         for(size_t j(0); j < i; ++j) {
