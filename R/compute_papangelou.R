@@ -18,6 +18,7 @@
 #' @param saturation Saturation parameter.
 #' @importFrom stats na.omit
 #' @param mark Mark of the point to add.
+#' @param nthreads Maximum number of threads for parallel computing.
 #' @export
 compute_papangelou <- function(configuration,
                                x,
@@ -34,7 +35,8 @@ compute_papangelou <- function(configuration,
                                short_range,
                                medium_range,
                                long_range,
-                               saturation) {
+                               saturation,
+                               nthreads = 4) {
   parameters <- model_parameters(alpha = alpha,
                                  gamma = gamma,
                                  beta0 = beta0,
@@ -46,6 +48,22 @@ compute_papangelou <- function(configuration,
                                  saturation = saturation,
                                  model = model,
                                  medium_range_model = medium_range_model)
+
+  if(length(type) != length(x)) {
+    if(length(type) == 1) {
+      type <- rep(type, length(x))
+    } else {
+      stop("Unknown format for type.")
+    }
+  }
+
+  if(length(mark) != length(x)) {
+    if(length(mark) == 1) {
+      mark <- rep(mark, length(x))
+    } else {
+      stop("Unknown format for mark")
+    }
+  }
 
   compute_papangelou_cpp(x = x,
                          y = y,
@@ -62,5 +80,6 @@ compute_papangelou <- function(configuration,
                          short_range = parameters$short_range,
                          medium_range = parameters$medium_range,
                          long_range = parameters$long_range,
-                         saturation = parameters$saturation)
+                         saturation = parameters$saturation,
+                         nthreads = nthreads)
 }

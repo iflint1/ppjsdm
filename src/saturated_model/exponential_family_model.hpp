@@ -76,8 +76,8 @@ public:
 
   // TODO: Code quality is awful for this, make a unique compute_papangelou function, same for compute_total_dispersion
   template<typename Points, typename Configuration>
-  auto compute_papangelou_vectorized(const Points& points, const Configuration& configuration) const {
-    auto dispersion(compute_total_dispersion_vectorized(points, configuration));
+  auto compute_papangelou_vectorized(const Points& points, const Configuration& configuration, int nthreads) const {
+    auto dispersion(compute_total_dispersion_vectorized(points, configuration, nthreads));
     for(typename decltype(dispersion)::size_type i(0); i < dispersion.size(); ++i) {
       dispersion[i] += beta0_[get_type(points[i])];
       dispersion[i] += detail::compute_beta_dot_covariates(points[i], beta_, covariates_);
@@ -123,7 +123,7 @@ protected:
   }
 
   template<typename Points, typename Configuration>
-  auto compute_total_dispersion_vectorized(const Points& points, const Configuration& configuration) const {
+  auto compute_total_dispersion_vectorized(const Points& points, const Configuration& configuration, int nthreads) const {
     // Are any of the alpha/gamma rows non-zero?
     bool is_any_alpha_nonzero(false);
     bool is_any_gamma_nonzero(false);
@@ -145,10 +145,10 @@ protected:
     using dispersion_t = decltype(compute_dispersion_for_fitting<true>(dispersion_, number_types, 1, configuration, points));
     dispersion_t short_range_dispersion, medium_range_dispersion;
     if(is_any_alpha_nonzero) {
-      short_range_dispersion = compute_dispersion_for_fitting<true>(dispersion_, number_types, 1, configuration, points);
+      short_range_dispersion = compute_dispersion_for_fitting<true>(dispersion_, number_types, nthreads, configuration, points);
     }
     if(is_any_gamma_nonzero) {
-      medium_range_dispersion = compute_dispersion_for_fitting<true>(medium_range_dispersion_, number_types, 1, configuration, points);
+      medium_range_dispersion = compute_dispersion_for_fitting<true>(medium_range_dispersion_, number_types, nthreads, configuration, points);
     }
 
     // Fill in the returned vector

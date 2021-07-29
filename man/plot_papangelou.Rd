@@ -22,7 +22,8 @@ plot_papangelou(
   types,
   saturation,
   grid_steps = 1000,
-  steps = 0
+  steps = 0,
+  nthreads = 4
 )
 }
 \arguments{
@@ -61,6 +62,8 @@ plot_papangelou(
 \item{grid_steps}{Number of horizontal and vertical grid steps.}
 
 \item{steps}{Nunber of steps in the Metropolis-Hastings simulation algorithm.}
+
+\item{nthreads}{Maximum number of threads for parallel computing.}
 }
 \description{
 Plot the Papangelou conditional intensity.

@@ -18,6 +18,7 @@
 #' @param grid_steps Number of horizontal and vertical grid steps.
 #' @param mark Mark of the point.
 #' @param steps Nunber of steps in the Metropolis-Hastings simulation algorithm.
+#' @param nthreads Maximum number of threads for parallel computing.
 #' @importFrom spatstat.geom as.im as.owin as.ppp
 #' @importFrom stats na.omit
 #' @importFrom graphics plot
@@ -39,7 +40,8 @@ plot_papangelou <- function(window,
                             types,
                             saturation,
                             grid_steps = 1000,
-                            steps = 0) {
+                            steps = 0,
+                            nthreads = 4) {
 
   parameters <- model_parameters(window = window,
                                  alpha = alpha,
@@ -93,7 +95,8 @@ plot_papangelou <- function(window,
                            short_range = parameters$short_range,
                            medium_range = parameters$medium_range,
                            long_range = parameters$long_range,
-                           saturation = parameters$saturation)
+                           saturation = parameters$saturation,
+                           nthreads = nthreads)
   })
   plot(as.im(t(z), W = window), main = "Papangelou conditional intensity")
   plot(as.ppp(configuration, window), add = TRUE, cols = 'white')

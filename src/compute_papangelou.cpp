@@ -24,7 +24,8 @@ Rcpp::NumericVector compute_papangelou_cpp(SEXP configuration,
                                            Rcpp::NumericMatrix long_range,
                                            R_xlen_t saturation,
                                            Rcpp::IntegerVector type,
-                                           Rcpp::NumericVector mark) {
+                                           Rcpp::NumericVector mark,
+                                           int nthreads) {
   const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
   std::vector<ppjsdm::Marked_point> points(x.size());
   for(typename decltype(points)::size_type i(0); i < points.size(); ++i) {
@@ -32,5 +33,5 @@ Rcpp::NumericVector compute_papangelou_cpp(SEXP configuration,
   }
 
   const ppjsdm::Truncated_exponential_family_model<Rcpp::NumericVector> exponential_model(beta0, model, medium_range_model, alpha, beta, gamma, covariates, short_range, medium_range, long_range, saturation);
-  return Rcpp::wrap(exponential_model.compute_papangelou_vectorized(points, wrapped_configuration));
+  return Rcpp::wrap(exponential_model.compute_papangelou_vectorized(points, wrapped_configuration, nthreads));
 }

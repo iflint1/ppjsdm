@@ -20,7 +20,8 @@ compute_papangelou(
   short_range,
   medium_range,
   long_range,
-  saturation
+  saturation,
+  nthreads = 4
 )
 }
 \arguments{
@@ -55,6 +56,8 @@ compute_papangelou(
 \item{long_range}{Long range interaction radii.}
 
 \item{saturation}{Saturation parameter.}
+
+\item{nthreads}{Maximum number of threads for parallel computing.}
 }
 \description{
 Compute Papangelou conditional intensity of the model.

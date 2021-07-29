@@ -7,8 +7,8 @@
 using namespace Rcpp;
 
 // compute_papangelou_cpp
-Rcpp::NumericVector compute_papangelou_cpp(SEXP configuration, Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::NumericMatrix alpha, Rcpp::NumericVector beta0, Rcpp::NumericMatrix beta, Rcpp::NumericMatrix gamma, Rcpp::List covariates, Rcpp::NumericMatrix short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, Rcpp::IntegerVector type, Rcpp::NumericVector mark);
-RcppExport SEXP _ppjsdm_compute_papangelou_cpp(SEXP configurationSEXP, SEXP xSEXP, SEXP ySEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP alphaSEXP, SEXP beta0SEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP covariatesSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP typeSEXP, SEXP markSEXP) {
+Rcpp::NumericVector compute_papangelou_cpp(SEXP configuration, Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::NumericMatrix alpha, Rcpp::NumericVector beta0, Rcpp::NumericMatrix beta, Rcpp::NumericMatrix gamma, Rcpp::List covariates, Rcpp::NumericMatrix short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, Rcpp::IntegerVector type, Rcpp::NumericVector mark, int nthreads);
+RcppExport SEXP _ppjsdm_compute_papangelou_cpp(SEXP configurationSEXP, SEXP xSEXP, SEXP ySEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP alphaSEXP, SEXP beta0SEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP covariatesSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP typeSEXP, SEXP markSEXP, SEXP nthreadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -28,7 +28,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< R_xlen_t >::type saturation(saturationSEXP);
     Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type type(typeSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type mark(markSEXP);
-    rcpp_result_gen = Rcpp::wrap(compute_papangelou_cpp(configuration, x, y, model, medium_range_model, alpha, beta0, beta, gamma, covariates, short_range, medium_range, long_range, saturation, type, mark));
+    Rcpp::traits::input_parameter< int >::type nthreads(nthreadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(compute_papangelou_cpp(configuration, x, y, model, medium_range_model, alpha, beta0, beta, gamma, covariates, short_range, medium_range, long_range, saturation, type, mark, nthreads));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -313,7 +314,7 @@ END_RCPP
 RcppExport SEXP run_testthat_tests(SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_ppjsdm_compute_papangelou_cpp", (DL_FUNC) &_ppjsdm_compute_papangelou_cpp, 16},
+    {"_ppjsdm_compute_papangelou_cpp", (DL_FUNC) &_ppjsdm_compute_papangelou_cpp, 17},
     {"_ppjsdm_compute_vcov", (DL_FUNC) &_ppjsdm_compute_vcov, 22},
     {"_ppjsdm_compute_S_cpp", (DL_FUNC) &_ppjsdm_compute_S_cpp, 5},
     {"_ppjsdm_compute_A1_cpp", (DL_FUNC) &_ppjsdm_compute_A1_cpp, 5},
