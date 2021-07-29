@@ -23,12 +23,12 @@ Rcpp::NumericVector compute_papangelou_cpp(SEXP configuration,
                                            Rcpp::NumericMatrix medium_range,
                                            Rcpp::NumericMatrix long_range,
                                            R_xlen_t saturation,
-                                           R_xlen_t type = 1,
-                                           double mark = 1.0) {
+                                           Rcpp::IntegerVector type,
+                                           Rcpp::NumericVector mark) {
   const ppjsdm::Configuration_wrapper wrapped_configuration(configuration);
   std::vector<ppjsdm::Marked_point> points(x.size());
   for(typename decltype(points)::size_type i(0); i < points.size(); ++i) {
-    points[i] = ppjsdm::Marked_point(x[i], y[i], type - 1, mark);
+    points[i] = ppjsdm::Marked_point(x[i], y[i], type[i] - 1, mark[i]);
   }
 
   const ppjsdm::Truncated_exponential_family_model<Rcpp::NumericVector> exponential_model(beta0, model, medium_range_model, alpha, beta, gamma, covariates, short_range, medium_range, long_range, saturation);

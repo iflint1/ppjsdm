@@ -6,7 +6,8 @@
 \usage{
 plot_papangelou(
   window,
-  type,
+  type = 1,
+  mark = 1,
   configuration,
   model,
   medium_range_model,
@@ -21,7 +22,6 @@ plot_papangelou(
   types,
   saturation,
   grid_steps = 1000,
-  mark,
   steps = 0
 )
 }
@@ -29,6 +29,8 @@ plot_papangelou(
 \item{window}{Observation window.}
 
 \item{type}{Type of the point at which to evaluate the Papangelou conditional intensity.}
+
+\item{mark}{Mark of the point.}
 
 \item{configuration}{Configuration of points at which to evaluate the Papangelou conditional intensity.}
 
@@ -57,8 +59,6 @@ plot_papangelou(
 \item{saturation}{Saturation.}
 
 \item{grid_steps}{Number of horizontal and vertical grid steps.}
-
-\item{mark}{Mark of the point.}
 
 \item{steps}{Nunber of steps in the Metropolis-Hastings simulation algorithm.}
 }

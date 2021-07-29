@@ -22,8 +22,8 @@
 compute_papangelou <- function(configuration,
                                x,
                                y,
-                               type,
-                               mark,
+                               type = rep(1, length(x)),
+                               mark = rep(1.0, length(x)),
                                model,
                                medium_range_model,
                                alpha,
@@ -46,28 +46,21 @@ compute_papangelou <- function(configuration,
                                  saturation = saturation,
                                  model = model,
                                  medium_range_model = medium_range_model)
-  # Arguments we want to forward
-  fwd_args <- c("type", "mark")
-  # Obtain the list of arguments provided
-  other_args <- as.list(match.call())
-  # Remove first list element, it's the function call
-  other_args[[1]] <- NULL
-  # Remove the arguments that are not listed in fwd_args
-  other_args <- other_args[na.omit(match(fwd_args, names(other_args)))]
 
-  args <- c(other_args, list(x = x,
-                             y = y,
-                             configuration = as.Configuration(configuration),
-                             model = parameters$model,
-                             medium_range_model = parameters$medium_range_model,
-                             alpha = parameters$alpha,
-                             beta0 = parameters$beta0,
-                             beta = parameters$beta,
-                             gamma = parameters$gamma,
-                             covariates = parameters$covariates,
-                             short_range = parameters$short_range,
-                             medium_range = parameters$medium_range,
-                             long_range = parameters$long_range,
-                             saturation = parameters$saturation))
-  do.call(compute_papangelou_cpp, args, envir = parent.frame())
+  compute_papangelou_cpp(x = x,
+                         y = y,
+                         type = type,
+                         mark = mark,
+                         configuration = as.Configuration(configuration),
+                         model = parameters$model,
+                         medium_range_model = parameters$medium_range_model,
+                         alpha = parameters$alpha,
+                         beta0 = parameters$beta0,
+                         beta = parameters$beta,
+                         gamma = parameters$gamma,
+                         covariates = parameters$covariates,
+                         short_range = parameters$short_range,
+                         medium_range = parameters$medium_range,
+                         long_range = parameters$long_range,
+                         saturation = parameters$saturation)
 }

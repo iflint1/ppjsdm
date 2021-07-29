@@ -23,7 +23,8 @@
 #' @importFrom graphics plot
 #' @export
 plot_papangelou <- function(window,
-                            type,
+                            type = 1,
+                            mark = 1.0,
                             configuration,
                             model,
                             medium_range_model,
@@ -38,7 +39,6 @@ plot_papangelou <- function(window,
                             types,
                             saturation,
                             grid_steps = 1000,
-                            mark,
                             steps = 0) {
 
   parameters <- model_parameters(window = window,
@@ -77,31 +77,23 @@ plot_papangelou <- function(window,
   x_axis <- seq(from = x_range[1], to = x_range[2], length.out = grid_steps)
   y_axis <- seq(from = y_range[1], to = y_range[2], length.out = grid_steps)
 
-  # Arguments we want to forward
-  fwd_args <- c("type", "mark")
-  # Obtain the list of arguments provided
-  other_args <- as.list(match.call())
-  # Remove first list element, it's the function call
-  other_args[[1]] <- NULL
-  # Remove the arguments that are not listed in fwd_args
-  other_args <- other_args[na.omit(match(fwd_args, names(other_args)))]
-
   z <- outer(x_axis, y_axis, function(x, y) {
-    args <- c(other_args, list(x = x,
-                               y = y,
-                               configuration = as.Configuration(configuration),
-                               model = parameters$model,
-                               medium_range_model = parameters$medium_range_model,
-                               alpha = parameters$alpha,
-                               beta0 = parameters$beta0,
-                               beta = parameters$beta,
-                               gamma = parameters$gamma,
-                               covariates = parameters$covariates,
-                               short_range = parameters$short_range,
-                               medium_range = parameters$medium_range,
-                               long_range = parameters$long_range,
-                               saturation = parameters$saturation))
-    do.call(compute_papangelou_cpp, args, envir = parent.frame())
+    compute_papangelou_cpp(x = x,
+                           y = y,
+                           type = rep(type, length(x)),
+                           mark = rep(mark, length(x)),
+                           configuration = as.Configuration(configuration),
+                           model = parameters$model,
+                           medium_range_model = parameters$medium_range_model,
+                           alpha = parameters$alpha,
+                           beta0 = parameters$beta0,
+                           beta = parameters$beta,
+                           gamma = parameters$gamma,
+                           covariates = parameters$covariates,
+                           short_range = parameters$short_range,
+                           medium_range = parameters$medium_range,
+                           long_range = parameters$long_range,
+                           saturation = parameters$saturation)
   })
   plot(as.im(t(z), W = window), main = "Papangelou conditional intensity")
   plot(as.ppp(configuration, window), add = TRUE, cols = 'white')
