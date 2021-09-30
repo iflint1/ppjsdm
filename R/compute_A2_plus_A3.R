@@ -9,6 +9,7 @@
 #' @param npoints Target number of points in the restricted window that the vcov matrix is computed on. Computation is slower for larger values, but the vcov matrix is then better approximated.
 #' @param multiple_windows Compute A2 and A3 on a lot of small windows and which are then averaged out, or only on a single restricted window?
 #' @param time_limit Time limit in hours that can be spent running this function.
+#' @importFrom stats sd
 #' @export
 compute_A2_plus_A3 <- function(..., list, nthreads, debug = FALSE, npoints = 1000, multiple_windows = TRUE, time_limit) {
   if(missing(list)) {

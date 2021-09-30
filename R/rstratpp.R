@@ -1,10 +1,10 @@
 #' Sample a stratified binomial point processes
 #'
 #' @param window Simulation window. Default is a Rectangle window [0, 1]^2.
-#' @param nx A vector representing the distance between tiles along the x axis, for each type.
+#' @param delta_x A vector representing the distance between tiles along the x axis, for each type.
 #' Default is a vector of same size as types, filled with ones.
-#' @param ny A vector representing the distance between tiles along the y axis, for each type.
-#' Default is to set it to nx.
+#' @param delta_y A vector representing the distance between tiles along the y axis, for each type.
+#' Default is to set it to delta_x
 #' @param nsim Number of samples to generate. Default is 1.
 #' @param types Types of the points. Default is a vector (type1, type2, ...) of same size as n.
 #' @param drop If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration.

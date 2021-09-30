@@ -7,6 +7,7 @@
 #' @param nthreads (optional) number of threads to use.
 #' @param debug Display debug information?
 #' @param time_limit Time limit in hours that can be spent running this function.
+#' @importFrom stats sd
 #' @export
 compute_A1 <- function(..., list, nthreads, debug = FALSE, time_limit) {
   if(missing(list)) {

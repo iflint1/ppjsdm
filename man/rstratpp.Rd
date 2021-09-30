@@ -17,6 +17,12 @@ rstratpp(
 \arguments{
 \item{window}{Simulation window. Default is a Rectangle window [0, 1]^2.}
 
+\item{delta_x}{A vector representing the distance between tiles along the x axis, for each type.
+Default is a vector of same size as types, filled with ones.}
+
+\item{delta_y}{A vector representing the distance between tiles along the y axis, for each type.
+Default is to set it to delta_x}
+
 \item{nsim}{Number of samples to generate. Default is 1.}
 
 \item{types}{Types of the points. Default is a vector (type1, type2, ...) of same size as n.}
@@ -25,12 +31,6 @@ rstratpp(
 Default is TRUE.}
 
 \item{mark_range}{Range of additional marks to give to the points.}
-
-\item{nx}{A vector representing the distance between tiles along the x axis, for each type.
-Default is a vector of same size as types, filled with ones.}
-
-\item{ny}{A vector representing the distance between tiles along the y axis, for each type.
-Default is to set it to nx.}
 }
 \description{
 Sample a stratified binomial point processes
