@@ -460,6 +460,7 @@ gibbsm <- function(configuration_list,
 
   number_configurations <- length(configuration_list)
   number_types <- length(levels(types(configuration_list[[1]])))
+
   if(estimate_radii) {
     estimate_alpha <- matrix(short_range[1] != short_range[2], nrow = number_types, ncol = number_types)
     estimate_gamma <- matrix(long_range[1] != long_range[2], nrow = number_types, ncol = number_types)
@@ -635,16 +636,17 @@ gibbsm <- function(configuration_list,
 
     # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
     mark_range <- c(min(marks(configuration_list[[1]])), max(marks(configuration_list[[1]])))
-    gibbsm_data_list <- prepare_gibbsm_data(configuration_list,
-                                            window,
-                                            covariates,
-                                            model,
-                                            medium_range_model,
-                                            short_range,
-                                            medium_range,
-                                            long_range,
-                                            saturation,
-                                            mark_range,
+
+    gibbsm_data_list <- prepare_gibbsm_data(configuration_list = configuration_list,
+                                            window = window,
+                                            covariates = covariates,
+                                            model = model,
+                                            medium_range_model = medium_range_model,
+                                            short_range = short_range,
+                                            medium_range = medium_range,
+                                            long_range = long_range,
+                                            saturation = saturation,
+                                            mark_range = mark_range,
                                             max_dummy = max_dummy,
                                             min_dummy = min_dummy,
                                             dummy_factor = dummy_factor,

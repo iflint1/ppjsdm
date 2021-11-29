@@ -313,7 +313,7 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
   // Construct std::vector of configurations.
   std::vector<std::vector<ppjsdm::Marked_point>> vector_configurations(configuration_list.size());
   for(R_xlen_t i(0); i < configuration_list.size(); ++i) {
-    const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::wrap(configuration_list[i]));
+    const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::as<Rcpp::List>(configuration_list[i]));
     const auto length_configuration(ppjsdm::size(wrapped_configuration));
 
     // Convert configurations to std::vector in order for parallelised version to work.
@@ -339,6 +339,7 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
   }
   const auto dispersion(ppjsdm::Saturated_model<double>(model, short_range, saturation));
   const auto medium_range_dispersion(ppjsdm::Saturated_model<double>(medium_range_model, medium_range, long_range, saturation));
+
   return prepare_gibbsm_data_helper(vector_configurations,
                                     cpp_window,
                                     ppjsdm::Im_list_wrapper(covariates),

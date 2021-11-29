@@ -170,13 +170,13 @@ public:
     x_(Rcpp::as<Rcpp::NumericVector>(configuration["x"])),
     y_(Rcpp::as<Rcpp::NumericVector>(configuration["y"])),
     types_(Rcpp::as<Rcpp::IntegerVector>(configuration["types"])),
-    marks_(Rcpp::as<Rcpp::NumericVector>(configuration["marks"])){}
+    marks_(Rcpp::as<Rcpp::NumericVector>(configuration["marks"])) {}
 
   explicit Configuration_wrapper(R_xlen_t size):
     x_(Rcpp::no_init(size)),
     y_(Rcpp::no_init(size)),
     types_(Rcpp::no_init(size)),
-    marks_(Rcpp::no_init(size)){}
+    marks_(Rcpp::no_init(size)) {}
   Configuration_wrapper(): Configuration_wrapper(static_cast<R_xlen_t>(0)) {}
 
   auto operator[](R_xlen_t index) const {
