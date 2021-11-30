@@ -10,13 +10,15 @@
 #' @importFrom stats sd
 #' @export
 compute_A1 <- function(..., list, nthreads, debug = FALSE, time_limit) {
+  # Allow for either sequence of fits or list of fits, convert both to list
   if(missing(list)) {
     fits <- base::list(...)
   } else {
     fits <- list
   }
 
-  theta <- setNames(sapply(seq_len(length(fits[[1]]$coefficients_vector)), function(i) mean(sapply(fits, function(fit) fit$coefficients_vector[i]), na.rm = TRUE)), nm = names(fits[[1]]$coefficients_vector))
+  theta <- setNames(sapply(seq_len(length(fits[[1]]$coefficients_vector)), function(i) mean(sapply(fits, function(fit) fit$coefficients_vector[i]), na.rm = TRUE)),
+                    nm = names(fits[[1]]$coefficients_vector))
 
   if(missing(nthreads)) {
     nthreads <- NULL
@@ -54,8 +56,8 @@ compute_A1 <- function(..., list, nthreads, debug = FALSE, time_limit) {
     }
 
     if(debug) {
-      cat(paste0("Starting computation of A1.\n"))
-      tm <- Sys.time()
+      cat("Starting computation of A1.\n")
+      current_time <- Sys.time()
     }
     A1 <- compute_A1_cpp(rho = exp(-fit$data_list$shift),
                          theta = theta,
@@ -63,8 +65,7 @@ compute_A1 <- function(..., list, nthreads, debug = FALSE, time_limit) {
                          type = fit$data_list$type,
                          nthreads = nt)
     if(debug) {
-      cat("End of computation. ")
-      print(Sys.time() - tm)
+      cat(paste0("End of computation. Elapsed time: ", base::format(Sys.time() - current_time), ".\n"))
     }
     A1
   }
