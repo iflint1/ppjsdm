@@ -9,7 +9,7 @@
 #' @param time_limit Time limit in hours that can be spent running this function.
 #' @importFrom stats sd
 #' @export
-compute_A1 <- function(..., list, nthreads, debug = FALSE, time_limit) {
+compute_A1 <- function(..., list, nthreads = 4, debug = FALSE, time_limit) {
   # Allow for either sequence of fits or list of fits, convert both to list
   if(missing(list)) {
     fits <- base::list(...)
@@ -20,14 +20,11 @@ compute_A1 <- function(..., list, nthreads, debug = FALSE, time_limit) {
   theta <- setNames(sapply(seq_len(length(fits[[1]]$coefficients_vector)), function(i) mean(sapply(fits, function(fit) fit$coefficients_vector[i]), na.rm = TRUE)),
                     nm = names(fits[[1]]$coefficients_vector))
 
-  if(missing(nthreads)) {
-    nthreads <- NULL
-  }
   compute_A1_on_fit <- function(fit) {
-    if(is.null(nthreads)) {
-      nt <- fit$nthreads
-    } else {
+    if(is.null(fit$nthreads)) {
       nt <- nthreads
+    } else {
+      nt <- fit$nthreads
     }
 
     tt <- tryCatch({
