@@ -17,8 +17,20 @@ compute_A1 <- function(..., list, nthreads = 4, debug = FALSE, time_limit) {
     fits <- list
   }
 
-  theta <- setNames(sapply(seq_len(length(fits[[1]]$coefficients_vector)), function(i) mean(sapply(fits, function(fit) fit$coefficients_vector[i]), na.rm = TRUE)),
-                    nm = names(fits[[1]]$coefficients_vector))
+  # Make sure thetas are compatible
+  theta1 <- fits[[1]]$coefficients_vector
+  for(fit in fits) {
+    if(length(theta1) != length(fit$coefficients_vector)) {
+      stop("Thetas of the supplied fits do not have the same length.")
+    }
+    if(!identical(names(theta1), names(fit$coefficients_vector))) {
+      stop("Thetas of the supplied fits do not have the same names.")
+    }
+  }
+
+  average_theta <- setNames(sapply(seq_len(length(theta1)), function(i) {
+    mean(sapply(fits, function(fit) fit$coefficients_vector[i]), na.rm = TRUE)
+  }), nm = names(theta1))
 
   compute_A1_on_fit <- function(fit) {
     if(is.null(fit$nthreads)) {
@@ -57,7 +69,7 @@ compute_A1 <- function(..., list, nthreads = 4, debug = FALSE, time_limit) {
       current_time <- Sys.time()
     }
     A1 <- compute_A1_cpp(rho = exp(-fit$data_list$shift),
-                         theta = theta,
+                         theta = average_theta,
                          regressors = regressors,
                          type = fit$data_list$type,
                          nthreads = nt)
@@ -96,8 +108,8 @@ compute_A1 <- function(..., list, nthreads = 4, debug = FALSE, time_limit) {
 
   A1 <- Reduce("+", A1) / length(A1)
 
-  rownames(A1) <- names(theta)
-  colnames(A1) <- names(theta)
+  rownames(A1) <- names(average_theta)
+  colnames(A1) <- names(average_theta)
 
   A1
 }
