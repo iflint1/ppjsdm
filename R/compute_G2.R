@@ -7,27 +7,45 @@
 #' @param nthreads (optional) number of threads to use.
 #' @param debug Display debug information?
 #' @param time_limit Time limit in hours that can be spent running this function.
-#' @importFrom stats sd
+#'
 #' @export
-compute_G2 <- function(..., list, nthreads, debug = FALSE, time_limit) {
+compute_G2 <- function(..., list, nthreads = NULL, debug = FALSE, time_limit = Inf) {
+  # Allow for either sequence of fits or list of fits, convert both to list
   if(missing(list)) {
     fits <- base::list(...)
   } else {
     fits <- list
   }
 
-  theta <- setNames(sapply(seq_len(length(fits[[1]]$coefficients_vector)), function(i) mean(sapply(fits, function(fit) fit$coefficients_vector[i]), na.rm = TRUE)), nm = names(fits[[1]]$coefficients_vector))
-
-  if(missing(nthreads)) {
-    nthreads <- NULL
+  # Make sure thetas are compatible
+  theta1 <- fits[[1]]$coefficients_vector
+  for(fit in fits) {
+    if(length(theta1) != length(fit$coefficients_vector)) {
+      stop("Thetas of the supplied fits do not have the same length.")
+    }
+    if(!identical(names(theta1), names(fit$coefficients_vector))) {
+      stop("Thetas of the supplied fits do not have the same names.")
+    }
   }
+
+  # Compute the regression coefficient, averaged out over the fits
+  average_theta <- setNames(sapply(seq_len(length(theta1)), function(i) {
+    mean(sapply(fits, function(fit) fit$coefficients_vector[i]), na.rm = TRUE)
+  }), nm = names(theta1))
+
   compute_G2_on_fit <- function(fit) {
+    # Use either the fit-specific nthreads, or the user-supplied value
     if(is.null(nthreads)) {
-      nt <- fit$nthreads
+      if(is.null(fit$nthreads)) {
+        nt <- 1
+      } else {
+        nt <- fit$nthreads
+      }
     } else {
       nt <- nthreads
     }
 
+    # Try to convert the regression matrix to base::matrix, it might crash if insufficient RAM
     tt <- tryCatch({
       regressors <- as.matrix(fit$data_list$regressors)
     }, error = function(e) e, warning = function(w) w)
@@ -55,7 +73,7 @@ compute_G2 <- function(..., list, nthreads, debug = FALSE, time_limit) {
 
     if(debug) {
       cat(paste0("Starting computation of G2.\n"))
-      tm <- Sys.time()
+      current_time <- Sys.time()
     }
     G2 <- compute_G2_cpp(configuration = fit$configuration_list[[1]],
                          dummy = fit$data_list$dummy,
@@ -68,7 +86,7 @@ compute_G2 <- function(..., list, nthreads, debug = FALSE, time_limit) {
                          long_range = fit$coefficients$long_range,
                          saturation = fit$parameters$saturation,
                          rho = exp(-fit$data_list$shift),
-                         theta = theta,
+                         theta = average_theta,
                          regressors = regressors,
                          type = fit$data_list$type,
                          estimate_alpha = fit$estimate_alpha,
@@ -77,43 +95,19 @@ compute_G2 <- function(..., list, nthreads, debug = FALSE, time_limit) {
                          dummy_distribution = fit$dummy_distribution,
                          mark_range = fit$mark_range)
     if(debug) {
-      cat("End of computation. ")
-      print(Sys.time() - tm)
+      cat(paste0("End of computation. Elapsed time: ", base::format(Sys.time() - current_time), ".\n"))
     }
     G2
   }
 
-  if(missing(time_limit)) {
-    G2 <- lapply(fits, compute_G2_on_fit)
-  } else {
-    G2 <- vector(mode = 'list', length = length(fits))
-    execution_times <- c()
-    time_left <- time_limit
-    for(i in seq_len(length(fits))) {
-      if(length(execution_times) > 0) {
-        if(length(execution_times) > 1) {
-          max_time <- mean(execution_times) + 4 * sd(execution_times)
-        } else {
-          max_time <- 2 * mean(execution_times)
-        }
-      } else {
-        max_time <- 0
-      }
-      if(max_time < time_left) {
-        start <- Sys.time()
-        G2[[i]] <- compute_G2_on_fit(fits[[i]])
-        execution_time <- as.numeric(Sys.time() - start, unit = "hours")
-        execution_times <- c(execution_times, execution_time)
-        time_left <- time_left - execution_time
-      }
-    }
-    G2 <- G2[sapply(G2, function(g) !is.null(g))]
-  }
+  # If no time limit supplied, compute G2 for each of the fits
+  # and if not, try to guesstimate how long next fit will take
+  # and execute as many as possible
+  G2 <- execute_until_time_limit(objects = fits, func = compute_G2_on_fit, time_limit = time_limit)
 
+  # Average out the matrices G2 over the fits and set names
   G2 <- Reduce("+", G2) / length(G2) / length(fits)
-
-  rownames(G2) <- names(theta)
-  colnames(G2) <- names(theta)
+  rownames(G2) <- colnames(G2) <- names(average_theta)
 
   G2
 }
