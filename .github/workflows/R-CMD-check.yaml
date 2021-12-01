@@ -16,7 +16,7 @@ jobs:
       - uses: r-lib/actions/setup-r@master
       - name: Setting up pandoc for Rmd docs
         uses: r-lib/actions/setup-pandoc@v1
-      - uses: xu-cheng/latex-action@v2
+      - uses: r-lib/actions/setup-tinytex@v1
       - name: Install dependencies
         run: |
           install.packages(c("remotes", "rcmdcheck"))
