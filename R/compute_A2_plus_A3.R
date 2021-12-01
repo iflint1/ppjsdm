@@ -8,22 +8,44 @@
 #' @param debug Display debug information?
 #' @param npoints Target number of points in the restricted window that the vcov matrix is computed on. Computation is slower for larger values, but the vcov matrix is then better approximated.
 #' @param multiple_windows Compute A2 and A3 on a lot of small windows and which are then averaged out, or only on a single restricted window?
-#' @param time_limit Time limit in hours that can be spent running this function.
-#' @importFrom stats sd
+#' @param time_limit Time limit measured in hours that can be spent running this function.
+#' @param unit Unit used to measure the time limit (hours, mins, secs, etc).
+#'
 #' @export
-compute_A2_plus_A3 <- function(..., list, nthreads, debug = FALSE, npoints = 1000, multiple_windows = TRUE, time_limit) {
+compute_A2_plus_A3 <- function(..., list, nthreads = NULL, debug = FALSE, npoints = 1000, multiple_windows = TRUE, time_limit = Inf, unit = "hours") {
+  # Allow for either sequence of fits or list of fits, convert both to list
   if(missing(list)) {
     fits <- base::list(...)
   } else {
     fits <- list
   }
 
-  theta <- setNames(sapply(seq_len(length(fits[[1]]$coefficients_vector)), function(i) mean(sapply(fits, function(fit) fit$coefficients_vector[i]), na.rm = TRUE)), nm = names(fits[[1]]$coefficients_vector))
-
-  if(missing(nthreads)) {
-    nthreads <- fits[[1]]$nthreads
+  # Make sure thetas are compatible
+  theta1 <- fits[[1]]$coefficients_vector
+  for(fit in fits) {
+    if(length(theta1) != length(fit$coefficients_vector)) {
+      stop("Thetas of the supplied fits do not have the same length.")
+    }
+    if(!identical(names(theta1), names(fit$coefficients_vector))) {
+      stop("Thetas of the supplied fits do not have the same names.")
+    }
   }
 
+  # Compute the regression coefficient, averaged out over the fits
+  average_theta <- setNames(sapply(seq_len(length(theta1)), function(i) {
+    mean(sapply(fits, function(fit) fit$coefficients_vector[i]), na.rm = TRUE)
+  }), nm = names(theta1))
+
+  # Use either the fit-specific nthreads, or the user-supplied value
+  if(is.null(nthreads)) {
+    if(is.null(fits[[1]]$nthreads)) {
+      nthreads <- 1
+    } else {
+      nthreads <- fits[[1]]$nthreads
+    }
+  }
+
+  # Try to convert the regression matrix to base::matrix, it might crash if insufficient RAM
   tt <- tryCatch({
     regressors <- as.matrix(fits[[1]]$data_list$regressors)
   }, error = function(e) e, warning = function(w) w)
@@ -51,9 +73,9 @@ compute_A2_plus_A3 <- function(..., list, nthreads, debug = FALSE, npoints = 100
 
   if(debug) {
     cat(paste0("Starting computation of A2 + A3.\n"))
-    tm <- Sys.time()
+    current_time <- Sys.time()
   }
-  if(missing(time_limit)) {
+  if(is.infinite(time_limit)) {
     A2_plus_A3 <- compute_A2_plus_A3_cpp(configuration = fits[[1]]$configuration_list[[1]],
                                          window = fits[[1]]$window,
                                          covariates = fits[[1]]$parameters$covariates,
@@ -64,7 +86,7 @@ compute_A2_plus_A3 <- function(..., list, nthreads, debug = FALSE, npoints = 100
                                          long_range = fits[[1]]$coefficients$long_range,
                                          saturation = fits[[1]]$parameters$saturation,
                                          rho = exp(-fits[[1]]$data_list$shift),
-                                         theta = theta,
+                                         theta = average_theta,
                                          regressors = regressors,
                                          data_list = fits[[1]]$data_list,
                                          estimate_alpha = fits[[1]]$estimate_alpha,
@@ -87,7 +109,7 @@ compute_A2_plus_A3 <- function(..., list, nthreads, debug = FALSE, npoints = 100
                                          long_range = fits[[1]]$coefficients$long_range,
                                          saturation = fits[[1]]$parameters$saturation,
                                          rho = exp(-fits[[1]]$data_list$shift),
-                                         theta = theta,
+                                         theta = average_theta,
                                          regressors = regressors,
                                          data_list = fits[[1]]$data_list,
                                          estimate_alpha = fits[[1]]$estimate_alpha,
@@ -98,7 +120,7 @@ compute_A2_plus_A3 <- function(..., list, nthreads, debug = FALSE, npoints = 100
                                          mark_range = fits[[1]]$mark_range,
                                          debug = debug,
                                          max_executions = 1)
-    single_execution_time <- as.numeric(Sys.time() - start, unit = "hours")
+    single_execution_time <- as.numeric(Sys.time() - start, unit = unit)
     max_executions <- max(0, floor(time_limit / single_execution_time - 1.))
     if(debug) {
       cat(paste0("Going to divide the window into a maximum of ", max_executions, " subregions to approximate A2 + A3.\n"))
@@ -114,7 +136,7 @@ compute_A2_plus_A3 <- function(..., list, nthreads, debug = FALSE, npoints = 100
                                            long_range = fits[[1]]$coefficients$long_range,
                                            saturation = fits[[1]]$parameters$saturation,
                                            rho = exp(-fits[[1]]$data_list$shift),
-                                           theta = theta,
+                                           theta = average_theta,
                                            regressors = regressors,
                                            data_list = fits[[1]]$data_list,
                                            estimate_alpha = fits[[1]]$estimate_alpha,
@@ -128,11 +150,11 @@ compute_A2_plus_A3 <- function(..., list, nthreads, debug = FALSE, npoints = 100
     }
   }
   if(debug) {
-    cat("End of computation. ")
-    print(Sys.time() - tm)
+    cat(paste0("End of computation. Elapsed time: ", base::format(Sys.time() - current_time), ".\n"))
   }
 
-  rownames(A2_plus_A3) <- names(theta)
-  colnames(A2_plus_A3) <- names(theta)
+  # Set names
+  rownames(A2_plus_A3) <- colnames(A2_plus_A3) <- names(average_theta)
+
   A2_plus_A3
 }
