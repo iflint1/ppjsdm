@@ -6,9 +6,10 @@
 #' @param list List of fits.
 #' @param nthreads (optional) number of threads to use.
 #' @param debug Display debug information?
-#' @param time_limit Time limit in hours that can be spent running this function.
+#' @param time_limit Time limit measured in  `unit` that can be spent running this function.
+#' @param unit Unit used to measure the time limit (hours, mins, secs, etc).
 #' @export
-compute_A1 <- function(..., list, nthreads = NULL, debug = FALSE, time_limit = Inf) {
+compute_A1 <- function(..., list, nthreads = NULL, debug = FALSE, time_limit = Inf, unit = "hours") {
   # Allow for either sequence of fits or list of fits, convert both to list
   if(missing(list)) {
     fits <- base::list(...)
@@ -92,7 +93,7 @@ compute_A1 <- function(..., list, nthreads = NULL, debug = FALSE, time_limit = I
   # If no time limit supplied, compute A1 for each of the fits
   # and if not, try to guesstimate how long next fit will take
   # and execute as many as possible
-  A1 <- execute_until_time_limit(objects = fits, func = compute_A1_on_fit, time_limit = time_limit)
+  A1 <- execute_until_time_limit(objects = fits, func = compute_A1_on_fit, time_limit = time_limit, unit = unit)
 
   # Average out the matrices A1 over the fits and set names
   A1 <- Reduce("+", A1) / length(A1)

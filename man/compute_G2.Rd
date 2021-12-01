@@ -6,7 +6,14 @@
 The function can be supplied multiple fits, in which case the aggregate estimator is computed.
 This is an internal function used when you want to compute the vcov matrix in multiple steps (useful for large datasets).}
 \usage{
-compute_G2(..., list, nthreads = NULL, debug = FALSE, time_limit = Inf)
+compute_G2(
+  ...,
+  list,
+  nthreads = NULL,
+  debug = FALSE,
+  time_limit = Inf,
+  unit = "hours"
+)
 }
 \arguments{
 \item{...}{A sequence of fit objects.}
@@ -17,7 +24,9 @@ compute_G2(..., list, nthreads = NULL, debug = FALSE, time_limit = Inf)
 
 \item{debug}{Display debug information?}
 
-\item{time_limit}{Time limit in hours that can be spent running this function.}
+\item{time_limit}{Time limit measured in `unit` that can be spent running this function.}
+
+\item{unit}{Unit used to measure the time limit (hours, mins, secs, etc).}
 }
 \description{
 Calculate the matrix G2 used to compute the Variance-Covariance Matrix for a Fitted Gibbs point process.

@@ -6,10 +6,11 @@
 #' @param list List of fits.
 #' @param nthreads (optional) number of threads to use.
 #' @param debug Display debug information?
-#' @param time_limit Time limit in hours that can be spent running this function.
+#' @param time_limit Time limit measured in `unit` that can be spent running this function.
+#' @param unit Unit used to measure the time limit (hours, mins, secs, etc).
 #'
 #' @export
-compute_G2 <- function(..., list, nthreads = NULL, debug = FALSE, time_limit = Inf) {
+compute_G2 <- function(..., list, nthreads = NULL, debug = FALSE, time_limit = Inf, unit = "hours") {
   # Allow for either sequence of fits or list of fits, convert both to list
   if(missing(list)) {
     fits <- base::list(...)
@@ -103,7 +104,7 @@ compute_G2 <- function(..., list, nthreads = NULL, debug = FALSE, time_limit = I
   # If no time limit supplied, compute G2 for each of the fits
   # and if not, try to guesstimate how long next fit will take
   # and execute as many as possible
-  G2 <- execute_until_time_limit(objects = fits, func = compute_G2_on_fit, time_limit = time_limit)
+  G2 <- execute_until_time_limit(objects = fits, func = compute_G2_on_fit, time_limit = time_limit, unit = unit)
 
   # Average out the matrices G2 over the fits and set names
   G2 <- Reduce("+", G2) / length(G2) / length(fits)
