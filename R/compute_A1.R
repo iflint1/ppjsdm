@@ -9,7 +9,7 @@
 #' @param time_limit Time limit in hours that can be spent running this function.
 #' @importFrom stats sd
 #' @export
-compute_A1 <- function(..., list, nthreads = 4, debug = FALSE, time_limit) {
+compute_A1 <- function(..., list, nthreads = NULL, debug = FALSE, time_limit) {
   # Allow for either sequence of fits or list of fits, convert both to list
   if(missing(list)) {
     fits <- base::list(...)
@@ -28,17 +28,24 @@ compute_A1 <- function(..., list, nthreads = 4, debug = FALSE, time_limit) {
     }
   }
 
+  # Compute the regression coefficient, averaged out over the fits
   average_theta <- setNames(sapply(seq_len(length(theta1)), function(i) {
     mean(sapply(fits, function(fit) fit$coefficients_vector[i]), na.rm = TRUE)
   }), nm = names(theta1))
 
   compute_A1_on_fit <- function(fit) {
-    if(is.null(fit$nthreads)) {
-      nt <- nthreads
+    # Use either the fit-specific nthreads, or the user-supplied value
+    if(is.null(nthreads)) {
+      if(is.null(fit$nthreads)) {
+        nt <- 1
+      } else {
+        nt <- fit$nthreads
+      }
     } else {
-      nt <- fit$nthreads
+      nt <- nthreads
     }
 
+    # Try to convert the regression matrix to base::matrix, it might crash if insufficient RAM
     tt <- tryCatch({
       regressors <- as.matrix(fit$data_list$regressors)
     }, error = function(e) e, warning = function(w) w)
@@ -61,7 +68,11 @@ compute_A1 <- function(..., list, nthreads = 4, debug = FALSE, time_limit) {
         colnames(tmp) <- mat@Dimnames[[2]]
         tmp
       }
-      regressors <- as_matrix(fit$data_list$regressors)
+      if(!is(fit$data_list$regressors, "Matrix::Matrix")) {
+        stop("Error while converting regression matrix to base::matrix format.")
+      } else {
+        regressors <- as_matrix(fit$data_list$regressors)
+      }
     }
 
     if(debug) {
@@ -79,6 +90,9 @@ compute_A1 <- function(..., list, nthreads = 4, debug = FALSE, time_limit) {
     A1
   }
 
+  # If no time limit supplied, compute A1 for each of the fits
+  # and if not, try to guesstimate how long next fit will take
+  # and execute as many as possible
   if(missing(time_limit)) {
     A1 <- lapply(fits, compute_A1_on_fit)
   } else {
@@ -101,15 +115,16 @@ compute_A1 <- function(..., list, nthreads = 4, debug = FALSE, time_limit) {
         execution_time <- as.numeric(Sys.time() - start, unit = "hours")
         execution_times <- c(execution_times, execution_time)
         time_left <- time_left - execution_time
+      } else {
+        break
       }
     }
-    A1 <- A1[sapply(A1, function(a) !is.null(a))]
+    A1 <- A1[!sapply(A1, is.null)]
   }
 
+  # Average out the matrices A1 over the fits and set names
   A1 <- Reduce("+", A1) / length(A1)
-
-  rownames(A1) <- names(average_theta)
-  colnames(A1) <- names(average_theta)
+  rownames(A1) <- colnames(A1) <- names(average_theta)
 
   A1
 }
