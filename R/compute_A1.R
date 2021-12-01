@@ -7,9 +7,8 @@
 #' @param nthreads (optional) number of threads to use.
 #' @param debug Display debug information?
 #' @param time_limit Time limit in hours that can be spent running this function.
-#' @importFrom stats sd
 #' @export
-compute_A1 <- function(..., list, nthreads = NULL, debug = FALSE, time_limit) {
+compute_A1 <- function(..., list, nthreads = NULL, debug = FALSE, time_limit = Inf) {
   # Allow for either sequence of fits or list of fits, convert both to list
   if(missing(list)) {
     fits <- base::list(...)
@@ -93,34 +92,7 @@ compute_A1 <- function(..., list, nthreads = NULL, debug = FALSE, time_limit) {
   # If no time limit supplied, compute A1 for each of the fits
   # and if not, try to guesstimate how long next fit will take
   # and execute as many as possible
-  if(missing(time_limit)) {
-    A1 <- lapply(fits, compute_A1_on_fit)
-  } else {
-    A1 <- vector(mode = 'list', length = length(fits))
-    execution_times <- c()
-    time_left <- time_limit
-    for(i in seq_len(length(fits))) {
-      if(length(execution_times) > 0) {
-        if(length(execution_times) > 1) {
-          max_time <- mean(execution_times) + 4 * sd(execution_times)
-        } else {
-          max_time <- 2 * mean(execution_times)
-        }
-      } else {
-        max_time <- 0
-      }
-      if(max_time < time_left) {
-        start <- Sys.time()
-        A1[[i]] <- compute_A1_on_fit(fits[[i]])
-        execution_time <- as.numeric(Sys.time() - start, unit = "hours")
-        execution_times <- c(execution_times, execution_time)
-        time_left <- time_left - execution_time
-      } else {
-        break
-      }
-    }
-    A1 <- A1[!sapply(A1, is.null)]
-  }
+  A1 <- execute_until_time_limit(objects = fits, func = compute_A1_on_fit, time_limit = time_limit)
 
   # Average out the matrices A1 over the fits and set names
   A1 <- Reduce("+", A1) / length(A1)
