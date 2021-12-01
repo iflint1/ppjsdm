@@ -2,22 +2,24 @@
 % Please edit documentation in R/execute_until_time_limit.R
 \name{execute_until_time_limit}
 \alias{execute_until_time_limit}
-\title{Execute a function on a list of objects, using educated guesses to execute as many calls
-as possible within a specified time limit.}
+\title{Execute a function on a list/vector of objects, using educated guesses to execute as many calls
+as possible within a specified time limit. The function is always called at least once (on the
+first object).}
 \usage{
 execute_until_time_limit(objects, func, time_limit = Inf, unit = "hours")
 }
 \arguments{
-\item{objects}{List of objects.}
+\item{objects}{List/vector of objects.}
 
 \item{func}{Function to apply to each object.}
 
 \item{time_limit}{Time limit in `unit` that can be spent running this function.}
 
-\item{unit}{Unit used to measure the time limit (hours, minutes, seconds, etc).}
+\item{unit}{Unit used to measure the time limit (hours, mins, secs, etc).}
 }
 \description{
-Execute a function on a list of objects, using educated guesses to execute as many calls
-as possible within a specified time limit.
+Execute a function on a list/vector of objects, using educated guesses to execute as many calls
+as possible within a specified time limit. The function is always called at least once (on the
+first object).
 }
 \keyword{internal}
