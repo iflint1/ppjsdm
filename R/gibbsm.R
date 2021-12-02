@@ -462,7 +462,7 @@ gibbsm <- function(configuration_list,
   covariates_names <- names(covariates)
 
   number_configurations <- length(configuration_list)
-  number_types <- nevels(types(configuration_list[[1]]))
+  number_types <- nlevels(types(configuration_list[[1]]))
 
   if(estimate_radii) {
     estimate_alpha <- matrix(short_range[1] != short_range[2], nrow = number_types, ncol = number_types)
