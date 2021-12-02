@@ -57,6 +57,8 @@ compute_papangelou <- function(configuration,
       } else {
         stop("Unknown format for type or mark.")
       }
+    } else {
+      obj
     }
   }
 
