@@ -4,7 +4,7 @@
 \alias{compute_G2}
 \title{Calculate the matrix G2 used to compute the Variance-Covariance Matrix for a Fitted Gibbs point process.
 The function can be supplied multiple fits, in which case the aggregate estimator is computed.
-This is an internal function used when you want to compute the vcov matrix in multiple steps (useful for large datasets).}
+This function is used to compute the vcov matrix in multiple steps (useful for large datasets).}
 \usage{
 compute_G2(
   ...,
@@ -31,5 +31,5 @@ compute_G2(
 \description{
 Calculate the matrix G2 used to compute the Variance-Covariance Matrix for a Fitted Gibbs point process.
 The function can be supplied multiple fits, in which case the aggregate estimator is computed.
-This is an internal function used when you want to compute the vcov matrix in multiple steps (useful for large datasets).
+This function is used to compute the vcov matrix in multiple steps (useful for large datasets).
 }

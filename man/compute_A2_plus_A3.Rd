@@ -4,16 +4,17 @@
 \alias{compute_A2_plus_A3}
 \title{Calculate the matrix A_2 + A3 used to compute the Variance-Covariance Matrix for a Fitted Gibbs point process.
 The function can be supplied multiple fits, in which case the aggregate estimator is computed.
-This is an internal function used when you want to compute the vcov matrix in multiple steps (useful for large datasets).}
+This function is used to compute the vcov matrix in multiple steps (useful for large datasets).}
 \usage{
 compute_A2_plus_A3(
   ...,
   list,
-  nthreads,
+  nthreads = NULL,
   debug = FALSE,
   npoints = 1000,
   multiple_windows = TRUE,
-  time_limit
+  time_limit = Inf,
+  unit = "hours"
 )
 }
 \arguments{
@@ -29,10 +30,12 @@ compute_A2_plus_A3(
 
 \item{multiple_windows}{Compute A2 and A3 on a lot of small windows and which are then averaged out, or only on a single restricted window?}
 
-\item{time_limit}{Time limit in hours that can be spent running this function.}
+\item{time_limit}{Time limit measured in hours that can be spent running this function.}
+
+\item{unit}{Unit used to measure the time limit (hours, mins, secs, etc).}
 }
 \description{
 Calculate the matrix A_2 + A3 used to compute the Variance-Covariance Matrix for a Fitted Gibbs point process.
 The function can be supplied multiple fits, in which case the aggregate estimator is computed.
-This is an internal function used when you want to compute the vcov matrix in multiple steps (useful for large datasets).
+This function is used to compute the vcov matrix in multiple steps (useful for large datasets).
 }
