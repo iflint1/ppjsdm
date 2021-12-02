@@ -407,7 +407,7 @@ gibbsm <- function(configuration_list,
                    max_dummy = 0,
                    min_dummy = 0,
                    dummy_factor = 0,
-                   nthreads = 4,
+                   nthreads = 1,
                    use_regularization = FALSE,
                    return_raw_fitting_data = FALSE,
                    refit_glmnet = 0,
@@ -419,15 +419,24 @@ gibbsm <- function(configuration_list,
   }
 
   # If we're given a single configuration, convert it to a list.
-  if(inherits(configuration_list, "Configuration")) {
+  if(!is(configuration_list, "list")) {
     configuration_list <- list(configuration_list)
   }
 
+  # Try to force conversion to Configuration class.
+  configuration_list <- lapply(configuration_list, function(configuration) as.Configuration(configuration))
+
+  # Make sure at this point we have a list of configurations.
+  stopifnot(inherits(configuration_list[[1]], "Configuration"))
+
+  # If short_range is a vector with a lower and upper bound, then look for optimal short_range within that range
   if(!missing(short_range)) {
     estimate_radii <- is.vector(short_range, mode = "numeric") && length(short_range) == 2
   } else {
     estimate_radii <- FALSE
   }
+
+  # Set defaults for other parameters
   parameters <- model_parameters(window = window,
                                  covariates = covariates,
                                  saturation = saturation,
@@ -437,29 +446,23 @@ gibbsm <- function(configuration_list,
                                  medium_range = medium_range,
                                  long_range = long_range,
                                  default_number_types = nlevels(types(configuration_list[[1]])))
-  if(!estimate_radii) {
-    short_range <- parameters$short_range
-    medium_range <- parameters$medium_range
-    long_range <- parameters$long_range
-  }
   window <- parameters$window
   covariates <- parameters$covariates
   saturation <- parameters$saturation
   model <- parameters$model
   medium_range_model <- parameters$medium_range_model
-
-  # Try to force conversion to Configuration class.
-  lapply(configuration_list, function(configuration) as.Configuration(configuration))
+  if(!estimate_radii) {
+    short_range <- parameters$short_range
+    medium_range <- parameters$medium_range
+    long_range <- parameters$long_range
+  }
 
   # Set types names and covariates names
   types_names <- levels(types(configuration_list[[1]]))
   covariates_names <- names(covariates)
 
-  # Make sure we're given a list of configurations.
-  stopifnot(inherits(configuration_list[[1]], "Configuration"))
-
   number_configurations <- length(configuration_list)
-  number_types <- length(levels(types(configuration_list[[1]])))
+  number_types <- nevels(types(configuration_list[[1]]))
 
   if(estimate_radii) {
     estimate_alpha <- matrix(short_range[1] != short_range[2], nrow = number_types, ncol = number_types)
@@ -707,12 +710,9 @@ gibbsm <- function(configuration_list,
     medium_range <- best_medium
     long_range <- best_long
   }
-  rownames(short_range) <- types_names
-  colnames(short_range) <- types_names
-  rownames(medium_range) <- types_names
-  colnames(medium_range) <- types_names
-  rownames(long_range) <- types_names
-  colnames(long_range) <- types_names
+  rownames(short_range) <- colnames(short_range) <- types_names
+  rownames(medium_range) <- colnames(medium_range) <- types_names
+  rownames(long_range) <- colnames(long_range) <- types_names
 
   ret <- append(ret, list(coefficients = append(fits_coefficients,
                                                 list(short_range = short_range,

@@ -20,7 +20,7 @@ gibbsm(
   max_dummy = 0,
   min_dummy = 0,
   dummy_factor = 0,
-  nthreads = 4,
+  nthreads = 1,
   use_regularization = FALSE,
   return_raw_fitting_data = FALSE,
   refit_glmnet = 0,
