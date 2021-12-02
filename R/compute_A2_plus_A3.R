@@ -32,9 +32,9 @@ compute_A2_plus_A3 <- function(..., list, nthreads = NULL, debug = FALSE, npoint
   }
 
   # Compute the regression coefficient, averaged out over the fits
-  average_theta <- setNames(sapply(seq_len(length(theta1)), function(i) {
-    mean(sapply(fits, function(fit) fit$coefficients_vector[i]), na.rm = TRUE)
-  }), nm = names(theta1))
+  average_theta <- sapply(names(theta1), function(nm) {
+    mean(sapply(fits, function(fit) fit$coefficients_vector[nm]), na.rm = TRUE)
+  })
 
   # Use either the fit-specific nthreads, or the user-supplied value
   if(is.null(nthreads)) {
