@@ -1,5 +1,5 @@
 
-#' Compute Papangelou conditional intensity of the model.
+#' Compute the Papangelou conditional intensity of the model.
 #'
 #' @param configuration Configuration.
 #' @param x Coordinates along the x-axis of the points at which to evaluate the Papangelou conditional intensity.
@@ -36,7 +36,8 @@ compute_papangelou <- function(configuration,
                                medium_range,
                                long_range,
                                saturation,
-                               nthreads = 4) {
+                               nthreads = 1) {
+
   parameters <- model_parameters(alpha = alpha,
                                  gamma = gamma,
                                  beta0 = beta0,
@@ -49,21 +50,18 @@ compute_papangelou <- function(configuration,
                                  model = model,
                                  medium_range_model = medium_range_model)
 
-  if(length(type) != length(x)) {
-    if(length(type) == 1) {
-      type <- rep(type, length(x))
-    } else {
-      stop("Unknown format for type.")
+  check_type_mark <- function(obj) {
+    if(length(obj) != length(x)) {
+      if(length(obj) == 1) {
+        rep(obj, length(x))
+      } else {
+        stop("Unknown format for type or mark.")
+      }
     }
   }
 
-  if(length(mark) != length(x)) {
-    if(length(mark) == 1) {
-      mark <- rep(mark, length(x))
-    } else {
-      stop("Unknown format for mark")
-    }
-  }
+  type <- check_type_mark(type)
+  mark <- check_type_mark(mark)
 
   compute_papangelou_cpp(x = x,
                          y = y,

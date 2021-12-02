@@ -2,7 +2,7 @@
 % Please edit documentation in R/compute_papangelou.R
 \name{compute_papangelou}
 \alias{compute_papangelou}
-\title{Compute Papangelou conditional intensity of the model.}
+\title{Compute the Papangelou conditional intensity of the model.}
 \usage{
 compute_papangelou(
   configuration,
@@ -21,7 +21,7 @@ compute_papangelou(
   medium_range,
   long_range,
   saturation,
-  nthreads = 4
+  nthreads = 1
 )
 }
 \arguments{
@@ -60,5 +60,5 @@ compute_papangelou(
 \item{nthreads}{Maximum number of threads for parallel computing.}
 }
 \description{
-Compute Papangelou conditional intensity of the model.
+Compute the Papangelou conditional intensity of the model.
 }
