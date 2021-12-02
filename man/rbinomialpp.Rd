@@ -14,7 +14,7 @@ rbinomialpp(
 )
 }
 \arguments{
-\item{window}{Simulation window. Default is a Rectangle window [0, 1]^2.}
+\item{window}{Simulation window. Default is a rectangle window [0, 1]^2.}
 
 \item{n}{A vector representing the number of points of each types of the multipoint binomial point processes.
 Default is a vector of same size as types, filled with ones.}

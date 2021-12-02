@@ -22,7 +22,7 @@ rgibbs(
   nsim = 1,
   drop = TRUE,
   mark_range = c(1, 1),
-  starting_configuration
+  starting_configuration = NULL
 )
 }
 \arguments{

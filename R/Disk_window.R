@@ -39,7 +39,7 @@ y_range.Disk_window <- function(window) {
 #' Return the area of a disk window.
 #'
 #' @param window The window.
-        #' @importFrom spatstat.geom area
+#' @importFrom spatstat.geom area
 #' @export
 area.Disk_window <- function(window) {
   r <- window$radius

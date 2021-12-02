@@ -40,7 +40,7 @@ rgibbs <- function(window,
                    nsim = 1,
                    drop = TRUE,
                    mark_range = c(1.0, 1.0),
-                   starting_configuration) {
+                   starting_configuration = NULL) {
   parameters <- model_parameters(window = window,
                                  alpha = alpha,
                                  gamma = gamma,
@@ -54,9 +54,7 @@ rgibbs <- function(window,
                                  types = types,
                                  model = model,
                                  medium_range_model = medium_range_model)
-  if(missing(starting_configuration)) {
-    starting_configuration <- NULL
-  }
+
   rgibbs_cpp(window = parameters$window,
              alpha = parameters$alpha,
              beta0 = parameters$beta0,

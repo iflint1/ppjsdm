@@ -18,18 +18,11 @@ rstratpp <- function(window = Rectangle_window(),
                      types = NULL,
                      drop = TRUE,
                      mark_range = c(1.0, 1.0)) {
-  if(is.list(delta_x)) {
-    delta_x <- unlist(delta_x)
-  }
-  if(is.list(delta_y)) {
-    delta_y <- unlist(delta_y)
-  }
-
-  rstratpp_cpp(window,
-               delta_x,
-               delta_y,
-               nsim,
-               types,
-               drop,
-               mark_range)
+  rstratpp_cpp(window = window,
+               delta_x = unlist(delta_x),
+               delta_y = unlist(delta_y),
+               nsim = nsim,
+               types = types,
+               drop = drop,
+               mark_range = mark_range)
 }

@@ -1,7 +1,7 @@
 
 #' Sample a binomial point processes
 #'
-#' @param window Simulation window. Default is a Rectangle window [0, 1]^2.
+#' @param window Simulation window. Default is a rectangle window [0, 1]^2.
 #' @param n A vector representing the number of points of each types of the multipoint binomial point processes.
 #' Default is a vector of same size as types, filled with ones.
 #' @param nsim Number of samples to generate. Default is 1.
@@ -16,13 +16,10 @@ rbinomialpp <- function(window = Rectangle_window(),
                  types = NULL,
                  drop = TRUE,
                  mark_range = c(1.0, 1.0)) {
-  if(is.list(n)) {
-    n <- unlist(n)
-  }
-  rbinomialpp_cpp(window,
-                  n,
-                  nsim,
-                  types,
-                  drop,
-                  mark_range)
+  rbinomialpp_cpp(window = window,
+                  n = unlist(n),
+                  nsim = nsim,
+                  types = types,
+                  drop = drop,
+                  mark_range = mark_range)
 }

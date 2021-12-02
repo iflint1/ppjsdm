@@ -16,13 +16,10 @@ rppp <- function(window = Rectangle_window(),
                  types = NULL,
                  drop = TRUE,
                  mark_range = c(1.0, 1.0)) {
-  if(is.list(lambda)) {
-    lambda <- unlist(lambda)
-  }
-  rppp_cpp(window,
-           lambda,
-           nsim,
-           types,
-           drop,
-           mark_range)
+  rppp_cpp(window = window,
+           lambda = unlist(lambda),
+           nsim = nsim,
+           types = types,
+           drop = drop,
+           mark_range = mark_range)
 }
