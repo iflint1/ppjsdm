@@ -5,7 +5,6 @@
 
 #include <type_traits> // std::remove_cv_t, std::remove_reference_t
 
-#include "../configuration/configuration_manipulation.hpp"
 #include "../utility/window.hpp"
 
 namespace ppjsdm {

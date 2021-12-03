@@ -6,6 +6,9 @@
 
 #include "rbinomialpp_single.hpp"
 
+#include "../utility/window.hpp"
+
+#include <type_traits> // std::remove_cv_t, std::remove_reference_t
 #include <vector> // std::vector
 
 namespace ppjsdm {
@@ -15,8 +18,9 @@ inline auto rppp_single(const Window& window, const Vector& lambda, R_xlen_t num
   const auto volume(window.volume());
   std::vector<R_xlen_t> number_points(number_types);
   R_xlen_t total_number(0);
+  using volume_t = std::remove_cv_t<std::remove_reference_t<decltype(volume)>>;
   for(R_xlen_t type(0); type < number_types; ++type) {
-    const auto points_to_add(R::rpois(volume * static_cast<double>(lambda[type])));
+    const auto points_to_add(R::rpois(volume * static_cast<volume_t>(lambda[type])));
     number_points[type] = points_to_add;
     total_number += points_to_add;
   }
