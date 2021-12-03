@@ -26,7 +26,6 @@ inline auto rstratpp_single(const Window& window,
   const auto y1(window.ymin());
   const auto y2(window.ymax());
 
-  auto iterator(configuration.begin());
   using filling_t = decltype(delta_x.size());
   for(decltype(delta_x.size()) type(0); type < number_types; ++type) {
     const auto nx = static_cast<filling_t>((x2 - x1) / delta_x[type]);
