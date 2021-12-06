@@ -17,20 +17,28 @@ inline auto rstratpp_single(const Window& window,
 
   const auto number_types(delta_x.size());
 
-  const auto x1(window.xmin());
-  const auto x2(window.xmax());
-  const auto y1(window.ymin());
-  const auto y2(window.ymax());
+  const auto xmin(window.xmin());
+  const auto xmax(window.xmax());
+  const auto ymin(window.ymin());
+  const auto ymax(window.ymax());
 
   using filling_t = decltype(delta_x.size());
-  for(filling_t type(0); type < number_types; ++type) {
-    const auto nx = static_cast<filling_t>((x2 - x1) / delta_x[type]);
-    const auto ny = static_cast<filling_t>((y2 - y1) / delta_y[type]);
 
+  filling_t maximum_size(0);
+  for(filling_t type(0); type < number_types; ++type) {
+    const auto nx = static_cast<filling_t>((xmax - xmin) / delta_x[type]);
+    const auto ny = static_cast<filling_t>((ymax - ymin) / delta_y[type]);
+    maximum_size += nx * ny;
+  }
+  reserve_if_possible(configuration, maximum_size);
+
+  for(filling_t type(0); type < number_types; ++type) {
+    const auto nx = static_cast<filling_t>((xmax - xmin) / delta_x[type]);
+    const auto ny = static_cast<filling_t>((ymax - ymin) / delta_y[type]);
     for(filling_t filling_x(0); filling_x < nx; ++filling_x) {
       for(filling_t filling_y(0); filling_y < ny; ++filling_y) {
-        const auto sample_x(x1 + (filling_x + unif_rand()) * delta_x[type]);
-        const auto sample_y(y1 + (filling_y + unif_rand()) * delta_y[type]);
+        const auto sample_x(xmin + (filling_x + unif_rand()) * delta_x[type]);
+        const auto sample_y(ymin + (filling_y + unif_rand()) * delta_y[type]);
         if(window.is_in(sample_x, sample_y)) {
           add_point(configuration, Marked_point(sample_x, sample_y, type, window.draw_mark()));
         }
