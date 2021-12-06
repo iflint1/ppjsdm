@@ -15,8 +15,6 @@ inline auto rstratpp_single(const Window& window,
                             const Vector2& delta_y) {
   Configuration configuration{};
 
-  // TODO: Reserve sum(mx * ny)?
-
   const auto number_types(delta_x.size());
 
   const auto x1(window.xmin());
@@ -25,7 +23,7 @@ inline auto rstratpp_single(const Window& window,
   const auto y2(window.ymax());
 
   using filling_t = decltype(delta_x.size());
-  for(decltype(delta_x.size()) type(0); type < number_types; ++type) {
+  for(filling_t type(0); type < number_types; ++type) {
     const auto nx = static_cast<filling_t>((x2 - x1) / delta_x[type]);
     const auto ny = static_cast<filling_t>((y2 - y1) / delta_y[type]);
 

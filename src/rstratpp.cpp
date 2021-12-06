@@ -1,8 +1,9 @@
 #include <Rcpp.h>
 #include <Rinternals.h>
 
-#include "configuration/configuration_wrapper.hpp"
 #include "configuration/make_R_configuration.hpp"
+
+#include "point/point_manipulation.hpp"
 
 #include "simulation/rstrat_single.hpp"
 
@@ -21,8 +22,8 @@ inline SEXP rstratpp_helper(const ppjsdm::Window& window,
                             bool drop) {
   Rcpp::List samples(nsim);
   for(R_xlen_t i(0); i < nsim; ++i) {
-    const auto sample(ppjsdm::rstratpp_single<ppjsdm::Configuration_wrapper>(window, delta_x, delta_y));
-    samples[i] = ppjsdm::make_R_configuration(sample, types);
+    const auto sample(ppjsdm::rstratpp_single<std::vector<ppjsdm::Marked_point>>(window, delta_x, delta_y));
+    samples[i] = ppjsdm::make_R_configuration(std::move(sample), types);
   }
   return ppjsdm::get_list_or_first_element(samples, nsim == 1 && drop);
 }

@@ -293,6 +293,13 @@ struct point_manipulation<Configuration_wrapper::Marked_point_reference> {
   }
 };
 
+template<>
+struct configuration_manipulation<Configuration_wrapper>: public configuration_manipulation_defaults<Configuration_wrapper> {
+  static inline void reserve_if_possible(Configuration_wrapper&, typename Configuration_wrapper::size_type) {
+    return;
+  }
+};
+
 } // namespace traits
 } // namespace ppjsdm
 
