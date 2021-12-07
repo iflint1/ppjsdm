@@ -199,7 +199,7 @@ print.Configuration <- function(x, ...) {
 #' @importFrom ggplot2 aes_string coord_equal element_text geom_point ggplot ggtitle scale_color_manual scale_shape_manual theme theme_minimal xlab xlim ylab ylim
 #' @method plot Configuration
 #' @export
-plot.Configuration <- function(x, window, ...) {
+plot.Configuration <- function(x, window, color, shape, ...) {
   if(length(x$x) > 0) {
     if(missing(window)) {
       x_range <- c(min(x$x), max(x$x))
@@ -208,9 +208,14 @@ plot.Configuration <- function(x, window, ...) {
       x_range <- x_range(window)
       y_range <- y_range(window)
     }
-    # TODO: Allow for user to supply colors & labels.
 
     df <- data.frame(x = x$x, y = x$y, Types = droplevels(x$types), Marks = x$marks)
+    if(missing(color)) {
+      color <- rep(c("#FF0000", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6"), nlevels(df$Types))
+    }
+    if(missing("shape")) {
+      shape <- rep(15:17, nlevels(df$Types))
+    }
     g <- ggplot(data = df)
     if(!all(df$Marks == 1.)) {
       g <- g + geom_point(aes_string(x = 'x', y = 'y', colour = 'Types', shape = 'Types', size = 'Marks'))
@@ -219,8 +224,8 @@ plot.Configuration <- function(x, window, ...) {
     }
     g + xlim(x_range[1], x_range[2]) +
       ylim(y_range[1], y_range[2]) +
-      scale_color_manual(values = rep(c("#FF0000", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6"), nlevels(df$Types))) +
-      scale_shape_manual(values = rep(15:17, nlevels(df$Types))) +
+      scale_color_manual(values = color) +
+      scale_shape_manual(values = shape) +
       xlab(NULL) +
       ylab(NULL) +
       ggtitle("") +
