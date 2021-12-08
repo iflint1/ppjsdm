@@ -21,6 +21,7 @@ spatstat_result <- t.test(spatstat_number_points, conf.interval = confidence)
 message(paste0("ppjsdm confidence interval: [", paste0(ppjsdm_result$conf.int, collapse = ", "),
        "], spatstat confidence interval: [", paste0(spatstat_result$conf.int, collapse = ", "), "]."))
 
+# ------------------------------------------------------------------------------------------
 
 beta0 <- log(35)
 radius <- 0.05
@@ -37,6 +38,8 @@ spatstat_result <- t.test(spatstat_number_points, conf.interval = confidence)
 message(paste0("ppjsdm confidence interval: [", paste0(ppjsdm_result$conf.int, collapse = ", "),
                "], spatstat confidence interval: [", paste0(spatstat_result$conf.int, collapse = ", "), "]."))
 
+# ------------------------------------------------------------------------------------------
+
 window <- Rectangle_window(c(0, 1), c(0, 1))
 alpha <- 0.
 beta0 <- log(50)
@@ -47,7 +50,6 @@ short_range <- 0.05
 medium_range <- 0.1
 long_range <- 0.15
 saturation <- 2
-
 
 N <- 10000
 cftp_configurations <- rgibbs(window = window, saturation = saturation, alpha = alpha, beta0 = beta0, gamma = gamma, model = model, medium_range_model = medium_range_model, short_range = short_range, medium_range = medium_range, long_range = long_range, nsim = N)
@@ -62,6 +64,8 @@ mh_result <- t.test(mh_number_points, conf.interval = confidence)
 
 message(paste0("cftp confidence interval: [", paste0(cftp_result$conf.int, collapse = ", "),
                "], mh confidence interval: [", paste0(mh_result$conf.int, collapse = ", "), "]."))
+
+# ------------------------------------------------------------------------------------------
 
 window <- Rectangle_window(c(0, 1), c(0, 1))
 alpha <- cbind(c(-1.0, 0.), c(0., 0.))
@@ -74,7 +78,6 @@ medium_range <- matrix(0.1, 2, 2)
 long_range <- matrix(0.15, 2, 2)
 saturation <- 2
 
-
 N <- 10000
 cftp_configurations <- rgibbs(window = window, saturation = saturation, alpha = alpha, beta0 = beta0, gamma = gamma, model = model, medium_range_model = medium_range_model, short_range = short_range, medium_range = medium_range, long_range = long_range, nsim = N)
 cftp_number_points <- sapply(cftp_configurations, function(a) length(a$x))
@@ -88,6 +91,8 @@ mh_result <- t.test(mh_number_points, conf.interval = confidence)
 
 message(paste0("cftp confidence interval: [", paste0(cftp_result$conf.int, collapse = ", "),
                "], mh confidence interval: [", paste0(mh_result$conf.int, collapse = ", "), "]."))
+
+# ------------------------------------------------------------------------------------------
 
 window <- Rectangle_window(c(0, 1), c(0, 1))
 alpha <- cbind(c(-1.0, -0.3), c(-0.3, -0.4))
@@ -100,7 +105,6 @@ medium_range <- matrix(0.1, 2, 2)
 long_range <- matrix(0.15, 2, 2)
 saturation <- 2
 
-
 N <- 10000
 cftp_configurations <- rgibbs(window = window, saturation = saturation, alpha = alpha, beta0 = beta0, gamma = gamma, model = model, medium_range_model = medium_range_model, short_range = short_range, medium_range = medium_range, long_range = long_range, nsim = N)
 cftp_number_points <- sapply(cftp_configurations, function(a) length(a$x))
@@ -115,6 +119,8 @@ mh_result <- t.test(mh_number_points, conf.interval = confidence)
 message(paste0("cftp confidence interval: [", paste0(cftp_result$conf.int, collapse = ", "),
                "], mh confidence interval: [", paste0(mh_result$conf.int, collapse = ", "), "]."))
 
+# ------------------------------------------------------------------------------------------
+
 window <- Rectangle_window(c(0, 1), c(0, 1))
 alpha <- 0.4
 beta0 <- log(10)
@@ -125,7 +131,6 @@ short_range <- 0.05
 medium_range <- 0.1
 long_range <- 0.15
 saturation <- 1
-
 
 N <- 10000
 cftp_configurations <- rgibbs(window = window, saturation = saturation, alpha = alpha, beta0 = beta0, gamma = gamma, model = model, medium_range_model = medium_range_model, short_range = short_range, medium_range = medium_range, long_range = long_range, nsim = N)

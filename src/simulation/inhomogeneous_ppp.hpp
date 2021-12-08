@@ -12,13 +12,17 @@
 namespace ppjsdm {
 
 template<typename Configuration, typename Intensity, typename UpperBound>
-inline auto simulate_inhomogeneous_ppp(const Window& window, const Intensity& log_normalised_intensity, const UpperBound& upper_bound, R_xlen_t number_types) {
+inline auto simulate_inhomogeneous_ppp(const Window& window,
+                                       const Intensity& log_normalised_intensity,
+                                       const UpperBound& upper_bound) {
   const auto volume(window.volume());
+  const auto number_types(upper_bound.size());
 
   Configuration configuration{};
 
+  using volume_t = std::remove_cv_t<std::remove_reference_t<decltype(volume)>>;
   for(R_xlen_t type(0); type < number_types; ++type) {
-    const R_xlen_t max_points_to_add(R::rpois(volume * static_cast<double>(upper_bound[type])));
+    const R_xlen_t max_points_to_add(R::rpois(volume * static_cast<volume_t>(upper_bound[type])));
     reserve_if_possible(configuration, configuration.size() + max_points_to_add);
     for(R_xlen_t j(0); j < max_points_to_add; ++j) {
       const auto sample(window.sample(type));

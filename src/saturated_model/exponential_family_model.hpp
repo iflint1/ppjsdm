@@ -365,8 +365,7 @@ struct approximate_draw_helper<Configuration, Truncated_exponential_family_model
                                                                        [&model](const auto& point) {
                                                                          return model.get_log_normalized_bounding_intensity(point);
                                                                        },
-                                                                       model.get_upper_bound_approximate_ppp_intensity(),
-                                                                       model.get_number_types()));
+                                                                       model.get_upper_bound_approximate_ppp_intensity()));
     return configuration;
   }
 };

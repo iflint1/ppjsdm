@@ -25,8 +25,7 @@ public:
     model_(model),
     last_configuration_(simulate_inhomogeneous_ppp<Configuration>(model.get_window(),
                                                                   [&model](const auto& point) { return model.get_log_normalized_bounding_intensity(point); },
-                                                                  model.get_upper_bound(),
-                                                                  model.get_number_types())),
+                                                                  model.get_upper_bound())),
                                                                   intensity_integral_(model.get_integral()),
                                                                   chain_{} {}
 

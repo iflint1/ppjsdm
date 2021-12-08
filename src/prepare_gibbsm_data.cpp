@@ -91,30 +91,26 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   using big_int_t = long long int;
   std::vector<big_int_t> rho_times_volume(number_types);
   std::vector<computation_t> rho(number_types);
-  size_t length_D(0);
+
   for(typename decltype(rho_times_volume)::size_type i(0); i < rho_times_volume.size(); ++i) {
     const auto factor_times_max_points_in_type = static_cast<computation_t>(dummy_factor) * static_cast<computation_t>(max_points_by_type[i]);
     if(static_cast<big_int_t>(factor_times_max_points_in_type) < static_cast<big_int_t>(max_dummy)) {
       if(static_cast<big_int_t>(factor_times_max_points_in_type) > static_cast<big_int_t>(min_dummy)) {
         rho_times_volume[i] = static_cast<big_int_t>(factor_times_max_points_in_type);
         rho[i] = factor_times_max_points_in_type / volume;
-        length_D += static_cast<size_t>(factor_times_max_points_in_type);
       } else {
         rho_times_volume[i] = static_cast<big_int_t>(min_dummy);
         rho[i] = static_cast<computation_t>(min_dummy) / volume;
-        length_D += static_cast<size_t>(min_dummy);
       }
     } else {
       rho_times_volume[i] = static_cast<big_int_t>(max_dummy);
       rho[i] = static_cast<computation_t>(max_dummy) / volume;
-      length_D += static_cast<size_t>(max_dummy);
     }
   }
   using dummy_configuration_t = std::vector<ppjsdm::Marked_point>;
   dummy_configuration_t D;
   if(dummy_distribution == std::string("binomial")) {
-    // TODO: Don't precompute length_D, instead make it a paremeter of rbinomialpp
-    D = ppjsdm::rbinomialpp_single<dummy_configuration_t>(window, rho_times_volume, number_types, length_D);
+    D = ppjsdm::rbinomialpp_single<dummy_configuration_t>(window, rho_times_volume);
   } else if(dummy_distribution == std::string("stratified")) {
     decltype(rho) delta(rho);
     for(auto& r: delta) {
@@ -136,7 +132,6 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
         }
         return false;
       }), D.end());
-  length_D = D.size();
 
   // Make shift vector
   Rcpp::NumericVector shift(Rcpp::no_init(number_types));
@@ -192,7 +187,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   }
 
   // Compute a few parameters necessary for the construction of regressors
-  const auto total_points(total_configuration_length - total_removed_points + length_D * configuration_list.size());
+  const auto total_points(total_configuration_length - total_removed_points + D.size() * configuration_list.size());
   const auto number_parameters_struct(ppjsdm::get_number_parameters(number_types,
                                                                     covariates.size(),
                                                                     estimate_alpha,

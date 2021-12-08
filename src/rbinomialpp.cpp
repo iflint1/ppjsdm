@@ -10,15 +10,16 @@
 #include "utility/get_list_or_first_element.hpp"
 #include "utility/get_number_types.hpp"
 #include "utility/make_default_types.hpp"
-#include "utility/sum.hpp"
 #include "utility/window.hpp"
 
-inline SEXP rbinomialpp_helper(const ppjsdm::Window& window, const Rcpp::NumericVector& n, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, R_xlen_t number_types) {
-  const auto total_number(ppjsdm::sum<R_xlen_t>(n, number_types));
-
+inline SEXP rbinomialpp_helper(const ppjsdm::Window& window,
+                               const Rcpp::NumericVector& n,
+                               R_xlen_t nsim,
+                               Rcpp::CharacterVector types,
+                               bool drop) {
   Rcpp::List samples(nsim);
   for(R_xlen_t i(0); i < nsim; ++i) {
-    const auto sample(ppjsdm::rbinomialpp_single<ppjsdm::Configuration_wrapper>(window, n, number_types, total_number));
+    const auto sample(ppjsdm::rbinomialpp_single<ppjsdm::Configuration_wrapper>(window, n));
     samples[i] = ppjsdm::make_R_configuration(sample, types);
   }
   return ppjsdm::get_list_or_first_element(samples, nsim == 1 && drop);
@@ -30,5 +31,5 @@ SEXP rbinomialpp_cpp(SEXP window, SEXP n, R_xlen_t nsim, SEXP types, bool drop, 
   n = ppjsdm::construct_if_missing<Rcpp::IntegerVector>(n, 1, number_types);
   types = ppjsdm::make_types(types, number_types, n);
   const auto cpp_window(ppjsdm::Window(window, mark_range));
-  return rbinomialpp_helper(cpp_window, n, nsim, types, drop, number_types);
+  return rbinomialpp_helper(cpp_window, n, nsim, types, drop);
 }
