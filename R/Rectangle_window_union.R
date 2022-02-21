@@ -35,8 +35,10 @@ Rectangle_window_union <- local({
             if(x_ranges[[i]][1] < x_ranges[[j]][2] &&
                x_ranges[[i]][2] > x_ranges[[j]][1] &&
                y_ranges[[i]][2] > y_ranges[[j]][1] &&
-               y_ranges[[i]][1] < y_ranges[[i]][2] ) {
-              stop("Two of the given rectangles overlap.")
+               y_ranges[[i]][1] < y_ranges[[j]][2]) {
+              stop(paste0("Two of the given rectangles overlap, first with xs (", paste0(x_ranges[[i]], collapse = ", "),
+              ") and ys (", paste0(y_ranges[[i]], collapse = ", "), "), second with first with xs (",
+              paste0(x_ranges[[j]], collapse = ", "), ") and ys (", paste0(y_ranges[[j]], collapse = ", "), ")."))
             }
           }
         }
