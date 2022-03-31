@@ -14,6 +14,7 @@ gibbsm(
   medium_range,
   long_range,
   saturation,
+  dummy,
   debug = FALSE,
   fitting_package = "glmnet",
   which_lambda = "AIC",
@@ -46,6 +47,8 @@ gibbsm(
 \item{long_range}{Long range interaction radius. Filled with 0 by default.}
 
 \item{saturation}{Saturation parameter of the point process.}
+
+\item{dummy}{(Optional) dummy point configuration used in the fitting procedure.}
 
 \item{debug}{Print debugging information?}
 

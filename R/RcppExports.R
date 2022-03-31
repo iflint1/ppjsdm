@@ -43,6 +43,10 @@ prepare_gibbsm_data <- function(configuration_list, window, covariates, model, m
     .Call(`_ppjsdm_prepare_gibbsm_data`, configuration_list, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, max_dummy, min_dummy, dummy_factor, estimate_alpha, estimate_gamma, nthreads, debug, dummy_distribution, type_names)
 }
 
+prepare_gibbsm_data_with_dummy <- function(configuration_list, dummy, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, estimate_alpha, estimate_gamma, nthreads, debug, type_names) {
+    .Call(`_ppjsdm_prepare_gibbsm_data_with_dummy`, configuration_list, dummy, window, covariates, model, medium_range_model, short_range, medium_range, long_range, saturation, mark_range, estimate_alpha, estimate_gamma, nthreads, debug, type_names)
+}
+
 rbinomialpp_cpp <- function(window, n, nsim, types, drop, mark_range) {
     .Call(`_ppjsdm_rbinomialpp_cpp`, window, n, nsim, types, drop, mark_range)
 }

@@ -372,6 +372,7 @@ fit_gibbs <- function(gibbsm_data,
 #' @param medium_range Medium range interaction radius. Filled with 0 by default.
 #' @param long_range Long range interaction radius. Filled with 0 by default.
 #' @param saturation Saturation parameter of the point process.
+#' @param dummy (Optional) dummy point configuration used in the fitting procedure.
 #' @param debug Print debugging information?
 #' @param fitting_package Choices are glmnet, oem or glm.
 #' @param which_lambda Which lambda to choose in the regularised fit? Choices are "AIC" (lambda that minimises AIC), "BIC" (lambda that minimises BIC) or "smallest" (smallest lambda).
@@ -401,6 +402,7 @@ gibbsm <- function(configuration_list,
                    medium_range,
                    long_range,
                    saturation,
+                   dummy,
                    debug = FALSE,
                    fitting_package = "glmnet",
                    which_lambda = "AIC",
@@ -500,24 +502,44 @@ gibbsm <- function(configuration_list,
       # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
       mark_range <- c(min(marks(configuration_list[[1]])), max(marks(configuration_list[[1]])))
 
-      gibbsm_data_list <- prepare_gibbsm_data(configuration_list,
-                                              window,
-                                              covariates,
-                                              model,
-                                              medium_range_model,
-                                              sh,
-                                              me,
-                                              lo,
-                                              saturation,
-                                              mark_range,
-                                              max_dummy = max_dummy,
-                                              min_dummy = min_dummy,
-                                              dummy_factor = dummy_factor,
-                                              estimate_alpha = estimate_alpha,
-                                              estimate_gamma = estimate_gamma,
-                                              nthreads = nthreads,
-                                              debug = debug,
-                                              dummy_distribution = dummy_distribution)
+      gibbsm_data_list <- if(missing(dummy)) {
+        prepare_gibbsm_data(configuration_list = configuration_list,
+                            window = window,
+                            covariates = covariates,
+                            model = model,
+                            medium_range_model = medium_range_model,
+                            short_range = sh,
+                            medium_range = me,
+                            long_range = lo,
+                            saturation = saturation,
+                            mark_range = mark_range,
+                            max_dummy = max_dummy,
+                            min_dummy = min_dummy,
+                            dummy_factor = dummy_factor,
+                            estimate_alpha = estimate_alpha,
+                            estimate_gamma = estimate_gamma,
+                            nthreads = nthreads,
+                            debug = debug,
+                            dummy_distribution = dummy_distribution,
+                            type_names = types_names)
+      } else {
+        prepare_gibbsm_data_with_dummy(configuration_list = configuration_list,
+                                       dummy = dummy,
+                                       window = window,
+                                       covariates = covariates,
+                                       model = model,
+                                       medium_range_model = medium_range_model,
+                                       short_range = sh,
+                                       medium_range = me,
+                                       long_range = lo,
+                                       saturation = saturation,
+                                       mark_range = mark_range,
+                                       estimate_alpha = estimate_alpha,
+                                       estimate_gamma = estimate_gamma,
+                                       nthreads = nthreads,
+                                       debug = debug,
+                                       type_names = types_names)
+      }
 
       fit <- fit_gibbs(gibbsm_data_list,
                        fitting_package = "glm",
@@ -583,25 +605,44 @@ gibbsm <- function(configuration_list,
     # Refit with best radii and non-approximation
     # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
     mark_range <- c(min(marks(configuration_list[[1]])), max(marks(configuration_list[[1]])))
-    gibbsm_data_list <- prepare_gibbsm_data(configuration_list,
-                                            window,
-                                            covariates,
-                                            model,
-                                            medium_range_model,
-                                            best_short,
-                                            best_medium,
-                                            best_long,
-                                            saturation,
-                                            mark_range,
-                                            max_dummy = max_dummy,
-                                            min_dummy = min_dummy,
-                                            dummy_factor = dummy_factor,
-                                            estimate_alpha = estimate_alpha,
-                                            estimate_gamma = estimate_gamma,
-                                            nthreads = nthreads,
-                                            debug = debug,
-                                            dummy_distribution = dummy_distribution,
-                                            type_names = types_names)
+    gibbsm_data_list <- if(missing(dummy)) {
+      prepare_gibbsm_data(configuration_list = configuration_list,
+                          window = window,
+                          covariates = covariates,
+                          model = model,
+                          medium_range_model = medium_range_model,
+                          short_range = best_short,
+                          medium_range = best_medium,
+                          long_range = best_long,
+                          saturation = saturation,
+                          mark_range = mark_range,
+                          max_dummy = max_dummy,
+                          min_dummy = min_dummy,
+                          dummy_factor = dummy_factor,
+                          estimate_alpha = estimate_alpha,
+                          estimate_gamma = estimate_gamma,
+                          nthreads = nthreads,
+                          debug = debug,
+                          dummy_distribution = dummy_distribution,
+                          type_names = types_names)
+    } else {
+      prepare_gibbsm_data_with_dummy(configuration_list = configuration_list,
+                                     dummy = dummy,
+                                     window = window,
+                                     covariates = covariates,
+                                     model = model,
+                                     medium_range_model = medium_range_model,
+                                     short_range = best_short,
+                                     medium_range = best_medium,
+                                     long_range = best_long,
+                                     saturation = saturation,
+                                     mark_range = mark_range,
+                                     estimate_alpha = estimate_alpha,
+                                     estimate_gamma = estimate_gamma,
+                                     nthreads = nthreads,
+                                     debug = debug,
+                                     type_names = types_names)
+    }
 
     if(return_raw_fitting_data) {
       return(gibbsm_data_list)
@@ -640,25 +681,44 @@ gibbsm <- function(configuration_list,
     # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
     mark_range <- c(min(marks(configuration_list[[1]])), max(marks(configuration_list[[1]])))
 
-    gibbsm_data_list <- prepare_gibbsm_data(configuration_list = configuration_list,
-                                            window = window,
-                                            covariates = covariates,
-                                            model = model,
-                                            medium_range_model = medium_range_model,
-                                            short_range = short_range,
-                                            medium_range = medium_range,
-                                            long_range = long_range,
-                                            saturation = saturation,
-                                            mark_range = mark_range,
-                                            max_dummy = max_dummy,
-                                            min_dummy = min_dummy,
-                                            dummy_factor = dummy_factor,
-                                            estimate_alpha = estimate_alpha,
-                                            estimate_gamma = estimate_gamma,
-                                            nthreads = nthreads,
-                                            debug = debug,
-                                            dummy_distribution = dummy_distribution,
-                                            type_names = types_names)
+    gibbsm_data_list <- if(missing(dummy)) {
+      prepare_gibbsm_data(configuration_list = configuration_list,
+                          window = window,
+                          covariates = covariates,
+                          model = model,
+                          medium_range_model = medium_range_model,
+                          short_range = short_range,
+                          medium_range = medium_range,
+                          long_range = long_range,
+                          saturation = saturation,
+                          mark_range = mark_range,
+                          max_dummy = max_dummy,
+                          min_dummy = min_dummy,
+                          dummy_factor = dummy_factor,
+                          estimate_alpha = estimate_alpha,
+                          estimate_gamma = estimate_gamma,
+                          nthreads = nthreads,
+                          debug = debug,
+                          dummy_distribution = dummy_distribution,
+                          type_names = types_names)
+    } else {
+      prepare_gibbsm_data_with_dummy(configuration_list = configuration_list,
+                                     dummy = dummy,
+                                     window = window,
+                                     covariates = covariates,
+                                     model = model,
+                                     medium_range_model = medium_range_model,
+                                     short_range = short_range,
+                                     medium_range = medium_range,
+                                     long_range = long_range,
+                                     saturation = saturation,
+                                     mark_range = mark_range,
+                                     estimate_alpha = estimate_alpha,
+                                     estimate_gamma = estimate_gamma,
+                                     nthreads = nthreads,
+                                     debug = debug,
+                                     type_names = types_names)
+    }
 
     if(return_raw_fitting_data) {
       return(gibbsm_data_list)
