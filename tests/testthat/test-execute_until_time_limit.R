@@ -15,7 +15,7 @@ test_that("Returns initial objects when time limit is large", {
   expect_equal(objects, ppjsdm:::execute_until_time_limit(objects = objects, func = func, time_limit = Inf, unit = "secs"))
 
   objects <- lapply(c(TRUE, FALSE), function(i) i)
-  expect_equal(objects, ppjsdm:::execute_until_time_limit(objects = objects, func = func, time_limit = 0.5, unit = "secs"))
+  expect_equal(objects, ppjsdm:::execute_until_time_limit(objects = objects, func = func, time_limit = 1, unit = "secs"))
 
   objects <- lapply(c("a", "b", "c"), function(i) i)
   expect_equal(objects, ppjsdm:::execute_until_time_limit(objects = objects, func = func, time_limit = 1, unit = "mins"))
