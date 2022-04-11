@@ -68,7 +68,7 @@ compute_A1 <- function(..., list, nthreads = NULL, debug = FALSE, time_limit = I
         colnames(tmp) <- mat@Dimnames[[2]]
         tmp
       }
-      if(!is(fit$data_list$regressors, "Matrix::Matrix")) {
+      if(!inherits(fit$data_list$regressors, "Matrix")) {
         stop("Error while converting regression matrix to base::matrix format.")
       } else {
         regressors <- as_matrix(fit$data_list$regressors)
