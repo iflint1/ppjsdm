@@ -64,7 +64,7 @@ struct dispersion_computation_fitting {
         }
       }
 
-#pragma omp parallel default(none) shared(other_configuration) \
+#pragma omp parallel shared(other_configuration) \
       shared(dispersion, configuration, number_types, count_vector, varphi)
 {
       decltype(dispersion) dispersion_private(size(other_configuration));
@@ -108,7 +108,7 @@ struct dispersion_computation_fitting {
         }
       }
 
-#pragma omp parallel default(none) shared(other_configuration) \
+#pragma omp parallel shared(other_configuration) \
       shared(dispersion, configuration, number_types, count_vector, varphi)
 {
       decltype(dispersion) dispersion_private(size(other_configuration));
