@@ -72,7 +72,7 @@ struct dispersion_computation_fitting {
       for(decltype(size(other_configuration)) i = 0; i < size(other_configuration); ++i) {
         dispersion_private[i] = DispersionType(number_types);
         CountType count_point(number_types);
-        for(size_t j(0); j < configuration_size; ++j) {
+        for(size_t j(0); j < size(configuration); ++j) {
           AbstractDispersion::template update_count<std::numeric_limits<int>::max()>(varphi, count_point[get_type(configuration[j])],
                                                                                   other_configuration[i], configuration[j]);
         }
