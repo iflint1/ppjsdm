@@ -134,7 +134,7 @@ inline auto make_G2_binomial(const std::vector<double>& papangelou,
   ppjsdm::Lightweight_square_matrix<computation_t> G2(number_parameters);
   computation_t kappa(0.);
 
-#pragma omp parallel default(none) shared(papangelou, rho, regressors, type, kappa, G2, G2_vec)
+#pragma omp parallel shared(papangelou, rho, regressors, type, kappa, G2, G2_vec)
 {
   decltype(G2_vec) G2_vec_private(number_parameters);
   decltype(G2) G2_private(number_parameters);
@@ -259,7 +259,7 @@ inline auto make_G2_stratified(const Configuration& configuration,
   }
 
   // Compute G2
-#pragma omp parallel default(none) shared(G2, dummy, short_computation_dummy, short_computation_other) \
+#pragma omp parallel shared(G2, dummy, short_computation_dummy, short_computation_other) \
   shared(medium_computation_dummy, medium_computation_other, compute_some_alphas, compute_some_gammas) \
   shared(covariates, estimate_alpha, estimate_gamma, theta, rho)
 {
@@ -368,7 +368,7 @@ inline auto make_S(const std::vector<double>& papangelou,
 
   ppjsdm::Lightweight_square_matrix<computation_t> S(number_parameters);
 
-#pragma omp parallel default(none) shared(papangelou, rho, regressors, type, S)
+#pragma omp parallel shared(papangelou, rho, regressors, type, S)
 {
   decltype(S) S_private(number_parameters);
 #pragma omp for nowait
@@ -420,7 +420,7 @@ inline auto make_A1(const std::vector<double>& papangelou,
 
   ppjsdm::Lightweight_square_matrix<computation_t> A1(number_parameters);
 
-#pragma omp parallel default(none) shared(papangelou, rho, regressors, type, A1)
+#pragma omp parallel shared(papangelou, rho, regressors, type, A1)
 {
   decltype(A1) A1_private(number_parameters);
 #pragma omp for nowait
@@ -571,7 +571,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
     }
 
     const auto max_index(std::min<long long int>(filling + increment, static_cast<long long int>(ppjsdm::size(restricted_configuration)) * (static_cast<long long int>(ppjsdm::size(restricted_configuration)) - 1) / 2));
-#pragma omp parallel default(none)                                                  \
+#pragma omp parallel                                              \
     shared(filling, regressors, compute_some_alphas, compute_some_gammas)           \
       shared(short_computation, medium_computation, estimate_alpha, estimate_gamma) \
       shared(covariates, theta, papangelou, rho, mat, restricted_papangelou, regressors_over_papangelou_plus_rho)

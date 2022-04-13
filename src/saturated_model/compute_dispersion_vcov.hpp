@@ -122,7 +122,7 @@ struct generic_vcov_dispersion_computation {
       decltype(dispersion_j) dispersion_j_private(dispersion_i.size());
 #pragma omp for nowait
       for(std::remove_cv_t<decltype(dispersion_i.size())> index = min_index; index < max_index; ++index) {
-        const auto pr(decode_linear(index, restricted_configuration_size));
+        const auto pr(decode_linear(index, size(restricted_configuration)));
         const size_t i(pr.first);
         const size_t j(pr.second);
 
@@ -130,7 +130,7 @@ struct generic_vcov_dispersion_computation {
         if(get_type(restricted_configuration[i]) == get_type(restricted_configuration[j])) {
           dispersion_i_private[index - min_index] = DispersionType(number_types);
           dispersion_j_private[index - min_index] = DispersionType(number_types);
-          for(size_t l(0); l < configuration_size; ++l) {
+          for(size_t l(0); l < size(configuration); ++l) {
             if(l != index_in_configuration[i] && l != index_in_configuration[j]) {
               dispersion_i_private[index - min_index][get_type(configuration[l])] += AbstractDispersion::template delta_discarding<2, true>(varphi, count_vector[l][get_type(restricted_configuration[i])], configuration[l], restricted_configuration[i], restricted_configuration[j]);
               dispersion_j_private[index - min_index][get_type(configuration[l])] += AbstractDispersion::template delta_discarding<2, true>(varphi, count_vector[l][get_type(restricted_configuration[j])], configuration[l], restricted_configuration[j], restricted_configuration[i]);
