@@ -21,7 +21,8 @@ inline auto simulate_inhomogeneous_ppp(const Window& window,
   Configuration configuration{};
 
   using volume_t = std::remove_cv_t<std::remove_reference_t<decltype(volume)>>;
-  for(R_xlen_t type(0); type < number_types; ++type) {
+  using number_types_t = std::remove_cv_t<std::remove_reference_t<decltype(number_types)>>;
+  for(number_types_t type(0); type < number_types; ++type) {
     const R_xlen_t max_points_to_add(R::rpois(volume * static_cast<volume_t>(upper_bound[type])));
     reserve_if_possible(configuration, configuration.size() + max_points_to_add);
     for(R_xlen_t j(0); j < max_points_to_add; ++j) {
