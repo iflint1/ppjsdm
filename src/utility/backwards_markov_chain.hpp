@@ -6,6 +6,7 @@
 #include "../configuration/configuration_manipulation.hpp"
 #include "../point/point_manipulation.hpp"
 #include "../simulation/inhomogeneous_ppp.hpp"
+#include "../utility/timer.hpp"
 
 #include <tuple> // std::tuple
 #include <type_traits> // std::remove_cv_t, std::remove_reference_t
@@ -27,7 +28,7 @@ public:
                                                                   [&model](const auto& point) { return model.get_log_normalized_bounding_intensity(point); },
                                                                   model.get_upper_bound())),
                                                                   intensity_integral_(model.get_integral()),
-                                                                  chain_{} {}
+                                                                  chain_{} { }
 
   auto size() const {
     return chain_.size();
@@ -37,6 +38,9 @@ public:
     const auto initial_last_size(ppjsdm::size(last_configuration_));
     if(initial_last_size != 0) {
       Configuration points_not_in_last{};
+
+      // Start a timer to allow for user interruption
+      const auto timer(start_timer());
       while(true) {
         // Do the computations by blocks of size `initial_last_size`, reserving space each time
         chain_.reserve(chain_.size() + initial_last_size);
@@ -57,7 +61,8 @@ public:
             delete_random_point_in_configuration_and_update_chain(points_not_in_last);
           }
         }
-        R_CheckUserInterrupt();
+        // Allow user interruption at regular intervals
+        stop_if_interrupt(timer);
       }
     }
   }
@@ -65,12 +70,17 @@ public:
   template<typename IntegerType>
   void extend_backwards(IntegerType number_extensions) {
     chain_.reserve(chain_.size() + number_extensions);
+
+    // Start a timer to allow for user interruption
+    const auto timer(start_timer());
     for(IntegerType i(0); i < number_extensions; ++i) {
       if(unif_rand() * (intensity_integral_ + static_cast<double>(ppjsdm::size(last_configuration_))) < intensity_integral_) {
         insert_uniform_point_in_configuration_and_update_chain(last_configuration_);
       } else {
         delete_random_point_in_configuration_and_update_chain(last_configuration_);
       }
+      // Allow user interruption at regular intervals
+      stop_if_interrupt(timer);
     }
   }
 
@@ -85,6 +95,10 @@ public:
     // Reserve a bit extra space for each of the configurations
     ppjsdm::reserve_if_possible(L, 2 * ppjsdm::size(last_configuration_));
     ppjsdm::reserve_if_possible(L_complement, 2 * ppjsdm::size(last_configuration_));
+
+    // Start a timer to allow for user interruption
+    const auto timer(start_timer());
+
     const auto chain_size(chain_.size());
     if(chain_size != 0) {
       for(auto n(static_cast<long long int>(chain_size) - 1); n >= 0; --n) {
@@ -100,6 +114,8 @@ public:
         } else {  // Avoid computations above in this case.
           add_point(L, std::get<1>(chain_[static_cast<std::size_t>(n)]));
         }
+        // Allow user interruption at regular intervals
+        stop_if_interrupt(timer);
       }
     }
     return std::pair<bool, Configuration>(empty(L_complement), L);
@@ -124,6 +140,19 @@ private:
       chain_.emplace_back(detail::always_in_L, std::move(point));
     } else {
       chain_.emplace_back(e, std::move(point));
+    }
+  }
+
+  PreciseTimer start_timer() const {
+    PreciseTimer timer{};
+    timer.set_current();
+    return timer;
+  }
+
+  void stop_if_interrupt(PreciseTimer timer) const {
+    const auto t(timer.get_total_time().count());
+    if((static_cast<int>(std::floor(t * 10)) % 10) == 0) {
+      Rcpp::checkUserInterrupt();
     }
   }
 };

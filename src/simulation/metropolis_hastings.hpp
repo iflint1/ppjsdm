@@ -7,6 +7,11 @@
 
 #include "../configuration/configuration_manipulation.hpp"
 #include "../utility/approximate_draw.hpp"
+#include "../utility/timer.hpp"
+
+#include <cmath> // std::floor
+#include <iterator> // std::next
+#include <vector> // std::vector
 
 namespace ppjsdm {
 
@@ -27,7 +32,16 @@ inline auto simulate_metropolis_hastings(const Model& model, unsigned long long 
 
   Configuration points(starting_configuration);
 
+  // Set up timer to regularly check for user interruption
+  PreciseTimer timer{};
+  timer.set_current();
+
   for(decltype(steps) k(0); k < steps; ++k) {
+    // Allow user interruption at regular intervals
+    const auto t(timer.get_total_time().count());
+    if((static_cast<int>(std::floor(t * 10)) % 10) == 0) {
+      Rcpp::checkUserInterrupt();
+    }
     if(unif_rand() <= birth_probability) {
       const R_xlen_t random_type(Rcpp::sample(number_types, 1, false, R_NilValue, false)[0]);
       const auto point(window.sample(random_type));

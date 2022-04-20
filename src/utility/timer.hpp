@@ -18,6 +18,16 @@ public:
     current_ = get_current_time();
   }
 
+  template<typename Unit = std::chrono::seconds>
+  auto get_elapsed_time() const {
+    return std::chrono::duration_cast<Unit>(get_current_time() - current_);
+  }
+
+  template<typename Unit = std::chrono::seconds>
+  auto get_total_time() const {
+    return std::chrono::duration_cast<Unit>(get_current_time() - start_);
+  }
+
   auto elapsed_time() const {
     return make_printing_string(get_current_time() - current_);
   }
