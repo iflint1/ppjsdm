@@ -168,7 +168,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
     }
   }
   if(debug) {
-    Rcpp::Rcout << "Finished computing the dispersions. Time elapsed: " << timer.elapsed_time();
+    Rcpp::Rcout << "Finished computing the dispersions. Time elapsed: " << timer.print_elapsed_time();
   }
 
   // Precompute how many of the points in the configuration we'll have to drop due to NA values on the covariates.
@@ -278,7 +278,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   Rcpp::colnames(regressors) = col_names;
 
   if(debug) {
-    Rcpp::Rcout << "Finished computing the regression matrix. Time elapsed: " << timer.total_time();
+    Rcpp::Rcout << "Finished computing the regression matrix. Time elapsed: " << timer.print_total_time();
   }
 
   return Rcpp::List::create(Rcpp::Named("response") = response,

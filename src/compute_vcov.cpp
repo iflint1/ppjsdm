@@ -565,7 +565,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
       medium_computation = ppjsdm::compute_dispersion_for_vcov(medium_dispersion_model, number_types, configuration, restricted_configuration, filling, filling + increment, nthreads);
     }
     if(debug) {
-      Rcpp::Rcout << "Computed batch of dispersions. Elapsed time: " << timer.elapsed_time();
+      Rcpp::Rcout << "Computed batch of dispersions. Elapsed time: " << timer.print_elapsed_time();
       timer.set_current();
       Rcpp::Rcout << "Filling the matrix...\n";
     }
@@ -661,7 +661,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
         }
 }
     if(debug) {
-      Rcpp::Rcout << "Finished filling matrix. Elapsed time: " << timer.elapsed_time();
+      Rcpp::Rcout << "Finished filling matrix. Elapsed time: " << timer.print_elapsed_time();
       timer.set_current();
     }
   }
@@ -712,13 +712,13 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
   }
   const auto papangelou(detail::make_papangelou(regressors, theta, nthreads));
   if(debug) {
-    Rcpp::Rcout << "Finished computing the Papangelou conditional intensity. Time elapsed: " << timer.elapsed_time();
+    Rcpp::Rcout << "Finished computing the Papangelou conditional intensity. Time elapsed: " << timer.print_elapsed_time();
     timer.set_current();
     Rcpp::Rcout << "Starting computation of S...\n";
   }
   const auto S(detail::make_S(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), nthreads));
   if(debug) {
-    Rcpp::Rcout << "Finished computing S. Time elapsed: " << timer.elapsed_time();
+    Rcpp::Rcout << "Finished computing S. Time elapsed: " << timer.print_elapsed_time();
     timer.set_current();
     Rcpp::Rcout << "Starting inversion of S...\n";
   }
@@ -729,7 +729,7 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
   // especially in corner cases where S appears numerically to not be positive definite.
   const auto S_inv(arma::inv(S));
   if(debug) {
-    Rcpp::Rcout << "Finished inversion of S. Time elapsed: " << timer.elapsed_time();
+    Rcpp::Rcout << "Finished inversion of S. Time elapsed: " << timer.print_elapsed_time();
     timer.set_current();
     Rcpp::Rcout << "Starting computation of G2...\n";
   }
@@ -743,13 +743,13 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
     Rcpp::stop("Unknown dummy_distribution parameter.");
   }
   if(debug) {
-    Rcpp::Rcout << "Finished computation of G2. Time elapsed: " << timer.elapsed_time();
+    Rcpp::Rcout << "Finished computation of G2. Time elapsed: " << timer.print_elapsed_time();
     timer.set_current();
     Rcpp::Rcout << "Starting computation of A1...\n";
   }
   const auto A1(detail::make_A1(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), nthreads));
   if(debug) {
-    Rcpp::Rcout << "Finished computation of A1. Time elapsed: " << timer.elapsed_time();
+    Rcpp::Rcout << "Finished computation of A1. Time elapsed: " << timer.print_elapsed_time();
     timer.set_current();
     Rcpp::Rcout << "Starting computation of A2 + A3...\n";
   }
@@ -816,7 +816,7 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
   }
 
   if(debug) {
-    Rcpp::Rcout << "Finished computation of A2 + A3. Time elapsed: " << timer.elapsed_time();
+    Rcpp::Rcout << "Finished computation of A2 + A3. Time elapsed: " << timer.print_elapsed_time();
     timer.set_current();
     Rcpp::Rcout << "Starting clean-up...\n";
   }
@@ -832,8 +832,8 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
   Rcpp::rownames(G2_rcpp) = col_names;
 
   if(debug) {
-    Rcpp::Rcout << "Finished computing the vcov matrix. Time elapsed: " << timer.elapsed_time();
-    Rcpp::Rcout << "Total time taken to compute vcov matrix: " << timer.total_time();
+    Rcpp::Rcout << "Finished computing the vcov matrix. Time elapsed: " << timer.print_elapsed_time();
+    Rcpp::Rcout << "Total time taken to compute vcov matrix: " << timer.print_total_time();
   }
 
   return Rcpp::List::create(Rcpp::Named("G1") = G1_rcpp,
@@ -869,13 +869,13 @@ Rcpp::List compute_S_helper(const Configuration& configuration,
   }
   const auto papangelou(detail::make_papangelou(regressors, theta, nthreads));
   if(debug) {
-    Rcpp::Rcout << "Finished computing the Papangelou conditional intensity. Time elapsed: " << timer.elapsed_time();
+    Rcpp::Rcout << "Finished computing the Papangelou conditional intensity. Time elapsed: " << timer.print_elapsed_time();
     timer.set_current();
     Rcpp::Rcout << "Starting computation of S...\n";
   }
   const auto S(detail::make_S(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), nthreads));
   if(debug) {
-    Rcpp::Rcout << "Finished computing S. Time elapsed: " << timer.elapsed_time();
+    Rcpp::Rcout << "Finished computing S. Time elapsed: " << timer.print_elapsed_time();
     timer.set_current();
     Rcpp::Rcout << "Starting inversion of S...\n";
   }
@@ -886,7 +886,7 @@ Rcpp::List compute_S_helper(const Configuration& configuration,
   // especially in corner cases where S appears numerically to not be positive definite.
   const auto S_inv(arma::inv(S));
   if(debug) {
-    Rcpp::Rcout << "Finished inversion of S. Time elapsed: " << timer.elapsed_time();
+    Rcpp::Rcout << "Finished inversion of S. Time elapsed: " << timer.print_elapsed_time();
     timer.set_current();
     Rcpp::Rcout << "Starting computation of G2...\n";
   }
@@ -900,13 +900,13 @@ Rcpp::List compute_S_helper(const Configuration& configuration,
     Rcpp::stop("Unknown dummy_distribution parameter.");
   }
   if(debug) {
-    Rcpp::Rcout << "Finished computation of G2. Time elapsed: " << timer.elapsed_time();
+    Rcpp::Rcout << "Finished computation of G2. Time elapsed: " << timer.print_elapsed_time();
     timer.set_current();
     Rcpp::Rcout << "Starting computation of A1...\n";
   }
   const auto A1(detail::make_A1(papangelou, rho, regressors, Rcpp::as<std::vector<int>>(data_list["type"]), nthreads));
   if(debug) {
-    Rcpp::Rcout << "Finished computation of A1. Time elapsed: " << timer.elapsed_time();
+    Rcpp::Rcout << "Finished computation of A1. Time elapsed: " << timer.print_elapsed_time();
     timer.set_current();
     Rcpp::Rcout << "Starting computation of A2 + A3...\n";
   }
@@ -973,7 +973,7 @@ Rcpp::List compute_S_helper(const Configuration& configuration,
   }
 
   if(debug) {
-    Rcpp::Rcout << "Finished computation of A2 + A3. Time elapsed: " << timer.elapsed_time();
+    Rcpp::Rcout << "Finished computation of A2 + A3. Time elapsed: " << timer.print_elapsed_time();
     timer.set_current();
     Rcpp::Rcout << "Starting clean-up...\n";
   }
@@ -989,8 +989,8 @@ Rcpp::List compute_S_helper(const Configuration& configuration,
   Rcpp::rownames(G2_rcpp) = col_names;
 
   if(debug) {
-    Rcpp::Rcout << "Finished computing the vcov matrix. Time elapsed: " << timer.elapsed_time();
-    Rcpp::Rcout << "Total time taken to compute vcov matrix: " << timer.total_time();
+    Rcpp::Rcout << "Finished computing the vcov matrix. Time elapsed: " << timer.print_elapsed_time();
+    Rcpp::Rcout << "Total time taken to compute vcov matrix: " << timer.print_total_time();
   }
 
   return Rcpp::List::create(Rcpp::Named("G1") = G1_rcpp,

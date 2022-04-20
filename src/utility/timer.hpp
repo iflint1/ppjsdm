@@ -28,11 +28,11 @@ public:
     return std::chrono::duration_cast<Unit>(get_current_time() - start_);
   }
 
-  auto elapsed_time() const {
+  auto print_elapsed_time() const {
     return make_printing_string(get_current_time() - current_);
   }
 
-  auto total_time() const {
+  auto print_total_time() const {
     return make_printing_string(get_current_time() - start_);
   }
 
