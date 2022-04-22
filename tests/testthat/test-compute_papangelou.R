@@ -28,6 +28,7 @@ test_that("Default values", {
                                                     short_range = matrix(0, ncol = 2, nrow = 2),
                                                     medium_range = matrix(0, ncol = 2, nrow = 2),
                                                     long_range = matrix(0, ncol = 2, nrow = 2),
+                                                    nthreads = 4,
                                                     saturation = 2)
   expect_equal(papangelou, papangelou_explicit)
 })
@@ -194,6 +195,7 @@ test_that("Correct Papangelou conditional intensity value", {
                                                      short_range = r_1,
                                                      medium_range = r_2,
                                                      long_range = r_3,
+                                                     nthreads = 4,
                                                      saturation = N)
     expect_equal(papangelou_direct, papangelou_package)
   }
