@@ -141,7 +141,6 @@ protected:
 
     // Precompute dispersion if required
     const auto number_types(get_number_types());
-    // TODO: Add a nthreads argument instead of 1
     using dispersion_t = decltype(compute_dispersion_for_fitting<true>(dispersion_, number_types, 1, configuration, points));
     dispersion_t short_range_dispersion, medium_range_dispersion;
     if(is_any_alpha_nonzero) {
