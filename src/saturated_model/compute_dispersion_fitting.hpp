@@ -58,10 +58,21 @@ struct dispersion_computation_fitting {
       }
 
       if(compute_on_configuration) {
-        for(size_t i(0); i < configuration_size; ++i) {
-          dispersion[i] = DispersionType(number_types);
-          add_count_to_dispersion<0, AbstractDispersion, 2>(varphi, dispersion[i], count_vector[i], configuration[i]);
-        }
+#pragma omp parallel shared(dispersion, configuration, count_vector, number_types, varphi)
+{
+          decltype(dispersion) dispersion_private(configuration_size);
+#pragma omp for nowait
+          for(size_t i = 0; i < configuration_size; ++i) {
+            dispersion_private[i] = DispersionType(number_types);
+            add_count_to_dispersion<0, AbstractDispersion, 2>(varphi, dispersion_private[i], count_vector[i], configuration[i]);
+          }
+#pragma omp critical
+          for(size_t i(0); i < configuration_size; ++i) {
+            if(dispersion_private[i] != DispersionType{}) {
+              dispersion[i] = dispersion_private[i];
+            }
+          }
+}
       }
 
 #pragma omp parallel shared(other_configuration) \
@@ -80,7 +91,7 @@ struct dispersion_computation_fitting {
                                                           count_point, other_configuration[i]);
       }
 #pragma omp critical
-      for(decltype(size(other_configuration)) i = 0; i < size(other_configuration); ++i) {
+      for(decltype(size(other_configuration)) i(0); i < size(other_configuration); ++i) {
         if(dispersion_private[i] != DispersionType{}) {
           dispersion[index_configuration + i] = dispersion_private[i];
         }
@@ -99,13 +110,31 @@ struct dispersion_computation_fitting {
       if(compute_on_configuration) {
         for(size_t i(0); i < configuration_size; ++i) {
           dispersion[i] = DispersionType(number_types);
+        }
+
+#pragma omp parallel shared(dispersion, configuration, count_vector, number_types) \
+        shared(varphi)
+{
+          decltype(dispersion) dispersion_private(configuration_size);
+          for(size_t i(0); i < configuration_size; ++i) {
+            dispersion_private[i] = DispersionType(number_types);
+          }
+#pragma omp for nowait
+        for(size_t i = 0; i < configuration_size; ++i) {
           for(size_t j(0); j < i; ++j) {
             // TODO: varphi(configuration[i], configuration[j]) only needs to be computed once
-            dispersion[i][get_type(configuration[j])] += AbstractDispersion::template delta<1, true>(varphi, count_vector[j][get_type(configuration[i])], configuration[j], configuration[i]);
-            dispersion[j][get_type(configuration[i])] += AbstractDispersion::template delta<1, true>(varphi, count_vector[i][get_type(configuration[j])], configuration[j], configuration[i]);
+            dispersion_private[i][get_type(configuration[j])] += AbstractDispersion::template delta<1, true>(varphi, count_vector[j][get_type(configuration[i])], configuration[j], configuration[i]);
+            dispersion_private[j][get_type(configuration[i])] += AbstractDispersion::template delta<1, true>(varphi, count_vector[i][get_type(configuration[j])], configuration[j], configuration[i]);
           }
-          add_count_to_dispersion<1, AbstractDispersion, 1>(varphi, dispersion[i], count_vector[i], configuration[i]);
+          add_count_to_dispersion<1, AbstractDispersion, 1>(varphi, dispersion_private[i], count_vector[i], configuration[i]);
         }
+#pragma omp critical
+        for(size_t i(0); i < configuration_size; ++i) {
+          for(decltype(dispersion_private[i].size()) j(0); j < dispersion_private[i].size(); ++j) {
+            dispersion[i][j] += dispersion_private[i][j];
+          }
+        }
+}
       }
 
 #pragma omp parallel shared(other_configuration) \
@@ -123,7 +152,7 @@ struct dispersion_computation_fitting {
         add_count_to_dispersion<0, AbstractDispersion, 1>(varphi, dispersion_private[i], count_point, other_configuration[i]);
       }
 #pragma omp critical
-      for(decltype(size(other_configuration)) i = 0; i < size(other_configuration); ++i) {
+      for(decltype(size(other_configuration)) i(0); i < size(other_configuration); ++i) {
         if(dispersion_private[i] != DispersionType{}) {
           dispersion[index_configuration + i] = dispersion_private[i];
         }

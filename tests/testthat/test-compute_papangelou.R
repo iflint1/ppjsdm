@@ -35,7 +35,7 @@ test_that("Default values", {
 
 test_that("Correct Papangelou conditional intensity value", {
   set.seed(42)
-  Ntests <- 100
+  Ntests <- 200
   for(nt in seq_len(Ntests)) {
     possible_short <- c("exponential",
                         "square_exponential",
@@ -119,7 +119,8 @@ test_that("Correct Papangelou conditional intensity value", {
     r_3 <- matrix(runif(4, 0, 0.1), 2, 2)
     r_3 <- r_2 + r_3 %*% t(r_3)
 
-    N <- 2
+    possible_N <- c(1, 2, 10, 20, 100)
+    N <- sample(possible_N, 1)
     beta <- matrix(4, 2, 1)
     covariate <- function(x, y) x + y
     if(sample(c(TRUE, FALSE), 1)) { # Compute the Papangelou conditional intensity on a point of the configuration
@@ -149,7 +150,7 @@ test_that("Correct Papangelou conditional intensity value", {
           stop("Incorrect range value in dispersion term.")
         }
       })
-      sum(s[order(s, decreasing = TRUE)[1:N]])
+      sum(s[order(s, decreasing = TRUE)[1:min(length(s), N)]])
     }
 
     compute_dispersion_term <- function(range) {
