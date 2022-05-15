@@ -402,7 +402,7 @@ gibbsm <- function(configuration_list,
                    medium_range,
                    long_range,
                    saturation,
-                   dummy,
+                   dummy = NULL,
                    debug = FALSE,
                    fitting_package = "glmnet",
                    which_lambda = "AIC",
@@ -502,7 +502,7 @@ gibbsm <- function(configuration_list,
       # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
       mark_range <- c(min(marks(configuration_list[[1]])), max(marks(configuration_list[[1]])))
 
-      gibbsm_data_list <- if(missing(dummy)) {
+      gibbsm_data_list <- if(is.null(dummy)) {
         prepare_gibbsm_data(configuration_list = configuration_list,
                             window = window,
                             covariates = covariates,
@@ -605,7 +605,7 @@ gibbsm <- function(configuration_list,
     # Refit with best radii and non-approximation
     # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
     mark_range <- c(min(marks(configuration_list[[1]])), max(marks(configuration_list[[1]])))
-    gibbsm_data_list <- if(missing(dummy)) {
+    gibbsm_data_list <- if(is.null(dummy)) {
       prepare_gibbsm_data(configuration_list = configuration_list,
                           window = window,
                           covariates = covariates,
@@ -681,7 +681,7 @@ gibbsm <- function(configuration_list,
     # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
     mark_range <- c(min(marks(configuration_list[[1]])), max(marks(configuration_list[[1]])))
 
-    gibbsm_data_list <- if(missing(dummy)) {
+    gibbsm_data_list <- if(is.null(dummy)) {
       prepare_gibbsm_data(configuration_list = configuration_list,
                           window = window,
                           covariates = covariates,
