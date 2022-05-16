@@ -19,6 +19,7 @@
 #' @param mark Mark of the point.
 #' @param steps Nunber of steps in the Metropolis-Hastings simulation algorithm.
 #' @param nthreads Maximum number of threads for parallel computing.
+#' @param use_log Plot the logarithm of the Papangelou conditional intensity instead?
 #' @importFrom spatstat.geom as.im as.owin as.ppp
 #' @importFrom stats na.omit
 #' @importFrom graphics plot
@@ -41,7 +42,8 @@ plot_papangelou <- function(window,
                             saturation,
                             grid_steps = 1000,
                             steps = 0,
-                            nthreads = 4) {
+                            nthreads = 4,
+                            use_log = FALSE) {
 
   parameters <- model_parameters(window = window,
                                  alpha = alpha,
@@ -98,6 +100,12 @@ plot_papangelou <- function(window,
                            saturation = parameters$saturation,
                            nthreads = nthreads)
   })
-  plot(as.im(t(z), W = window), main = "Papangelou conditional intensity")
+  if(use_log) {
+    z <- log(z)
+    title <- "log-Papangelou conditional intensity"
+  } else {
+    title <- "Papangelou conditional intensity"
+  }
+  plot(as.im(t(z), W = window), main = title)
   plot(as.ppp(configuration, window), add = TRUE, cols = 'white')
 }

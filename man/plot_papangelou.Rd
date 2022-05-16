@@ -23,7 +23,8 @@ plot_papangelou(
   saturation,
   grid_steps = 1000,
   steps = 0,
-  nthreads = 4
+  nthreads = 4,
+  use_log = FALSE
 )
 }
 \arguments{
@@ -64,6 +65,8 @@ plot_papangelou(
 \item{steps}{Nunber of steps in the Metropolis-Hastings simulation algorithm.}
 
 \item{nthreads}{Maximum number of threads for parallel computing.}
+
+\item{use_log}{Plot the logarithm of the Papangelou conditional intensity instead?}
 }
 \description{
 Plot the Papangelou conditional intensity.
