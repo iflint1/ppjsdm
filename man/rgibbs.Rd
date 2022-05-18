@@ -2,69 +2,14 @@
 % Please edit documentation in R/rgibbs.R
 \name{rgibbs}
 \alias{rgibbs}
-\title{Sample a multivariate Gibbs point processes}
+\title{Sample a multivariate saturated pairwise interaction Gibbs point processes.}
 \usage{
-rgibbs(
-  window,
-  alpha,
-  gamma,
-  beta0,
-  covariates,
-  beta,
-  short_range,
-  medium_range,
-  long_range,
-  saturation,
-  types,
-  model,
-  medium_range_model,
-  steps = 0,
-  nsim = 1,
-  drop = TRUE,
-  mark_range = c(1, 1),
-  starting_configuration = NULL
-)
+rgibbs(...)
 }
 \arguments{
-\item{window}{Simulation window.}
-
-\item{alpha}{Repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.}
-
-\item{gamma}{Medium range repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.}
-
-\item{beta0}{A vector representing the log_intensities of the point processes.
-Default is a vector of same size as types, filled with zeros}
-
-\item{covariates}{Covariates, with an empty list as a default.}
-
-\item{beta}{Fitted coefficients related to covariates. Default is square matrix of zeroes of the same
-number of rows/columns as the covariates.}
-
-\item{short_range}{Symmetric matrix of short range interaction radii. Filled with 0.1 by default.}
-
-\item{medium_range}{Symmetric matrix of medium range interaction radii. Filled with 0 by default.}
-
-\item{long_range}{Symmetric matrix of long range interaction radii. Filled with 0 by default.}
-
-\item{saturation}{Saturation parameter of the point process. Default is 2.}
-
-\item{types}{Types of the points. Default is a vector (type1, type2, ...) of same size as n.}
-
-\item{model}{String representing the model to use You can check the currently authorised models with a call to `show_short_range_models()`.}
-
-\item{medium_range_model}{String representing the model to use You can check the currently authorised models with a call to `show_medium_range_models()`.}
-
-\item{steps}{Number of steps in the Metropolis algorithm. If `steps = 0`, uses the coupling from the past algorithm instead.
-Default is 0.}
-
-\item{nsim}{Number of samples to generate. Default is 1.}
-
-\item{drop}{If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration. Default is TRUE.}
-
-\item{mark_range}{Range of additional marks to give to the points.}
-
-\item{starting_configuration}{Optional configuration to start with when using the Metropolis-Hastings algorithm (steps > 0).}
+\item{...}{Parameters to be forwarded to the relevant method. Currently, either
+the parameters of the Gibbs point process, or a fit object obtained from running `gibbsm`.}
 }
 \description{
-Sample a multivariate Gibbs point processes
+Sample a multivariate saturated pairwise interaction Gibbs point processes.
 }

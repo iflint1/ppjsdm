@@ -14,7 +14,7 @@ gibbsm(
   medium_range,
   long_range,
   saturation,
-  dummy,
+  dummy = NULL,
   debug = FALSE,
   fitting_package = "glmnet",
   which_lambda = "AIC",

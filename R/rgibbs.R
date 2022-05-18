@@ -1,5 +1,13 @@
+#' Sample a multivariate saturated pairwise interaction Gibbs point processes.
+#'
+#' @param ... Parameters to be forwarded to the relevant method. Currently, either
+#' the parameters of the Gibbs point process, or a fit object obtained from running `gibbsm`.
+#' @export
+rgibbs <- function(...) {
+  UseMethod("rgibbs")
+}
 
-#' Sample a multivariate Gibbs point processes
+#' Sample a multivariate saturated pairwise interaction Gibbs point processes with given parameters.
 #'
 #' @param window Simulation window.
 #' @param alpha Repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.
@@ -22,25 +30,28 @@
 #' @param drop If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration. Default is TRUE.
 #' @param mark_range Range of additional marks to give to the points.
 #' @param starting_configuration Optional configuration to start with when using the Metropolis-Hastings algorithm (steps > 0).
+#' @param ... Ignored.
 #' @export
-rgibbs <- function(window,
-                   alpha,
-                   gamma,
-                   beta0,
-                   covariates,
-                   beta,
-                   short_range,
-                   medium_range,
-                   long_range,
-                   saturation,
-                   types,
-                   model,
-                   medium_range_model,
-                   steps = 0,
-                   nsim = 1,
-                   drop = TRUE,
-                   mark_range = c(1.0, 1.0),
-                   starting_configuration = NULL) {
+#' @method rgibbs default
+rgibbs.default <- function(window,
+                           alpha,
+                           gamma,
+                           beta0,
+                           covariates,
+                           beta,
+                           short_range,
+                           medium_range,
+                           long_range,
+                           saturation,
+                           types,
+                           model,
+                           medium_range_model,
+                           steps = 0,
+                           nsim = 1,
+                           drop = TRUE,
+                           mark_range = c(1.0, 1.0),
+                           starting_configuration = NULL,
+                           ...) {
   parameters <- model_parameters(window = window,
                                  alpha = alpha,
                                  gamma = gamma,
@@ -73,4 +84,29 @@ rgibbs <- function(window,
              drop = drop,
              mark_range = mark_range,
              starting_configuration = starting_configuration)
+}
+
+#' Sample a multivariate Gibbs point processes from a fit object.
+#'
+#' @param fit Fit object obtained by running gibbsm.
+#' @param ... Forwarded to rgibbs.
+#' @export
+#' @method rgibbs gibbsm
+rgibbs.gibbsm <- function(fit,
+                          ...) {
+  rgibbs(window = fit$window,
+         alpha = fit$coefficients$alpha,
+         gamma = fit$coefficients$gamma,
+         beta0 = fit$coefficients$beta0,
+         covariates = fit$parameters$covariates,
+         beta = fit$coefficients$beta,
+         short_range = fit$coefficients$short_range,
+         medium_range = fit$coefficients$medium_range,
+         long_range = fit$coefficients$long_range,
+         saturation = fit$parameters$saturation,
+         types = fit$type_names,
+         model = fit$parameters$model,
+         medium_range_model = fit$parameters$medium_range_model,
+         mark_range = fit$mark_range,
+         ...)
 }
