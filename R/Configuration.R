@@ -214,7 +214,7 @@ plot.Configuration <- function(x, window, color, shape, ...) {
       color <- rep(c("#FF0000", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6"), nlevels(df$Types))
     }
     if(missing("shape")) {
-      shape <- rep(15:17, nlevels(df$Types))
+      shape <- rep(c(16, 17, 15), nlevels(df$Types))
     }
     g <- ggplot(data = df)
     if(!all(df$Marks == 1.)) {
