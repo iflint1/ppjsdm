@@ -22,6 +22,8 @@
   nsim = 1,
   drop = TRUE,
   mark_range = c(1, 1),
+  only_simulate_these_types = NULL,
+  conditional_configuration = NULL,
   starting_configuration = NULL,
   ...
 )
@@ -63,6 +65,10 @@ Default is 0.}
 \item{drop}{If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration. Default is TRUE.}
 
 \item{mark_range}{Range of additional marks to give to the points.}
+
+\item{only_simulate_these_types}{Parameter used to do conditional simulation, only drawing from some of the types (usually conditional upon the others).}
+
+\item{conditional_configuration}{Simulate conditional on this configuration.}
 
 \item{starting_configuration}{Optional configuration to start with when using the Metropolis-Hastings algorithm (steps > 0).}
 

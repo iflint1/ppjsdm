@@ -86,10 +86,10 @@ public:
     return dispersion;
   }
 
-  template<typename Point, typename Configuration>
-  auto compute_papangelou(const Point& point, const Configuration& configuration) const {
+  template<typename Point, typename... Configurations>
+  auto compute_papangelou(const Point& point, const Configurations&... configurations) const {
     return std::exp(beta0_[get_type(point)] +
-                    compute_total_dispersion(point, configuration) +
+                    compute_total_dispersion(point, configurations...) +
                     detail::compute_beta_dot_covariates(point, beta_, covariates_));
   }
 
@@ -107,7 +107,7 @@ protected:
   Im_list_wrapper covariates_;
 
   template<typename Point, typename... Configurations>
-  auto compute_total_dispersion(const Point& point, Configurations&... configurations) const {
+  auto compute_total_dispersion(const Point& point, const Configurations&... configurations) const {
     const auto number_types(get_number_types());
     using return_t = decltype(matrix_times_vector_at_index(alpha_, compute_dispersion(dispersion_, point, number_types, configurations...), 0));
     return_t return_value(0.);

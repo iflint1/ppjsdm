@@ -29,6 +29,8 @@ rgibbs <- function(...) {
 #' @param medium_range_model String representing the model to use You can check the currently authorised models with a call to `show_medium_range_models()`.
 #' @param drop If nsim = 1 and drop = TRUE, the result will be a Configuration, rather than a list containing a Configuration. Default is TRUE.
 #' @param mark_range Range of additional marks to give to the points.
+#' @param only_simulate_these_types Parameter used to do conditional simulation, only drawing from some of the types (usually conditional upon the others).
+#' @param conditional_configuration Simulate conditional on this configuration.
 #' @param starting_configuration Optional configuration to start with when using the Metropolis-Hastings algorithm (steps > 0).
 #' @param ... Ignored.
 #' @export
@@ -50,6 +52,8 @@ rgibbs.default <- function(window,
                            nsim = 1,
                            drop = TRUE,
                            mark_range = c(1.0, 1.0),
+                           only_simulate_these_types = NULL,
+                           conditional_configuration = NULL,
                            starting_configuration = NULL,
                            ...) {
   parameters <- model_parameters(window = window,
@@ -65,6 +69,11 @@ rgibbs.default <- function(window,
                                  types = types,
                                  model = model,
                                  medium_range_model = medium_range_model)
+
+  if(is.null(only_simulate_these_types)) {
+    only_simulate_these_types <- seq_len(length(beta0))
+  }
+  only_simulate_these_types <- only_simulate_these_types - 1
 
   rgibbs_cpp(window = parameters$window,
              alpha = parameters$alpha,
@@ -83,6 +92,8 @@ rgibbs.default <- function(window,
              medium_range_model = parameters$medium_range_model,
              drop = drop,
              mark_range = mark_range,
+             only_simulate_these_types = only_simulate_these_types,
+             conditional_configuration = conditional_configuration,
              starting_configuration = starting_configuration)
 }
 
