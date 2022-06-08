@@ -4,75 +4,11 @@
 \alias{plot_papangelou}
 \title{Plot the Papangelou conditional intensity.}
 \usage{
-plot_papangelou(
-  window,
-  type = 1,
-  mark = 1,
-  configuration,
-  model,
-  medium_range_model,
-  alpha,
-  beta0,
-  beta,
-  gamma,
-  covariates,
-  short_range,
-  medium_range,
-  long_range,
-  types,
-  saturation,
-  grid_steps = 1000,
-  steps = 0,
-  nthreads = 4,
-  use_log = FALSE,
-  use_ggplot = TRUE,
-  limits
-)
+plot_papangelou(...)
 }
 \arguments{
-\item{window}{Observation window.}
-
-\item{type}{Type of the point at which to evaluate the Papangelou conditional intensity.}
-
-\item{mark}{Mark of the point.}
-
-\item{configuration}{Configuration of points at which to evaluate the Papangelou conditional intensity.}
-
-\item{model}{Model for short range interaction.}
-
-\item{medium_range_model}{Model for medium range interaction.}
-
-\item{alpha}{Short range repulsion parameter.}
-
-\item{beta0}{Log-intensity.}
-
-\item{beta}{Covariates coefficients.}
-
-\item{gamma}{Medium range repulsion parameter.}
-
-\item{covariates}{Covariates.}
-
-\item{short_range}{Matrix of short range distances.}
-
-\item{medium_range}{Matrix of medium range distances.}
-
-\item{long_range}{Matrix of long range distances.}
-
-\item{types}{Types of the points. Default is a vector (type1, type2, ...) of same size as n.}
-
-\item{saturation}{Saturation.}
-
-\item{grid_steps}{Number of horizontal and vertical grid steps.}
-
-\item{steps}{Nunber of steps in the Metropolis-Hastings simulation algorithm.}
-
-\item{nthreads}{Maximum number of threads for parallel computing.}
-
-\item{use_log}{Plot the logarithm of the Papangelou conditional intensity instead?}
-
-\item{use_ggplot}{Use ggplot for fancier plot?}
-
-\item{limits}{Limits for values of the Papamgelou conditional intensity in plotting functions.}
+\item{...}{Parameters to be forwarded to the relevant method. Currently, either
+the parameters of the Gibbs point process, or a fit object obtained from running `gibbsm`.}
 }
 \description{
 Plot the Papangelou conditional intensity.

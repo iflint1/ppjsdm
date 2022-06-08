@@ -1,5 +1,14 @@
 #' Plot the Papangelou conditional intensity.
 #'
+#' @param ... Parameters to be forwarded to the relevant method. Currently, either
+#' the parameters of the Gibbs point process, or a fit object obtained from running `gibbsm`.
+#' @export
+plot_papangelou <- function(...) {
+  UseMethod("plot_papangelou")
+}
+
+#' Plot the Papangelou conditional intensity with given parameters.
+#'
 #' @param window Observation window.
 #' @param type Type of the point at which to evaluate the Papangelou conditional intensity.
 #' @param configuration Configuration of points at which to evaluate the Papangelou conditional intensity.
@@ -15,41 +24,44 @@
 #' @param long_range Matrix of long range distances.
 #' @param types Types of the points. Default is a vector (type1, type2, ...) of same size as n.
 #' @param saturation Saturation.
-#' @param grid_steps Number of horizontal and vertical grid steps.
+#' @param grid_steps Vector of length 2, representing the number of horizontal and vertical grid steps.
 #' @param mark Mark of the point.
 #' @param steps Nunber of steps in the Metropolis-Hastings simulation algorithm.
 #' @param nthreads Maximum number of threads for parallel computing.
 #' @param use_log Plot the logarithm of the Papangelou conditional intensity instead?
 #' @param use_ggplot Use ggplot for fancier plot?
 #' @param limits Limits for values of the Papamgelou conditional intensity in plotting functions.
+#' @param ... Ignored.
 #' @importFrom colorspace scale_fill_continuous_sequential
 #' @importFrom ggplot2 aes coord_equal element_text geom_tile ggplot ggtitle guide_legend guides labs scale_color_manual scale_shape_manual scale_x_continuous scale_y_continuous theme theme_minimal xlab ylab
 #' @importFrom graphics plot
 #' @importFrom spatstat.geom as.im as.owin as.ppp
 #' @importFrom stats na.omit
 #' @export
-plot_papangelou <- function(window,
-                            type = 1,
-                            mark = 1.0,
-                            configuration,
-                            model,
-                            medium_range_model,
-                            alpha,
-                            beta0,
-                            beta,
-                            gamma,
-                            covariates,
-                            short_range,
-                            medium_range,
-                            long_range,
-                            types,
-                            saturation,
-                            grid_steps = 1000,
-                            steps = 0,
-                            nthreads = 4,
-                            use_log = FALSE,
-                            use_ggplot = TRUE,
-                            limits) {
+#' @method rgibbs default
+plot_papangelou.default <- function(window,
+                                    type = 1,
+                                    mark = 1.0,
+                                    configuration,
+                                    model,
+                                    medium_range_model,
+                                    alpha,
+                                    beta0,
+                                    beta,
+                                    gamma,
+                                    covariates,
+                                    short_range,
+                                    medium_range,
+                                    long_range,
+                                    types,
+                                    saturation,
+                                    grid_steps = c(1000, 1000),
+                                    steps = 0,
+                                    nthreads = 4,
+                                    use_log = FALSE,
+                                    use_ggplot = TRUE,
+                                    limits,
+                                    ...) {
 
   parameters <- model_parameters(window = window,
                                  alpha = alpha,
@@ -86,8 +98,8 @@ plot_papangelou <- function(window,
   window <- as.owin(parameters$window)
   x_range <- window$xrange
   y_range <- window$yrange
-  x_axis <- seq(from = x_range[1], to = x_range[2], length.out = grid_steps)
-  y_axis <- seq(from = y_range[1], to = y_range[2], length.out = grid_steps)
+  x_axis <- seq(from = x_range[1], to = x_range[2], length.out = grid_steps[1])
+  y_axis <- seq(from = y_range[1], to = y_range[2], length.out = grid_steps[2])
   df <- as.data.frame(expand.grid(x = x_axis, y = y_axis))
 
   df$papangelou <- compute_papangelou_cpp(x = df$x,
@@ -155,4 +167,30 @@ plot_papangelou <- function(window,
     plot(as.im(t(z), W = window), main = title)
     plot(as.ppp(configuration, window), add = TRUE, cols = 'white')
   }
+}
+
+#' Plot the Papangelou conditional intensity from a fit object.
+#'
+#' @param fit Fit object obtained by running gibbsm.
+#' @param ... Forwarded to plot_papangelou
+#' @export
+#' @method plot_papangelou gibbsm
+plot_papangelou.gibbsm <- function(fit,
+                                   ...) {
+  plot_papangelou(window = fit$window,
+                  configuration = fit$configuration_list[[1]],
+                  alpha = fit$coefficients$alpha,
+                  gamma = fit$coefficients$gamma,
+                  beta0 = fit$coefficients$beta0,
+                  covariates = fit$parameters$covariates,
+                  beta = fit$coefficients$beta,
+                  short_range = fit$coefficients$short_range,
+                  medium_range = fit$coefficients$medium_range,
+                  long_range = fit$coefficients$long_range,
+                  saturation = fit$parameters$saturation,
+                  types = fit$type_names,
+                  model = fit$parameters$model,
+                  medium_range_model = fit$parameters$medium_range_model,
+                  nthreads = fit$nthreads,
+                  ...)
 }
