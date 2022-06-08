@@ -4,7 +4,7 @@
 \alias{plot_papangelou.default}
 \title{Plot the Papangelou conditional intensity with given parameters.}
 \usage{
-\method{rgibbs}{default}(
+\method{plot_papangelou}{default}(
   window,
   type = 1,
   mark = 1,

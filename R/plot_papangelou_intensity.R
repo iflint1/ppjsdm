@@ -38,7 +38,7 @@ plot_papangelou <- function(...) {
 #' @importFrom spatstat.geom as.im as.owin as.ppp
 #' @importFrom stats na.omit
 #' @export
-#' @method rgibbs default
+#' @method plot_papangelou default
 plot_papangelou.default <- function(window,
                                     type = 1,
                                     mark = 1.0,
