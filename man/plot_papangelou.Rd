@@ -24,7 +24,9 @@ plot_papangelou(
   grid_steps = 1000,
   steps = 0,
   nthreads = 4,
-  use_log = FALSE
+  use_log = FALSE,
+  use_ggplot = TRUE,
+  limits
 )
 }
 \arguments{
@@ -67,6 +69,10 @@ plot_papangelou(
 \item{nthreads}{Maximum number of threads for parallel computing.}
 
 \item{use_log}{Plot the logarithm of the Papangelou conditional intensity instead?}
+
+\item{use_ggplot}{Use ggplot for fancier plot?}
+
+\item{limits}{Limits for values of the Papamgelou conditional intensity in plotting functions.}
 }
 \description{
 Plot the Papangelou conditional intensity.

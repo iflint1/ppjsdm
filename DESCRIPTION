@@ -8,6 +8,7 @@ Maintainer: Ian Flint <ian.flint@unimelb.edu.au>
 Description: Point processes in joint species distribution models.
 License: MIT + file LICENSE
 Imports: 
+    colorspace,
     GA,
     ggplot2,
     glmnet,
