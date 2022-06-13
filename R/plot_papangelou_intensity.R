@@ -133,7 +133,7 @@ plot_papangelou.default <- function(window,
                          types = droplevels(configuration$types),
                          marks = configuration$marks)
     color <- rep(c("#FF0000", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6"), nlevels(points$types))
-    shape <- rep(c(16, 17, 15), nlevels(points$types))
+    shape <- rep(c(16, 17, 15, 18), nlevels(points$types))
 
     if(missing(limits)) {
       lim <- c(min(df$papangelou), max(df$papangelou))
@@ -145,8 +145,8 @@ plot_papangelou.default <- function(window,
       geom_tile(aes_string(fill = 'papangelou'), alpha = 0.5) +
       scale_fill_continuous_sequential(palette = "Purple-Yellow", limits = lim) +
       labs(fill = title) +
-      scale_color_manual(values = rep(c("#FF0000", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6"), len = nlevels(points$types))) + # Obtained by wesanderson::wes_palette("Darjeeling1")
-      scale_shape_manual(values = rep(15:18, len = nlevels(points$types))) +
+      scale_color_manual(values = color) + # Obtained by wesanderson::wes_palette("Darjeeling1")
+      scale_shape_manual(values = shape) +
       xlab(NULL) + # Remove x labels
       ylab(NULL) + # Remove y labels
       ggtitle("") +
@@ -155,9 +155,9 @@ plot_papangelou.default <- function(window,
       guides(shape = guide_legend(override.aes = list(size = 5))) # Bigger species symbol size
 
     if(!all(points$marks == 1.)) {
-      g <- g + geom_point(data = points, aes_string(x = 'x', y = 'y', colour = 'types', shape = 'types', size = 'marks'), size = 1.5)
+      g <- g + geom_point(data = points, aes_string(x = 'x', y = 'y', colour = 'types', shape = 'types', size = 'marks'), alpha = 0.5)
     } else {
-      g <- g + geom_point(data = points, aes_string(x = 'x', y = 'y', colour = 'types', shape = 'types'), size = 1.5)
+      g <- g + geom_point(data = points, aes_string(x = 'x', y = 'y', colour = 'types', shape = 'types'), size = 1.5, alpha = 0.5)
     }
     g
   } else {
