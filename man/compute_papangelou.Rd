@@ -4,60 +4,11 @@
 \alias{compute_papangelou}
 \title{Compute the Papangelou conditional intensity of the model.}
 \usage{
-compute_papangelou(
-  configuration,
-  x,
-  y,
-  type = rep(1, length(x)),
-  mark = rep(1, length(x)),
-  model,
-  medium_range_model,
-  alpha,
-  beta0,
-  beta,
-  gamma,
-  covariates,
-  short_range,
-  medium_range,
-  long_range,
-  saturation,
-  nthreads = 1
-)
+compute_papangelou(...)
 }
 \arguments{
-\item{configuration}{Configuration.}
-
-\item{x}{Coordinates along the x-axis of the points at which to evaluate the Papangelou conditional intensity.}
-
-\item{y}{Coordinates along the y-axis of the points at which to evaluate the Papangelou conditional intensity.}
-
-\item{type}{Type of the point (as an integer >= 1).}
-
-\item{mark}{Mark of the point to add.}
-
-\item{model}{String representing the model to use. You can check the currently authorised models with a call to `show_models()`.}
-
-\item{medium_range_model}{String representing the medium range model to use. You can check the currently authorised models with a call to `show_medium_range_models()`.}
-
-\item{alpha}{Short range repulsion matrix.}
-
-\item{beta0}{A vector representing the log-intensities of the point processes.}
-
-\item{beta}{Coefficients related to covariates.}
-
-\item{gamma}{Medium range repulsion matrix.}
-
-\item{covariates}{Covariates.}
-
-\item{short_range}{Short range interaction radii.}
-
-\item{medium_range}{Medium range interaction radii.}
-
-\item{long_range}{Long range interaction radii.}
-
-\item{saturation}{Saturation parameter.}
-
-\item{nthreads}{Maximum number of threads for parallel computing.}
+\item{...}{Parameters to be forwarded to the relevant method. Currently, either
+the parameters of the Gibbs point process, or a fit object obtained from running `gibbsm`.}
 }
 \description{
 Compute the Papangelou conditional intensity of the model.
