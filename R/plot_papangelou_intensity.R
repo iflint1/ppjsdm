@@ -172,25 +172,58 @@ plot_papangelou.default <- function(window,
 #' Plot the Papangelou conditional intensity from a fit object.
 #'
 #' @param fit Fit object obtained by running gibbsm.
+#' @param window Observation window.
+#' @param type Type of the point at which to evaluate the Papangelou conditional intensity.
+#' @param configuration Configuration of points at which to evaluate the Papangelou conditional intensity.
+#' @param alpha Short range repulsion parameter.
+#' @param gamma Medium range repulsion parameter.
+#' @param beta0 Log-intensity.
+#' @param covariates Covariates.
+#' @param beta Covariates coefficients.
+#' @param short_range Matrix of short range distances.
+#' @param medium_range Matrix of medium range distances.
+#' @param long_range Matrix of long range distances.
+#' @param saturation Saturation.
+#' @param types Types of the points. Default is a vector (type1, type2, ...) of same size as n.
+#' @param model Model for short range interaction.
+#' @param medium_range_model Model for medium range interaction.
+#' @param nthreads Maximum number of threads for parallel computing.
 #' @param ... Forwarded to plot_papangelou
 #' @export
 #' @method plot_papangelou gibbsm
 plot_papangelou.gibbsm <- function(fit,
+                                   window = fit$window,
+                                   type = 1,
+                                   configuration = fit$configuration_list[[1]],
+                                   alpha = fit$coefficients$alpha,
+                                   gamma = fit$coefficients$gamma,
+                                   beta0 = fit$coefficients$beta0,
+                                   covariates = fit$parameters$covariates,
+                                   beta = fit$coefficients$beta,
+                                   short_range = fit$coefficients$short_range,
+                                   medium_range = fit$coefficients$medium_range,
+                                   long_range = fit$coefficients$long_range,
+                                   saturation = fit$parameters$saturation,
+                                   types = fit$type_names,
+                                   model = fit$parameters$model,
+                                   medium_range_model = fit$parameters$medium_range_model,
+                                   nthreads = fit$nthreads,
                                    ...) {
-  plot_papangelou(window = fit$window,
-                  configuration = fit$configuration_list[[1]],
-                  alpha = fit$coefficients$alpha,
-                  gamma = fit$coefficients$gamma,
-                  beta0 = fit$coefficients$beta0,
-                  covariates = fit$parameters$covariates,
-                  beta = fit$coefficients$beta,
-                  short_range = fit$coefficients$short_range,
-                  medium_range = fit$coefficients$medium_range,
-                  long_range = fit$coefficients$long_range,
-                  saturation = fit$parameters$saturation,
-                  types = fit$type_names,
-                  model = fit$parameters$model,
-                  medium_range_model = fit$parameters$medium_range_model,
-                  nthreads = fit$nthreads,
+  plot_papangelou(window = window,
+                  type = type,
+                  configuration = configuration,
+                  alpha = alpha,
+                  gamma = gamma,
+                  beta0 = beta0,
+                  covariates = covariates,
+                  beta = beta,
+                  short_range = short_range,
+                  medium_range = medium_range,
+                  long_range = long_range,
+                  saturation = saturation,
+                  types = types,
+                  model = model,
+                  medium_range_model = medium_range_model,
+                  nthreads = nthreads,
                   ...)
 }

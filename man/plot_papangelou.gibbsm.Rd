@@ -4,10 +4,61 @@
 \alias{plot_papangelou.gibbsm}
 \title{Plot the Papangelou conditional intensity from a fit object.}
 \usage{
-\method{plot_papangelou}{gibbsm}(fit, ...)
+\method{plot_papangelou}{gibbsm}(
+  fit,
+  window = fit$window,
+  type = 1,
+  configuration = fit$configuration_list[[1]],
+  alpha = fit$coefficients$alpha,
+  gamma = fit$coefficients$gamma,
+  beta0 = fit$coefficients$beta0,
+  covariates = fit$parameters$covariates,
+  beta = fit$coefficients$beta,
+  short_range = fit$coefficients$short_range,
+  medium_range = fit$coefficients$medium_range,
+  long_range = fit$coefficients$long_range,
+  saturation = fit$parameters$saturation,
+  types = fit$type_names,
+  model = fit$parameters$model,
+  medium_range_model = fit$parameters$medium_range_model,
+  nthreads = fit$nthreads,
+  ...
+)
 }
 \arguments{
 \item{fit}{Fit object obtained by running gibbsm.}
+
+\item{window}{Observation window.}
+
+\item{type}{Type of the point at which to evaluate the Papangelou conditional intensity.}
+
+\item{configuration}{Configuration of points at which to evaluate the Papangelou conditional intensity.}
+
+\item{alpha}{Short range repulsion parameter.}
+
+\item{gamma}{Medium range repulsion parameter.}
+
+\item{beta0}{Log-intensity.}
+
+\item{covariates}{Covariates.}
+
+\item{beta}{Covariates coefficients.}
+
+\item{short_range}{Matrix of short range distances.}
+
+\item{medium_range}{Matrix of medium range distances.}
+
+\item{long_range}{Matrix of long range distances.}
+
+\item{saturation}{Saturation.}
+
+\item{types}{Types of the points. Default is a vector (type1, type2, ...) of same size as n.}
+
+\item{model}{Model for short range interaction.}
+
+\item{medium_range_model}{Model for medium range interaction.}
+
+\item{nthreads}{Maximum number of threads for parallel computing.}
 
 \item{...}{Forwarded to plot_papangelou}
 }
