@@ -4,10 +4,57 @@
 \alias{rgibbs.gibbsm}
 \title{Sample a multivariate Gibbs point processes from a fit object.}
 \usage{
-\method{rgibbs}{gibbsm}(fit, ...)
+\method{rgibbs}{gibbsm}(
+  fit,
+  window = fit$window,
+  alpha = fit$coefficients$alpha,
+  gamma = fit$coefficients$gamma,
+  beta0 = fit$coefficients$beta0,
+  covariates = fit$parameters$covariates,
+  beta = fit$coefficients$beta,
+  short_range = fit$coefficients$short_range,
+  medium_range = fit$coefficients$medium_range,
+  long_range = fit$coefficients$long_range,
+  saturation = fit$parameters$saturation,
+  types = fit$type_names,
+  model = fit$parameters$model,
+  medium_range_model = fit$parameters$medium_range_model,
+  mark_range = fit$mark_range,
+  ...
+)
 }
 \arguments{
 \item{fit}{Fit object obtained by running gibbsm.}
+
+\item{window}{Simulation window.}
+
+\item{alpha}{Repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.}
+
+\item{gamma}{Medium range repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.}
+
+\item{beta0}{A vector representing the log_intensities of the point processes.
+Default is a vector of same size as types, filled with zeros}
+
+\item{covariates}{Covariates, with an empty list as a default.}
+
+\item{beta}{Fitted coefficients related to covariates. Default is square matrix of zeroes of the same
+number of rows/columns as the covariates.}
+
+\item{short_range}{Symmetric matrix of short range interaction radii. Filled with 0.1 by default.}
+
+\item{medium_range}{Symmetric matrix of medium range interaction radii. Filled with 0 by default.}
+
+\item{long_range}{Symmetric matrix of long range interaction radii. Filled with 0 by default.}
+
+\item{saturation}{Saturation parameter of the point process. Default is 2.}
+
+\item{types}{Types of the points. Default is a vector (type1, type2, ...) of same size as n.}
+
+\item{model}{String representing the model to use You can check the currently authorised models with a call to `show_short_range_models()`.}
+
+\item{medium_range_model}{String representing the model to use You can check the currently authorised models with a call to `show_medium_range_models()`.}
+
+\item{mark_range}{Range of additional marks to give to the points.}
 
 \item{...}{Forwarded to rgibbs.}
 }

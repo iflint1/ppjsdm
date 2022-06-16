@@ -100,24 +100,54 @@ rgibbs.default <- function(window,
 #' Sample a multivariate Gibbs point processes from a fit object.
 #'
 #' @param fit Fit object obtained by running gibbsm.
+#' @param window Simulation window.
+#' @param alpha Repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.
+#' @param gamma Medium range repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.
+#' @param beta0 A vector representing the log_intensities of the point processes.
+#' Default is a vector of same size as types, filled with zeros
+#' @param covariates Covariates, with an empty list as a default.
+#' @param beta Fitted coefficients related to covariates. Default is square matrix of zeroes of the same
+#' number of rows/columns as the covariates.
+#' @param short_range Symmetric matrix of short range interaction radii. Filled with 0.1 by default.
+#' @param medium_range Symmetric matrix of medium range interaction radii. Filled with 0 by default.
+#' @param long_range Symmetric matrix of long range interaction radii. Filled with 0 by default.
+#' @param saturation Saturation parameter of the point process. Default is 2.
+#' @param types Types of the points. Default is a vector (type1, type2, ...) of same size as n.
+#' @param model String representing the model to use You can check the currently authorised models with a call to `show_short_range_models()`.
+#' @param medium_range_model String representing the model to use You can check the currently authorised models with a call to `show_medium_range_models()`.
+#' @param mark_range Range of additional marks to give to the points.
 #' @param ... Forwarded to rgibbs.
 #' @export
 #' @method rgibbs gibbsm
 rgibbs.gibbsm <- function(fit,
+                          window = fit$window,
+                          alpha = fit$coefficients$alpha,
+                          gamma = fit$coefficients$gamma,
+                          beta0 = fit$coefficients$beta0,
+                          covariates = fit$parameters$covariates,
+                          beta = fit$coefficients$beta,
+                          short_range = fit$coefficients$short_range,
+                          medium_range = fit$coefficients$medium_range,
+                          long_range = fit$coefficients$long_range,
+                          saturation = fit$parameters$saturation,
+                          types = fit$type_names,
+                          model = fit$parameters$model,
+                          medium_range_model = fit$parameters$medium_range_model,
+                          mark_range = fit$mark_range,
                           ...) {
-  rgibbs(window = fit$window,
-         alpha = fit$coefficients$alpha,
-         gamma = fit$coefficients$gamma,
-         beta0 = fit$coefficients$beta0,
-         covariates = fit$parameters$covariates,
-         beta = fit$coefficients$beta,
-         short_range = fit$coefficients$short_range,
-         medium_range = fit$coefficients$medium_range,
-         long_range = fit$coefficients$long_range,
-         saturation = fit$parameters$saturation,
-         types = fit$type_names,
-         model = fit$parameters$model,
-         medium_range_model = fit$parameters$medium_range_model,
-         mark_range = fit$mark_range,
+  rgibbs(window = window,
+         alpha = alpha,
+         gamma = gamma,
+         beta0 = beta0,
+         covariates = covariates,
+         beta = beta,
+         short_range = short_range,
+         medium_range = medium_range,
+         long_range = long_range,
+         saturation = saturation,
+         types = types,
+         model = model,
+         medium_range_model = medium_range_model,
+         mark_range = mark_range,
          ...)
 }
