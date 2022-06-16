@@ -30,6 +30,7 @@ plot_papangelou <- function(...) {
 #' @param nthreads Maximum number of threads for parallel computing.
 #' @param use_log Plot the logarithm of the Papangelou conditional intensity instead?
 #' @param use_ggplot Use ggplot for fancier plot?
+#' @param return_papangelou Should we return the Papangelou intensity itself instead of plotting it?
 #' @param limits Limits for values of the Papamgelou conditional intensity in plotting functions.
 #' @param ... Ignored.
 #' @importFrom colorspace scale_fill_continuous_sequential
@@ -60,6 +61,7 @@ plot_papangelou.default <- function(window,
                                     nthreads = 4,
                                     use_log = FALSE,
                                     use_ggplot = TRUE,
+                                    return_papangelou = FALSE,
                                     limits,
                                     ...) {
 
@@ -127,6 +129,14 @@ plot_papangelou.default <- function(window,
     title <- "Papangelou conditional intensity"
   }
 
+  papangelou_im <-as.im(t(outer(x_axis, y_axis, function(x, y) {
+    df$papangelou[df$x == x & df$y == y]
+  })), W = window)
+
+  if(return_papangelou) {
+    return(papangelou_im)
+  }
+
   if(use_ggplot) {
     points <- data.frame(x = configuration$x,
                          y = configuration$y,
@@ -164,7 +174,7 @@ plot_papangelou.default <- function(window,
     z <- outer(x_axis, y_axis, function(x, y) {
       df$papangelou[df$x == x & df$y == y]
     })
-    plot(as.im(t(z), W = window), main = title)
+    plot(papangelou_im, main = title)
     plot(as.ppp(configuration, window), add = TRUE, cols = 'white')
   }
 }

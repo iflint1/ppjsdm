@@ -26,6 +26,7 @@
   nthreads = 4,
   use_log = FALSE,
   use_ggplot = TRUE,
+  return_papangelou = FALSE,
   limits,
   ...
 )
@@ -72,6 +73,8 @@
 \item{use_log}{Plot the logarithm of the Papangelou conditional intensity instead?}
 
 \item{use_ggplot}{Use ggplot for fancier plot?}
+
+\item{return_papangelou}{Should we return the Papangelou intensity itself instead of plotting it?}
 
 \item{limits}{Limits for values of the Papamgelou conditional intensity in plotting functions.}
 
