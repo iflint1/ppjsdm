@@ -165,8 +165,16 @@ as.Configuration.default <- function(configuration) {
 #' @export
 "[.Configuration" <- function(x, i) {
   types <- x$types
-  subset_indices <- types %in% levels(types)[as.integer(i)]
-  Configuration(x = x$x[subset_indices], y = x$y[subset_indices], types = factor(types[subset_indices]), marks = x$marks[subset_indices])
+  if(is.character(i)) {
+    target_types <- i
+  } else {
+    target_types <- levels(types)[as.integer(i)]
+  }
+  subset_indices <- types %in% target_types
+  Configuration(x = x$x[subset_indices],
+                y = x$y[subset_indices],
+                types = factor(types[subset_indices]),
+                marks = x$marks[subset_indices])
 }
 
 format <- function(configuration) {
