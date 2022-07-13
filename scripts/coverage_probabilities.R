@@ -55,7 +55,27 @@ samples <- ppjsdm::rgibbs(window = window,
                           saturation = saturation,
                           covariates = covariates,
                           beta = beta,
+                          drop = FALSE,
                           steps = steps)
+
+library(ggplot2)
+configuration <- samples[[1]]
+dat <- data.frame(x = configuration$x,
+                  y = configuration$y,
+                  types = configuration$types)
+png(file = "first_experiment_typical_sample.png", bg = "white", width = 1000, height = 1000)
+ggplot(dat, aes(x = x, y = y)) +
+  geom_point(aes(colour = types, shape = types), size = 5) +
+  scale_size(breaks = seq(from = 0.16, to = 0.4, by = 0.02)) +
+  coord_equal() +
+  theme_minimal(base_size = 30) +
+  xlab("") +
+  ylab("") +
+  xlim(x_range(window)) +
+  ylim(y_range(window)) +
+  theme(legend.title = element_blank(),
+        axis.text = element_text(size = 30))
+dev.off()
 
 set.seed(seed)
 for(i in seq_len(nreplications)) {
@@ -80,22 +100,6 @@ for(i in seq_len(nreplications)) {
   is_in[i, ] <- true >= lower & true <= upper
   estimates[i, ] <- estimate
 }
-
-library(ggplot2)
-configuration <- samples[[1]]
-dat <- data.frame(x = configuration$x, y = configuration$y, types = configuration$types)
-X11(width = 12, height = 10)
-ggplot(dat, aes(x = y, y = x)) +
-  geom_point(aes(colour = types, shape = types), size = 5) +
-  scale_size(breaks = seq(from = 0.16, to = 0.4, by = 0.02)) +
-  coord_equal() +
-  xlab("x") +
-  ylab("y") +
-  theme(panel.background = element_rect(fill = 'white', colour = 'red'),
-        legend.title = element_blank())
-
-X11(width = 15, height = 10)
-plot(samples[[1]])
 
 coverage_probabilities <- colMeans(is_in, na.rm = TRUE)
 mean_estimates <- colMeans(estimates, na.rm = TRUE)

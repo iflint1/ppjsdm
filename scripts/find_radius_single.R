@@ -5,7 +5,7 @@ library(spatstat)
 seed <- 1
 
 window <- Rectangle_window(c(0, 1), c(0, 1))
-nreplications <-
+nreplications <- 1
 ntypes <- 2
 beta0 <- c(6.5, 2.6)
 steps <- 1e5
@@ -47,6 +47,25 @@ samples <- ppjsdm::rgibbs(window = window,
                           steps = steps)
 
 Sys.time() - tm
+
+library(ggplot2)
+configuration <- samples[[1]]
+dat <- data.frame(x = configuration$x,
+                  y = configuration$y,
+                  types = configuration$types)
+png(file = "unknown_radius.png", bg = "white", width = 1000, height = 1000)
+ggplot(dat, aes(x = x, y = y)) +
+  geom_point(aes(colour = types, shape = types), size = 5) +
+  scale_size(breaks = seq(from = 0.16, to = 0.4, by = 0.02)) +
+  coord_equal() +
+  theme_minimal(base_size = 30) +
+  xlab("") +
+  ylab("") +
+  xlim(x_range(window)) +
+  ylim(y_range(window)) +
+  theme(legend.title = element_blank(),
+        axis.text = element_text(size = 30))
+dev.off()
 
 tm <- Sys.time()
 
