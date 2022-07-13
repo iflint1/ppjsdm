@@ -106,6 +106,43 @@ plot_papangelou.default <- function(window,
   }
   configuration <- as.Configuration(configuration)
 
+  # TODO: There is a lot of code duplication here and in compute_papangelou, try to factorise...
+  # There are some cases where configuration might only have a subset of all types,
+  # e.g., if one wants to predict at a new location.
+  if(nlevels(configuration$types) != length(parameters$types)) {
+    # In this case, everything is ok, we can evaluate the parameters on the subset of types
+    if(all(levels(configuration$types) %in% parameters$types)) {
+      parameters$alpha <- parameters$alpha[levels(configuration$types), levels(configuration$types)]
+      parameters$gamma <- parameters$gamma[levels(configuration$types), levels(configuration$types)]
+      parameters$short_range <- parameters$short_range[levels(configuration$types), levels(configuration$types)]
+      parameters$medium_range <- parameters$medium_range[levels(configuration$types), levels(configuration$types)]
+      parameters$long_range <- parameters$long_range[levels(configuration$types), levels(configuration$types)]
+
+      parameters$beta0 <- parameters$beta0[levels(configuration$types)]
+      parameters$beta <- parameters$beta[levels(configuration$types), ]
+
+      parameters$types <- levels(configuration$types)
+    } else {
+      stop(paste0("The types of the configuration are not a subset of those given by the parameters, configuration: ",
+                  paste0(levels(configuration$types), collapse = ", "),
+                  " and supplied types: ",
+                  paste0(parameters$types, collapse = ", ")))
+    }
+  } else if(!all(levels(configuration$types) == types)) {
+    stop(paste0("The types of the configuration do not correspond to those given by the parameters, configuration: ",
+                paste0(levels(configuration$types), collapse = ", "),
+                " and supplied types: ",
+                paste0(parameters$types, collapse = ", ")))
+  }
+
+  # At this point, the parameters should exactly correspond to the types of the configuration
+  if(!all(names(parameters$beta0) == levels(configuration$types))) {
+    stop(paste0("Unexpected setting when computing the Papangelou intensity: the supplied parameters do not refer to the same types as the configuration, configuration: ",
+                paste0(levels(configuration$types), collapse = ", "),
+                " and supplied parameters: ",
+                paste0(names(parameters$beta0), collapse = ", ")))
+  }
+
   # If the user supplies a string as the type, they want to evaluate the intensity
   # at that type.
   if(is.character(type)) {
