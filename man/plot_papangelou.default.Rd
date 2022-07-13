@@ -27,6 +27,8 @@
   use_log = FALSE,
   use_ggplot = TRUE,
   return_papangelou = FALSE,
+  drop_type_from_configuration = FALSE,
+  show_only_type = FALSE,
   limits,
   ...
 )
@@ -75,6 +77,10 @@
 \item{use_ggplot}{Use ggplot for fancier plot?}
 
 \item{return_papangelou}{Should we return the Papangelou intensity itself instead of plotting it?}
+
+\item{drop_type_from_configuration}{Should we remove the considered type from the configuration?}
+
+\item{show_only_type}{In the plot, should we show only the individuals of the configuration with the target type?}
 
 \item{limits}{Limits for values of the Papamgelou conditional intensity in plotting functions.}
 

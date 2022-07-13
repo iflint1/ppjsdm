@@ -31,10 +31,12 @@ plot_papangelou <- function(...) {
 #' @param use_log Plot the logarithm of the Papangelou conditional intensity instead?
 #' @param use_ggplot Use ggplot for fancier plot?
 #' @param return_papangelou Should we return the Papangelou intensity itself instead of plotting it?
+#' @param drop_type_from_configuration Should we remove the considered type from the configuration?
+#' @param show_only_type In the plot, should we show only the individuals of the configuration with the target type?
 #' @param limits Limits for values of the Papamgelou conditional intensity in plotting functions.
 #' @param ... Ignored.
 #' @importFrom colorspace scale_fill_continuous_sequential
-#' @importFrom ggplot2 aes coord_equal element_text geom_tile ggplot ggtitle guide_legend guides labs scale_color_manual scale_shape_manual scale_x_continuous scale_y_continuous theme theme_minimal xlab ylab
+#' @importFrom ggplot2 aes coord_equal element_text geom_tile ggplot ggtitle guide_legend guides labs scale_color_manual scale_shape_manual scale_x_continuous scale_y_continuous theme theme_minimal xlab xlim ylab ylim
 #' @importFrom graphics plot
 #' @importFrom spatstat.geom as.im as.owin as.ppp
 #' @importFrom stats na.omit
@@ -62,8 +64,15 @@ plot_papangelou.default <- function(window,
                                     use_log = FALSE,
                                     use_ggplot = TRUE,
                                     return_papangelou = FALSE,
+                                    drop_type_from_configuration = FALSE,
+                                    show_only_type = FALSE,
                                     limits,
                                     ...) {
+
+  # If user did not supply types, by default they should be those of the configuration
+  if(missing(types) & !missing(configuration)) {
+    types <- levels(as.Configuration(configuration)$types)
+  }
 
   parameters <- model_parameters(window = window,
                                  alpha = alpha,
@@ -97,6 +106,12 @@ plot_papangelou.default <- function(window,
   }
   configuration <- as.Configuration(configuration)
 
+  # If the user supplies a string as the type, they want to evaluate the intensity
+  # at that type.
+  if(is.character(type)) {
+    type <- which(type == names(parameters$beta0))[1]
+  }
+
   window <- as.owin(parameters$window)
   x_range <- window$xrange
   y_range <- window$yrange
@@ -104,23 +119,25 @@ plot_papangelou.default <- function(window,
   y_axis <- seq(from = y_range[1], to = y_range[2], length.out = grid_steps[2])
   df <- as.data.frame(expand.grid(x = x_axis, y = y_axis))
 
-  df$papangelou <- compute_papangelou_cpp(x = df$x,
-                                          y = df$y,
-                                          type = rep(type, length(df$x)),
-                                          mark = rep(mark, length(df$x)),
-                                          configuration = configuration,
-                                          model = parameters$model,
-                                          medium_range_model = parameters$medium_range_model,
-                                          alpha = parameters$alpha,
-                                          beta0 = parameters$beta0,
-                                          beta = parameters$beta,
-                                          gamma = parameters$gamma,
-                                          covariates = parameters$covariates,
-                                          short_range = parameters$short_range,
-                                          medium_range = parameters$medium_range,
-                                          long_range = parameters$long_range,
-                                          saturation = parameters$saturation,
-                                          nthreads = nthreads)
+  df$papangelou <- compute_papangelou(x = df$x,
+                                      y = df$y,
+                                      type = rep(type, length(df$x)),
+                                      mark = rep(mark, length(df$x)),
+                                      configuration = configuration,
+                                      model = parameters$model,
+                                      medium_range_model = parameters$medium_range_model,
+                                      alpha = parameters$alpha,
+                                      beta0 = parameters$beta0,
+                                      beta = parameters$beta,
+                                      gamma = parameters$gamma,
+                                      covariates = parameters$covariates,
+                                      short_range = parameters$short_range,
+                                      medium_range = parameters$medium_range,
+                                      long_range = parameters$long_range,
+                                      saturation = parameters$saturation,
+                                      types = parameters$types,
+                                      drop_type_from_configuration = drop_type_from_configuration,
+                                      nthreads = nthreads)
 
   if(use_log) {
     df$papangelou <- log(df$papangelou)
@@ -129,12 +146,20 @@ plot_papangelou.default <- function(window,
     title <- "Papangelou conditional intensity"
   }
 
-  papangelou_im <-as.im(t(outer(x_axis, y_axis, function(x, y) {
+  papangelou_im <- as.im(t(outer(x_axis, y_axis, function(x, y) {
     df$papangelou[df$x == x & df$y == y]
   })), W = window)
 
   if(return_papangelou) {
     return(papangelou_im)
+  }
+
+  # Show only individuals of target type?
+  if(show_only_type) {
+    configuration <- Configuration(x = configuration$x[configuration$types %in% parameters$types[type]],
+                                   y = configuration$y[configuration$types %in% parameters$types[type]],
+                                   types = configuration$types[configuration$types %in% parameters$types[type]],
+                                   marks = configuration$marks[configuration$types %in% parameters$types[type]])
   }
 
   if(use_ggplot) {
@@ -162,6 +187,8 @@ plot_papangelou.default <- function(window,
       ggtitle("") +
       coord_equal() +
       theme_minimal(base_size = 12) + # Theme
+      xlim(x_range) +
+      ylim(y_range) +
       guides(shape = guide_legend(override.aes = list(size = 5))) # Bigger species symbol size
 
     if(!all(points$marks == 1.)) {

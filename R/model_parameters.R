@@ -140,5 +140,13 @@ model_parameters <- function(window,
                                               long_range = long_range,
                                               types = types,
                                               default_number_types = default_number_types)
+
+  colnames(parameters$alpha) <- rownames(parameters$alpha) <- parameters$types
+  colnames(parameters$gamma) <- rownames(parameters$gamma) <- parameters$types
+  colnames(parameters$short_range) <- rownames(parameters$short_range) <- parameters$types
+  colnames(parameters$medium_range) <- rownames(parameters$medium_range) <- parameters$types
+  colnames(parameters$long_range) <- rownames(parameters$long_range) <- parameters$types
+  rownames(parameters$beta) <- parameters$types
+  names(parameters$beta0) <- parameters$types
   append(parameters, defaults)
 }

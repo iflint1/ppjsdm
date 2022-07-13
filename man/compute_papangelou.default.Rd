@@ -21,7 +21,10 @@
   medium_range,
   long_range,
   saturation,
-  nthreads = 1
+  types,
+  drop_type_from_configuration = FALSE,
+  nthreads = 1,
+  ...
 )
 }
 \arguments{
@@ -57,7 +60,13 @@
 
 \item{saturation}{Saturation parameter.}
 
+\item{types}{Types of the points. Default is a vector (type1, type2, ...) of same size as n.}
+
+\item{drop_type_from_configuration}{Should we remove the considered type(s) from the configuration?}
+
 \item{nthreads}{Maximum number of threads for parallel computing.}
+
+\item{...}{Ignored.}
 }
 \description{
 Compute the Papangelou conditional intensity of the model with given parameters.
