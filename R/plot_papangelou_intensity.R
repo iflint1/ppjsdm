@@ -68,7 +68,6 @@ plot_papangelou.default <- function(window,
                                     show_only_type = FALSE,
                                     limits,
                                     ...) {
-
   # If user did not supply types, by default they should be those of the configuration
   if(missing(types) & !missing(configuration)) {
     types <- levels(as.Configuration(configuration)$types)
@@ -128,7 +127,7 @@ plot_papangelou.default <- function(window,
                   " and supplied types: ",
                   paste0(parameters$types, collapse = ", ")))
     }
-  } else if(!all(levels(configuration$types) == types)) {
+  } else if(!all(levels(configuration$types) == parameters$types)) {
     stop(paste0("The types of the configuration do not correspond to those given by the parameters, configuration: ",
                 paste0(levels(configuration$types), collapse = ", "),
                 " and supplied types: ",

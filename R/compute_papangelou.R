@@ -96,7 +96,7 @@ compute_papangelou.default <- function(configuration,
                   " and supplied types: ",
                   paste0(parameters$types, collapse = ", ")))
     }
-  } else if(!all(levels(configuration$types) == types)) {
+  } else if(!all(levels(configuration$types) == parameters$types)) {
     stop(paste0("The types of the configuration do not correspond to those given by the parameters, configuration: ",
                 paste0(levels(configuration$types), collapse = ", "),
                 " and supplied types: ",
