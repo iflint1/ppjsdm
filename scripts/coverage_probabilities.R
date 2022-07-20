@@ -63,9 +63,9 @@ configuration <- samples[[1]]
 dat <- data.frame(x = configuration$x,
                   y = configuration$y,
                   types = configuration$types)
-png(file = "first_experiment_typical_sample.png", bg = "white", width = 1000, height = 1000)
+png(file = "first_experiment_typical_sample.png", width = 600, height = 400)
 ggplot(dat, aes(x = x, y = y)) +
-  geom_point(aes(colour = types, shape = types), size = 5) +
+  geom_point(aes(colour = types, shape = types), size = 4) +
   scale_size(breaks = seq(from = 0.16, to = 0.4, by = 0.02)) +
   coord_equal() +
   theme_minimal(base_size = 30) +
@@ -73,8 +73,10 @@ ggplot(dat, aes(x = x, y = y)) +
   ylab("") +
   xlim(x_range(window)) +
   ylim(y_range(window)) +
+  guides(color = guide_legend(override.aes = list(size = 8))) +
   theme(legend.title = element_blank(),
-        axis.text = element_text(size = 30))
+        legend.text = element_text(size = 40),
+        axis.text = element_text(colour = "black"))
 dev.off()
 
 set.seed(seed)

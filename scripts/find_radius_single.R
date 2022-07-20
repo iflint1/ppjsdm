@@ -5,10 +5,10 @@ library(spatstat)
 seed <- 1
 
 window <- Rectangle_window(c(0, 1), c(0, 1))
-nreplications <- 1
+nreplications <- 1e3
 ntypes <- 2
 beta0 <- c(6.5, 2.6)
-steps <- 1e5
+steps <- 1e6
 alpha <- cbind(c(-1, -0.5), c(-0.5, 2))
 
 covariates <- list(x = function(x, y) x - 0.5)
@@ -53,9 +53,9 @@ configuration <- samples[[1]]
 dat <- data.frame(x = configuration$x,
                   y = configuration$y,
                   types = configuration$types)
-png(file = "unknown_radius.png", bg = "white", width = 1000, height = 1000)
+png(file = "unknown_radius.png", bg = "white", width = 600, height = 400)
 ggplot(dat, aes(x = x, y = y)) +
-  geom_point(aes(colour = types, shape = types), size = 5) +
+  geom_point(aes(colour = types, shape = types), size = 4) +
   scale_size(breaks = seq(from = 0.16, to = 0.4, by = 0.02)) +
   coord_equal() +
   theme_minimal(base_size = 30) +
@@ -63,8 +63,10 @@ ggplot(dat, aes(x = x, y = y)) +
   ylab("") +
   xlim(x_range(window)) +
   ylim(y_range(window)) +
+  guides(color = guide_legend(override.aes = list(size = 8))) +
   theme(legend.title = element_blank(),
-        axis.text = element_text(size = 30))
+        legend.text = element_text(size = 40),
+        axis.text = element_text(colour = "black"))
 dev.off()
 
 tm <- Sys.time()
@@ -79,7 +81,7 @@ for(k1 in seq_len(length(short_range_search))) {
                           short_range = test_short_range,
                           medium_range = medium_range,
                           long_range = long_range,
-                          use_glmnet = FALSE,
+                          fitting_package = "glm",
                           max_dummy = max_dummy,
                           dummy_factor = dummy_factor,
                           model = model,
@@ -104,7 +106,7 @@ results2 <- lapply(seq_len(nreplications), function(i) {
                           short_range = test_short_range,
                           medium_range = medium_range,
                           long_range = long_range,
-                          use_glmnet = FALSE,
+                          fitting_package = "glm",
                           max_dummy = max_dummy,
                           dummy_factor = dummy_factor,
                           model = model,
