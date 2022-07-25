@@ -12,7 +12,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // compute_papangelou_cpp
-Rcpp::NumericVector compute_papangelou_cpp(SEXP configuration, Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::List alpha, Rcpp::NumericVector beta0, Rcpp::NumericMatrix beta, Rcpp::NumericMatrix gamma, Rcpp::List covariates, Rcpp::List short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, Rcpp::IntegerVector type, Rcpp::NumericVector mark, int nthreads);
+Rcpp::NumericVector compute_papangelou_cpp(SEXP configuration, Rcpp::NumericVector x, Rcpp::NumericVector y, Rcpp::List model, Rcpp::CharacterVector medium_range_model, Rcpp::List alpha, Rcpp::NumericVector beta0, Rcpp::NumericMatrix beta, Rcpp::NumericMatrix gamma, Rcpp::List covariates, Rcpp::List short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, Rcpp::IntegerVector type, Rcpp::NumericVector mark, int nthreads);
 RcppExport SEXP _ppjsdm_compute_papangelou_cpp(SEXP configurationSEXP, SEXP xSEXP, SEXP ySEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP alphaSEXP, SEXP beta0SEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP covariatesSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP typeSEXP, SEXP markSEXP, SEXP nthreadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -20,7 +20,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type configuration(configurationSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type x(xSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type y(ySEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type model(modelSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type model(modelSEXP);
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type medium_range_model(medium_range_modelSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type beta0(beta0SEXP);
@@ -39,7 +39,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // compute_vcov
-Rcpp::List compute_vcov(SEXP configuration, SEXP dummy, SEXP window, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::List short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, Rcpp::NumericVector rho, Rcpp::NumericVector theta, Rcpp::NumericMatrix regressors, Rcpp::List data_list, Rcpp::List estimate_alpha, Rcpp::LogicalMatrix estimate_gamma, bool debug, int nthreads, int npoints, bool multiple_windows, std::string dummy_distribution, Rcpp::NumericVector mark_range);
+Rcpp::List compute_vcov(SEXP configuration, SEXP dummy, SEXP window, Rcpp::List covariates, SEXP model, Rcpp::CharacterVector medium_range_model, Rcpp::List short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, Rcpp::NumericVector rho, Rcpp::NumericVector theta, Rcpp::NumericMatrix regressors, Rcpp::List data_list, Rcpp::List estimate_alpha, Rcpp::LogicalMatrix estimate_gamma, bool debug, int nthreads, int npoints, bool multiple_windows, std::string dummy_distribution, Rcpp::NumericVector mark_range);
 RcppExport SEXP _ppjsdm_compute_vcov(SEXP configurationSEXP, SEXP dummySEXP, SEXP windowSEXP, SEXP covariatesSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP rhoSEXP, SEXP thetaSEXP, SEXP regressorsSEXP, SEXP data_listSEXP, SEXP estimate_alphaSEXP, SEXP estimate_gammaSEXP, SEXP debugSEXP, SEXP nthreadsSEXP, SEXP npointsSEXP, SEXP multiple_windowsSEXP, SEXP dummy_distributionSEXP, SEXP mark_rangeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -48,7 +48,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type dummy(dummySEXP);
     Rcpp::traits::input_parameter< SEXP >::type window(windowSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type covariates(covariatesSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type model(modelSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type model(modelSEXP);
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type medium_range_model(medium_range_modelSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type short_range(short_rangeSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type medium_range(medium_rangeSEXP);
@@ -101,7 +101,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // compute_A2_plus_A3_cpp
-Rcpp::NumericMatrix compute_A2_plus_A3_cpp(SEXP configuration, SEXP window, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::List short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, Rcpp::NumericVector rho, Rcpp::NumericVector theta, Rcpp::NumericMatrix regressors, Rcpp::List data_list, Rcpp::List estimate_alpha, Rcpp::LogicalMatrix estimate_gamma, int nthreads, int npoints, bool multiple_windows, Rcpp::NumericVector mark_range, bool debug, int max_executions);
+Rcpp::NumericMatrix compute_A2_plus_A3_cpp(SEXP configuration, SEXP window, Rcpp::List covariates, SEXP model, Rcpp::CharacterVector medium_range_model, Rcpp::List short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, R_xlen_t saturation, Rcpp::NumericVector rho, Rcpp::NumericVector theta, Rcpp::NumericMatrix regressors, Rcpp::List data_list, Rcpp::List estimate_alpha, Rcpp::LogicalMatrix estimate_gamma, int nthreads, int npoints, bool multiple_windows, Rcpp::NumericVector mark_range, bool debug, int max_executions);
 RcppExport SEXP _ppjsdm_compute_A2_plus_A3_cpp(SEXP configurationSEXP, SEXP windowSEXP, SEXP covariatesSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP rhoSEXP, SEXP thetaSEXP, SEXP regressorsSEXP, SEXP data_listSEXP, SEXP estimate_alphaSEXP, SEXP estimate_gammaSEXP, SEXP nthreadsSEXP, SEXP npointsSEXP, SEXP multiple_windowsSEXP, SEXP mark_rangeSEXP, SEXP debugSEXP, SEXP max_executionsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -109,7 +109,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type configuration(configurationSEXP);
     Rcpp::traits::input_parameter< SEXP >::type window(windowSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type covariates(covariatesSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type model(modelSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type model(modelSEXP);
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type medium_range_model(medium_range_modelSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type short_range(short_rangeSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type medium_range(medium_rangeSEXP);
@@ -132,7 +132,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // compute_G2_cpp
-Rcpp::NumericMatrix compute_G2_cpp(SEXP configuration, SEXP dummy, SEXP window, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::List short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, Rcpp::IntegerVector type, R_xlen_t saturation, Rcpp::NumericVector rho, Rcpp::NumericVector theta, Rcpp::NumericMatrix regressors, Rcpp::List estimate_alpha, Rcpp::LogicalMatrix estimate_gamma, int nthreads, std::string dummy_distribution, Rcpp::NumericVector mark_range);
+Rcpp::NumericMatrix compute_G2_cpp(SEXP configuration, SEXP dummy, SEXP window, Rcpp::List covariates, SEXP model, Rcpp::CharacterVector medium_range_model, Rcpp::List short_range, Rcpp::NumericMatrix medium_range, Rcpp::NumericMatrix long_range, Rcpp::IntegerVector type, R_xlen_t saturation, Rcpp::NumericVector rho, Rcpp::NumericVector theta, Rcpp::NumericMatrix regressors, Rcpp::List estimate_alpha, Rcpp::LogicalMatrix estimate_gamma, int nthreads, std::string dummy_distribution, Rcpp::NumericVector mark_range);
 RcppExport SEXP _ppjsdm_compute_G2_cpp(SEXP configurationSEXP, SEXP dummySEXP, SEXP windowSEXP, SEXP covariatesSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP typeSEXP, SEXP saturationSEXP, SEXP rhoSEXP, SEXP thetaSEXP, SEXP regressorsSEXP, SEXP estimate_alphaSEXP, SEXP estimate_gammaSEXP, SEXP nthreadsSEXP, SEXP dummy_distributionSEXP, SEXP mark_rangeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -141,7 +141,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type dummy(dummySEXP);
     Rcpp::traits::input_parameter< SEXP >::type window(windowSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type covariates(covariatesSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type model(modelSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type model(modelSEXP);
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type medium_range_model(medium_range_modelSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type short_range(short_rangeSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type medium_range(medium_rangeSEXP);
@@ -219,7 +219,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // prepare_gibbsm_data
-Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list, SEXP window, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::List short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, Rcpp::NumericVector mark_range, R_xlen_t max_dummy, R_xlen_t min_dummy, double dummy_factor, Rcpp::List estimate_alpha, Rcpp::LogicalMatrix estimate_gamma, int nthreads, bool debug, std::string dummy_distribution, Rcpp::CharacterVector type_names);
+Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list, SEXP window, Rcpp::List covariates, Rcpp::List model, Rcpp::CharacterVector medium_range_model, Rcpp::List short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, Rcpp::NumericVector mark_range, R_xlen_t max_dummy, R_xlen_t min_dummy, double dummy_factor, Rcpp::List estimate_alpha, Rcpp::LogicalMatrix estimate_gamma, int nthreads, bool debug, std::string dummy_distribution, Rcpp::CharacterVector type_names);
 RcppExport SEXP _ppjsdm_prepare_gibbsm_data(SEXP configuration_listSEXP, SEXP windowSEXP, SEXP covariatesSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP mark_rangeSEXP, SEXP max_dummySEXP, SEXP min_dummySEXP, SEXP dummy_factorSEXP, SEXP estimate_alphaSEXP, SEXP estimate_gammaSEXP, SEXP nthreadsSEXP, SEXP debugSEXP, SEXP dummy_distributionSEXP, SEXP type_namesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -227,7 +227,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::List >::type configuration_list(configuration_listSEXP);
     Rcpp::traits::input_parameter< SEXP >::type window(windowSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type covariates(covariatesSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type model(modelSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type model(modelSEXP);
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type medium_range_model(medium_range_modelSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type short_range(short_rangeSEXP);
     Rcpp::traits::input_parameter< SEXP >::type medium_range(medium_rangeSEXP);
@@ -248,7 +248,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // prepare_gibbsm_data_with_dummy
-Rcpp::List prepare_gibbsm_data_with_dummy(Rcpp::List configuration_list, SEXP dummy, SEXP window, Rcpp::List covariates, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, Rcpp::List short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, Rcpp::NumericVector mark_range, Rcpp::List estimate_alpha, Rcpp::LogicalMatrix estimate_gamma, int nthreads, bool debug, Rcpp::CharacterVector type_names);
+Rcpp::List prepare_gibbsm_data_with_dummy(Rcpp::List configuration_list, SEXP dummy, SEXP window, Rcpp::List covariates, Rcpp::List model, Rcpp::CharacterVector medium_range_model, Rcpp::List short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, Rcpp::NumericVector mark_range, Rcpp::List estimate_alpha, Rcpp::LogicalMatrix estimate_gamma, int nthreads, bool debug, Rcpp::CharacterVector type_names);
 RcppExport SEXP _ppjsdm_prepare_gibbsm_data_with_dummy(SEXP configuration_listSEXP, SEXP dummySEXP, SEXP windowSEXP, SEXP covariatesSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP mark_rangeSEXP, SEXP estimate_alphaSEXP, SEXP estimate_gammaSEXP, SEXP nthreadsSEXP, SEXP debugSEXP, SEXP type_namesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -257,7 +257,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type dummy(dummySEXP);
     Rcpp::traits::input_parameter< SEXP >::type window(windowSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type covariates(covariatesSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type model(modelSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type model(modelSEXP);
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type medium_range_model(medium_range_modelSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type short_range(short_rangeSEXP);
     Rcpp::traits::input_parameter< SEXP >::type medium_range(medium_rangeSEXP);
@@ -290,7 +290,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // rgibbs_cpp
-SEXP rgibbs_cpp(SEXP window, SEXP alpha, Rcpp::NumericVector beta0, SEXP covariates, SEXP beta, SEXP gamma, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, R_xlen_t steps, R_xlen_t nsim, SEXP types, Rcpp::CharacterVector model, Rcpp::CharacterVector medium_range_model, bool drop, Rcpp::NumericVector mark_range, Rcpp::IntegerVector only_simulate_these_types, SEXP conditional_configuration, SEXP starting_configuration);
+SEXP rgibbs_cpp(SEXP window, SEXP alpha, Rcpp::NumericVector beta0, SEXP covariates, SEXP beta, SEXP gamma, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, R_xlen_t steps, R_xlen_t nsim, SEXP types, SEXP model, SEXP medium_range_model, bool drop, Rcpp::NumericVector mark_range, Rcpp::IntegerVector only_simulate_these_types, SEXP conditional_configuration, SEXP starting_configuration);
 RcppExport SEXP _ppjsdm_rgibbs_cpp(SEXP windowSEXP, SEXP alphaSEXP, SEXP beta0SEXP, SEXP covariatesSEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP stepsSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP dropSEXP, SEXP mark_rangeSEXP, SEXP only_simulate_these_typesSEXP, SEXP conditional_configurationSEXP, SEXP starting_configurationSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -308,8 +308,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< R_xlen_t >::type steps(stepsSEXP);
     Rcpp::traits::input_parameter< R_xlen_t >::type nsim(nsimSEXP);
     Rcpp::traits::input_parameter< SEXP >::type types(typesSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type model(modelSEXP);
-    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type medium_range_model(medium_range_modelSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type model(modelSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type medium_range_model(medium_range_modelSEXP);
     Rcpp::traits::input_parameter< bool >::type drop(dropSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type mark_range(mark_rangeSEXP);
     Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type only_simulate_these_types(only_simulate_these_typesSEXP);

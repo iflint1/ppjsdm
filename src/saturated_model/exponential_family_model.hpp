@@ -65,7 +65,7 @@ template<typename Lambda>
 class Truncated_exponential_family_model {
 public:
   Truncated_exponential_family_model(const Lambda& beta0,
-                                     Rcpp::CharacterVector model,
+                                     Rcpp::List model,
                                      Rcpp::CharacterVector medium_range_model,
                                      Rcpp::List alpha,
                                      Rcpp::NumericMatrix beta,
@@ -86,7 +86,7 @@ public:
     } else {
       dispersion_ = std::vector<Saturated_model<double>>{};
       for(decltype(alpha.size()) i(0); i < alpha.size(); ++i) {
-        dispersion_.emplace_back(Saturated_model<double>(model, short_range[i], saturation));
+        dispersion_.emplace_back(Saturated_model<double>(model[i], short_range[i], saturation));
       }
     }
   }
@@ -224,7 +224,7 @@ private:
 public:
   Truncated_exponential_family_model_over_window(const Window& window,
                                                  const Lambda& beta0,
-                                                 Rcpp::CharacterVector model,
+                                                 Rcpp::List model,
                                                  Rcpp::CharacterVector medium_range_model,
                                                  Rcpp::List alpha,
                                                  Rcpp::NumericMatrix beta,

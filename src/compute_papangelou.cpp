@@ -12,7 +12,7 @@
 Rcpp::NumericVector compute_papangelou_cpp(SEXP configuration,
                                            Rcpp::NumericVector x,
                                            Rcpp::NumericVector y,
-                                           Rcpp::CharacterVector model,
+                                           Rcpp::List model,
                                            Rcpp::CharacterVector medium_range_model,
                                            Rcpp::List alpha,
                                            Rcpp::NumericVector beta0,

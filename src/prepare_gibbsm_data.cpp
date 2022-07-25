@@ -323,7 +323,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
                                SEXP window,
                                Rcpp::List covariates,
-                               Rcpp::CharacterVector model,
+                               Rcpp::List model,
                                Rcpp::CharacterVector medium_range_model,
                                Rcpp::List short_range,
                                SEXP medium_range,
@@ -368,10 +368,10 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
       }
     }
   }
-  using dispersion_t = decltype(ppjsdm::Saturated_model<double>(model, Rcpp::wrap(short_range[0]), saturation));
+  using dispersion_t = decltype(ppjsdm::Saturated_model<double>(model[0], Rcpp::wrap(short_range[0]), saturation));
   std::vector<dispersion_t> dispersion{};
   for(decltype(short_range.size()) i(0); i < short_range.size(); ++i) {
-    dispersion.emplace_back(ppjsdm::Saturated_model<double>(model, short_range[i], saturation));
+    dispersion.emplace_back(ppjsdm::Saturated_model<double>(model[i], short_range[i], saturation));
   }
   const auto medium_range_dispersion(ppjsdm::Saturated_model<double>(medium_range_model, medium_range, long_range, saturation));
 
@@ -407,7 +407,7 @@ Rcpp::List prepare_gibbsm_data_with_dummy(Rcpp::List configuration_list,
                                           SEXP dummy,
                                           SEXP window,
                                           Rcpp::List covariates,
-                                          Rcpp::CharacterVector model,
+                                          Rcpp::List model,
                                           Rcpp::CharacterVector medium_range_model,
                                           Rcpp::List short_range,
                                           SEXP medium_range,
@@ -455,10 +455,10 @@ Rcpp::List prepare_gibbsm_data_with_dummy(Rcpp::List configuration_list,
       }
     }
   }
-  using dispersion_t = decltype(ppjsdm::Saturated_model<double>(model, Rcpp::wrap(short_range[0]), saturation));
+  using dispersion_t = decltype(ppjsdm::Saturated_model<double>(model[0], Rcpp::wrap(short_range[0]), saturation));
   std::vector<dispersion_t> dispersion{};
   for(decltype(short_range.size()) i(0); i < short_range.size(); ++i) {
-    dispersion.emplace_back(ppjsdm::Saturated_model<double>(model, short_range[i], saturation));
+    dispersion.emplace_back(ppjsdm::Saturated_model<double>(model[i], short_range[i], saturation));
   }
   const auto medium_range_dispersion(ppjsdm::Saturated_model<double>(medium_range_model, medium_range, long_range, saturation));
 

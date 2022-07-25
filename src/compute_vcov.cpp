@@ -38,13 +38,15 @@
 
 namespace detail {
 
-inline auto make_dispersions(Rcpp::CharacterVector model,
+inline auto make_dispersions(Rcpp::List model,
                              Rcpp::List short_range,
                              R_xlen_t saturation) {
   using dispersion_t = ppjsdm::Saturated_model<double>;
   std::vector<dispersion_t> dispersions;
   for(decltype(short_range.size()) i(0); i < short_range.size(); ++i) {
-    dispersions.emplace_back(dispersion_t(model, Rcpp::as<Rcpp::NumericMatrix>(short_range[i]), saturation));
+    dispersions.emplace_back(dispersion_t(Rcpp::as<Rcpp::CharacterVector>(model[i]),
+                                          Rcpp::as<Rcpp::NumericMatrix>(short_range[i]),
+                                          saturation));
   }
   return dispersions;
 }
@@ -1039,7 +1041,7 @@ Rcpp::List compute_vcov(SEXP configuration,
                         SEXP dummy,
                         SEXP window,
                         Rcpp::List covariates,
-                        Rcpp::CharacterVector model,
+                        SEXP model,
                         Rcpp::CharacterVector medium_range_model,
                         Rcpp::List short_range,
                         Rcpp::NumericMatrix medium_range,
@@ -1147,7 +1149,7 @@ Rcpp::NumericMatrix compute_A1_cpp(Rcpp::NumericVector rho,
 Rcpp::NumericMatrix compute_A2_plus_A3_cpp(SEXP configuration,
                                            SEXP window,
                                            Rcpp::List covariates,
-                                           Rcpp::CharacterVector model,
+                                           SEXP model,
                                            Rcpp::CharacterVector medium_range_model,
                                            Rcpp::List short_range,
                                            Rcpp::NumericMatrix medium_range,
@@ -1264,7 +1266,7 @@ Rcpp::NumericMatrix compute_G2_cpp(SEXP configuration,
                                    SEXP dummy,
                                    SEXP window,
                                    Rcpp::List covariates,
-                                   Rcpp::CharacterVector model,
+                                   SEXP model,
                                    Rcpp::CharacterVector medium_range_model,
                                    Rcpp::List short_range,
                                    Rcpp::NumericMatrix medium_range,

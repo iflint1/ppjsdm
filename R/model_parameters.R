@@ -31,9 +31,14 @@ model_parameters_defaults <- function(window,
   if(missing(saturation)) {
     saturation <- 2
   }
-  if(missing(model)) {
-    model <- "square_bump"
-  }
+  # Model is a list of length the number of potentials, missing values indicated by NULL
+  model <- lapply(model, function(x) {
+    if(is.null(x)) {
+      "square_bump"
+    } else {
+      x
+    }
+  })
   if(missing(medium_range_model)) {
     medium_range_model <- "square_exponential"
   }
@@ -268,15 +273,57 @@ model_parameters <- function(window,
                              medium_range_model,
                              default_number_types = 1,
                              ...) {
-  # The parameters below are set to NULL, and are treated later on.
-  # Their values are not straightforward to determine and depends on how many types the user has in mind.
+  # Try to figure out how many short_range potentials the user intends to use
+  number_short_range <- if(!missing(alpha)) {
+    if(is.list(alpha)) {
+      length(alpha)
+    } else {
+      1
+    }
+  } else if(!missing(short_range)) {
+    if(is.list(short_range)) {
+      length(short_range)
+    } else {
+      1
+    }
+  } else if(!missing(model)) {
+    if(is.list(model)) {
+      length(model)
+    } else {
+      1
+    }
+  } else {
+    1
+  }
+
+  # Default initialise most parameters, but at this point we do not know how many types user intends
   if(missing(alpha)) {
-    alpha <- list(NULL)
+    alpha <- lapply(seq_len(number_short_range), function(x) NULL)
   } else if(!is.list(alpha)) {
     if(is.numeric(alpha)) {
-      alpha <- list(alpha)
+      alpha <- lapply(seq_len(number_short_range), function(x) alpha)
     } else {
       stop("Not sure how to interpret parameter alpha.")
+    }
+  }
+
+  if(missing(short_range)) {
+    short_range <- lapply(seq_len(number_short_range), function(x) NULL)
+  } else if(!is.list(short_range)) {
+    if(is.numeric(short_range)) {
+      short_range <- lapply(seq_len(number_short_range), function(x) short_range)
+    } else {
+      stop("Not sure how to interpret parameter short_range")
+    }
+  }
+
+  if(missing(model)) {
+    model <- lapply(seq_len(number_short_range), function(x) NULL)
+  } else if(!is.list(short_range)) {
+    if(is.character(short_range)) {
+      model <- lapply(seq_len(number_short_range), function(x) model)
+    } else {
+      stop("Not sure how to interpret parameter model")
     }
   }
 
@@ -292,16 +339,6 @@ model_parameters <- function(window,
     beta <- NULL
   } else {
     beta <- as.matrix(beta)
-  }
-
-  if(missing(short_range)) {
-    short_range <- list(NULL)
-  } else if(!is.list(short_range)) {
-    if(is.numeric(short_range)) {
-      short_range <- list(short_range)
-    } else {
-      stop("Not sure how to interpret parameter short_range")
-    }
   }
 
   if(missing(medium_range)) {
@@ -335,6 +372,17 @@ model_parameters <- function(window,
                                               types = types,
                                               default_number_types = default_number_types,
                                               ...)
+
+  # TODO: If user sets model to given length, want to default-construct alpha of the same length
+  if(!is.list(defaults$model)) {
+    defaults$model <- lapply(parameters$alpha, function(x) defaults$model)
+  }
+
+  if(length(defaults$model) != length(parameters$alpha) || length(defaults$model) != length(parameters$short_range)) {
+    stop(paste0("Some of the parameters have incompatible sizes; model: ", paste0(model, collapse = ", "),
+                ", alpha: ", paste0(alpha, collapse = ", "),
+                " and short_range: ", paste0(short_range, collapse = ", ")))
+  }
 
   parameters$alpha <- lapply(parameters$alpha, function(a) {
     z <- a
