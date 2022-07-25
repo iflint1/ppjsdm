@@ -41,7 +41,7 @@ SEXP rstratpp_cpp(SEXP window,
   if(Rf_isNull(delta_y)) {
     delta_y = delta_x;
   }
-  types = ppjsdm::make_types(types, number_types, delta_x, delta_y);
+  types = ppjsdm::detail::make_types(types, number_types, delta_x, delta_y);
   const auto cpp_window(ppjsdm::Window(window, mark_range));
   return rstratpp_helper(cpp_window, delta_x, delta_y, nsim, types, drop);
 }

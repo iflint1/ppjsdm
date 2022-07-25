@@ -7,6 +7,7 @@
 namespace ppjsdm {
 namespace detail {
 
+// Deduce from object its "length", i.e., the number of types it implies
 inline auto get_length_with_check(SEXP x) {
   if(Rf_isMatrix(x)) {
     const auto n(Rf_nrows(x));
@@ -14,11 +15,26 @@ inline auto get_length_with_check(SEXP x) {
       Rcpp::stop("Found a non-square matrix in the arguments.");
     }
     return n;
+  } else if(Rf_isNewList(x)) {
+    const auto x_list(Rcpp::as<Rcpp::List>(x));
+    const auto n(Rcpp::as<Rcpp::NumericMatrix>(x_list[0]).nrow());
+    if(n != Rcpp::as<Rcpp::NumericMatrix>(x_list[0]).ncol()) {
+      Rcpp::stop("First argument is not a square matrix.");
+    }
+    const auto length_x(x_list.size());
+    for(decltype(x_list.size()) i(1); i < length_x; ++i) {
+      if(n != Rcpp::as<Rcpp::NumericMatrix>(x_list[i]).nrow() ||
+         n != Rcpp::as<Rcpp::NumericMatrix>(x_list[i]).ncol()) {
+        Rcpp::stop("Found a matrix with incompatible size in the arguments.");
+      }
+    }
+    return n;
   } else {
     return Rf_length(x);
   }
 }
 
+// End of loop
 inline R_xlen_t get_number_types_helper(R_xlen_t default_number_types, R_xlen_t number_types) {
   return number_types == 0 ? default_number_types : number_types;
 }

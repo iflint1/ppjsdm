@@ -14,12 +14,12 @@ Rcpp::NumericVector compute_papangelou_cpp(SEXP configuration,
                                            Rcpp::NumericVector y,
                                            Rcpp::CharacterVector model,
                                            Rcpp::CharacterVector medium_range_model,
-                                           Rcpp::NumericMatrix alpha,
+                                           Rcpp::List alpha,
                                            Rcpp::NumericVector beta0,
                                            Rcpp::NumericMatrix beta,
                                            Rcpp::NumericMatrix gamma,
                                            Rcpp::List covariates,
-                                           Rcpp::NumericMatrix short_range,
+                                           Rcpp::List short_range,
                                            Rcpp::NumericMatrix medium_range,
                                            Rcpp::NumericMatrix long_range,
                                            R_xlen_t saturation,
@@ -32,6 +32,11 @@ Rcpp::NumericVector compute_papangelou_cpp(SEXP configuration,
     points[i] = ppjsdm::Marked_point(x[i], y[i], type[i] - 1, mark[i]);
   }
 
-  const ppjsdm::Truncated_exponential_family_model<Rcpp::NumericVector> exponential_model(beta0, model, medium_range_model, alpha, beta, gamma, covariates, short_range, medium_range, long_range, saturation);
+  const ppjsdm::Truncated_exponential_family_model<Rcpp::NumericVector> exponential_model(beta0, model,
+                                                                                          medium_range_model,
+                                                                                          alpha, beta, gamma,
+                                                                                          covariates, short_range,
+                                                                                          medium_range, long_range,
+                                                                                          saturation);
   return Rcpp::wrap(exponential_model.compute_papangelou_vectorized(points, wrapped_configuration, nthreads));
 }

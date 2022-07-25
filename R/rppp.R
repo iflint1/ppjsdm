@@ -16,8 +16,14 @@ rppp <- function(window = Rectangle_window(),
                  types = NULL,
                  drop = TRUE,
                  mark_range = c(1.0, 1.0)) {
+  lambda <- unlist(lambda)
+  types <- unlist(types)
+  number_types <- get_number_types_and_check_conformance(default_number_types = 1, lambda, types)
+  lambda <- construct_if_missing(x = lambda, def = 1, nrows = number_types, matrix = FALSE)
+  types <- make_types(types = types, size = number_types, might_contain_name = lambda)
+
   rppp_cpp(window = window,
-           lambda = unlist(lambda),
+           lambda = lambda,
            nsim = nsim,
            types = types,
            drop = drop,

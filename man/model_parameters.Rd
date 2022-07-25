@@ -18,7 +18,8 @@ model_parameters(
   types,
   model,
   medium_range_model,
-  default_number_types
+  default_number_types = 1,
+  ...
 )
 }
 \arguments{
@@ -51,6 +52,8 @@ number of rows/columns as the covariates.}
 \item{medium_range_model}{String representing the model to use You can check the currently authorised models with a call to `show_medium_range_models()`.}
 
 \item{default_number_types}{Default number of types.}
+
+\item{...}{Other parameters used to infer the number of types.}
 }
 \description{
 Construct parameters for the model.

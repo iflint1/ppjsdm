@@ -30,6 +30,21 @@
 #include <type_traits> // std::remove_cv_t
 #include <vector> // std::vector
 
+namespace detail {
+
+// TODO: This function is copy/pasted from compute_vcov, and a similar version for numeric matrices
+// was also used elsewhere; synchronise.
+inline auto convert_list_of_boolean_matrices_to_vector(Rcpp::List boolean_matrices) {
+  using conversion_t = ppjsdm::Lightweight_matrix<bool>;
+  std::vector<conversion_t> converted_matrices(boolean_matrices.size());
+  for(decltype(converted_matrices.size()) i(0); i < converted_matrices.size(); ++i) {
+    converted_matrices[i] = conversion_t(Rcpp::as<Rcpp::LogicalMatrix>(boolean_matrices[i]));
+  }
+  return converted_matrices;
+}
+
+} // detail
+
 template<typename computation_t, typename Vector>
 auto make_dummy_points(const ppjsdm::Window& window,
                        const Vector& rho_times_volume,
@@ -88,15 +103,15 @@ auto make_rho_times_volume(int number_types,
   return rho_times_volume;
 }
 
-template<typename Configuration, typename Dummy, typename FloatType, typename Vector>
+template<typename Configuration, typename Dummy, typename FloatType, typename Vector, typename VectorBoolMatrices>
 Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configuration_list,
                                       const Dummy& D,
                                       const Vector& rho_times_volume,
                                       const ppjsdm::Window& window,
                                       const ppjsdm::Im_list_wrapper& covariates,
-                                      const ppjsdm::Saturated_model<FloatType>& dispersion_model,
+                                      const std::vector<ppjsdm::Saturated_model<FloatType>>& dispersion_model,
                                       const ppjsdm::Saturated_model<FloatType>& medium_dispersion_model,
-                                      Rcpp::LogicalMatrix estimate_alpha,
+                                      const VectorBoolMatrices& estimate_alpha,
                                       Rcpp::LogicalMatrix estimate_gamma,
                                       int number_types,
                                       int nthreads,
@@ -112,10 +127,13 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
 
   // Check if we actually need to compute alpha/gamma regressors
   bool need_to_compute_alpha(false), need_to_compute_gamma(false);
-  for(decltype(estimate_alpha.nrow()) i(0); i < estimate_alpha.nrow(); ++i) {
-    for(decltype(estimate_alpha.ncol()) j(i); j < estimate_alpha.ncol(); ++j) {
-      if(estimate_alpha(i, j)) {
-        need_to_compute_alpha = true;
+  for(decltype(estimate_gamma.nrow()) i(0); i < estimate_gamma.nrow(); ++i) {
+    for(decltype(estimate_gamma.ncol()) j(i); j < estimate_gamma.ncol(); ++j) {
+      for(decltype(estimate_alpha.size()) k(0); k < estimate_alpha.size(); ++k) {
+        if(estimate_alpha[k](i, j)) {
+          need_to_compute_alpha = true;
+          break;
+        }
       }
       if(estimate_gamma(i, j)) {
         need_to_compute_gamma = true;
@@ -147,18 +165,24 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   }
 
   // Precompute short and medium range dispersions
-  using vec_dispersion_t = std::vector<decltype(ppjsdm::compute_dispersion_for_fitting(dispersion_model, 1, 1, configuration_list[0], D_no_NA_covariates))>;
-  vec_dispersion_t dispersion_short(configuration_list.size()), dispersion_medium(configuration_list.size());
+  using vec_dispersion_t = std::vector<decltype(ppjsdm::compute_dispersion_for_fitting(dispersion_model[0], 1, 1, configuration_list[0], D_no_NA_covariates))>;
+  std::vector<vec_dispersion_t> dispersion_short{};
+  for(decltype(dispersion_model.size()) j(0); j < dispersion_model.size(); ++j) {
+    dispersion_short.emplace_back(vec_dispersion_t(configuration_list.size()));
+  }
+  vec_dispersion_t dispersion_medium(configuration_list.size());
   if(debug) {
     timer.set_current();
     Rcpp::Rcout << "Starting pre-computation of the dispersions to put into the regression matrix...\n";
   }
   for(decltype(configuration_list.size()) i(0); i < configuration_list.size(); ++i) {
     if(need_to_compute_alpha) {
-      dispersion_short[i] = ppjsdm::compute_dispersion_for_fitting(dispersion_model,
-                                                                   number_types,
-                                                                   nthreads,
-                                                                   configuration_list[i], D_no_NA_covariates);
+      for(decltype(dispersion_short.size()) j(0); j < dispersion_short.size(); ++j) {
+        dispersion_short[j][i] = ppjsdm::compute_dispersion_for_fitting(dispersion_model[j],
+                                                                        number_types,
+                                                                        nthreads,
+                                                                        configuration_list[i], D_no_NA_covariates);
+      }
     }
     if(need_to_compute_gamma) {
       dispersion_medium[i] = ppjsdm::compute_dispersion_for_fitting(medium_dispersion_model,
@@ -248,10 +272,13 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
       type[filling] = type_index + 1;
 
       // Fill regressors
-      using current_dispersion_t = std::remove_cv_t<std::remove_reference_t<decltype(dispersion_short[0][0])>>;
-      current_dispersion_t current_short, current_medium;
+      using current_dispersion_t = std::remove_cv_t<std::remove_reference_t<decltype(dispersion_short[0][0][0])>>;
+      std::vector<current_dispersion_t> current_short{};
+      current_dispersion_t current_medium;
       if(need_to_compute_alpha) {
-        current_short = dispersion_short[configuration_index][point_index];
+        for(decltype(estimate_alpha.size()) k(0); k < estimate_alpha.size(); ++k) {
+          current_short.emplace_back(dispersion_short[k][configuration_index][point_index]);
+        }
       }
       if(need_to_compute_gamma) {
         current_medium = dispersion_medium[configuration_index][point_index];
@@ -298,7 +325,7 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
                                Rcpp::List covariates,
                                Rcpp::CharacterVector model,
                                Rcpp::CharacterVector medium_range_model,
-                               SEXP short_range,
+                               Rcpp::List short_range,
                                SEXP medium_range,
                                SEXP long_range,
                                R_xlen_t saturation,
@@ -306,7 +333,7 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
                                R_xlen_t max_dummy,
                                R_xlen_t min_dummy,
                                double dummy_factor,
-                               Rcpp::LogicalMatrix estimate_alpha,
+                               Rcpp::List estimate_alpha,
                                Rcpp::LogicalMatrix estimate_gamma,
                                int nthreads,
                                bool debug,
@@ -341,7 +368,11 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
       }
     }
   }
-  const auto dispersion(ppjsdm::Saturated_model<double>(model, short_range, saturation));
+  using dispersion_t = decltype(ppjsdm::Saturated_model<double>(model, Rcpp::wrap(short_range[0]), saturation));
+  std::vector<dispersion_t> dispersion{};
+  for(decltype(short_range.size()) i(0); i < short_range.size(); ++i) {
+    dispersion.emplace_back(ppjsdm::Saturated_model<double>(model, short_range[i], saturation));
+  }
   const auto medium_range_dispersion(ppjsdm::Saturated_model<double>(medium_range_model, medium_range, long_range, saturation));
 
   // Compute rho.
@@ -363,7 +394,7 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
                                     ppjsdm::Im_list_wrapper(covariates),
                                     dispersion,
                                     medium_range_dispersion,
-                                    estimate_alpha,
+                                    detail::convert_list_of_boolean_matrices_to_vector(estimate_alpha),
                                     estimate_gamma,
                                     number_types,
                                     nthreads,
@@ -378,12 +409,12 @@ Rcpp::List prepare_gibbsm_data_with_dummy(Rcpp::List configuration_list,
                                           Rcpp::List covariates,
                                           Rcpp::CharacterVector model,
                                           Rcpp::CharacterVector medium_range_model,
-                                          SEXP short_range,
+                                          Rcpp::List short_range,
                                           SEXP medium_range,
                                           SEXP long_range,
                                           R_xlen_t saturation,
                                           Rcpp::NumericVector mark_range,
-                                          Rcpp::LogicalMatrix estimate_alpha,
+                                          Rcpp::List estimate_alpha,
                                           Rcpp::LogicalMatrix estimate_gamma,
                                           int nthreads,
                                           bool debug,
@@ -424,7 +455,11 @@ Rcpp::List prepare_gibbsm_data_with_dummy(Rcpp::List configuration_list,
       }
     }
   }
-  const auto dispersion(ppjsdm::Saturated_model<double>(model, short_range, saturation));
+  using dispersion_t = decltype(ppjsdm::Saturated_model<double>(model, Rcpp::wrap(short_range[0]), saturation));
+  std::vector<dispersion_t> dispersion{};
+  for(decltype(short_range.size()) i(0); i < short_range.size(); ++i) {
+    dispersion.emplace_back(ppjsdm::Saturated_model<double>(model, short_range[i], saturation));
+  }
   const auto medium_range_dispersion(ppjsdm::Saturated_model<double>(medium_range_model, medium_range, long_range, saturation));
 
   return prepare_gibbsm_data_helper(vector_configurations,
@@ -434,7 +469,7 @@ Rcpp::List prepare_gibbsm_data_with_dummy(Rcpp::List configuration_list,
                                     ppjsdm::Im_list_wrapper(covariates),
                                     dispersion,
                                     medium_range_dispersion,
-                                    estimate_alpha,
+                                    detail::convert_list_of_boolean_matrices_to_vector(estimate_alpha),
                                     estimate_gamma,
                                     number_types,
                                     nthreads,

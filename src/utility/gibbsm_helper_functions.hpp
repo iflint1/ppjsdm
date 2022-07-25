@@ -7,10 +7,10 @@
 
 namespace ppjsdm {
 
-template<typename BoolMatrix>
+template<typename BoolMatrix, typename VectorBoolMatrix>
 inline auto get_number_parameters(int number_types,
                                   unsigned long long int covariates_size,
-                                  const BoolMatrix& estimate_alpha,
+                                  const VectorBoolMatrix& estimate_alpha,
                                   const BoolMatrix& estimate_gamma) {
   using size_t = unsigned long long int;
   struct Number_parameters_struct {
@@ -23,8 +23,10 @@ inline auto get_number_parameters(int number_types,
   size_t ngamma(0);
   for(int i(0); i < number_types; ++i) {
     for(int j(i); j < number_types; ++j) {
-      if(estimate_alpha(i, j)) {
-        ++nalpha;
+      for(decltype(estimate_alpha.size()) k(0); k < estimate_alpha.size(); ++k) {
+        if(estimate_alpha[k](i, j)) {
+          ++nalpha;
+        }
       }
       if(estimate_gamma(i, j)) {
         ++ngamma;
@@ -38,12 +40,12 @@ inline auto get_number_parameters(int number_types,
   return Number_parameters_struct{index_start_gamma, index_start_covariates, total_parameters};
 }
 
-template<typename BoolMatrix>
+template<typename BoolMatrix, typename VectorBoolMatrix>
 inline auto make_model_coloumn_names(const Im_list_wrapper& covariates,
-                                     const BoolMatrix& estimate_alpha,
+                                     const VectorBoolMatrix& estimate_alpha,
                                      const BoolMatrix& estimate_gamma) {
 
-  const R_xlen_t number_types(estimate_alpha.nrow());
+  const R_xlen_t number_types(estimate_gamma.nrow());
 
   Rcpp::CharacterVector col_names(Rcpp::no_init(get_number_parameters(number_types,
                                                                       covariates.size(),
@@ -55,9 +57,11 @@ inline auto make_model_coloumn_names(const Im_list_wrapper& covariates,
   R_xlen_t index_shift(number_types);
   for(R_xlen_t k1(0); k1 < number_types; ++k1) {
     for(R_xlen_t k2(k1); k2 < number_types; ++k2) {
-      if(estimate_alpha(k1, k2)) {
-        col_names[index_shift] = std::string("alpha_") + std::to_string(k1 + 1) + std::string("_") + std::to_string(k2 + 1);
-        ++index_shift;
+      for(decltype(estimate_alpha.size()) k(0); k < estimate_alpha.size(); ++k) {
+        if(estimate_alpha[k](k1, k2)) {
+          col_names[index_shift] = std::string("alpha") + std::to_string(k + 1) + std::string("_") + std::to_string(k1 + 1) + std::string("_") + std::to_string(k2 + 1);
+          ++index_shift;
+        }
       }
     }
   }

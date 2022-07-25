@@ -104,7 +104,7 @@ inline auto positive_matrix_times_vector(const Alpha& alpha,
   return result;
 }
 
-// Does all elements in the vector Alpha[index, ] satisfy f(alpha_{i,j})?
+// Do all elements in the vector Alpha[index, ] satisfy f(alpha_{i,j})?
 template<typename Alpha, typename F>
 inline bool does_column_satisfy_condition(const Alpha& alpha,
                                           std::remove_cv_t<std::remove_reference_t<decltype(alpha.ncol())>> index,

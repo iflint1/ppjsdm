@@ -439,25 +439,39 @@ gibbsm <- function(configuration_list,
   }
 
   # Set defaults for other parameters
-  parameters <- model_parameters(window = window,
-                                 covariates = covariates,
-                                 saturation = saturation,
-                                 model = model,
-                                 medium_range_model = medium_range_model,
-                                 short_range = short_range,
-                                 medium_range = medium_range,
-                                 long_range = long_range,
-                                 default_number_types = nlevels(types(configuration_list[[1]])))
+  if(!estimate_radii) {
+    parameters <- model_parameters(window = window,
+                                   covariates = covariates,
+                                   saturation = saturation,
+                                   model = model,
+                                   medium_range_model = medium_range_model,
+                                   short_range = short_range,
+                                   medium_range = medium_range,
+                                   long_range = long_range,
+                                   default_number_types = nlevels(types(configuration_list[[1]])))
+    short_range <- parameters$short_range
+    medium_range <- parameters$medium_range
+    long_range <- parameters$long_range
+  } else {
+    parameters <- model_parameters(window = window,
+                                   covariates = covariates,
+                                   saturation = saturation,
+                                   model = model,
+                                   medium_range_model = medium_range_model,
+                                   default_number_types = nlevels(types(configuration_list[[1]])))
+    if(missing(medium_range)) {
+      medium_range <- c(0, 0)
+    }
+    if(missing(long_range)) {
+      long_range <- c(0, 0)
+    }
+  }
+
   window <- parameters$window
   covariates <- parameters$covariates
   saturation <- parameters$saturation
   model <- parameters$model
   medium_range_model <- parameters$medium_range_model
-  if(!estimate_radii) {
-    short_range <- parameters$short_range
-    medium_range <- parameters$medium_range
-    long_range <- parameters$long_range
-  }
 
   # Set types names and covariates names
   types_names <- levels(types(configuration_list[[1]]))
@@ -467,7 +481,7 @@ gibbsm <- function(configuration_list,
   number_types <- nlevels(types(configuration_list[[1]]))
 
   if(estimate_radii) {
-    estimate_alpha <- matrix(short_range[1] != short_range[2], nrow = number_types, ncol = number_types)
+    estimate_alpha <- list(matrix(short_range[1] != short_range[2], nrow = number_types, ncol = number_types))
     estimate_gamma <- matrix(long_range[1] != long_range[2], nrow = number_types, ncol = number_types)
 
     lower <- c(rep(short_range[1], number_types * (number_types + 1) / 2), rep(medium_range[1], number_types * (number_types + 1) / 2), rep(long_range[1], number_types * (number_types + 1) / 2))
@@ -498,6 +512,8 @@ gibbsm <- function(configuration_list,
           index <- index + 1
         }
       }
+
+      sh <- list(sh)
 
       # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
       mark_range <- c(min(marks(configuration_list[[1]])), max(marks(configuration_list[[1]])))
@@ -661,12 +677,11 @@ gibbsm <- function(configuration_list,
                         debug = debug,
                         ...)
   } else {
-    short_range <- as.matrix(short_range)
+    short_range <- lapply(short_range, function(s) as.matrix(s))
     medium_range <- as.matrix(medium_range)
     long_range <- as.matrix(long_range)
 
-    if(nrow(short_range) != number_types |
-       ncol(short_range) != number_types |
+    if(any(sapply(short_range, function(s) nrow(s) != number_types | ncol(s) != number_types)) |
        nrow(medium_range) != number_types |
        ncol(medium_range) != number_types |
        nrow(long_range) != number_types |
@@ -675,7 +690,7 @@ gibbsm <- function(configuration_list,
     }
 
 
-    estimate_alpha <- short_range != 0
+    estimate_alpha <- lapply(short_range, function(s) s != 0)
     estimate_gamma <- medium_range != long_range
 
     # The fitting procedure samples additional points, let us choose their marks in the same range as current ones.
@@ -770,7 +785,11 @@ gibbsm <- function(configuration_list,
     medium_range <- best_medium
     long_range <- best_long
   }
-  rownames(short_range) <- colnames(short_range) <- types_names
+  short_range <- lapply(short_range, function(s) {
+    z <- s
+    rownames(z) <- colnames(z) <- types_names
+    z
+  })
   rownames(medium_range) <- colnames(medium_range) <- types_names
   rownames(long_range) <- colnames(long_range) <- types_names
 

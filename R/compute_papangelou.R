@@ -82,9 +82,9 @@ compute_papangelou.default <- function(configuration,
   if(nlevels(configuration$types) != length(parameters$types)) {
     # In this case, everything is ok, we can evaluate the parameters on the subset of types
     if(all(levels(configuration$types) %in% parameters$types)) {
-      parameters$alpha <- parameters$alpha[levels(configuration$types), levels(configuration$types)]
+      parameters$alpha <- lapply(parameters$alpha, function(a) a[levels(configuration$types), levels(configuration$types)])
       parameters$gamma <- parameters$gamma[levels(configuration$types), levels(configuration$types)]
-      parameters$short_range <- parameters$short_range[levels(configuration$types), levels(configuration$types)]
+      parameters$short_range <- lapply(parameters$short_range, function(s) s[levels(configuration$types), levels(configuration$types)])
       parameters$medium_range <- parameters$medium_range[levels(configuration$types), levels(configuration$types)]
       parameters$long_range <- parameters$long_range[levels(configuration$types), levels(configuration$types)]
 

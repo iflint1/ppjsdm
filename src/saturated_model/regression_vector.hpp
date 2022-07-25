@@ -5,16 +5,16 @@
 
 namespace ppjsdm {
 
-template<typename ComputationType, typename Vector, typename Dispersion, typename Matrix>
+template<typename ComputationType, typename Vector, typename DispersionVector, typename Dispersion, typename Matrix, typename VectorMatrices>
 inline auto make_regression_vector(typename std::vector<ComputationType>::size_type type_index,
                                    typename std::vector<ComputationType>::size_type number_types,
                                    typename std::vector<ComputationType>::size_type number_parameters,
                                    typename std::vector<ComputationType>::size_type index_start_covariates,
                                    typename std::vector<ComputationType>::size_type index_start_gamma,
                                    const Vector& covariates,
-                                   const Dispersion& dispersion_short,
+                                   const DispersionVector& dispersion_short,
                                    const Dispersion& dispersion_medium,
-                                   const Matrix& estimate_alpha,
+                                   const VectorMatrices& estimate_alpha,
                                    const Matrix& estimate_gamma) {
   using size_t = typename std::vector<ComputationType>::size_type;
   std::vector<ComputationType> regression_vector(number_parameters);
@@ -32,13 +32,15 @@ inline auto make_regression_vector(typename std::vector<ComputationType>::size_t
   size_t index_gamma(0);
   for(size_t j(0); j <= type_index; ++j) {
     for(size_t k(j); k < number_types; ++k) {
-      if(estimate_alpha(j, k)) {
-        if(j == type_index) {
-          regression_vector[number_types + index_alpha] = static_cast<ComputationType>(dispersion_short[k]);
-        } else if(k == type_index) {
-          regression_vector[number_types + index_alpha] = static_cast<ComputationType>(dispersion_short[j]);
+      for(decltype(estimate_alpha.size()) i(0); i < estimate_alpha.size(); ++i) {
+        if(estimate_alpha[i](j, k)) {
+          if(j == type_index) {
+            regression_vector[number_types + index_alpha] = static_cast<ComputationType>(dispersion_short[i][k]);
+          } else if(k == type_index) {
+            regression_vector[number_types + index_alpha] = static_cast<ComputationType>(dispersion_short[i][j]);
+          }
+          ++index_alpha;
         }
-        ++index_alpha;
       }
       if(estimate_gamma(j, k)) {
         if(j == type_index) {

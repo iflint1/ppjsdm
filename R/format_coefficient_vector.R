@@ -16,7 +16,7 @@ format_coefficient_vector <- function(coefficient_vector,
 
   # Construct coefficients in matrix form
   beta0 <- vector(mode = "numeric", length = number_types)
-  alpha <- matrix(0, number_types, number_types)
+  alpha <- lapply(seq_len(length(estimate_alpha)), function(n) matrix(0, number_types, number_types))
   gamma <- matrix(0, number_types, number_types)
 
   # Environmental covariates in vector form
@@ -34,16 +34,20 @@ format_coefficient_vector <- function(coefficient_vector,
     if(length(beta_vector) != 0) {
       beta[i, ] <- beta_vector[endsWith(names(beta_vector), paste0("_", i))]
     }
-    if(estimate_alpha[i, i]) {
-      alpha[i, i] <- coefficient_vector[match(paste0("alpha_", i, "_", i), names(coefficient_vector))]
+    for(k in seq_len(length(estimate_alpha))) {
+      if(estimate_alpha[[k]][i, i]) {
+        alpha[[k]][i, i] <- coefficient_vector[match(paste0("alpha", k, "_", i, "_", i), names(coefficient_vector))]
+      }
     }
     if(estimate_gamma[i, i]) {
       gamma[i, i] <- coefficient_vector[match(paste0("gamma_", i, "_", i), names(coefficient_vector))]
     }
     if(i < number_types) {
       for(j in (i + 1):number_types) {
-        if(estimate_alpha[i, j]) {
-          alpha[i, j] <- alpha[j, i] <- coefficient_vector[match(paste0("alpha_", i, "_", j), names(coefficient_vector))]
+        for(k in seq_len(length(estimate_alpha))) {
+          if(estimate_alpha[[k]][i, j]) {
+            alpha[[k]][i, j] <- alpha[[k]][j, i] <- coefficient_vector[match(paste0("alpha", k, "_", i, "_", j), names(coefficient_vector))]
+          }
         }
         if(estimate_gamma[i, j]) {
           gamma[i, j] <- gamma[j, i] <- coefficient_vector[match(paste0("gamma_", i, "_", j), names(coefficient_vector))]
@@ -56,8 +60,12 @@ format_coefficient_vector <- function(coefficient_vector,
   if(!missing(types_names)) {
     names(beta0) <- types_names
     rownames(beta) <- types_names
-    rownames(alpha) <- types_names
-    colnames(alpha) <- types_names
+    alpha <- lapply(alpha, function(a) {
+      z <- a
+      colnames(z) <- types_names
+      rownames(z) <- types_names
+      z
+    })
     rownames(gamma) <- types_names
     colnames(gamma) <- types_names
   }

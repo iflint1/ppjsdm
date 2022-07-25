@@ -12,13 +12,22 @@
 #include "../utility/approximate_draw.hpp"
 #include "../utility/im_wrapper.hpp"
 
-#include <algorithm> // std::transform
+#include <algorithm> // std::all_of, std::fill, std::transform
 #include <cmath> // std::exp, std::isinf
 #include <functional> // std::plus
 #include <vector> // std::vector
 
 namespace ppjsdm {
 namespace detail {
+
+inline auto convert_list_of_numeric_matrices_to_vector(Rcpp::List numeric_matrices) {
+  using conversion_t = ppjsdm::Lightweight_matrix<double>;
+  std::vector<conversion_t> converted_matrices(numeric_matrices.size());
+  for(decltype(converted_matrices.size()) i(0); i < converted_matrices.size(); ++i) {
+    converted_matrices[i] = conversion_t(Rcpp::as<Rcpp::NumericMatrix>(numeric_matrices[i]));
+  }
+  return converted_matrices;
+}
 
 template<typename Point, typename Beta, typename Covariates>
 inline auto compute_beta_dot_covariates(const Point& point, const Beta& beta, const Covariates& covariates) {
@@ -58,21 +67,29 @@ public:
   Truncated_exponential_family_model(const Lambda& beta0,
                                      Rcpp::CharacterVector model,
                                      Rcpp::CharacterVector medium_range_model,
-                                     Rcpp::NumericMatrix alpha,
+                                     Rcpp::List alpha,
                                      Rcpp::NumericMatrix beta,
                                      Rcpp::NumericMatrix gamma,
                                      Rcpp::List covariates,
-                                     Rcpp::NumericMatrix short_range,
+                                     Rcpp::List short_range,
                                      Rcpp::NumericMatrix medium_range,
                                      Rcpp::NumericMatrix long_range,
                                      unsigned long long int saturation):
-    dispersion_(model, short_range, saturation),
     medium_range_dispersion_(medium_range_model, medium_range, long_range, saturation),
     beta0_(beta0),
-    alpha_(alpha),
+    alpha_(detail::convert_list_of_numeric_matrices_to_vector(alpha)),
     beta_(beta),
     gamma_(gamma),
-    covariates_(covariates) {}
+    covariates_(covariates) {
+    if(alpha.size() != short_range.size()) {
+      Rcpp::stop("Supplied short_range and alpha lists do not have compatible sizes.");
+    } else {
+      dispersion_ = std::vector<Saturated_model<double>>{};
+      for(decltype(alpha.size()) i(0); i < alpha.size(); ++i) {
+        dispersion_.emplace_back(Saturated_model<double>(model, short_range[i], saturation));
+      }
+    }
+  }
 
   // TODO: Code quality is awful for this, make a unique compute_papangelou function, same for compute_total_dispersion
   template<typename Points, typename Configuration>
@@ -98,10 +115,10 @@ public:
   }
 
 protected:
-  Saturated_model<double> dispersion_;
+  std::vector<Saturated_model<double>> dispersion_;
   Saturated_model<double> medium_range_dispersion_;
   Lambda beta0_;
-  Rcpp::NumericMatrix alpha_;
+  std::vector<ppjsdm::Lightweight_matrix<double>> alpha_;
   Rcpp::NumericMatrix beta_;
   Rcpp::NumericMatrix gamma_;
   Im_list_wrapper covariates_;
@@ -109,11 +126,15 @@ protected:
   template<typename Point, typename... Configurations>
   auto compute_total_dispersion(const Point& point, const Configurations&... configurations) const {
     const auto number_types(get_number_types());
-    using return_t = decltype(matrix_times_vector_at_index(alpha_, compute_dispersion(dispersion_, point, number_types, configurations...), 0));
+    using return_t = decltype(matrix_times_vector_at_index(alpha_[0],
+                                                           compute_dispersion(dispersion_[0], point, number_types, configurations...),
+                                                           0));
     return_t return_value(0.);
-    if(!is_column_zero(alpha_, get_type(point))) {
-      const auto short_range_dispersion(compute_dispersion(dispersion_, point, number_types, configurations...));
-      return_value += matrix_times_vector_at_index(alpha_, short_range_dispersion, get_type(point));
+    for(decltype(alpha_.size()) i(0); i < alpha_.size(); ++i) {
+      if(!is_column_zero(alpha_[i], get_type(point))) {
+        const auto short_range_dispersion(compute_dispersion(dispersion_[i], point, number_types, configurations...));
+        return_value += matrix_times_vector_at_index(alpha_[i], short_range_dispersion, get_type(point));
+      }
     }
     if(!is_column_zero(gamma_, get_type(point))) {
       const auto medium_range_dispersion(compute_dispersion(medium_range_dispersion_, point, number_types, configurations...));
@@ -125,46 +146,62 @@ protected:
   template<typename Points, typename Configuration>
   auto compute_total_dispersion_vectorized(const Points& points, const Configuration& configuration, int nthreads) const {
     // Are any of the alpha/gamma rows non-zero?
-    bool is_any_alpha_nonzero(false);
+    std::vector<bool> is_any_alpha_nonzero(alpha_.size());
+    std::fill(is_any_alpha_nonzero.begin(), is_any_alpha_nonzero.end(), false);
     bool is_any_gamma_nonzero(false);
     for(typename Points::size_type i(0); i < size(points); ++i) {
-      if(!is_column_zero(alpha_, get_type(points[i]))) {
-        is_any_alpha_nonzero = true;
+      for(decltype(alpha_.size()) j(0); j < alpha_.size(); ++j) {
+        if(!is_column_zero(alpha_[j], get_type(points[i]))) {
+          is_any_alpha_nonzero[j] = true;
+        }
       }
       if(!is_column_zero(gamma_, get_type(points[i]))) {
         is_any_gamma_nonzero = true;
       }
-      if(is_any_alpha_nonzero && is_any_gamma_nonzero) {
+      if(std::all_of(is_any_alpha_nonzero.begin(),
+                     is_any_alpha_nonzero.end(),
+                     [](bool v) { return v; }) && is_any_gamma_nonzero) {
         break;
       }
     }
 
     // Precompute dispersion if required
     const auto number_types(get_number_types());
-    using dispersion_t = decltype(compute_dispersion_for_fitting<true>(dispersion_, number_types, 1, configuration, points));
-    dispersion_t short_range_dispersion, medium_range_dispersion;
-    if(is_any_alpha_nonzero) {
-      short_range_dispersion = compute_dispersion_for_fitting<true>(dispersion_, number_types, nthreads, configuration, points);
+    using dispersion_t = decltype(compute_dispersion_for_fitting<true>(dispersion_[0], number_types, 1, configuration, points));
+    std::vector<dispersion_t> short_range_dispersion{};
+    dispersion_t medium_range_dispersion;
+    for(decltype(dispersion_.size()) i(0); i < dispersion_.size(); ++i) {
+      if(is_any_alpha_nonzero[i]) {
+        short_range_dispersion.emplace_back(compute_dispersion_for_fitting<true>(dispersion_[i],
+                                                                                 number_types,
+                                                                                 nthreads,
+                                                                                 configuration,
+                                                                                 points));
+      }
     }
     if(is_any_gamma_nonzero) {
       medium_range_dispersion = compute_dispersion_for_fitting<true>(medium_range_dispersion_, number_types, nthreads, configuration, points);
     }
 
     // Fill in the returned vector
-    std::vector<decltype(matrix_times_vector_at_index(alpha_, short_range_dispersion[0], 0))> return_value(size(points));
+    std::vector<decltype(matrix_times_vector_at_index(alpha_[0], short_range_dispersion[0][0], 0))> return_value(size(points));
     for(typename Points::size_type i(0); i < size(points); ++i) {
-      if(!is_column_zero(alpha_, get_type(points[i])) || !is_column_zero(gamma_, get_type(points[i]))) {
+      //if(!is_column_zero(alpha_, get_type(points[i])) || !is_column_zero(gamma_, get_type(points[i]))) {
         typename Configuration::size_type index_in_configuration(0);
         while(index_in_configuration < size(configuration) && !is_equal(configuration[index_in_configuration], points[i])) {
           ++index_in_configuration;
         }
-        if(!is_column_zero(alpha_, get_type(points[i]))) {
-          return_value[i] += matrix_times_vector_at_index(alpha_, short_range_dispersion[index_in_configuration < size(configuration) ? index_in_configuration : i + size(configuration)], get_type(points[i]));
+        for(decltype(alpha_.size()) j(0); j < alpha_.size(); ++j) {
+          if(!is_column_zero(alpha_[j], get_type(points[i]))) {
+            return_value[i] += matrix_times_vector_at_index(alpha_[j],
+                                                            short_range_dispersion[j][index_in_configuration < size(configuration) ? index_in_configuration : i + size(configuration)],
+                                                            get_type(points[i]));
+          }
         }
         if(!is_column_zero(gamma_, get_type(points[i]))) {
           return_value[i] += matrix_times_vector_at_index(gamma_, medium_range_dispersion[index_in_configuration < size(configuration) ? index_in_configuration : i + size(configuration)], get_type(points[i]));
         }
-      }
+      //}
     }
     return return_value;
   }
@@ -189,18 +226,23 @@ public:
                                                  const Lambda& beta0,
                                                  Rcpp::CharacterVector model,
                                                  Rcpp::CharacterVector medium_range_model,
-                                                 Rcpp::NumericMatrix alpha,
+                                                 Rcpp::List alpha,
                                                  Rcpp::NumericMatrix beta,
                                                  Rcpp::NumericMatrix gamma,
                                                  Rcpp::List covariates,
-                                                 Rcpp::NumericMatrix short_range,
+                                                 Rcpp::List short_range,
                                                  Rcpp::NumericMatrix medium_range,
                                                  Rcpp::NumericMatrix long_range,
                                                  unsigned long long int saturation):
     Model(beta0, model, medium_range_model, alpha, beta, gamma, covariates, short_range, medium_range, long_range, saturation),
     window_(window),
     beta_dot_covariates_maximum_(detail::compute_beta_dot_covariates_maximum(beta, Model::covariates_)),
-    dot_dispersion_maximum_(positive_matrix_times_vector(alpha, get_dispersion_maximum(Model::dispersion_))) {
+    dot_dispersion_maximum_(positive_matrix_times_vector(Rcpp::as<Rcpp::NumericMatrix>(alpha[0]), get_dispersion_maximum(Model::dispersion_[0]))) {
+    for(decltype(alpha.size()) i(1); i < alpha.size(); ++i) {
+      const auto current_dot_dispersion_maximum(positive_matrix_times_vector(Rcpp::as<Rcpp::NumericMatrix>(alpha[i]), get_dispersion_maximum(Model::dispersion_[i])));
+      std::transform(dot_dispersion_maximum_.begin(), dot_dispersion_maximum_.end(), current_dot_dispersion_maximum.begin(),
+                     dot_dispersion_maximum_.begin(), std::plus<typename decltype(dot_dispersion_maximum_)::value_type>());
+    }
     const auto gamma_dot_dispersion_maximum(positive_matrix_times_vector(gamma, get_dispersion_maximum(Model::medium_range_dispersion_)));
     std::transform(dot_dispersion_maximum_.begin(), dot_dispersion_maximum_.end(), gamma_dot_dispersion_maximum.begin(),
                    dot_dispersion_maximum_.begin(), std::plus<typename decltype(dot_dispersion_maximum_)::value_type>());
@@ -281,28 +323,35 @@ public:
     const auto dot_dispersion_maximum(dot_dispersion_maximum_[get_type(point)]);
     using FloatType = std::remove_cv_t<decltype(dot_dispersion_maximum)>;
     FloatType alpha_need_to_add(0.), alpha_which_one_to_add_to(0.);
-    if(is_column_nonnegative(Model::alpha_, get_type(point)) && is_column_nonnegative(Model::gamma_, get_type(point))) {
+    if(std::all_of(Model::alpha_.begin(), Model::alpha_.end(), [&point](const auto alpha) {
+          return(is_column_nonnegative(alpha, get_type(point)));
+        }) && is_column_nonnegative(Model::gamma_, get_type(point))) {
       alpha_need_to_add = Model::compute_total_dispersion(point, l, l_complement) - dot_dispersion_maximum;
       if(alpha_need_to_add + exp_mark > 0.) {
         alpha_which_one_to_add_to = Model::compute_total_dispersion(point, l) - dot_dispersion_maximum;
         add_point(alpha_which_one_to_add_to + exp_mark > 0. ? l : l_complement, point);
       }
-    } else if(is_column_nonpositive(Model::alpha_, get_type(point)) && is_column_nonpositive(Model::gamma_, get_type(point))) {
+    } else if(std::all_of(Model::alpha_.begin(), Model::alpha_.end(), [&point](const auto alpha) {
+          return(is_column_nonpositive(alpha, get_type(point)));
+        }) && is_column_nonpositive(Model::gamma_, get_type(point))) {
       alpha_need_to_add = Model::compute_total_dispersion(point, l) - dot_dispersion_maximum;
       if(alpha_need_to_add + exp_mark > 0.) {
         alpha_which_one_to_add_to = Model::compute_total_dispersion(point, l, l_complement) - dot_dispersion_maximum;
         add_point(alpha_which_one_to_add_to + exp_mark > 0. ? l : l_complement, point);
       }
     } else {
-      using dispersion_t = std::remove_cv_t<std::remove_reference_t<decltype(compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l))>>;
-      dispersion_t short_range_dispersion_l, short_range_dispersion_u, medium_range_dispersion_l, medium_range_dispersion_u;
+      using dispersion_t = std::remove_cv_t<std::remove_reference_t<decltype(compute_dispersion(Model::dispersion_[0], point, Model::alpha_[0].nrow(), l))>>;
+      std::vector<dispersion_t> short_range_dispersion_l, short_range_dispersion_u;
+      dispersion_t medium_range_dispersion_l, medium_range_dispersion_u;
       alpha_need_to_add = -dot_dispersion_maximum;
-      if(!is_column_zero(Model::alpha_, get_type(point))) {
-        // TODO: These two can definitely be computed faster by doing both at once.
-        short_range_dispersion_u = compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l, l_complement);
-        short_range_dispersion_l = compute_dispersion(Model::dispersion_, point, Model::alpha_.nrow(), l);
-        alpha_need_to_add += positive_matrix_times_vector_at_index(Model::alpha_, short_range_dispersion_u, get_type(point));
-        alpha_need_to_add += negative_matrix_times_vector_at_index(Model::alpha_, short_range_dispersion_l, get_type(point));
+      for(decltype(Model::alpha_.size()) i(0); i < Model::alpha_.size(); ++i) {
+        if(!is_column_zero(Model::alpha_[i], get_type(point))) {
+          // TODO: These two can definitely be computed faster by doing both at once.
+          short_range_dispersion_u.emplace_back(compute_dispersion(Model::dispersion_[i], point, Model::alpha_[i].nrow(), l, l_complement));
+          short_range_dispersion_l.emplace_back(compute_dispersion(Model::dispersion_[i], point, Model::alpha_[i].nrow(), l));
+          alpha_need_to_add += positive_matrix_times_vector_at_index(Model::alpha_[i], short_range_dispersion_u[i], get_type(point));
+          alpha_need_to_add += negative_matrix_times_vector_at_index(Model::alpha_[i], short_range_dispersion_l[i], get_type(point));
+        }
       }
       if(!is_column_zero(Model::gamma_, get_type(point))) {
         // TODO: These two can definitely be computed faster by doing both at once.
@@ -313,9 +362,13 @@ public:
       }
       if(alpha_need_to_add + exp_mark > 0.) {
         alpha_which_one_to_add_to = -dot_dispersion_maximum;
-        if(!is_column_zero(Model::alpha_, get_type(point))) {
-          alpha_which_one_to_add_to += positive_matrix_times_vector_at_index(Model::alpha_, short_range_dispersion_l, get_type(point));
-          alpha_which_one_to_add_to += negative_matrix_times_vector_at_index(Model::alpha_, short_range_dispersion_u, get_type(point));
+        for(decltype(Model::alpha_.size()) i(0); i < Model::alpha_.size(); ++i) {
+          if(!is_column_zero(Model::alpha_[i], get_type(point))) {
+            alpha_which_one_to_add_to += positive_matrix_times_vector_at_index(Model::alpha_[i],
+                                                                               short_range_dispersion_l[i], get_type(point));
+            alpha_which_one_to_add_to += negative_matrix_times_vector_at_index(Model::alpha_[i],
+                                                                               short_range_dispersion_u[i], get_type(point));
+          }
         }
         if(!is_column_zero(Model::gamma_, get_type(point))) {
           alpha_which_one_to_add_to += positive_matrix_times_vector_at_index(Model::gamma_, medium_range_dispersion_l, get_type(point));
@@ -335,14 +388,21 @@ public:
   }
 
   auto compute_log_alpha_min_lower_bound(R_xlen_t type) const {
-    decltype(std::abs(Model::alpha_(0, 0))) sum_alpha(0.);
-    decltype(std::abs(Model::gamma_(0, 0))) sum_gamma(0.);
-    for(decltype(Model::alpha_.ncol()) other_type(0); other_type < Model::alpha_.ncol(); ++other_type) {
-      sum_alpha -= std::abs(Model::alpha_(type, other_type));
+    using sum_t = decltype(std::abs(Model::alpha_[0](0, 0)));
+    sum_t sum(0.);
+    for(decltype(Model::alpha_.size()) i(0); i < Model::alpha_.size(); ++i) {
+      sum_t sum_alpha(0.);
+      for(decltype(Model::alpha_[i].ncol()) other_type(0); other_type < Model::alpha_[i].ncol(); ++other_type) {
+        sum_alpha -= std::abs(Model::alpha_[i](type, other_type));
+      }
+      sum_alpha *= get_dispersion_maximum(Model::dispersion_[i]);
+      sum += sum_alpha;
+    }
+    sum_t sum_gamma(0.);
+    for(decltype(Model::gamma_.ncol()) other_type(0); other_type < Model::gamma_.ncol(); ++other_type) {
       sum_gamma -= std::abs(Model::gamma_(type, other_type));
     }
-    return sum_alpha  * get_dispersion_maximum(Model::dispersion_) +
-      sum_gamma * get_dispersion_maximum(Model::medium_range_dispersion_);
+    return sum + sum_gamma * get_dispersion_maximum(Model::medium_range_dispersion_);
   }
 
   const auto& get_window() const {

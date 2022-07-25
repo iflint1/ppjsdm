@@ -26,7 +26,7 @@ inline SEXP rppp_helper(const ppjsdm::Window& window, const Rcpp::NumericVector&
 SEXP rppp_cpp(SEXP window, SEXP lambda, R_xlen_t nsim, SEXP types, bool drop, Rcpp::NumericVector mark_range) {
   const auto number_types(ppjsdm::get_number_types_and_check_conformance(1, lambda, types));
   lambda = ppjsdm::construct_if_missing<Rcpp::NumericVector>(lambda, 1., number_types);
-  types = ppjsdm::make_types(types, number_types, lambda);
+  types = ppjsdm::detail::make_types(types, number_types, lambda);
   const auto cpp_window(ppjsdm::Window(window, mark_range));
   return rppp_helper(cpp_window, lambda, nsim, types, drop);
 }

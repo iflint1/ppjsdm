@@ -18,6 +18,16 @@ rstratpp <- function(window = Rectangle_window(),
                      types = NULL,
                      drop = TRUE,
                      mark_range = c(1.0, 1.0)) {
+  delta_x <- unlist(delta_x)
+  delta_y <- unlist(delta_y)
+  types <- unlist(types)
+  number_types <- get_number_types_and_check_conformance(default_number_types = 1, delta_x, delta_y, types)
+  delta_x <- construct_if_missing(x = delta_x, def = 1, nrows = number_types, matrix = FALSE)
+  if(is.null(delta_y)) {
+    delta_y <- delta_x
+  }
+  types <- make_types2(types = types, size = number_types, delta_x, delta_y)
+
   rstratpp_cpp(window = window,
                delta_x = unlist(delta_x),
                delta_y = unlist(delta_y),

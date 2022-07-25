@@ -39,12 +39,10 @@ inline SEXP make_default_types(R_xlen_t size, Args... might_contain_names) {
   return Rcpp::wrap(default_types);
 }
 
-} // namespace detail
-
 template<typename... Args>
 inline SEXP make_types(SEXP types, R_xlen_t size, Args... might_contain_names) {
   if(Rf_isNull(types)) {
-    return detail::make_default_types(size, might_contain_names...);
+    return make_default_types(size, might_contain_names...);
   } else if (Rf_isNewList(types)) {
     const auto list(Rcpp::as<Rcpp::List>(types));
     const auto length_types(list.size());
@@ -59,6 +57,8 @@ inline SEXP make_types(SEXP types, R_xlen_t size, Args... might_contain_names) {
     Rcpp::stop("The type of `types` is not convertible to a character vector.");
   }
 }
+
+} // namespace detail
 
 } // namespace ppjsdm
 
