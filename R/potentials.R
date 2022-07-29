@@ -135,7 +135,7 @@ plot.potentials <- function(x, ...) {
   df <- df[complete.cases(df), ]
 
   g <- ggplot(data = df) +
-    geom_line(aes(x = x, y = overall, colour = "Overall")) +
+    geom_line(aes(x = x, y = overall, colour = "Overall"), size = 2) +
     geom_line(aes(x = x, y = 0), colour = "black") +
     xlab(NULL) +
     ylab(NULL) +
@@ -144,11 +144,11 @@ plot.potentials <- function(x, ...) {
 
   for(i in seq_len(length(x$short))) {
     assign(paste0("name", i), paste0("Short ", i))
-    g <- g + geom_line(aes_string(x = "x", y = paste0("short", i), colour = paste0("name", i)))
+    g <- g + geom_line(aes_string(x = "x", y = paste0("short", i), colour = paste0("name", i)), size = 1, alpha = 0.8)
   }
 
   if(any(df$medium != 0, na.rm = TRUE)) {
-    g <- g + geom_line(aes(x = x, y = medium, colour = "Medium"))
+    g <- g + geom_line(aes(x = x, y = medium, colour = "Medium"), size = 1, alpha = 0.8)
   }
   g
 }
