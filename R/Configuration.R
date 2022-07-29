@@ -177,7 +177,7 @@ as.Configuration.default <- function(configuration) {
                 marks = x$marks[subset_indices])
 }
 
-format <- function(configuration) {
+format_configuration <- function(configuration) {
   number_points <- length(configuration$x)
   str <- paste0("An S3 object representing a configuration.\n\nNumber of points: ",
                 paste0(number_points, collapse = ", "),
@@ -201,7 +201,7 @@ format <- function(configuration) {
 #' @method print Configuration
 #' @export
 print.Configuration <- function(x, ...) {
-  cat(format(x))
+  cat(format_configuration(x))
 }
 
 #' @importFrom ggplot2 aes_string coord_equal element_text geom_point ggplot ggtitle scale_color_manual scale_shape_manual theme theme_minimal xlab xlim ylab ylim
