@@ -40,52 +40,52 @@ potentials <- function(fit,
 
   # Extract variables relevant to the medium-range potentials
   medium_range_model <- fit$parameters$medium_range_model
-  medium_range <- fit$coefficients$medium_range
-  long_range <- fit$coefficients$long_range
-  gamma <- fit$coefficients$gamma
+  medium_range <- fit$coefficients$medium_range[species1, species2]
+  long_range <- fit$coefficients$long_range[species1, species2]
+  gamma <- fit$coefficients$gamma[species1, species2]
 
   # Construct the medium-range potentials
   medium_potential <- if(medium_range_model == "square_exponential") {
-    function(x) gamma[species1, species2] * exp(-4 * log(2) * ((medium_range[species1, species2] + long_range[species1, species2]) / 2 - x)^2 /
-                      (medium_range[species1, species2] - long_range[species1, species2])^2)
+    function(x) gamma * exp(-4 * log(2) * ((medium_range + long_range) / 2 - x)^2 /
+                      (medium_range - long_range)^2)
   } else if(medium_range_model == "half_square_exponential") {
-    function(x) gamma[species1, species2] * ifelse(x > medium_range[species1, species2], exp(-log(2) * (x - medium_range[species1, species2])^2 /
-                                                                   (long_range[species1, species2] - medium_range[species1, species2])^2), 0.)
+    function(x) gamma * ifelse(x > medium_range, exp(-log(2) * (x - medium_range)^2 /
+                                                                   (long_range - medium_range)^2), 0.)
   } else if(medium_range_model == "Geyer") {
-    function(x) gamma[species1, species2] * ifelse(x <= long_range[species1, species2] & x >= medium_range[species1, species2], 1, 0)
+    function(x) gamma * ifelse(x <= long_range & x >= medium_range, 1, 0)
   } else if(medium_range_model == "linear") {
-    function(x) gamma[species1, species2] * ifelse(2 * x <= medium_range[species1, species2] + long_range[species1, species2],
-                       ifelse(x <= medium_range[species1, species2], 0., 2. /
-                                (long_range[species1, species2] - medium_range[species1, species2]) *
-                                (x - medium_range[species1, species2])),
-                       ifelse(x >= long_range[species1, species2], 0., 2. /
-                                (long_range[species1, species2] - medium_range[species1, species2]) *
-                                (long_range[species1, species2] - x)))
+    function(x) gamma * ifelse(2 * x <= medium_range + long_range,
+                       ifelse(x <= medium_range, 0., 2. /
+                                (long_range - medium_range) *
+                                (x - medium_range)),
+                       ifelse(x >= long_range, 0., 2. /
+                                (long_range - medium_range) *
+                                (long_range - x)))
   } else if(medium_range_model == "half_exponential") {
-    function(x) gamma[species1, species2] * ifelse(x >= medium_range[species1, species2], exp(-log(2) *
-                                                                    (x - medium_range[species1, species2]) /
-                                                                    (long_range[species1, species2] - medium_range[species1, species2])),
+    function(x) gamma * ifelse(x >= medium_range, exp(-log(2) *
+                                                                    (x - medium_range) /
+                                                                    (long_range - medium_range)),
                        0.)
   } else if(medium_range_model == "exponential") {
-    function(x) gamma[species1, species2] * exp(-2 * log(2) * abs(x - 0.5 * (long_range[species1, species2] + medium_range[species1, species2]))
-                    / (long_range[species1, species2] - medium_range[species1, species2]))
+    function(x) gamma * exp(-2 * log(2) * abs(x - 0.5 * (long_range + medium_range))
+                    / (long_range - medium_range))
   } else if(medium_range_model == "bump") {
     function(x) {
-      me <- medium_range[species1, species2]
-      hi <- long_range[species1, species2]
-      gamma[species1, species2] * (1.0 - exp(-0.5 * sign(x - 0.5 * (me + hi)) * log(2) * (hi - me) / (x - 0.5 * (me + hi))))
+      me <- medium_range
+      hi <- long_range
+      gamma * (1.0 - exp(-0.5 * sign(x - 0.5 * (me + hi)) * log(2) * (hi - me) / (x - 0.5 * (me + hi))))
     }
   } else if(medium_range_model == "square_bump") {
     function(x) {
-      me <- medium_range[species1, species2]
-      hi <- long_range[species1, species2]
-      gamma[species1, species2] * (1.0 - exp(-0.25 * log(2) * (hi - me)^2 / (x - 0.5 * (me + hi))^2))
+      me <- medium_range
+      hi <- long_range
+      gamma * (1.0 - exp(-0.25 * log(2) * (hi - me)^2 / (x - 0.5 * (me + hi))^2))
     }
   } else if(medium_range_model == "tanh") {
     function(x) {
-      me <- medium_range[species1, species2]
-      hi <- long_range[species1, species2]
-      gamma[species1, species2] * (1 / (2 * tanh(5 / 2)) * (tanh(5 / (hi - me) * (x - me)) + tanh(5 / (hi - me) * (hi - x))))
+      me <- medium_range
+      hi <- long_range
+      gamma * (1 / (2 * tanh(5 / 2)) * (tanh(5 / (hi - me) * (x - me)) + tanh(5 / (hi - me) * (hi - x))))
     }
   } else {
     stop(paste0("Medium-range model not recognised: ", mod))
@@ -97,7 +97,7 @@ potentials <- function(fit,
               overall = function(x) Reduce("+", lapply(short_potentials, function(pot) pot(x))) +
                 medium_potential(x),
               long_range = long_range,
-              short_range = short_range)
+              short_range = sapply(seq_len(length(model)), function(i) short_range[[i]][species1, species2]))
   class(ret) <- "potentials"
   ret
 }
