@@ -24,7 +24,7 @@ test_that("Default arguments.", {
   set.seed(42)
   sample <- rppp()
   set.seed(42)
-  other_sample <- rppp(window = Rectangle_window(), lambda = 1.0, nsim = 1, types = "type1", drop = TRUE)
+  other_sample <- rppp(window = Rectangle_window(), lambda = 100.0, nsim = 1, types = "type1", drop = TRUE)
 
   expect_equal(sample, other_sample)
 })
@@ -42,7 +42,7 @@ test_that("Deduce number of types with only types.", {
   set.seed(42)
   sample <- rppp(types = c("a", "b", "c"))
   set.seed(42)
-  other_sample <- rppp(lambda = c(1, 1, 1), types = c("a", "b", "c"))
+  other_sample <- rppp(lambda = c(100, 100, 100), types = c("a", "b", "c"))
 
   expect_equal(sample, other_sample)
 })
@@ -69,7 +69,7 @@ test_that("Allow types to be a list.", {
   set.seed(42)
   sample <- rppp(types = list("a", "b", "c"))
   set.seed(42)
-  other_sample <- rppp(lambda = c(1, 1, 1), types = c("a", "b", "c"))
+  other_sample <- rppp(lambda = c(100, 100, 100), types = c("a", "b", "c"))
 
   expect_equal(sample, other_sample)
 })
