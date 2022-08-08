@@ -88,7 +88,7 @@ potentials <- function(fit,
       gamma * (1 / (2 * tanh(5 / 2)) * (tanh(5 / (hi - me) * (x - me)) + tanh(5 / (hi - me) * (hi - x))))
     }
   } else {
-    stop(paste0("Medium-range model not recognised: ", mod))
+    stop(paste0("Medium-range model not recognised: ", medium_range_model))
   }
 
   # Return object
@@ -135,7 +135,7 @@ plot.potentials <- function(x, ...) {
   df <- df[complete.cases(df), ]
 
   g <- ggplot(data = df) +
-    geom_line(aes(x = x, y = overall, colour = "Overall"), size = 2) +
+    geom_line(aes_string(x = "x", y = "overall", colour = "Overall"), size = 2) +
     geom_line(aes(x = x, y = 0), colour = "black") +
     xlab(NULL) +
     ylab(NULL) +
@@ -148,7 +148,7 @@ plot.potentials <- function(x, ...) {
   }
 
   if(any(df$medium != 0, na.rm = TRUE)) {
-    g <- g + geom_line(aes(x = x, y = medium, colour = "Medium"), size = 1, alpha = 0.8)
+    g <- g + geom_line(aes_string(x = "x", y = "medium", colour = "Medium"), size = 1, alpha = 0.8)
   }
   g
 }
