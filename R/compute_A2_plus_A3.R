@@ -12,7 +12,7 @@
 #' @param unit Unit used to measure the time limit (hours, mins, secs, etc).
 #'
 #' @export
-compute_A2_plus_A3 <- function(..., list, nthreads = NULL, debug = FALSE, npoints = 1000, multiple_windows = TRUE, time_limit = Inf, unit = "hours") {
+compute_A2_plus_A3 <- function(..., list, nthreads = NULL, debug = FALSE, npoints = 2000, multiple_windows = TRUE, time_limit = Inf, unit = "hours") {
   # Allow for either sequence of fits or list of fits, convert both to list
   if(missing(list)) {
     fits <- base::list(...)

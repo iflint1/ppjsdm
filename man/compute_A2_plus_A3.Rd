@@ -11,7 +11,7 @@ compute_A2_plus_A3(
   list,
   nthreads = NULL,
   debug = FALSE,
-  npoints = 1000,
+  npoints = 2000,
   multiple_windows = TRUE,
   time_limit = Inf,
   unit = "hours"
