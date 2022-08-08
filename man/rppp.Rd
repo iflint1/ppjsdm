@@ -17,7 +17,7 @@ rppp(
 \item{window}{Simulation window. Default is a Rectangle window [0, 1]^2.}
 
 \item{lambda}{A vector representing the intensities of the multipoint Poisson point processes.
-Default is a vector of same size as types, filled with ones.}
+Default is a vector of same size as types, filled with 100s.}
 
 \item{nsim}{Number of samples to generate. Default is 1.}
 
