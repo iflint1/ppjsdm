@@ -29,9 +29,17 @@ summary.gibbsm <- function(object,
 
   # Allow for either sequence of fits or list of fits, convert both to list
   fits <- if(missing(list)) {
-    base::list(object, ...)
+    if(missing(object)) {
+      base::list(...)
+    } else {
+      base::list(object, ...)
+    }
   } else {
-    c(list(object), list)
+    if(missing(object)) {
+      list
+    } else {
+      c(list(object), list)
+    }
   }
 
   # Make sure thetas are compatible
