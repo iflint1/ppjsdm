@@ -134,6 +134,7 @@ plot.potentials <- function(x, ...) {
 
   df <- df[complete.cases(df), ]
 
+  Overall <- "Overall"
   g <- ggplot(data = df) +
     geom_line(aes_string(x = "x", y = "overall", colour = "Overall"), size = 2) +
     geom_line(aes(x = x, y = 0), colour = "black") +
@@ -148,6 +149,7 @@ plot.potentials <- function(x, ...) {
   }
 
   if(any(df$medium != 0, na.rm = TRUE)) {
+    Medium <- "Medium"
     g <- g + geom_line(aes_string(x = "x", y = "medium", colour = "Medium"), size = 1, alpha = 0.8)
   }
   g
