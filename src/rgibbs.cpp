@@ -17,33 +17,59 @@
 #include "utility/make_default_types.hpp"
 #include "utility/window.hpp"
 
+#include <random> // Generator
 #include <utility> // std::forward
 #include <vector> // std::vector
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace detail {
 
-template<typename Configuration, typename... Args>
-inline Configuration sample(Args&&... args);
+template<typename Configuration, typename Generator, typename... Args>
+inline Configuration sample(Generator& generator, Args&&... args);
 
-template<typename Configuration, typename Model>
-inline auto sample(const Model& model) {
-  return ppjsdm::simulate_coupling_from_the_past<Configuration>(model);
+template<typename Configuration, typename Generator, typename Model>
+inline auto sample(Generator& generator, const Model& model) {
+  return ppjsdm::simulate_coupling_from_the_past<Configuration>(generator, model);
 }
 
-template<typename Configuration, typename Model, typename... Args>
-inline auto sample(const Model& model, R_xlen_t steps, Args&&... args) {
-  return ppjsdm::simulate_metropolis_hastings<Configuration>(model, steps, std::forward<Args>(args)...);
+template<typename Configuration, typename Generator, typename Model, typename... Args>
+inline auto sample(Generator& generator, const Model& model, R_xlen_t steps, Args&&... args) {
+  return ppjsdm::simulate_metropolis_hastings<Configuration>(generator, model, steps, std::forward<Args>(args)...);
 }
 
 } // namespace detail
 
 template<typename Configuration, typename... Args>
-inline SEXP rgibbs_helper(R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, const Args&... args) {
+inline SEXP rgibbs_helper(R_xlen_t nthreads, R_xlen_t seed, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, const Args&... args) {
+#ifdef _OPENMP
+  omp_set_num_threads(nthreads);
+#endif
+
   Rcpp::List samples(nsim);
+  std::vector<Configuration> cpp_samples(nsim);
+
+#pragma omp parallel
+{
+  decltype(cpp_samples) cpp_samples_private(cpp_samples.size());
+  std::mt19937 generator(omp_get_thread_num() * seed);
+#pragma omp for nowait
+  for(typename decltype(cpp_samples)::size_type i = 0; i < nsim; ++i) {
+    const auto sample(detail::sample<Configuration>(generator, args...));
+    cpp_samples_private[i] = sample;
+  }
+#pragma omp critical
+  for(std::remove_cv_t<decltype(cpp_samples.size())> index(0); index < nsim; ++index) {
+    if(cpp_samples_private[index] != Configuration{}) {
+      cpp_samples[index] = cpp_samples_private[index];
+    }
+  }
+}
 
   for(R_xlen_t i(0); i < nsim; ++i) {
-    const auto sample(detail::sample<Configuration>(args...));
-    samples[i] = ppjsdm::make_R_configuration(sample, types);
+    samples[i] = ppjsdm::make_R_configuration(cpp_samples[i], types);
   }
 
   return ppjsdm::get_list_or_first_element(samples, nsim == 1 && drop);
@@ -69,12 +95,14 @@ SEXP rgibbs_cpp(SEXP window,
                 Rcpp::NumericVector mark_range,
                 Rcpp::IntegerVector only_simulate_these_types,
                 SEXP conditional_configuration,
-                SEXP starting_configuration) {
+                SEXP starting_configuration,
+                R_xlen_t seed,
+                R_xlen_t nthreads) {
   using Configuration_type = std::vector<ppjsdm::Marked_point>;
 
   const auto cpp_window(ppjsdm::Window(window, mark_range));
-  const ppjsdm::Truncated_exponential_family_model_over_window<Rcpp::NumericVector> exponential_model(cpp_window,
-                                                                                                      beta0,
+  const ppjsdm::Truncated_exponential_family_model_over_window<std::vector<double>> exponential_model(cpp_window,
+                                                                                                      Rcpp::as<std::vector<double>>(beta0),
                                                                                                       model,
                                                                                                       medium_range_model,
                                                                                                       alpha,
@@ -88,7 +116,7 @@ SEXP rgibbs_cpp(SEXP window,
 
   if(steps == 0) {
     // TODO: Do not discard only_simulate_these_types or conditional_configuration.
-    return rgibbs_helper<Configuration_type>(nsim, types, drop, exponential_model);
+    return rgibbs_helper<Configuration_type>(nthreads, seed, nsim, types, drop, exponential_model);
   } else {
     Configuration_type vector_conditional_configuration{};
     if(conditional_configuration != R_NilValue) {
@@ -107,9 +135,26 @@ SEXP rgibbs_cpp(SEXP window,
       for(decltype(ppjsdm::size(wrapped_configuration)) j(0); j < length_configuration; ++j) {
         vector_starting_configuration[j] = wrapped_configuration[j];
       }
-      return rgibbs_helper<Configuration_type>(nsim, types, drop, exponential_model, steps, vector_starting_configuration, only_simulate_these_types, vector_conditional_configuration);
+      return rgibbs_helper<Configuration_type>(nthreads,
+                                               seed,
+                                               nsim,
+                                               types,
+                                               drop,
+                                               exponential_model,
+                                               steps,
+                                               vector_starting_configuration,
+                                               Rcpp::as<std::vector<R_xlen_t>>(only_simulate_these_types),
+                                               vector_conditional_configuration);
     } else {
-      return rgibbs_helper<Configuration_type>(nsim, types, drop, exponential_model, steps, only_simulate_these_types, vector_conditional_configuration);
+      return rgibbs_helper<Configuration_type>(nthreads,
+                                               seed,
+                                               nsim,
+                                               types,
+                                               drop,
+                                               exponential_model,
+                                               steps,
+                                               Rcpp::as<std::vector<R_xlen_t>>(only_simulate_these_types),
+                                               vector_conditional_configuration);
     }
   }
 }

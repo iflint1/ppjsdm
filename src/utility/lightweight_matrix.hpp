@@ -48,6 +48,22 @@ public:
     return rows_;
   }
 
+  auto get_row(size_type i) const {
+    std::vector<value_type> row(columns_);
+    for(size_type j(0); j < columns_; ++j) {
+      row[j] = operator()(i, j);
+    }
+    return row;
+  }
+
+  auto get_col(size_type j) const {
+    std::vector<value_type> col(rows_);
+    for(size_type i(0); i < rows_; ++i) {
+      col[i] = operator()(i, j);
+    }
+    return col;
+  }
+
 private:
   size_type rows_;
   size_type columns_;

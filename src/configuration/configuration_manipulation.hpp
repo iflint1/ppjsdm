@@ -89,6 +89,15 @@ inline auto random_point(Configuration& configuration) {
   return std::next(configuration.begin(), index);
 }
 
+// TODO: Combine with function above (through a remove_by_index?)
+template<typename Generator, typename Configuration>
+inline auto remove_random_point(Generator& generator, Configuration& configuration) {
+  using difference_type = typename std::iterator_traits<decltype(configuration.begin())>::difference_type;
+  std::uniform_int_distribution<difference_type> random_point_distribution(0, size(configuration) - 1);
+  const auto index(random_point_distribution(generator));
+  return remove_point_by_iterator(configuration, std::next(configuration.begin(), index));
+}
+
 template<typename Configuration>
 inline bool empty(const Configuration& configuration) {
   return traits::configuration_manipulation<Configuration>::empty(configuration);

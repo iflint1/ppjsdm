@@ -4,18 +4,18 @@
 namespace ppjsdm {
 namespace detail {
 
-template<typename Configuration, typename Model>
+template<typename Configuration, typename Generator, typename Model>
 struct approximate_draw_helper {
-  static auto get(const Model&) {
+  static auto get(Generator& generator, const Model&) {
     return Configuration{};
   }
 };
 
 } // namespace detail
 
-template<typename Configuration, typename Model>
-inline auto approximate_draw(const Model& model) {
-  return detail::approximate_draw_helper<Configuration, Model>::get(model);
+template<typename Configuration, typename Generator, typename Model>
+inline auto approximate_draw(Generator& generator, const Model& model) {
+  return detail::approximate_draw_helper<Configuration, Generator, Model>::get(generator, model);
 }
 
 } // namespace ppjsdm

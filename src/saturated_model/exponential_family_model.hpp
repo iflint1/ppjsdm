@@ -15,6 +15,7 @@
 #include <algorithm> // std::all_of, std::fill, std::transform
 #include <cmath> // std::exp, std::isinf
 #include <functional> // std::plus
+#include <random> // Distributions
 #include <vector> // std::vector
 
 namespace ppjsdm {
@@ -119,8 +120,8 @@ protected:
   Saturated_model<double> medium_range_dispersion_;
   Lambda beta0_;
   std::vector<ppjsdm::Lightweight_matrix<double>> alpha_;
-  Rcpp::NumericMatrix beta_;
-  Rcpp::NumericMatrix gamma_;
+  ppjsdm::Lightweight_matrix<double> beta_;
+  ppjsdm::Lightweight_matrix<double> gamma_;
   Im_list_wrapper covariates_;
 
   template<typename Point, typename... Configurations>
@@ -263,21 +264,29 @@ public:
     for(size_t type(0); type < number_types; ++type) {
       integral += Model::covariates_.get_integral_of_dot(window_, [beta0 = Model::beta0_[type], dot = dot_dispersion_maximum_[type]](auto x) {
         return std::exp(x + beta0 + dot);
-      }, Model::beta_(type, Rcpp::_));
+      }, Model::beta_.get_row(type));
     }
     return integral;
   }
 
-  auto sample_point_from_bounding_intensity() const {
-    // Sample type proportionally to the exp(beta0_i).
-    Rcpp::NumericVector exp_beta0(Model::beta0_.size());
-    for(decltype(Model::beta0_.size()) i(0); i < Model::beta0_.size(); ++i) {
+  template<typename Generator>
+  auto sample_point_from_bounding_intensity(Generator& generator) const {
+    // Compute exp(beta0)
+    std::vector<double> exp_beta0(Model::beta0_.size());
+    for(decltype(exp_beta0.size()) i(0); i < exp_beta0.size(); ++i) {
       exp_beta0[i] = std::exp(Model::beta0_[i]);
     }
-    const auto random_type(Rcpp::sample(Model::beta0_.size(), 1, false, Rcpp::sugar::probs_t(exp_beta0), false)[0]);
+
+    // Random distributions
+    std::discrete_distribution<decltype(Model::beta0_.size())> random_type_distribution(exp_beta0.begin(), exp_beta0.end());
+    std::exponential_distribution<double> exponential_distribution(1);
+
+    // Sample type proportionally to the exp(beta0_i).
+    const auto random_type(random_type_distribution(generator));
+
     while(true) {
-      const auto sample(window_.sample(random_type));
-      if(exp_rand() + get_log_normalized_bounding_intensity(sample) >= 0) {
+      const auto sample(window_.sample(generator, random_type));
+      if(exponential_distribution(generator) + get_log_normalized_bounding_intensity(sample) >= 0) {
         return sample;
       }
     }
@@ -417,10 +426,11 @@ private:
 
 namespace detail {
 
-template<typename Configuration, typename Lambda>
-struct approximate_draw_helper<Configuration, Truncated_exponential_family_model_over_window<Lambda>> {
-  static auto get(const Truncated_exponential_family_model_over_window<Lambda>& model) {
-    const auto configuration(simulate_inhomogeneous_ppp<Configuration>(model.get_window(),
+template<typename Configuration, typename Generator, typename Lambda>
+struct approximate_draw_helper<Configuration, Generator, Truncated_exponential_family_model_over_window<Lambda>> {
+  static auto get(Generator& generator, const Truncated_exponential_family_model_over_window<Lambda>& model) {
+    const auto configuration(simulate_inhomogeneous_ppp<Configuration>(generator,
+                                                                       model.get_window(),
                                                                        [&model](const auto& point) {
                                                                          return model.get_log_normalized_bounding_intensity(point);
                                                                        },

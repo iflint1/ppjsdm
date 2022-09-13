@@ -8,6 +8,7 @@
 #include "../utility/im_wrapper.hpp"
 
 #include <cmath> // std::sqrt
+#include <random> // Generator, distribution
 #include <vector> // std::vector
 
 namespace ppjsdm {
@@ -37,6 +38,14 @@ public:
     const auto y(Rcpp::as<Rcpp::NumericVector>(window["y_range"]));
     y_0_ = y[0];
     delta_y_ = y[1] - y[0];
+  }
+
+  Marked_point sample(std::mt19937 generator, int type = 0) const {
+    std::uniform_real_distribution<double> random_uniform_distribution(0, 1);
+    return Marked_point(x_0_ + random_uniform_distribution(generator) * delta_x_,
+                        y_0_ + random_uniform_distribution(generator) * delta_y_,
+                        type,
+                        mark_lower_ + delta_mark_ * random_uniform_distribution(generator));
   }
 
   Marked_point sample(int type = 0) const {
@@ -122,12 +131,29 @@ public:
     radius_ = static_cast<double>(window["radius"]);
   }
 
+  Marked_point sample(std::mt19937 generator, int type = 0) const {
+    std::uniform_real_distribution<double> random_uniform_distribution(0, 1);
+    while(true) {
+      const auto x(2 * random_uniform_distribution(generator) - 1.0);
+      const auto y(2 * random_uniform_distribution(generator) - 1.0);
+      if(x * x + y * y <= 1) {
+        return Marked_point(x_ + radius_ * x,
+                            y_ + radius_ * y,
+                            type,
+                            mark_lower_ + delta_mark_ * random_uniform_distribution(generator));
+      }
+    }
+  }
+
   Marked_point sample(int type = 0) const {
     while(true) {
       const auto x(2 * unif_rand() - 1.0);
       const auto y(2 * unif_rand() - 1.0);
       if(x * x + y * y <= 1) {
-        return Marked_point(x_ + radius_ * x,  y_ + radius_ * y, type, mark_lower_ + delta_mark_ * unif_rand());
+        return Marked_point(x_ + radius_ * x,
+                            y_ + radius_ * y,
+                            type,
+                            mark_lower_ + delta_mark_ * unif_rand());
       }
     }
   }
@@ -197,6 +223,21 @@ public:
     volume_(im_.volume()),
     mark_lower_(marked_range[0]),
     delta_mark_(marked_range[1] - marked_range[0]) {}
+
+  Marked_point sample(std::mt19937 generator, int type = 0) const {
+    std::uniform_real_distribution<double> random_uniform_distribution(0, 1);
+    const auto x_min(im_.x_min());
+    const auto y_min(im_.y_min());
+    const auto delta_x(im_.delta_x());
+    const auto delta_y(im_.delta_y());
+    while(true) {
+      const auto x(delta_x * random_uniform_distribution(generator) + x_min);
+      const auto y(delta_y * random_uniform_distribution(generator) + y_min);
+      if(im_.is_in(x, y)) {
+        return Marked_point(x,  y, type, mark_lower_ + delta_mark_ * random_uniform_distribution(generator));
+      }
+    }
+  }
 
   Marked_point sample(int type = 0) const {
     const auto x_min(im_.x_min());
@@ -298,6 +339,24 @@ public:
       volume += delta_x_[i] * delta_y_[i];
     }
     return volume;
+  }
+
+  // TODO: Simplify the implementation of sample(generator, type), reuse sample(type)
+  Marked_point sample(std::mt19937 generator, int type = 0) const {
+    std::uniform_real_distribution<double> random_uniform_distribution(0, 1);
+    double total_weight(volume());
+    using size_t = decltype(delta_x_.size());
+    size_t index(0);
+    const auto u(random_uniform_distribution(generator));
+    auto sum(delta_x_[index] * delta_y_[index]);
+    while(sum < u * total_weight) {
+      ++index;
+      sum += delta_x_[index] * delta_y_[index];
+    }
+    return Marked_point(x_0_[index] + random_uniform_distribution(generator) * delta_x_[index],
+                        y_0_[index] + random_uniform_distribution(generator) * delta_y_[index],
+                                                                                       type,
+                                                                                       mark_lower_ + delta_mark_ * random_uniform_distribution(generator));
   }
 
   Marked_point sample(int type = 0) const {

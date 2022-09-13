@@ -12,17 +12,19 @@
 
 #include <cmath> // std::floor
 #include <iterator> // std::next
+#include <random> // Generator, distribution, etc.
 #include <vector> // std::vector
 
 namespace ppjsdm {
 
-template<typename Configuration, typename Model, typename Vector>
-inline auto simulate_metropolis_hastings(const Model& model,
+template<typename Configuration, typename Generator, typename Model, typename Vector>
+inline auto simulate_metropolis_hastings(Generator& generator,
+                                         const Model& model,
                                          unsigned long long int steps,
                                          const Vector& only_simulate_these_types,
                                          const Configuration& conditional_configuration) {
   // Start from a rough approximate draw and go from there.
-  const auto starting_configuration(approximate_draw<Configuration>(model));
+  const auto starting_configuration(approximate_draw<Configuration>(generator, model));
 
   // Remove points which are not of the right type
   Configuration thinned_starting_configuration{};
@@ -36,15 +38,17 @@ inline auto simulate_metropolis_hastings(const Model& model,
     }
   }
 
-  return simulate_metropolis_hastings(model,
+  return simulate_metropolis_hastings(generator,
+                                      model,
                                       steps,
                                       thinned_starting_configuration,
                                       only_simulate_these_types,
                                       conditional_configuration);
 }
 
-template<typename Configuration, typename Model, typename Vector>
-inline auto simulate_metropolis_hastings(const Model& model,
+template<typename Configuration, typename Generator, typename Model, typename Vector>
+inline auto simulate_metropolis_hastings(Generator& generator,
+                                         const Model& model,
                                          unsigned long long int steps,
                                          const Configuration& starting_configuration,
                                          const Vector& only_simulate_these_types,
@@ -54,6 +58,10 @@ inline auto simulate_metropolis_hastings(const Model& model,
 
   // Number of types we are simulating from
   const auto number_types(only_simulate_these_types.size());
+
+  // Random distributions
+  std::uniform_int_distribution<decltype(only_simulate_these_types.size())> random_type_distribution(0, number_types - 1);
+  std::uniform_real_distribution<double> random_uniform_distribution(0, 1);
 
   // Simulation window
   const auto window(model.get_window());
@@ -71,29 +79,29 @@ inline auto simulate_metropolis_hastings(const Model& model,
     // Allow user interruption at regular intervals
     const auto t(timer.get_total_time().count());
     if((static_cast<int>(std::floor(t * 10)) % 10) == 0) {
-      Rcpp::checkUserInterrupt();
+      //Rcpp::checkUserInterrupt();
     }
 
-    if(unif_rand() <= birth_probability) { // Births
-      const auto random_type(only_simulate_these_types[Rcpp::sample(only_simulate_these_types.size(), 1, false, R_NilValue, false)[0]]);
-      const auto point(window.sample(random_type));
+    if(random_uniform_distribution(generator) <= birth_probability) { // Births
+      const auto random_type(only_simulate_these_types[random_type_distribution(generator)]);
+      const auto point(window.sample(generator, random_type));
 
       const double papangelou(model.compute_papangelou(point, points, conditional_configuration));
       const double birth_ratio(papangelou * precomputed_constant / (1. + static_cast<double>(size(points))));
 
       // Use C++ short-circuiting
-      if(birth_ratio >= 1. || birth_ratio >= unif_rand()) {
+      if(birth_ratio >= 1. || birth_ratio >= random_uniform_distribution(generator)) {
         add_point(points, point);
       }
     } else if(!empty(points)) { // Deaths
       const auto current_size = static_cast<double>(size(points));
-      const auto point(remove_random_point(points));
+      const auto point(remove_random_point(generator, points));
 
       const double papangelou(model.compute_papangelou(point, points, conditional_configuration));
       const double death_ratio(current_size / (precomputed_constant * papangelou));
 
       // Use C++ short-circuiting
-      if(death_ratio <= 1. && death_ratio <= unif_rand()) {
+      if(death_ratio <= 1. && death_ratio <= random_uniform_distribution(generator)) {
         add_point(points, point);
       }
     }

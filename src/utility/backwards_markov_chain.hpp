@@ -8,6 +8,7 @@
 #include "../simulation/inhomogeneous_ppp.hpp"
 #include "../utility/timer.hpp"
 
+#include <random> // Distribution
 #include <tuple> // std::tuple
 #include <type_traits> // std::remove_cv_t, std::remove_reference_t
 #include <utility> // std::forward
@@ -22,9 +23,11 @@ constexpr double always_in_L = -2.0;
 template <typename Configuration, typename Model>
 class Backwards_Markov_chain {
 public:
-  explicit Backwards_Markov_chain(const Model& model) :
+  template<typename Generator>
+  explicit Backwards_Markov_chain(const Model& model, Generator& generator) :
     model_(model),
-    last_configuration_(simulate_inhomogeneous_ppp<Configuration>(model.get_window(),
+    last_configuration_(simulate_inhomogeneous_ppp<Configuration>(generator,
+                                                                  model.get_window(),
                                                                   [&model](const auto& point) { return model.get_log_normalized_bounding_intensity(point); },
                                                                   model.get_upper_bound())),
                                                                   intensity_integral_(model.get_integral()),
@@ -34,7 +37,11 @@ public:
     return chain_.size();
   }
 
-  void extend_until_T0() {
+  template<typename Generator>
+  void extend_until_T0(Generator& generator) {
+    // Random distribution
+    std::uniform_real_distribution<double> random_uniform_distribution(0, 1);
+
     const auto initial_last_size(ppjsdm::size(last_configuration_));
     if(initial_last_size != 0) {
       Configuration points_not_in_last{};
@@ -48,17 +55,17 @@ public:
         using size_t = decltype(ppjsdm::size(last_configuration_));
         for(size_t i(0); i < initial_last_size; ++i) {
           const double sum_sizes(ppjsdm::size(points_not_in_last) + ppjsdm::size(last_configuration_));
-          const auto v(unif_rand() * (intensity_integral_ + sum_sizes) - intensity_integral_); // Uniformly distributed on [-beta, s_1 + s_2].
+          const auto v(random_uniform_distribution(generator) * (intensity_integral_ + sum_sizes) - intensity_integral_); // Uniformly distributed on [-beta, s_1 + s_2].
           if(v < 0.0) { // Happens with probability beta / (beta + s_1 + s_2).
-            insert_uniform_point_in_configuration_and_update_chain(points_not_in_last);
+            insert_uniform_point_in_configuration_and_update_chain(generator, points_not_in_last);
           } else if(v < static_cast<double>(ppjsdm::size(last_configuration_))) { // Happens with probability s_2 / (s_1 + s_2).
-            delete_random_point_in_configuration_and_update_chain(last_configuration_);
+            delete_random_point_in_configuration_and_update_chain(generator, last_configuration_);
             if(empty(last_configuration_)) {
               last_configuration_ = std::move(points_not_in_last);
               return;
             }
           } else {
-            delete_random_point_in_configuration_and_update_chain(points_not_in_last);
+            delete_random_point_in_configuration_and_update_chain(generator, points_not_in_last);
           }
         }
         // Allow user interruption at regular intervals
@@ -67,17 +74,21 @@ public:
     }
   }
 
-  template<typename IntegerType>
-  void extend_backwards(IntegerType number_extensions) {
+  template<typename Generator, typename IntegerType>
+  void extend_backwards(Generator& generator, IntegerType number_extensions) {
+    // Random distribution
+    std::uniform_real_distribution<double> random_uniform_distribution(0, 1);
+
+    // Reserve
     chain_.reserve(chain_.size() + number_extensions);
 
     // Start a timer to allow for user interruption
     const auto timer(start_timer());
     for(IntegerType i(0); i < number_extensions; ++i) {
-      if(unif_rand() * (intensity_integral_ + static_cast<double>(ppjsdm::size(last_configuration_))) < intensity_integral_) {
-        insert_uniform_point_in_configuration_and_update_chain(last_configuration_);
+      if(random_uniform_distribution(generator) * (intensity_integral_ + static_cast<double>(ppjsdm::size(last_configuration_))) < intensity_integral_) {
+        insert_uniform_point_in_configuration_and_update_chain(generator, last_configuration_);
       } else {
-        delete_random_point_in_configuration_and_update_chain(last_configuration_);
+        delete_random_point_in_configuration_and_update_chain(generator, last_configuration_);
       }
       // Allow user interruption at regular intervals
       stop_if_interrupt(timer);
@@ -89,7 +100,8 @@ public:
   // for spatial point processes'' by Berthelsen and Moller, and ``Perfect simulation of spatial
   // point processes using dominated coupling from the past with application to a multiscale area-interaction point process''
   // by Ambler and Silverman for a similar (but less general) idea.
-  auto compute_LU_and_check_coalescence() const {
+  template<typename Generator>
+  auto compute_LU_and_check_coalescence(Generator& generator) const {
     Configuration L_complement(last_configuration_); // U starts with the end value of the chain.
     Configuration L{}; // L is an empty configuration.
     // Reserve a bit extra space for each of the configurations
@@ -127,15 +139,20 @@ private:
   double intensity_integral_;
   std::vector<std::tuple<double, Marked_point>> chain_;
 
-  void insert_uniform_point_in_configuration_and_update_chain(Configuration& configuration) {
-    const auto point(model_.sample_point_from_bounding_intensity());
+  template<typename Generator>
+  void insert_uniform_point_in_configuration_and_update_chain(Generator& generator, Configuration& configuration) {
+    const auto point(model_.sample_point_from_bounding_intensity(generator));
     chain_.emplace_back(detail::do_not_need_mark, point);
     add_point(configuration, std::move(point));
   }
 
-  void delete_random_point_in_configuration_and_update_chain(Configuration& configuration) {
-    const auto point(remove_random_point(configuration));
-    const auto e(exp_rand());
+  template<typename Generator>
+  void delete_random_point_in_configuration_and_update_chain(Generator& generator, Configuration& configuration) {
+    // Random distribution
+    std::exponential_distribution<double> exponential_distribution(1);
+
+    const auto point(remove_random_point(generator, configuration));
+    const auto e(exponential_distribution(generator));
     if(model_.compute_log_alpha_min_lower_bound(get_type(point)) + e > 0) {
       chain_.emplace_back(detail::always_in_L, std::move(point));
     } else {
@@ -152,7 +169,7 @@ private:
   void stop_if_interrupt(PreciseTimer timer) const {
     const auto t(timer.get_total_time().count());
     if((static_cast<int>(std::floor(t * 10)) % 10) == 0) {
-      Rcpp::checkUserInterrupt();
+      //Rcpp::checkUserInterrupt();
     }
   }
 };

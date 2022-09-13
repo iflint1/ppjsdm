@@ -22,6 +22,10 @@ public:
   explicit Window(SEXP window):
   Window(window, Rcpp::NumericVector::create(1, 1)) {}
 
+  Marked_point sample(std::mt19937 generator, int type) const {
+    return object_->sample(generator, type);
+  }
+
   Marked_point sample(int type) const {
     return object_->sample(type);
   }
@@ -73,6 +77,8 @@ public:
 private:
   struct Concept {
     virtual ~Concept() {}
+    // TODO: Do not hard-code generator here and in window_concrete.hpp
+    virtual Marked_point sample(std::mt19937 generator, int type) const = 0;
     virtual Marked_point sample(int type) const = 0;
     virtual double draw_mark() const = 0;
     virtual double volume() const = 0;
@@ -92,6 +98,10 @@ private:
   public:
     template<typename... Args>
     explicit Concrete_window(Args&&... args): object_(std::forward<Args>(args)...) {}
+
+    Marked_point sample(std::mt19937 generator, int type) const {
+      return object_.sample(generator, type);
+    }
 
     Marked_point sample(int type) const {
       return object_.sample(type);

@@ -59,8 +59,8 @@ rbinomialpp_cpp <- function(window, n, nsim, types, drop, mark_range) {
     .Call(`_ppjsdm_rbinomialpp_cpp`, window, n, nsim, types, drop, mark_range)
 }
 
-rgibbs_cpp <- function(window, alpha, beta0, covariates, beta, gamma, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, mark_range, only_simulate_these_types, conditional_configuration, starting_configuration) {
-    .Call(`_ppjsdm_rgibbs_cpp`, window, alpha, beta0, covariates, beta, gamma, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, mark_range, only_simulate_these_types, conditional_configuration, starting_configuration)
+rgibbs_cpp <- function(window, alpha, beta0, covariates, beta, gamma, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, mark_range, only_simulate_these_types, conditional_configuration, starting_configuration, seed, nthreads) {
+    .Call(`_ppjsdm_rgibbs_cpp`, window, alpha, beta0, covariates, beta, gamma, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, mark_range, only_simulate_these_types, conditional_configuration, starting_configuration, seed, nthreads)
 }
 
 rppp_cpp <- function(window, lambda, nsim, types, drop, mark_range) {
