@@ -25,6 +25,7 @@
   only_simulate_these_types = NULL,
   conditional_configuration = NULL,
   starting_configuration = NULL,
+  nthreads = 1,
   ...
 )
 }
@@ -71,6 +72,8 @@ Default is 0.}
 \item{conditional_configuration}{Simulate conditional on this configuration.}
 
 \item{starting_configuration}{Optional configuration to start with when using the Metropolis-Hastings algorithm (steps > 0).}
+
+\item{nthreads}{Number of threads to use. Default is 1.}
 
 \item{...}{Ignored.}
 }
