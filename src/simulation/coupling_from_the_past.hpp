@@ -1,6 +1,7 @@
 #ifndef INCLUDE_PPJSDM_COUPLING_FROM_THE_PAST
 #define INCLUDE_PPJSDM_COUPLING_FROM_THE_PAST
 
+#include <RcppThread.h>
 #include <Rinternals.h>
 
 #include "../utility/backwards_markov_chain.hpp"
@@ -17,7 +18,7 @@ inline auto simulate_coupling_from_the_past(Generator& generator,
     if(coalescence.first) {
       return coalescence.second;
     }
-    // Rcpp::checkUserInterrupt();
+    RcppThread::checkUserInterrupt();
     Z.extend_backwards(generator, Z.size());
   }
 }

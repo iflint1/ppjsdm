@@ -2,6 +2,7 @@
 #define INCLUDE_PPJSDM_METROPOLIS_HASTINGS
 
 #include <Rcpp.h>
+#include <RcppThread.h>
 #include <Rinternals.h>
 #include <Rmath.h>
 
@@ -79,7 +80,7 @@ inline auto simulate_metropolis_hastings(Generator& generator,
     // Allow user interruption at regular intervals
     const auto t(timer.get_total_time().count());
     if((static_cast<int>(std::floor(t * 10)) % 10) == 0) {
-      //Rcpp::checkUserInterrupt();
+      RcppThread::checkUserInterrupt();
     }
 
     if(random_uniform_distribution(generator) <= birth_probability) { // Births

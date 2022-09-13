@@ -18,11 +18,13 @@ Imports:
     methods,
     oem,
     Rcpp (>= 1.0.2),
+    RcppThread,
     spatstat.geom,
     stats
 Depends: R (>= 2.10.0)
 LinkingTo: Rcpp,
            RcppArmadillo,
+           RcppThread,
            testthat
 RoxygenNote: 7.1.2
 Encoding: UTF-8

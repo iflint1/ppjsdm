@@ -1,6 +1,7 @@
 #ifndef INCLUDE_PPJSDM_BACKWARDS_MARKOV_CHAIN
 #define INCLUDE_PPJSDM_BACKWARDS_MARKOV_CHAIN
 
+#include <RcppThread.h>
 #include <Rinternals.h>
 
 #include "../configuration/configuration_manipulation.hpp"
@@ -169,7 +170,7 @@ private:
   void stop_if_interrupt(PreciseTimer timer) const {
     const auto t(timer.get_total_time().count());
     if((static_cast<int>(std::floor(t * 10)) % 10) == 0) {
-      //Rcpp::checkUserInterrupt();
+      RcppThread::checkUserInterrupt();
     }
   }
 };
