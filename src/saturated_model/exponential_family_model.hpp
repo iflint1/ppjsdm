@@ -16,6 +16,7 @@
 #include <cmath> // std::exp, std::isinf
 #include <functional> // std::plus
 #include <random> // Distributions
+#include <string> // std::string
 #include <vector> // std::vector
 
 namespace ppjsdm {
@@ -85,6 +86,7 @@ public:
     if(alpha.size() != short_range.size()) {
       Rcpp::stop("Supplied short_range and alpha lists do not have compatible sizes.");
     } else {
+      // TODO: Avoid emplace_back
       dispersion_ = std::vector<Saturated_model<double>>{};
       for(decltype(alpha.size()) i(0); i < alpha.size(); ++i) {
         dispersion_.emplace_back(Saturated_model<double>(model[i], short_range[i], saturation));
@@ -119,6 +121,7 @@ protected:
   std::vector<Saturated_model<double>> dispersion_;
   Saturated_model<double> medium_range_dispersion_;
   Lambda beta0_;
+  // TODO: use Lightweight_square_matrix
   std::vector<ppjsdm::Lightweight_matrix<double>> alpha_;
   ppjsdm::Lightweight_matrix<double> beta_;
   ppjsdm::Lightweight_matrix<double> gamma_;
@@ -187,6 +190,7 @@ protected:
     // Fill in the returned vector
     std::vector<decltype(matrix_times_vector_at_index(alpha_[0], short_range_dispersion[0][0], 0))> return_value(size(points));
     for(typename Points::size_type i(0); i < size(points); ++i) {
+      // TODO: Put back commented code below??
       //if(!is_column_zero(alpha_, get_type(points[i])) || !is_column_zero(gamma_, get_type(points[i]))) {
         typename Configuration::size_type index_in_configuration(0);
         while(index_in_configuration < size(configuration) && !is_equal(configuration[index_in_configuration], points[i])) {
@@ -387,12 +391,10 @@ public:
       }
     }
     if(alpha_need_to_add > 0.) {
-      Rcpp::Rcout << alpha_need_to_add << '\n';
-      Rcpp::stop("Internal error: Incorrect first alpha value, probably due to bad upper-bound to dispersion in the CFTP algorithm.");
+      Rcpp::stop(std::string("Internal error: Incorrect first alpha value, probably due to bad upper-bound to dispersion in the CFTP algorithm; alpha = ").append(std::to_string(alpha_need_to_add)).append(std::string(", point type = ")).append(std::to_string(get_type(point))).append(std::string(", upper bound = ")).append(std::to_string(dot_dispersion_maximum)));
     }
     if(alpha_which_one_to_add_to > 0.) {
-      Rcpp::Rcout << alpha_which_one_to_add_to << '\n';
-      Rcpp::stop("Internal error: Incorrect second alpha value, probably due to bad upper-bound to dispersion in the CFTP algorithm.");
+      Rcpp::stop(std::string("Internal error: Incorrect second alpha value, probably due to bad upper-bound to dispersion in the CFTP algorithm; alpha = ").append(std::to_string(alpha_which_one_to_add_to)).append(std::string(", point type = ")).append(std::to_string(get_type(point))).append(std::string(", upper bound = ")).append(std::to_string(dot_dispersion_maximum)));
     }
   }
 
