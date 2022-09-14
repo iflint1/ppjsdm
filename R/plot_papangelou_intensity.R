@@ -101,7 +101,8 @@ plot_papangelou.default <- function(window,
                             medium_range_model = parameters$medium_range_model,
                             gamma = parameters$gamma,
                             types = parameters$types,
-                            steps = steps)
+                            steps = steps,
+                            nthreads = nthreads)
   }
   configuration <- as.Configuration(configuration)
 
