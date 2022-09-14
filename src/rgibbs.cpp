@@ -54,7 +54,11 @@ inline SEXP rgibbs_helper(R_xlen_t nthreads, R_xlen_t seed, R_xlen_t nsim, Rcpp:
 #pragma omp parallel
 {
   decltype(cpp_samples) cpp_samples_private(cpp_samples.size());
-  std::mt19937 generator(omp_get_thread_num() * seed);
+  R_xlen_t thread_num(1);
+#ifdef _OPENMP
+  thread_num = omp_get_thread_num();
+#endif
+  std::mt19937 generator(thread_num * seed);
 #pragma omp for nowait
   for(typename decltype(cpp_samples)::size_type i = 0; i < nsim; ++i) {
     const auto sample(detail::sample<Configuration>(generator, args...));
