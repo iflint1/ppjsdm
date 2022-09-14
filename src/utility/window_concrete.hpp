@@ -40,7 +40,7 @@ public:
     delta_y_ = y[1] - y[0];
   }
 
-  Marked_point sample(std::mt19937 generator, int type = 0) const {
+  Marked_point sample(std::mt19937& generator, int type = 0) const {
     std::uniform_real_distribution<double> random_uniform_distribution(0, 1);
     return Marked_point(x_0_ + random_uniform_distribution(generator) * delta_x_,
                         y_0_ + random_uniform_distribution(generator) * delta_y_,
@@ -131,7 +131,7 @@ public:
     radius_ = static_cast<double>(window["radius"]);
   }
 
-  Marked_point sample(std::mt19937 generator, int type = 0) const {
+  Marked_point sample(std::mt19937& generator, int type = 0) const {
     std::uniform_real_distribution<double> random_uniform_distribution(0, 1);
     while(true) {
       const auto x(2 * random_uniform_distribution(generator) - 1.0);
@@ -224,7 +224,7 @@ public:
     mark_lower_(marked_range[0]),
     delta_mark_(marked_range[1] - marked_range[0]) {}
 
-  Marked_point sample(std::mt19937 generator, int type = 0) const {
+  Marked_point sample(std::mt19937& generator, int type = 0) const {
     std::uniform_real_distribution<double> random_uniform_distribution(0, 1);
     const auto x_min(im_.x_min());
     const auto y_min(im_.y_min());
@@ -342,7 +342,7 @@ public:
   }
 
   // TODO: Simplify the implementation of sample(generator, type), reuse sample(type)
-  Marked_point sample(std::mt19937 generator, int type = 0) const {
+  Marked_point sample(std::mt19937& generator, int type = 0) const {
     std::uniform_real_distribution<double> random_uniform_distribution(0, 1);
     double total_weight(volume());
     using size_t = decltype(delta_x_.size());
