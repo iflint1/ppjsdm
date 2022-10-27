@@ -531,7 +531,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
   using computation_t = double;
   using size_t = decltype(ppjsdm::size(configuration));
 
-  // Do you need to compute some of the alphas/gammas? If not, we can skip some of the dispersion computations
+  // Do we need to compute some of the alphas/gammas? If not, we can skip some of the dispersion computations
   bool compute_some_alphas(false);
   bool compute_some_gammas(false);
   for(int i(0); i < number_types; ++i) {

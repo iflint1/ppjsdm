@@ -43,7 +43,12 @@ inline auto sample(Generator& generator, const Model& model, R_xlen_t steps, Arg
 } // namespace detail
 
 template<typename Configuration, typename... Args>
-inline SEXP rgibbs_helper(R_xlen_t nthreads, R_xlen_t seed, R_xlen_t nsim, Rcpp::CharacterVector types, bool drop, const Args&... args) {
+inline SEXP rgibbs_helper(R_xlen_t nthreads,
+                          R_xlen_t seed,
+                          R_xlen_t nsim,
+                          Rcpp::CharacterVector types,
+                          bool drop,
+                          const Args&... args) {
 #ifdef _OPENMP
   omp_set_num_threads(nthreads);
 #endif
@@ -60,12 +65,12 @@ inline SEXP rgibbs_helper(R_xlen_t nthreads, R_xlen_t seed, R_xlen_t nsim, Rcpp:
 #endif
   std::mt19937 generator(thread_num * seed);
 #pragma omp for nowait
-  for(typename decltype(cpp_samples)::size_type i = 0; i < nsim; ++i) {
+  for(typename decltype(cpp_samples_private)::size_type index = 0; index < cpp_samples_private.size(); ++index) {
     const auto sample(detail::sample<Configuration>(generator, args...));
-    cpp_samples_private[i] = sample;
+    cpp_samples_private[index] = sample;
   }
 #pragma omp critical
-  for(std::remove_cv_t<decltype(cpp_samples.size())> index(0); index < nsim; ++index) {
+  for(std::remove_cv_t<decltype(cpp_samples_private.size())> index(0); index < cpp_samples_private.size(); ++index) {
     if(cpp_samples_private[index] != Configuration{}) {
       cpp_samples[index] = cpp_samples_private[index];
     }
