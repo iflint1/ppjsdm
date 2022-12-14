@@ -1,6 +1,7 @@
 #include <Rcpp.h>
 #include <Rinternals.h>
 
+#include "configuration/get_number_points.hpp"
 #include "configuration/make_R_configuration.hpp"
 
 #include "point/point_manipulation.hpp"
@@ -19,6 +20,7 @@
 
 #include <random> // Generator
 #include <utility> // std::forward
+#include <tuple> // std::pair
 #include <vector> // std::vector
 
 #ifdef _OPENMP
@@ -28,7 +30,7 @@
 namespace detail {
 
 template<typename Configuration, typename Generator, typename... Args>
-inline Configuration sample(Generator& generator, Args&&... args);
+inline std::pair<Configuration, std::vector<decltype(get_number_points(Configuration{}))>> sample(Generator& generator, Args&&... args);
 
 template<typename Configuration, typename Generator, typename Model>
 inline auto sample(Generator& generator, const Model& model) {
@@ -54,11 +56,13 @@ inline SEXP rgibbs_helper(R_xlen_t nthreads,
 #endif
 
   Rcpp::List samples(nsim);
-  std::vector<Configuration> cpp_samples(nsim);
+std::vector<Configuration> cpp_samples(nsim);
+std::vector<std::vector<decltype(ppjsdm::get_number_points(Configuration{}))>> number_points(nsim);
 
 #pragma omp parallel
 {
   decltype(cpp_samples) cpp_samples_private(cpp_samples.size());
+  decltype(number_points) number_points_private(cpp_samples.size());
   R_xlen_t thread_num(1);
 #ifdef _OPENMP
   thread_num = omp_get_thread_num();
@@ -67,18 +71,21 @@ inline SEXP rgibbs_helper(R_xlen_t nthreads,
 #pragma omp for nowait
   for(typename decltype(cpp_samples_private)::size_type index = 0; index < cpp_samples_private.size(); ++index) {
     const auto sample(detail::sample<Configuration>(generator, args...));
-    cpp_samples_private[index] = sample;
+    cpp_samples_private[index] = sample.first;
+    number_points_private[index] = sample.second;
   }
 #pragma omp critical
   for(std::remove_cv_t<decltype(cpp_samples_private.size())> index(0); index < cpp_samples_private.size(); ++index) {
     if(cpp_samples_private[index] != Configuration{}) {
       cpp_samples[index] = cpp_samples_private[index];
+      number_points[index] = number_points_private[index];
     }
   }
 }
 
   for(R_xlen_t i(0); i < nsim; ++i) {
     samples[i] = ppjsdm::make_R_configuration(cpp_samples[i], types);
+    Rcpp::as<Rcpp::List>(samples[i]).attr("number_points") = number_points[i];
   }
 
   return ppjsdm::get_list_or_first_element(samples, nsim == 1 && drop);

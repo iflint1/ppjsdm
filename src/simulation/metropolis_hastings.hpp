@@ -7,6 +7,7 @@
 #include <Rmath.h>
 
 #include "../configuration/configuration_manipulation.hpp"
+#include "../configuration/get_number_points.hpp"
 #include "../point/point_manipulation.hpp"
 #include "../utility/approximate_draw.hpp"
 #include "../utility/timer.hpp"
@@ -14,6 +15,7 @@
 #include <cmath> // std::floor
 #include <iterator> // std::next
 #include <random> // Generator, distribution, etc.
+#include <tuple> // std::make_pair
 #include <vector> // std::vector
 
 namespace ppjsdm {
@@ -54,6 +56,10 @@ inline auto simulate_metropolis_hastings(Generator& generator,
                                          const Configuration& starting_configuration,
                                          const Vector& only_simulate_these_types,
                                          const Configuration& conditional_configuration) {
+  // Initialise a vector of the number of points by type
+  std::vector<decltype(get_number_points(starting_configuration))> points_by_type(steps + 1);
+  points_by_type[0] = get_number_points(starting_configuration);
+
   // Probability of drawing tentative births
   constexpr double birth_probability(0.5);
 
@@ -77,6 +83,9 @@ inline auto simulate_metropolis_hastings(Generator& generator,
   timer.set_current();
 
   for(decltype(steps) k(0); k < steps; ++k) {
+    // Initialise the vector containing the number of types
+    points_by_type[k + 1] = points_by_type[k];
+
     // Allow user interruption at regular intervals
     const auto t(timer.get_total_time().count());
     if((static_cast<int>(std::floor(t * 10)) % 10) == 0) {
@@ -93,6 +102,7 @@ inline auto simulate_metropolis_hastings(Generator& generator,
       // Use C++ short-circuiting
       if(birth_ratio >= 1. || birth_ratio >= random_uniform_distribution(generator)) {
         add_point(points, point);
+        ++points_by_type[k + 1][random_type];
       }
     } else if(!empty(points)) { // Deaths
       const auto current_size = static_cast<double>(size(points));
@@ -104,10 +114,12 @@ inline auto simulate_metropolis_hastings(Generator& generator,
       // Use C++ short-circuiting
       if(death_ratio <= 1. && death_ratio <= random_uniform_distribution(generator)) {
         add_point(points, point);
+      } else {
+        --points_by_type[k + 1][get_type(point)];
       }
     }
   }
-  return points;
+  return std::make_pair(points, points_by_type);
 }
 
 } // namespace ppjsdm
