@@ -33,7 +33,7 @@ rgibbs <- function(...) {
 #' @param conditional_configuration Simulate conditional on this configuration.
 #' @param starting_configuration Optional configuration to start with when using the Metropolis-Hastings algorithm (steps > 0).
 #' @param nthreads Number of threads to use. Default is 1.
-#' @param ... Ignored.
+#' @param debug Output debugging information (current only used with Metropolis-Hastings)?
 #' @export
 #' @method rgibbs default
 rgibbs.default <- function(window,
@@ -57,6 +57,7 @@ rgibbs.default <- function(window,
                            conditional_configuration = NULL,
                            starting_configuration = NULL,
                            nthreads = 1,
+                           debug = FALSE,
                            ...) {
   parameters <- model_parameters(window = window,
                                  alpha = alpha,
@@ -98,7 +99,8 @@ rgibbs.default <- function(window,
              conditional_configuration = conditional_configuration,
              starting_configuration = starting_configuration,
              seed = sample.int(.Machine$integer.max, 1),
-             nthreads = nthreads)
+             nthreads = nthreads,
+             debug = debug)
 }
 
 #' Sample a multivariate Gibbs point processes from a fit object.

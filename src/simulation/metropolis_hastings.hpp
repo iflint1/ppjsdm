@@ -15,6 +15,7 @@
 #include <cmath> // std::floor
 #include <iterator> // std::next
 #include <random> // Generator, distribution, etc.
+#include <sstream> // std::stringstream
 #include <tuple> // std::make_pair
 #include <vector> // std::vector
 
@@ -24,6 +25,7 @@ template<typename Configuration, typename Generator, typename Model, typename Ve
 inline auto simulate_metropolis_hastings(Generator& generator,
                                          const Model& model,
                                          unsigned long long int steps,
+                                         bool debug,
                                          const Vector& only_simulate_these_types,
                                          const Configuration& conditional_configuration) {
   // Start from a rough approximate draw and go from there.
@@ -44,6 +46,7 @@ inline auto simulate_metropolis_hastings(Generator& generator,
   return simulate_metropolis_hastings(generator,
                                       model,
                                       steps,
+                                      debug,
                                       thinned_starting_configuration,
                                       only_simulate_these_types,
                                       conditional_configuration);
@@ -53,6 +56,7 @@ template<typename Configuration, typename Generator, typename Model, typename Ve
 inline auto simulate_metropolis_hastings(Generator& generator,
                                          const Model& model,
                                          unsigned long long int steps,
+                                         bool debug,
                                          const Configuration& starting_configuration,
                                          const Vector& only_simulate_these_types,
                                          const Configuration& conditional_configuration) {
@@ -90,6 +94,17 @@ inline auto simulate_metropolis_hastings(Generator& generator,
     const auto t(timer.get_total_time().count());
     if((static_cast<int>(std::floor(t * 10)) % 10) == 0) {
       RcppThread::checkUserInterrupt();
+    }
+
+    if(debug) {
+      if(k % 1000 == 0) {
+        std::stringstream output("");
+        output << "Number of points in each species at step " << k << ": \n";
+        for(decltype(points_by_type[0].size()) i(0); i < points_by_type[0].size(); ++i) {
+          output << points_by_type[k][i] << "\n";
+        }
+        RcppThread::Rcout << output.str() << "----------------------------\n";
+      }
     }
 
     if(random_uniform_distribution(generator) <= birth_probability) { // Births

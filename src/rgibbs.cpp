@@ -38,8 +38,8 @@ inline auto sample(Generator& generator, const Model& model) {
 }
 
 template<typename Configuration, typename Generator, typename Model, typename... Args>
-inline auto sample(Generator& generator, const Model& model, R_xlen_t steps, Args&&... args) {
-  return ppjsdm::simulate_metropolis_hastings<Configuration>(generator, model, steps, std::forward<Args>(args)...);
+inline auto sample(Generator& generator, const Model& model, R_xlen_t steps, bool debug, Args&&... args) {
+  return ppjsdm::simulate_metropolis_hastings<Configuration>(generator, model, steps, debug, std::forward<Args>(args)...);
 }
 
 } // namespace detail
@@ -56,8 +56,8 @@ inline SEXP rgibbs_helper(R_xlen_t nthreads,
 #endif
 
   Rcpp::List samples(nsim);
-std::vector<Configuration> cpp_samples(nsim);
-std::vector<std::vector<decltype(ppjsdm::get_number_points(Configuration{}))>> number_points(nsim);
+  std::vector<Configuration> cpp_samples(nsim);
+  std::vector<std::vector<decltype(ppjsdm::get_number_points(Configuration{}))>> number_points(nsim);
 
 #pragma omp parallel
 {
@@ -113,7 +113,8 @@ SEXP rgibbs_cpp(SEXP window,
                 SEXP conditional_configuration,
                 SEXP starting_configuration,
                 R_xlen_t seed,
-                R_xlen_t nthreads) {
+                R_xlen_t nthreads,
+                bool debug) {
   using Configuration_type = std::vector<ppjsdm::Marked_point>;
 
   const auto cpp_window(ppjsdm::Window(window, mark_range));
@@ -132,6 +133,7 @@ SEXP rgibbs_cpp(SEXP window,
 
   if(steps == 0) {
     // TODO: Do not discard only_simulate_these_types or conditional_configuration.
+    // TODO: Do not discard debug
     return rgibbs_helper<Configuration_type>(nthreads, seed, nsim, types, drop, exponential_model);
   } else {
     Configuration_type vector_conditional_configuration{};
@@ -158,6 +160,7 @@ SEXP rgibbs_cpp(SEXP window,
                                                drop,
                                                exponential_model,
                                                steps,
+                                               debug,
                                                vector_starting_configuration,
                                                Rcpp::as<std::vector<R_xlen_t>>(only_simulate_these_types),
                                                vector_conditional_configuration);
@@ -169,6 +172,7 @@ SEXP rgibbs_cpp(SEXP window,
                                                drop,
                                                exponential_model,
                                                steps,
+                                               debug,
                                                Rcpp::as<std::vector<R_xlen_t>>(only_simulate_these_types),
                                                vector_conditional_configuration);
     }
