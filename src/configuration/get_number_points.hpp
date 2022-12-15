@@ -10,15 +10,15 @@
 namespace ppjsdm {
 
 template<typename Configuration>
-inline auto get_number_points(const Configuration& configuration, int type) {
+inline auto get_number_points(const Configuration& configuration,
+                              size_t<Configuration> number_types) {
   using size_t = size_t<Configuration>;
-  size_t total(0);
+  std::vector<size_t> result(number_types);
   for(const auto& point: configuration) {
-    if(get_type(point) == type) {
-      ++total;
-    }
+    const decltype(result.size()) type(get_type(point));
+    ++result[type];
   }
-  return total;
+  return result;
 }
 
 template<typename Configuration>

@@ -62,12 +62,12 @@ inline SEXP rgibbs_helper(R_xlen_t nthreads,
 #pragma omp parallel
 {
   decltype(cpp_samples) cpp_samples_private(cpp_samples.size());
-  decltype(number_points) number_points_private(cpp_samples.size());
-  R_xlen_t thread_num(1);
+  decltype(number_points) number_points_private(number_points.size());
+  R_xlen_t thread_num(0);
 #ifdef _OPENMP
   thread_num = omp_get_thread_num();
 #endif
-  std::mt19937 generator(thread_num * seed);
+  std::mt19937 generator(thread_num + seed);
 #pragma omp for nowait
   for(typename decltype(cpp_samples_private)::size_type index = 0; index < cpp_samples_private.size(); ++index) {
     const auto sample(detail::sample<Configuration>(generator, args...));
@@ -76,7 +76,8 @@ inline SEXP rgibbs_helper(R_xlen_t nthreads,
   }
 #pragma omp critical
   for(std::remove_cv_t<decltype(cpp_samples_private.size())> index(0); index < cpp_samples_private.size(); ++index) {
-    if(cpp_samples_private[index] != Configuration{}) {
+    if(cpp_samples_private[index] != Configuration{} ||
+       number_points_private[index] != typename decltype(number_points)::value_type{}) {
       cpp_samples[index] = cpp_samples_private[index];
       number_points[index] = number_points_private[index];
     }

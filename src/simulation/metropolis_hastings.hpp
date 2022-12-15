@@ -60,15 +60,15 @@ inline auto simulate_metropolis_hastings(Generator& generator,
                                          const Configuration& starting_configuration,
                                          const Vector& only_simulate_these_types,
                                          const Configuration& conditional_configuration) {
-  // Initialise a vector of the number of points by type
-  std::vector<decltype(get_number_points(starting_configuration))> points_by_type(steps + 1);
-  points_by_type[0] = get_number_points(starting_configuration);
-
   // Probability of drawing tentative births
   constexpr double birth_probability(0.5);
 
   // Number of types we are simulating from
   const auto number_types(only_simulate_these_types.size());
+
+  // Initialise a vector of the number of points by type
+  std::vector<decltype(get_number_points(starting_configuration))> points_by_type(steps + 1);
+  points_by_type[0] = get_number_points(starting_configuration, number_types);
 
   // Random distributions
   std::uniform_int_distribution<decltype(only_simulate_these_types.size())> random_type_distribution(0, number_types - 1);
