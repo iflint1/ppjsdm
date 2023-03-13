@@ -125,13 +125,13 @@ get_number_types_and_check_conformance_helper <- function(default_number_types,
       best_guess
     }
   } else {
-    if(is.null(x)) {
+    length_x <- get_number_types_implied_by_object(x)
+    if(is.null(x) | length_x == 0) {
       get_number_types_and_check_conformance_helper(default_number_types = default_number_types,
                                                     best_guess = best_guess,
                                                     ...)
     } else {
-      length_x <- get_number_types_implied_by_object(x)
-      if(best_guess != 0 & length_x != 0) {
+      if(best_guess != 0) {
         if(length_x != best_guess) {
           stop("Two of the given arguments have incompatible sizes.")
         } else {
@@ -162,16 +162,16 @@ get_number_types_and_check_conformance <- function(default_number_types,
 }
 
 make_default_model_parameters2 <- function(alpha,
-                                          beta0,
-                                          covariates,
-                                          beta,
-                                          gamma,
-                                          short_range,
-                                          medium_range,
-                                          long_range,
-                                          types,
-                                          default_number_types,
-                                          ...) {
+                                           beta0,
+                                           covariates,
+                                           beta,
+                                           gamma,
+                                           short_range,
+                                           medium_range,
+                                           long_range,
+                                           types,
+                                           default_number_types,
+                                           ...) {
   number_types <- get_number_types_and_check_conformance(default_number_types = default_number_types,
                                                          alpha,
                                                          gamma,
@@ -181,6 +181,7 @@ make_default_model_parameters2 <- function(alpha,
                                                          long_range,
                                                          types,
                                                          ...)
+
   alpha <- lapply(alpha, function(a) {
     a <- construct_if_missing(a, 0, number_types, matrix = TRUE)
     if(!isSymmetric(a)) {
@@ -362,16 +363,16 @@ model_parameters <- function(window,
                                         medium_range_model = medium_range_model)
 
   parameters <- make_default_model_parameters2(alpha = alpha,
-                                              beta0 = beta0,
-                                              covariates = defaults$covariates,
-                                              beta = beta,
-                                              gamma = gamma,
-                                              short_range = short_range,
-                                              medium_range = medium_range,
-                                              long_range = long_range,
-                                              types = types,
-                                              default_number_types = default_number_types,
-                                              ...)
+                                               beta0 = beta0,
+                                               covariates = defaults$covariates,
+                                               beta = beta,
+                                               gamma = gamma,
+                                               short_range = short_range,
+                                               medium_range = medium_range,
+                                               long_range = long_range,
+                                               types = types,
+                                               default_number_types = default_number_types,
+                                               ...)
 
   # TODO: If user sets model to given length, want to default-construct alpha of the same length
   if(!is.list(defaults$model)) {
