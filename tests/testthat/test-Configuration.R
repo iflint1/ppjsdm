@@ -187,9 +187,9 @@ test_that("Convert to spatstat.geom::ppp", {
   types <- c("a", "b", "a")
   marks <- stats::runif(n = 3)
   expect_equal(as.ppp(ppjsdm::Configuration(x = x_coordinates, y = y_coordinates, types = types, marks = marks), W = Rectangle_window(c(0, 2), c(0, 4))),
-               spatstat.geom::ppp(x = x_coordinates, y = y_coordinates, window = spatstat.geom::owin(c(0, 2), c(0, 4)), marks = types))
+               spatstat.geom::ppp(x = x_coordinates, y = y_coordinates, window = spatstat.geom::owin(c(0, 2), c(0, 4)), marks = factor(types)))
   types <- c(1, 2, 1)
   expect_equal(as.ppp(ppjsdm::Configuration(x = x_coordinates, y = y_coordinates, types = types, marks = marks), W = Rectangle_window(c(0, 2), c(0, 4))),
-               spatstat.geom::ppp(x = x_coordinates, y = y_coordinates, window = spatstat.geom::owin(c(0, 2), c(0, 4)), marks = types))
+               spatstat.geom::ppp(x = x_coordinates, y = y_coordinates, window = spatstat.geom::owin(c(0, 2), c(0, 4)), marks = factor(types)))
 
 })
