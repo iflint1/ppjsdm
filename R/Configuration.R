@@ -286,13 +286,7 @@ marks <- function(configuration) {
 #' @importFrom spatstat.geom as.owin owin ppp
 #' @export
 as.ppp.Configuration <- function(X, W, ..., fatal = TRUE) {
-  types <- X$types
-  # The lines below "unfactor" types
-  types <- as.character(types)
-  if(all(sapply(types, function(t) suppressWarnings(!is.na(as.numeric(t)))))) {
-    types <- as.numeric(types)
-  }
-  ppp(X$x, X$y, window = as.owin(W), marks = types)
+  ppp(x = X$x, y = X$y, window = as.owin(W), marks = X$types)
 }
 
 #' Number of points in a configuration
