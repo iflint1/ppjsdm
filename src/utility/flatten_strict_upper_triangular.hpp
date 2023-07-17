@@ -16,7 +16,7 @@ inline auto encode_linear(long long int i, long long int j, long long int n) {
 
 // The computation is done with long long types to avoid overflows.
 inline auto decode_linear(long long int k, long long int n) {
-  const auto i(n - 2 - static_cast<long long int>(std::floor(std::sqrt(-8 * k + 4 * n * (n - 1) - 7) / 2. - 0.5)));
+  const auto i(n - 2 - static_cast<long long int>(std::floor((static_cast<double>(std::sqrt(-8 * k + 4 * n * (n - 1) - 7)) - 1.)/ 2.)));
   return std::make_pair(i, k + i + 1 + ((n - i) * (n - i - 1) - n * (n - 1)) / 2);
 }
 
