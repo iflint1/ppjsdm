@@ -13,10 +13,10 @@ trace_plot <- function(x, type = 1) {
 
   initial_type <- type
 
-  # If the user supplies a string as the type, they want to evaluate the intensity
-  # at that type.
+  # If the user supplies a string as the type, they want to evaluate the trace plot
+  # of that type.
   if(is.character(type)) {
-    type <- which(type == types(configuration[[1]]))[1]
+    type <- which(type == levels(types(x)))[1]
   }
 
   plot(sapply(number_points, function(y) y[type]),
