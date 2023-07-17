@@ -339,7 +339,7 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
                                bool debug,
                                std::string dummy_distribution,
                                Rcpp::CharacterVector type_names) {
-  using computation_t = long double;
+  using computation_t = double;
 
   // Construct std::vector of configurations.
   std::vector<std::vector<ppjsdm::Marked_point>> vector_configurations(configuration_list.size());

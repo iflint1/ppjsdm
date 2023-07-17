@@ -110,7 +110,7 @@ inline auto make_papangelou(const ppjsdm::Lightweight_matrix<double>& regressors
   omp_set_num_threads(nthreads);
 #endif
 
-  using computation_t = long double;
+  using computation_t = double;
   using size_t = decltype(regressors.ncol());
 
   std::vector<double> papangelou(regressors.nrow());
@@ -143,7 +143,7 @@ inline auto make_G2_binomial(const std::vector<double>& papangelou,
                              const std::vector<int>& type,
                              double window_volume,
                              int nthreads) {
-  using computation_t = long double;
+  using computation_t = double;
   using size_t = decltype(regressors.ncol());
 
 #ifdef _OPENMP
@@ -225,7 +225,7 @@ inline auto make_G2_stratified(const Configuration& configuration,
                                const ppjsdm::Saturated_model<FloatType>& medium_dispersion_model,
                                const ppjsdm::Im_list_wrapper& covariates,
                                int nthreads) {
-  using computation_t = long double;
+  using computation_t = double;
   using size_t = decltype(regressors.ncol());
 
   // Extract some values relating to the number of parameters and how they're ordered
@@ -388,7 +388,7 @@ inline auto make_S(const std::vector<double>& papangelou,
                    const ppjsdm::Lightweight_matrix<double>& regressors,
                    const std::vector<int>& type,
                    int nthreads) {
-  using computation_t = long double;
+  using computation_t = double;
   using size_t = decltype(regressors.ncol());
 
 #ifdef _OPENMP
@@ -440,7 +440,7 @@ inline auto make_A1(const std::vector<double>& papangelou,
                     const ppjsdm::Lightweight_matrix<double>& regressors,
                     const std::vector<int>& type,
                     int nthreads) {
-  using computation_t = long double;
+  using computation_t = double;
   using size_t = decltype(regressors.ncol());
 
 #ifdef _OPENMP
