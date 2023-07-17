@@ -50,9 +50,9 @@ struct dispersion_computation_fitting {
         count_vector[i] = CountType(number_types);
         for(size_t j(0); j < i; ++j) {
           // TODO: varphi(configuration[i], configuration[j]) only needs to be computed once
-          AbstractDispersion::template update_count<std::numeric_limits<int>::max()>(varphi, count_vector[i][get_type(configuration[j])],
+          AbstractDispersion::template update_count<std::numeric_limits<int>::infinity()>(varphi, count_vector[i][get_type(configuration[j])],
                                                                                   configuration[i], configuration[j]);
-          AbstractDispersion::template update_count<std::numeric_limits<int>::max()>(varphi, count_vector[j][get_type(configuration[i])],
+          AbstractDispersion::template update_count<std::numeric_limits<int>::infinity()>(varphi, count_vector[j][get_type(configuration[i])],
                                                                                   configuration[i], configuration[j]);
         }
       }
@@ -84,7 +84,7 @@ struct dispersion_computation_fitting {
         dispersion_private[i] = DispersionType(number_types);
         CountType count_point(number_types);
         for(size_t j(0); j < size(configuration); ++j) {
-          AbstractDispersion::template update_count<std::numeric_limits<int>::max()>(varphi, count_point[get_type(configuration[j])],
+          AbstractDispersion::template update_count<std::numeric_limits<int>::infinity()>(varphi, count_point[get_type(configuration[j])],
                                                                                   other_configuration[i], configuration[j]);
         }
         add_count_to_dispersion<0, AbstractDispersion, 2>(varphi, dispersion_private[i],
