@@ -47,7 +47,7 @@ struct generic_dispersion_computation {
                              ValueType count{};
                              // TODO: In the Geyer case, there's potential to use conditional_for_each_container and break if count == saturation.
                              // However, note that this would make the function different from other variations.
-                             for_each_container([&point, &count, &current_point, &varphi, saturation](const auto& other_point) {
+                             for_each_container([&point, &count, &current_point, &varphi](const auto& other_point) {
                                if(!is_equal(other_point, point) && !is_equal(other_point, current_point) && get_type(other_point) == get_type(point)) {
                                  AbstractDispersion::template update_count<0>(varphi, count, current_point, other_point);
                                }

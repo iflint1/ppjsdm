@@ -34,6 +34,7 @@ rgibbs <- function(...) {
 #' @param starting_configuration Optional configuration to start with when using the Metropolis-Hastings algorithm (steps > 0).
 #' @param nthreads Number of threads to use. Default is 1.
 #' @param debug Output debugging information (current only used with Metropolis-Hastings)?
+#' @param ... Not used.
 #' @export
 #' @method rgibbs default
 rgibbs.default <- function(window,

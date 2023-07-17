@@ -77,6 +77,8 @@ Default is 0.}
 \item{nthreads}{Number of threads to use. Default is 1.}
 
 \item{debug}{Output debugging information (current only used with Metropolis-Hastings)?}
+
+\item{...}{Not used.}
 }
 \description{
 Sample a multivariate saturated pairwise interaction Gibbs point processes with given parameters.

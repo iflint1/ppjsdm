@@ -18,7 +18,6 @@ Imports:
     methods,
     oem,
     Rcpp (>= 1.0.2),
-    RcppThread,
     spatstat.geom,
     stats
 Depends: R (>= 2.10.0)
