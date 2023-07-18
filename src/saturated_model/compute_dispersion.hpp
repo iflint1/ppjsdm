@@ -36,7 +36,7 @@ struct generic_dispersion_computation {
     if(static_cast<decltype(max_points_by_type)>(varphi.get_saturation()) >= max_points_by_type + 1) {
       for_each_container([&count_vector, &point, &varphi](const auto& current_point) {
         if(!is_equal(current_point, point)) {
-          AbstractDispersion::template update_count<std::numeric_limits<int>::infinity()>(varphi, count_vector[get_type(current_point)], current_point, point);
+          AbstractDispersion::template update_count<1000>(varphi, count_vector[get_type(current_point)], current_point, point);
         }
       }, configurations...);
       add_count_to_dispersion<0, AbstractDispersion, 2>(varphi, dispersion, count_vector, point);
