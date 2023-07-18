@@ -23,7 +23,7 @@
   saturation,
   grid_steps = c(1000, 1000),
   steps = 0,
-  nthreads = 4,
+  nthreads = 1,
   use_log = FALSE,
   use_ggplot = TRUE,
   return_papangelou = FALSE,
