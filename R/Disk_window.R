@@ -38,21 +38,21 @@ y_range.Disk_window <- function(window) {
 
 #' Return the area of a disk window.
 #'
-#' @param window The window.
+#' @param w The window.
 #' @importFrom spatstat.geom area
 #' @export
-area.Disk_window <- function(window) {
-  r <- window$radius
+area.Disk_window <- function(w) {
+  r <- w$radius
   pi * r * r
 }
 
 #' Return the volume of a disk window.
 #'
-#' @param window The window.
+#' @param x The window.
 #' @importFrom spatstat.geom volume
 #' @export
-volume.Disk_window <- function(window) {
-  area.Disk_window(window)
+volume.Disk_window <- function(x) {
+  area.Disk_window(x)
 }
 
 #' Convert a disk window to an owin from the SpatStat package.

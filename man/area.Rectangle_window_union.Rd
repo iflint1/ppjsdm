@@ -4,10 +4,10 @@
 \alias{area.Rectangle_window_union}
 \title{Return the area of a union of rectangle windows.}
 \usage{
-\method{area}{Rectangle_window_union}(window)
+\method{area}{Rectangle_window_union}(w)
 }
 \arguments{
-\item{window}{The window.}
+\item{w}{The window.}
 }
 \description{
 Return the area of a union of rectangle windows.

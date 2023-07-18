@@ -37,22 +37,22 @@ y_range.Rectangle_window <- function(window) {
 
 #' Return the area of a rectangle window.
 #'
-#' @param window The window.
+#' @param w The window.
 #' @importFrom spatstat.geom area
 #' @export
-area.Rectangle_window <- function(window) {
-  x <- window$x_range
-  y <- window$y_range
+area.Rectangle_window <- function(w) {
+  x <- w$x_range
+  y <- w$y_range
   (x[2] - x[1]) * (y[2] - y[1])
 }
 
 #' Return the volume of a rectangle window.
 #'
-#' @param window The window.
+#' @param x The window.
 #' @importFrom spatstat.geom volume
 #' @export
-volume.Rectangle_window <- function(window) {
-  area.Rectangle_window(window)
+volume.Rectangle_window <- function(x) {
+  area.Rectangle_window(x)
 }
 
 #' Convert a rectangle window to an owin from the SpatStat package.
