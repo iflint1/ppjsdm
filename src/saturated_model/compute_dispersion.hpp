@@ -32,15 +32,15 @@ struct generic_dispersion_computation {
 
     // If the saturation parameter is sufficiently large, we are guaranteed to never saturate.
     // In that case, a more efficient algorithm is available.
-    const auto max_points_by_type(get_number_points_in_most_numerous_type(configurations...));
-    if(static_cast<decltype(max_points_by_type)>(varphi.get_saturation()) >= max_points_by_type + 1) {
-      for_each_container([&count_vector, &point, &varphi](const auto& current_point) {
-        if(!is_equal(current_point, point)) {
-          AbstractDispersion::template update_count<1000>(varphi, count_vector[get_type(current_point)], current_point, point);
-        }
-      }, configurations...);
-      add_count_to_dispersion<0, AbstractDispersion, 2>(varphi, dispersion, count_vector, point);
-    } else {
+    // const auto max_points_by_type(get_number_points_in_most_numerous_type(configurations...));
+    // if(static_cast<decltype(max_points_by_type)>(varphi.get_saturation()) >= max_points_by_type + 1) {
+    //   for_each_container([&count_vector, &point, &varphi](const auto& current_point) {
+    //     if(!is_equal(current_point, point)) {
+    //       AbstractDispersion::template update_count<std::numeric_limits<int>::infinity()>(varphi, count_vector[get_type(current_point)], current_point, point);
+    //     }
+    //   }, configurations...);
+    //   add_count_to_dispersion<0, AbstractDispersion, 2>(varphi, dispersion, count_vector, point);
+    // } else {
       for_each_container([&dispersion, &count_vector, &point, &varphi,
                          saturation = varphi.get_saturation(), &configurations...](const auto& current_point) {
                            if(!is_equal(current_point, point)) {
@@ -58,7 +58,7 @@ struct generic_dispersion_computation {
                            }
                          }, configurations...);
       add_count_to_dispersion<0, AbstractDispersion, 1>(varphi, dispersion, count_vector, point);
-    }
+    //}
     return dispersion;
   }
 };

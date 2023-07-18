@@ -59,36 +59,36 @@ struct generic_vcov_dispersion_computation {
 
     // If the saturation parameter is sufficiently large, we are guaranteed to never saturate.
     // In that case, a more efficient algorithm is available.
-    const auto max_points_by_type(get_number_points_in_most_numerous_type(configuration));
-    if(static_cast<decltype(max_points_by_type)>(varphi.get_saturation()) >= max_points_by_type + 1) {
-      for(size_t i(0); i < configuration_size; ++i) {
-        count_vector[i] = CountType(number_types);
-        for(size_t j(0); j < i; ++j) {
-          // TODO: varphi(configuration[i], configuration[j]) only needs to be computed once
-          AbstractDispersion::template update_count<1000>(varphi, count_vector[i][get_type(configuration[j])], configuration[i], configuration[j]);
-          AbstractDispersion::template update_count<1000>(varphi, count_vector[j][get_type(configuration[i])], configuration[i], configuration[j]);
-        }
-      }
-
-      std::vector<DispersionType> dispersion_i(max_index - min_index);
-      std::vector<DispersionType> dispersion_j(dispersion_i.size());
-
-      for(std::remove_cv_t<decltype(dispersion_i.size())> index(min_index); index < max_index; ++index) {
-        const auto pr(decode_linear(index, restricted_configuration_size));
-        const size_t i(pr.first);
-        const size_t j(pr.second);
-
-        dispersion_i[index - min_index] = DispersionType(number_types);
-        dispersion_j[index - min_index] = DispersionType(number_types);
-
-        add_count_to_dispersion_discarding<0, AbstractDispersion, 2>(varphi, dispersion_i[index - min_index],
-                                                                     count_vector[index_in_configuration[i]], restricted_configuration[i], restricted_configuration[j]);
-        add_count_to_dispersion_discarding<0, AbstractDispersion, 2>(varphi, dispersion_j[index - min_index],
-                                                                     count_vector[index_in_configuration[j]], restricted_configuration[j], restricted_configuration[i]);
-      }
-
-      return std::pair<std::vector<DispersionType>, std::vector<DispersionType>>(dispersion_i, dispersion_j);
-    } else {
+    // const auto max_points_by_type(get_number_points_in_most_numerous_type(configuration));
+    // if(static_cast<decltype(max_points_by_type)>(varphi.get_saturation()) >= max_points_by_type + 1) {
+    //   for(size_t i(0); i < configuration_size; ++i) {
+    //     count_vector[i] = CountType(number_types);
+    //     for(size_t j(0); j < i; ++j) {
+    //       // TODO: varphi(configuration[i], configuration[j]) only needs to be computed once
+    //       AbstractDispersion::template update_count<std::numeric_limits<int>::infinity()>(varphi, count_vector[i][get_type(configuration[j])], configuration[i], configuration[j]);
+    //       AbstractDispersion::template update_count<std::numeric_limits<int>::infinity()>(varphi, count_vector[j][get_type(configuration[i])], configuration[i], configuration[j]);
+    //     }
+    //   }
+    //
+    //   std::vector<DispersionType> dispersion_i(max_index - min_index);
+    //   std::vector<DispersionType> dispersion_j(dispersion_i.size());
+    //
+    //   for(std::remove_cv_t<decltype(dispersion_i.size())> index(min_index); index < max_index; ++index) {
+    //     const auto pr(decode_linear(index, restricted_configuration_size));
+    //     const size_t i(pr.first);
+    //     const size_t j(pr.second);
+    //
+    //     dispersion_i[index - min_index] = DispersionType(number_types);
+    //     dispersion_j[index - min_index] = DispersionType(number_types);
+    //
+    //     add_count_to_dispersion_discarding<0, AbstractDispersion, 2>(varphi, dispersion_i[index - min_index],
+    //                                                                  count_vector[index_in_configuration[i]], restricted_configuration[i], restricted_configuration[j]);
+    //     add_count_to_dispersion_discarding<0, AbstractDispersion, 2>(varphi, dispersion_j[index - min_index],
+    //                                                                  count_vector[index_in_configuration[j]], restricted_configuration[j], restricted_configuration[i]);
+    //   }
+    //
+    //   return std::pair<std::vector<DispersionType>, std::vector<DispersionType>>(dispersion_i, dispersion_j);
+    // } else {
       for(size_t i(0); i < configuration_size; ++i) {
         count_vector[i] = CountType(number_types);
         for(size_t j(0); j < i; ++j) {
@@ -157,7 +157,7 @@ struct generic_vcov_dispersion_computation {
       }
 }
       return std::pair<std::vector<DispersionType>, std::vector<DispersionType>>(dispersion_i, dispersion_j);
-    }
+    //}
   }
 };
 
