@@ -256,7 +256,7 @@ test_that("gibbsm works with infinite saturation for Geyer potentials potentials
                          model = "Geyer",
                          medium_range_model = "Geyer")
 
-  expect_equal(as.vector(fit_large$coefficients$alpha), as.vector(fit_infinite$coefficients$alpha))
+  expect_equal(as.vector(fit_large$coefficients$alpha[[1]]), as.vector(fit_infinite$coefficients$alpha[[1]]))
   expect_equal(as.vector(fit_large$coefficients$gamma), as.vector(fit_infinite$coefficients$gamma))
   expect_equal(as.vector(fit_large$coefficients$beta0), as.vector(fit_infinite$coefficients$beta0))
 })
@@ -295,7 +295,7 @@ test_that("gibbsm works with infinite saturation for Exponential/Geyer potential
                          model = "exponential",
                          medium_range_model = "Geyer")
 
-  expect_equal(as.vector(fit_large$coefficients$alpha), as.vector(fit_infinite$coefficients$alpha))
+  expect_equal(as.vector(fit_large$coefficients$alpha[[1]]), as.vector(fit_infinite$coefficients$alpha[[1]]))
   expect_equal(as.vector(fit_large$coefficients$gamma), as.vector(fit_infinite$coefficients$gamma))
   expect_equal(as.vector(fit_large$coefficients$beta0), as.vector(fit_infinite$coefficients$beta0))
 })
@@ -334,7 +334,7 @@ test_that("gibbsm works with infinite saturation for Exponential/Half exponentia
                          model = "exponential",
                          medium_range_model = "half_exponential")
 
-  expect_equal(as.vector(fit_large$coefficients$alpha), as.vector(fit_infinite$coefficients$alpha))
+  expect_equal(as.vector(fit_large$coefficients$alpha[[1]]), as.vector(fit_infinite$coefficients$alpha[[1]]))
   expect_equal(as.vector(fit_large$coefficients$gamma), as.vector(fit_infinite$coefficients$gamma))
   expect_equal(as.vector(fit_large$coefficients$beta0), as.vector(fit_infinite$coefficients$beta0))
 })
@@ -373,7 +373,7 @@ test_that("gibbsm works with infinite saturation for Exponential/Square exponent
                          model = "exponential",
                          medium_range_model = "square_exponential")
 
-  expect_equal(as.vector(fit_large$coefficients$alpha), as.vector(fit_infinite$coefficients$alpha))
+  expect_equal(as.vector(fit_large$coefficients$alpha[[1]]), as.vector(fit_infinite$coefficients$alpha[[1]]))
   expect_equal(as.vector(fit_large$coefficients$gamma), as.vector(fit_infinite$coefficients$gamma))
   expect_equal(as.vector(fit_large$coefficients$beta0), as.vector(fit_infinite$coefficients$beta0))
 })
