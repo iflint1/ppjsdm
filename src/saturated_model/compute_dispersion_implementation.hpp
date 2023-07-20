@@ -243,7 +243,7 @@ static void add_count_to_dispersion(const Saturated_model<FloatType>& varphi,
   using size_t = typename Vector::size_type;
   using value_type = typename Vector::value_type;
   for(size_t i(0); i < dispersion.size(); ++i) {
-    const auto count_to_dispersion(static_cast<value_type>(AbstractDispersion::template add_count_to_dispersion<Buffer>(varphi, count_vector, point, i)));
+    const auto count_to_dispersion = static_cast<value_type>(AbstractDispersion::template add_count_to_dispersion<Buffer>(varphi, count_vector, point, i));
     dispersion[i] += static_cast<value_type>(N) * count_to_dispersion;
   }
 }

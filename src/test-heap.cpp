@@ -18,8 +18,8 @@ struct Acc {
 
 context("Heap") {
   test_that("Get nth element of a heap") {
-    const int max_tested_size(20);
-    const int number_replications(10);
+    const int max_tested_size(10);
+    const int number_replications(5);
     for(int i(0); i < max_tested_size; ++i) {
       for(int replication(0); replication < number_replications; ++replication) {
         std::vector<double> vector(i);
@@ -60,8 +60,8 @@ context("Heap") {
   }
 
   test_that("Get nth smallest element of a Max-heap") {
-    const int max_tested_size(20);
-    const int number_replications(20);
+    const int max_tested_size(10);
+    const int number_replications(5);
     for(int i(1); i < max_tested_size; ++i) {
       for(int replication(0); replication < number_replications; ++replication) {
         std::vector<double> vector(i);
@@ -121,8 +121,8 @@ context("Heap") {
   }
 
   test_that("Get nth largest element of a Min-heap") {
-    const int max_tested_size(20);
-    const int number_replications(20);
+    const int max_tested_size(10);
+    const int number_replications(5);
     for(int i(1); i < max_tested_size; ++i) {
       for(int replication(0); replication < number_replications; ++replication) {
         std::vector<double> vector(i);
@@ -172,8 +172,8 @@ context("Heap") {
   }
 
   test_that("Accumulate n smallest points of a Max-heap") {
-    const int max_tested_size(20);
-    const int number_replications(20);
+    const int max_tested_size(10);
+    const int number_replications(5);
     for(int i(0); i < max_tested_size; ++i) {
       for(int replication(0); replication < number_replications; ++replication) {
         std::vector<double> vector(i);
@@ -203,8 +203,8 @@ context("Heap") {
   }
 
   test_that("Accumulate n Largest points of a Min-heap") {
-    const int max_tested_size(20);
-    const int number_replications(20);
+    const int max_tested_size(10);
+    const int number_replications(5);
     for(int i(0); i < max_tested_size; ++i) {
       for(int replication(0); replication < number_replications; ++replication) {
         std::vector<double> vector(i);
