@@ -145,6 +145,7 @@ struct get_nth_smallest_if_implementation<Buffer, Depth, true, true> {
 template<long long int Buffer>
 struct accumulate_n_smallest_implementation;
 
+// In this case, 0 <= heap.size() - N <= 0 and so we have to accumulate the whole heap
 template<>
 struct accumulate_n_smallest_implementation<0> {
   template<typename Heap, typename Compare, typename BinaryOperation>
@@ -153,13 +154,14 @@ struct accumulate_n_smallest_implementation<0> {
   }
 };
 
+// In this case, N <= heap.size() <= N + 1
 template<>
 struct accumulate_n_smallest_implementation<1> {
   template<typename Heap, typename Compare, typename BinaryOperation>
   auto operator()(typename Heap::size_type N, const Heap& heap, Compare, BinaryOperation op) const {
-    if(heap.size() <= N) {
+    if(heap.size() <= N) { // heap.size() == N, accumulate everything
       return std::accumulate(heap.begin(), heap.end(), static_cast<typename Heap::value_type>(0.), op);
-    } else {
+    } else { // heap.size() == N + 1, so in particular heap.size() > 1
       return std::accumulate(heap.begin() + 1, heap.end(), static_cast<typename Heap::value_type>(0.), op);
     }
   }
@@ -169,19 +171,21 @@ template<>
 struct accumulate_n_smallest_implementation<2> {
   template<typename Heap, typename Compare, typename BinaryOperation>
   auto operator()(typename Heap::size_type N, const Heap& heap, Compare comp, BinaryOperation op) const {
-    if(heap.size() <= N) {
+    if(heap.size() <= N) { // heap.size() == N
       return std::accumulate(heap.begin(), heap.end(), static_cast<typename Heap::value_type>(0.), op);
-    } else if(heap.size() == N + 1) {
+    } else if(heap.size() == N + 1) { // In particular, heap.size() > 1
       return std::accumulate(heap.begin() + 1, heap.end(), static_cast<typename Heap::value_type>(0.), op);
-    } else {
-      if(heap.size() > 2) {
-        if(comp(heap[2], heap[1])) {
-          return std::accumulate(heap.begin() + 3, heap.end(), op(static_cast<typename Heap::value_type>(0.), heap[2]), op);
-        } else {
-          return std::accumulate(heap.begin() + 3, heap.end(), op(static_cast<typename Heap::value_type>(0.), heap[1]), op);
-        }
+    } else { // heap.size() == N + 2, so in particular heap.size() > 2
+      typename Heap::value_type sum;
+      if(comp(heap[2], heap[1])) {
+        sum = op(static_cast<typename Heap::value_type>(0.), heap[2]);
       } else {
-        return static_cast<typename Heap::value_type>(0.);
+        sum = op(static_cast<typename Heap::value_type>(0.), heap[1]);
+      }
+      if(heap.size() > 3) {
+        return std::accumulate(heap.begin() + 3, heap.end(), sum, op);
+      } else {
+        return sum;
       }
     }
   }
@@ -239,10 +243,16 @@ struct accumulate_n_smallest_excluding_implementation<2> {
       } else {
         if(get_nth_implementation<0>{}(heap, comp) == to_discard) { // In this case, removing to_discard doesn't change anything
           if(heap.size() > 2) {
+            typename Heap::value_type sum;
             if(comp(heap[2], heap[1])) {
-              return std::accumulate(heap.begin() + 3, heap.end(), op(static_cast<typename Heap::value_type>(0.), heap[2]), op);
+              sum = op(static_cast<typename Heap::value_type>(0.), heap[2]);
             } else {
-              return std::accumulate(heap.begin() + 3, heap.end(), op(static_cast<typename Heap::value_type>(0.), heap[1]), op);
+              sum = op(static_cast<typename Heap::value_type>(0.), heap[1]);
+            }
+            if(heap.size() > 3) {
+              return std::accumulate(heap.begin() + 3, heap.end(), sum, op);
+            } else {
+              return sum;
             }
           } else {
             return static_cast<typename Heap::value_type>(0.);
