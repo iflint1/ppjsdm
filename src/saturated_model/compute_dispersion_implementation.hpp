@@ -158,6 +158,7 @@ public:
         std::push_heap(count.begin(), count.end(), HeapOrder{});
       } else if(HeapOrder{}(disp, get_nth<0>(count, HeapOrder{}))) {
         count.emplace_back(disp);
+        std::push_heap(count.begin(), count.end(), HeapOrder{});
         std::pop_heap(count.begin(), count.end(), HeapOrder{});
         count.pop_back();
       }
