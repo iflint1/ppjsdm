@@ -138,7 +138,7 @@ struct Linear_implementation {
 template<typename FloatType>
 struct Strauss_implementation {
   static constexpr bool is_nonincreasing_after_lower_endpoint = true;
-  static constexpr bool is_two_valued = false;
+  static constexpr bool is_two_valued = true;
 
   static FloatType set(double radius) {
     return static_cast<FloatType>(radius) * static_cast<FloatType>(radius);

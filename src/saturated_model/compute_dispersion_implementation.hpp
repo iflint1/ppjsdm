@@ -151,14 +151,20 @@ public:
                            const Point& point,
                            const Other& other) {
     const auto sq(normalized_square_distance(point, other));
+    // If condition holds, the pair is relevant and has to be considered
     if(sq >= varphi.get_square_lower_endpoint(get_type(point), get_type(other))) {
       const auto disp(PutInHeap<FloatType>::put(varphi, sq, point, other));
+      // The heap has not attained its maximum size, so just add the new element
       if(count.size() < varphi.get_saturation() + Buffer) {
         count.emplace_back(disp);
         std::push_heap(count.begin(), count.end(), HeapOrder{});
+      // In this case, the element should be added to the heap, but we do not know where
       } else if(HeapOrder{}(disp, get_nth<0>(count, HeapOrder{}))) {
+        // First, add the element to the heap
         count.emplace_back(disp);
         std::push_heap(count.begin(), count.end(), HeapOrder{});
+
+        // Then, remove the largest element in the heap
         std::pop_heap(count.begin(), count.end(), HeapOrder{});
         count.pop_back();
       }
