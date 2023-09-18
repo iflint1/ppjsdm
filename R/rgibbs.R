@@ -98,7 +98,7 @@ rgibbs.default <- function(window,
              mark_range = mark_range,
              only_simulate_these_types = only_simulate_these_types,
              conditional_configuration = conditional_configuration,
-             starting_configuration = starting_configuration,
+             starting_configuration = as.Configuration(starting_configuration),
              seed = sample.int(.Machine$integer.max, 1),
              nthreads = nthreads,
              debug = debug)
