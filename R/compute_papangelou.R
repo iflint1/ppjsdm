@@ -1,4 +1,5 @@
 #' Compute the Papangelou conditional intensity of the model.
+#' IMPORTANT: Check ?compute_papangelou.default for the documentation.
 #'
 #' @param ... Parameters to be forwarded to the relevant method. Currently, either
 #' the parameters of the Gibbs point process, or a fit object obtained from running `gibbsm`.

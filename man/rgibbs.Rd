@@ -2,7 +2,8 @@
 % Please edit documentation in R/rgibbs.R
 \name{rgibbs}
 \alias{rgibbs}
-\title{Sample a multivariate saturated pairwise interaction Gibbs point processes.}
+\title{Sample a multivariate saturated pairwise interaction Gibbs point processes.
+IMPORTANT: Check ?rgibbs.default for the documentation.}
 \usage{
 rgibbs(...)
 }
@@ -12,4 +13,5 @@ the parameters of the Gibbs point process, or a fit object obtained from running
 }
 \description{
 Sample a multivariate saturated pairwise interaction Gibbs point processes.
+IMPORTANT: Check ?rgibbs.default for the documentation.
 }

@@ -1,4 +1,5 @@
 #' Plot the Papangelou conditional intensity.
+#' IMPORTANT: Check ?plot_papangelou.default for the documentation.
 #'
 #' @param ... Parameters to be forwarded to the relevant method. Currently, either
 #' the parameters of the Gibbs point process, or a fit object obtained from running `gibbsm`.
