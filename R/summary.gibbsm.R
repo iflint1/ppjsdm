@@ -10,7 +10,9 @@
 #' @param nthreads (optional) number of threads to use.
 #' @param npoints Target number of points in the restricted window that the vcov matrix is computed on. Computation is slower for larger values, but the vcov matrix is then better approximated.
 #' @param multiple_windows Compute A2 and A3 on a lot of small windows and which are then averaged out, or only on a single restricted window?
-#' @param assume_fitted_to_same_data Should the function assume that the data was fitted to the same data. If so and if multiple fits are supplied, the function assume that all configurations are identical. If not, the function assumes that the different fits are different realisations of the same point process.
+#' @param assume_fitted_to_same_data Should the function assume that the model was fitted to the same data?
+#' If so and if multiple fits are supplied, the function assumes that all configurations are identical.
+#' If not, the function assumes that the different fits were obtained through different realisations of the same point process.
 #' @importFrom stats pnorm qnorm
 #' @export
 summary.gibbsm <- function(object,

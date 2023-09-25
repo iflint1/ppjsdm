@@ -37,7 +37,9 @@ The function can be supplied multiple fits, in which case the aggregate estimato
 
 \item{multiple_windows}{Compute A2 and A3 on a lot of small windows and which are then averaged out, or only on a single restricted window?}
 
-\item{assume_fitted_to_same_data}{Should the function assume that the data was fitted to the same data. If so and if multiple fits are supplied, the function assume that all configurations are identical. If not, the function assumes that the different fits are different realisations of the same point process.}
+\item{assume_fitted_to_same_data}{Should the function assume that the model was fitted to the same data?
+If so and if multiple fits are supplied, the function assumes that all configurations are identical.
+If not, the function assumes that the different fits were obtained through different realisations of the same point process.}
 }
 \description{
 Summary of a Fitted Gibbs point process.
