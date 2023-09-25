@@ -581,7 +581,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
   // Add A2 and A3 by using precomputed values above.
   // TODO: This depends on memory
   // TODO: Clean up code below, new technique
-  const long long int increment(10000000);
+  const long long int increment(1000000);
   for(long long int filling(0); filling < static_cast<long long int>(ppjsdm::size(restricted_configuration)) * (static_cast<long long int>(ppjsdm::size(restricted_configuration)) - 1) / 2; filling += increment) {
     // Parallel computations done before adding A2 and A3
     using precomputation_t = decltype(ppjsdm::compute_dispersion_for_vcov(medium_dispersion_model, number_types, configuration, restricted_configuration, 0, 0, 1));
@@ -590,7 +590,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
 
     if(debug) {
       timer.set_current();
-      Rcpp::Rcout << "Starting computation of batch of dispersions...\n";
+      Rcpp::Rcout << "Starting computation of batch of dispersions... Number of points in batch: " << ppjsdm::size(restricted_configuration) << ".\n";
     }
     if(compute_some_alphas) {
       for(decltype(estimate_alpha.size()) k(0); k < estimate_alpha.size(); ++k) {
@@ -834,7 +834,7 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
                                               debug);
       }
     }
-    A2_plus_A3 /= (nx * ny);
+    A2_plus_A3 /= static_cast<double>(nx * ny);
   } else {
     detail::restrict_window(window, configuration, npoints, 0.05);
     A2_plus_A3 = detail::make_A2_plus_A3(papangelou,
