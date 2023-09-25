@@ -30,7 +30,7 @@ summary.gibbsm <- function(object,
                            time_limit = Inf,
                            unit = "hours",
                            nthreads = NULL,
-                           npoints = 4000,
+                           npoints = 2000,
                            multiple_windows = TRUE,
                            assume_fitted_to_same_data = FALSE) {
   # time_limit below is the time_limit to run each of the 4 matrix constructions,

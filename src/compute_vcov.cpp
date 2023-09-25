@@ -581,7 +581,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
   // Add A2 and A3 by using precomputed values above.
   // TODO: This depends on memory
   // TODO: Clean up code below, new technique
-  const long long int increment(1000000);
+  const long long int increment(10000000);
   for(long long int filling(0); filling < static_cast<long long int>(ppjsdm::size(restricted_configuration)) * (static_cast<long long int>(ppjsdm::size(restricted_configuration)) - 1) / 2; filling += increment) {
     // Parallel computations done before adding A2 and A3
     using precomputation_t = decltype(ppjsdm::compute_dispersion_for_vcov(medium_dispersion_model, number_types, configuration, restricted_configuration, 0, 0, 1));
@@ -594,11 +594,11 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
     }
     if(compute_some_alphas) {
       for(decltype(estimate_alpha.size()) k(0); k < estimate_alpha.size(); ++k) {
-        short_computation.emplace_back(ppjsdm::compute_dispersion_for_vcov(dispersion_model[k], number_types, configuration, restricted_configuration, filling, filling + increment, nthreads));
+        short_computation.emplace_back(ppjsdm::compute_dispersion_for_vcov(dispersion_model[k], number_types, configuration, restricted_configuration, filling, filling + increment, nthreads, debug));
       }
     }
     if(compute_some_gammas) {
-      medium_computation = ppjsdm::compute_dispersion_for_vcov(medium_dispersion_model, number_types, configuration, restricted_configuration, filling, filling + increment, nthreads);
+      medium_computation = ppjsdm::compute_dispersion_for_vcov(medium_dispersion_model, number_types, configuration, restricted_configuration, filling, filling + increment, nthreads, debug);
     }
     if(debug) {
       Rcpp::Rcout << "Computed batch of dispersions. Elapsed time: " << timer.print_elapsed_time();

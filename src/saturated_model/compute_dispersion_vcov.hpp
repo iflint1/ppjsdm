@@ -7,6 +7,7 @@
 #include "saturated_model.hpp"
 #include "../configuration/get_number_points.hpp"
 #include "../utility/flatten_strict_upper_triangular.hpp"
+#include "../utility/timer.hpp"
 
 #include <tuple> // std::pair
 #include <type_traits> // std::remove_cv_t
@@ -29,10 +30,14 @@ struct generic_vcov_dispersion_computation {
                 const Configuration& restricted_configuration,
                 typename Configuration::size_type min_index,
                 typename Configuration::size_type max_index,
-                int nthreads) const {
+                int nthreads,
+                bool debug) const {
 #ifdef _OPENMP
     omp_set_num_threads(nthreads);
 #endif
+
+    // Timer used to print debugging information
+    ppjsdm::PreciseTimer timer{};
 
     // TODO: Better way?
     min_index = std::max<typename Configuration::size_type>(min_index, 0);
@@ -61,6 +66,12 @@ struct generic_vcov_dispersion_computation {
     // In that case, a more efficient algorithm is available.
     const auto max_points_by_type(get_number_points_in_most_numerous_type(configuration));
     if(static_cast<decltype(max_points_by_type)>(varphi.get_saturation()) >= max_points_by_type + 1) {
+
+      if(debug) {
+        timer.set_current();
+        Rcpp::Rcout << "Starting first step...\n";
+      }
+
       for(size_t i(0); i < configuration_size; ++i) {
         count_vector[i] = CountType(number_types);
         for(size_t j(0); j < i; ++j) {
@@ -68,6 +79,11 @@ struct generic_vcov_dispersion_computation {
           AbstractDispersion::template update_count<std::numeric_limits<int>::infinity()>(varphi, count_vector[i][get_type(configuration[j])], configuration[i], configuration[j]);
           AbstractDispersion::template update_count<std::numeric_limits<int>::infinity()>(varphi, count_vector[j][get_type(configuration[i])], configuration[i], configuration[j]);
         }
+      }
+
+      if(debug) {
+        Rcpp::Rcout << "Starting second step... Elapsed time for first step: " << timer.print_elapsed_time();
+        timer.set_current();
       }
 
       std::vector<DispersionType> dispersion_i(max_index - min_index);
@@ -87,8 +103,16 @@ struct generic_vcov_dispersion_computation {
                                                                      count_vector[index_in_configuration[j]], restricted_configuration[j], restricted_configuration[i]);
       }
 
+      if(debug) {
+        Rcpp::Rcout << "End of second step... Elapsed time for second step: " << timer.print_elapsed_time();
+      }
+
       return std::pair<std::vector<DispersionType>, std::vector<DispersionType>>(dispersion_i, dispersion_j);
     } else {
+      if(debug) {
+        timer.set_current();
+        Rcpp::Rcout << "Starting first step...\n";
+      }
       for(size_t i(0); i < configuration_size; ++i) {
         count_vector[i] = CountType(number_types);
         for(size_t j(0); j < i; ++j) {
@@ -98,6 +122,10 @@ struct generic_vcov_dispersion_computation {
         }
       }
 
+      if(debug) {
+        Rcpp::Rcout << "Starting second step... Elapsed time for first step: " << timer.print_elapsed_time();
+        timer.set_current();
+      }
       std::vector<DispersionType> sum_deltas;
       if(number_types > 1) { // If condition not satisfied, sum_deltas is never used
         sum_deltas = std::vector<DispersionType>(configuration_size);
@@ -110,6 +138,10 @@ struct generic_vcov_dispersion_computation {
         }
       }
 
+      if(debug) {
+        Rcpp::Rcout << "Starting third step... Elapsed time for second step: " << timer.print_elapsed_time();
+        timer.set_current();
+      }
 
       std::vector<DispersionType> dispersion_i(max_index - min_index);
       std::vector<DispersionType> dispersion_j(dispersion_i.size());
@@ -156,6 +188,9 @@ struct generic_vcov_dispersion_computation {
         }
       }
 }
+      if(debug) {
+        Rcpp::Rcout << "End of third step... Elapsed time for third step: " << timer.print_elapsed_time();
+      }
       return std::pair<std::vector<DispersionType>, std::vector<DispersionType>>(dispersion_i, dispersion_j);
     }
   }
@@ -170,16 +205,18 @@ inline auto compute_dispersion_for_vcov(const Saturated_model<FloatType>& model,
                                         const Configuration& restricted_configuration,
                                         typename Configuration::size_type min_index,
                                         typename Configuration::size_type max_index,
-                                        int nthreads = 1) {
-  return detail::dispatch_model<detail::generic_vcov_dispersion_computation>(model, number_types, configuration, restricted_configuration, min_index, max_index, nthreads);
+                                        int nthreads = 1,
+                                        bool debug = false) {
+  return detail::dispatch_model<detail::generic_vcov_dispersion_computation>(model, number_types, configuration, restricted_configuration, min_index, max_index, nthreads, debug);
 }
 
 template<typename Configuration, typename FloatType>
 inline auto compute_dispersion_for_vcov(const Saturated_model<FloatType>& model,
                                         R_xlen_t number_types,
                                         const Configuration& configuration,
-                                        int nthreads = 1) {
-  return compute_dispersion_for_vcov(model, number_types, configuration, configuration, 0, size(configuration) * (size(configuration) - 1) / 2, nthreads);
+                                        int nthreads = 1,
+                                        bool debug = false) {
+  return compute_dispersion_for_vcov(model, number_types, configuration, configuration, 0, size(configuration) * (size(configuration) - 1) / 2, nthreads, debug);
 }
 
 } // namespace ppjsdm
