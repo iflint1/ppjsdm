@@ -33,6 +33,7 @@ summary.gibbsm <- function(object,
                            npoints = 2000,
                            multiple_windows = TRUE,
                            assume_fitted_to_same_data = FALSE) {
+  # TODO: rather than time_limit / 4, run first one in time_limit / 4, then divide remainder by 3 for next ones, etc.
   # time_limit below is the time_limit to run each of the 4 matrix constructions,
   # so allow time_limit / 4 for each one of them.
   time_limit <- time_limit / 4
@@ -95,7 +96,7 @@ summary.gibbsm <- function(object,
   # Compute fixed parameters
   number_types <- length(fits[[1]]$coefficients$beta0)
   types_names <- names(fits[[1]]$coefficients$beta0)
-  covariates_names <- names(fits[[1]]$covariates)
+  covariates_names <- names(fits[[1]]$parameters$covariates)
 
   # Make sure all fits have the same configuration
   if(!assume_fitted_to_same_data) {
