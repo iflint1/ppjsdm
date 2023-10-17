@@ -28,7 +28,7 @@
   use_ggplot = TRUE,
   return_papangelou = FALSE,
   drop_type_from_configuration = FALSE,
-  show_only_type = FALSE,
+  show = c("all", "none", "type"),
   limits,
   ...
 )
@@ -80,7 +80,7 @@
 
 \item{drop_type_from_configuration}{Should we remove the considered type from the configuration?}
 
-\item{show_only_type}{In the plot, should we show only the individuals of the configuration with the target type?}
+\item{show}{In the plot, should we show all points, no points, or only the individuals of the configuration with the target type?}
 
 \item{limits}{Limits for values of the Papamgelou conditional intensity in plotting functions.}
 

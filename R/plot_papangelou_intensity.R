@@ -33,13 +33,13 @@ plot_papangelou <- function(...) {
 #' @param use_ggplot Use ggplot for fancier plot?
 #' @param return_papangelou Should we return the Papangelou intensity itself instead of plotting it?
 #' @param drop_type_from_configuration Should we remove the considered type from the configuration?
-#' @param show_only_type In the plot, should we show only the individuals of the configuration with the target type?
+#' @param show In the plot, should we show all points, no points, or only the individuals of the configuration with the target type?
 #' @param limits Limits for values of the Papamgelou conditional intensity in plotting functions.
 #' @param ... Ignored.
 #' @importFrom colorspace scale_fill_continuous_sequential
 #' @importFrom ggplot2 aes coord_equal element_text geom_tile ggplot ggtitle guide_legend guides labs scale_color_manual scale_shape_manual scale_x_continuous scale_y_continuous theme theme_minimal xlab xlim ylab ylim
 #' @importFrom graphics plot
-#' @importFrom spatstat.geom as.im as.owin as.ppp
+#' @importFrom spatstat.geom as.im as.owin as.ppp boundingbox gridcentres
 #' @importFrom stats na.omit
 #' @export
 #' @method plot_papangelou default
@@ -66,9 +66,12 @@ plot_papangelou.default <- function(window,
                                     use_ggplot = TRUE,
                                     return_papangelou = FALSE,
                                     drop_type_from_configuration = FALSE,
-                                    show_only_type = FALSE,
+                                    show = c("all", "none", "type"),
                                     limits,
                                     ...) {
+  # Interpret the show argument
+  show <- match.arg(show)
+
   # If user did not supply types, by default they should be those of the configuration
   if(missing(types) & !missing(configuration)) {
     types <- levels(as.Configuration(configuration)$types)
@@ -151,11 +154,7 @@ plot_papangelou.default <- function(window,
   }
 
   window <- as.owin(parameters$window)
-  x_range <- window$xrange
-  y_range <- window$yrange
-  x_axis <- seq(from = x_range[1], to = x_range[2], length.out = grid_steps[1])
-  y_axis <- seq(from = y_range[1], to = y_range[2], length.out = grid_steps[2])
-  df <- as.data.frame(expand.grid(x = x_axis, y = y_axis))
+  df <- as.data.frame(gridcentres(window, nx = grid_steps[1], ny = grid_steps[2]))
 
   df$papangelou <- compute_papangelou(x = df$x,
                                       y = df$y,
@@ -184,20 +183,20 @@ plot_papangelou.default <- function(window,
     title <- "Papangelou conditional intensity"
   }
 
-  papangelou_im <- as.im(t(outer(x_axis, y_axis, function(x, y) {
-    df$papangelou[df$x == x & df$y == y]
-  })), W = window)
+  papangelou_im <- as.im(df)
 
   if(return_papangelou) {
     return(papangelou_im)
   }
 
-  # Show only individuals of target type?
-  if(show_only_type) {
+  # Which individuals do we want to show on the plot?
+  if(show == "type") {
     configuration <- Configuration(x = configuration$x[configuration$types %in% parameters$types[type]],
                                    y = configuration$y[configuration$types %in% parameters$types[type]],
                                    types = configuration$types[configuration$types %in% parameters$types[type]],
                                    marks = configuration$marks[configuration$types %in% parameters$types[type]])
+  } else if(show == "none") {
+    configuration <- Configuration()
   }
 
   if(use_ggplot) {
@@ -208,14 +207,14 @@ plot_papangelou.default <- function(window,
     color <- rep(c("#FF0000", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6"), nlevels(points$types))
     shape <- rep(c(16, 17, 15, 18), nlevels(points$types))
 
-    if(missing(limits)) {
-      lim <- c(min(df$papangelou), max(df$papangelou))
+    lim <- if(missing(limits)) {
+      c(min(df$papangelou), max(df$papangelou))
     } else {
-      lim <- limits
+      limits
     }
 
-    g <- ggplot(data = df, aes_string(x = 'x', y = 'y')) +
-      geom_tile(aes_string(fill = 'papangelou'), alpha = 0.5) +
+    g <- ggplot(data = df, aes_string(x = "x", y = "y")) +
+      geom_tile(aes_string(fill = "papangelou"), alpha = 0.5) +
       scale_fill_continuous_sequential(palette = "Purple-Yellow", limits = lim) +
       labs(fill = title) +
       scale_color_manual(values = color) + # Obtained by wesanderson::wes_palette("Darjeeling1")
@@ -225,8 +224,8 @@ plot_papangelou.default <- function(window,
       ggtitle("") +
       coord_equal() +
       theme_minimal(base_size = 12) + # Theme
-      xlim(x_range) +
-      ylim(y_range) +
+      xlim(boundingbox(window)$xrange) +
+      ylim(boundingbox(window)$yrange) +
       guides(shape = guide_legend(override.aes = list(size = 5))) # Bigger species symbol size
 
     if(!all(points$marks == 1.)) {
@@ -236,9 +235,6 @@ plot_papangelou.default <- function(window,
     }
     g
   } else {
-    z <- outer(x_axis, y_axis, function(x, y) {
-      df$papangelou[df$x == x & df$y == y]
-    })
     plot(papangelou_im, main = title)
     plot(as.ppp(configuration, window), add = TRUE, cols = 'white')
   }
