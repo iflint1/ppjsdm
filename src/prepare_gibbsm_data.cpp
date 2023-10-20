@@ -54,12 +54,7 @@ auto make_dummy_points(const ppjsdm::Window& window,
   if(dummy_distribution == std::string("binomial")) {
     D = ppjsdm::rbinomialpp_single<dummy_configuration_t>(window, rho_times_volume);
   } else if(dummy_distribution == std::string("stratified")) {
-    std::vector<computation_t> delta(rho_times_volume.size());
-    const auto volume = static_cast<computation_t>(window.volume());
-    for(typename decltype(delta)::size_type i(0); i < delta.size(); ++i) {
-      delta[i] = std::sqrt(volume / static_cast<computation_t>(rho_times_volume[i]));
-    }
-    D = ppjsdm::rstratpp_single<dummy_configuration_t>(window, delta, delta);
+    D = ppjsdm::rstratpp_single<dummy_configuration_t>(window, rho_times_volume);
   } else {
     Rcpp::stop("Unexpected dummy_distribution parameter.");
   }

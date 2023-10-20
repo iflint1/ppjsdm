@@ -7,6 +7,8 @@
 #include "../point/point_manipulation.hpp"
 #include "../utility/window.hpp"
 
+#include <cmath> // std::sqrt
+
 namespace ppjsdm {
 
 template<typename Configuration, typename Vector1, typename Vector2>
@@ -47,6 +49,17 @@ inline auto rstratpp_single(const Window& window,
   }
 
   return configuration;
+}
+
+template<typename Configuration, typename Vector>
+inline auto rstratpp_single(const Window& window,
+                            const Vector& n) {
+  const auto volume(window.volume());
+  std::vector<decltype(window.volume())> delta(n.size());
+  for(typename decltype(delta)::size_type i(0); i < delta.size(); ++i) {
+    delta[i] = std::sqrt(volume / static_cast<decltype(window.volume())>(n[i]));
+  }
+  return rstratpp_single<Configuration>(window, delta, delta);
 }
 
 } // namespace ppjsdm

@@ -117,6 +117,10 @@ public:
     return beta0_.size();
   }
 
+  auto get_saturation() const {
+    return dispersion_[0].get_saturation();
+  }
+
 protected:
   std::vector<Saturated_model<double>> dispersion_;
   Saturated_model<double> medium_range_dispersion_;
