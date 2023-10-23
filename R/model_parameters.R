@@ -132,11 +132,11 @@ get_number_types_and_check_conformance_helper <- function(default_number_types,
                                                     ...)
     } else {
       if(best_guess != 0) {
-        if(length_x != best_guess) {
+        if(length_x != best_guess && (best_guess > 1 && length_x > 1)) {
           stop("Two of the given arguments have incompatible sizes.")
         } else {
           get_number_types_and_check_conformance_helper(default_number_types = default_number_types,
-                                                        best_guess = best_guess,
+                                                        best_guess = max(best_guess, length_x),
                                                         ...)
         }
       } else {
@@ -275,27 +275,32 @@ model_parameters <- function(window,
                              medium_range_model,
                              default_number_types = 1,
                              ...) {
+  # TODO: A lot of this is converted from C++ code, and has been tested by hand on a few scenarios.
+  # WRITE PROPER TESTS to make sure it all works as expected. E.g., numeric short_range, varying number of potentials specified
+  # via short_range, model, alpha, etc.
+
   # Try to figure out how many short_range potentials the user intends to use
-  number_short_range <- if(!missing(alpha)) {
+  number_short_range <- 1
+  if(!missing(alpha)) {
     if(is.list(alpha)) {
-      length(alpha)
-    } else {
-      1
+      number_short_range <- length(alpha)
     }
-  } else if(!missing(short_range)) {
+  }
+  if(!missing(short_range)) {
     if(is.list(short_range)) {
-      length(short_range)
-    } else {
-      1
+      if(number_short_range > 1 & number_short_range != length(short_range)) {
+        stop("Alpha was a list, indicating >1 potentials, but short_range does not have the same number of potentials.")
+      }
+      number_short_range <- length(short_range)
     }
-  } else if(!missing(model)) {
+  }
+  if(!missing(model)) {
     if(is.list(model)) {
-      length(model)
-    } else {
-      1
+      if(number_short_range > 1 & number_short_range != length(model)) {
+        stop("Either alpha or short_range was a list, indicating >1 potentials, but model does not have the same number of potentials.")
+      }
+      number_short_range <- length(model)
     }
-  } else {
-    1
   }
 
   # Default initialise most parameters, but at this point we do not know how many types user intends
@@ -383,9 +388,9 @@ model_parameters <- function(window,
   }
 
   if(length(defaults$model) != length(parameters$alpha) || length(defaults$model) != length(parameters$short_range)) {
-    stop(paste0("Some of the parameters have incompatible sizes; model: ", paste0(model, collapse = ", "),
-                ", alpha: ", paste0(alpha, collapse = ", "),
-                " and short_range: ", paste0(short_range, collapse = ", ")))
+    stop(paste0("Some of the parameters have incompatible sizes; model: [", paste0(defaults$model, collapse = ", "),
+                "], alpha: [", paste0(parameters$alpha, collapse = ", "),
+                "] and short_range: [", paste0(parameters$short_range, collapse = ", "), "]."))
   }
 
   parameters$alpha <- lapply(parameters$alpha, function(a) {

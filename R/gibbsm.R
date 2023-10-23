@@ -448,6 +448,7 @@ gibbsm <- function(configuration_list,
                                    short_range = short_range,
                                    medium_range = medium_range,
                                    long_range = long_range,
+                                   types = levels(types(configuration_list[[1]])),
                                    default_number_types = nlevels(types(configuration_list[[1]])))
     short_range <- parameters$short_range
     medium_range <- parameters$medium_range
