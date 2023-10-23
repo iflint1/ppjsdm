@@ -161,17 +161,17 @@ get_number_types_and_check_conformance <- function(default_number_types,
                                                 ...)
 }
 
-make_default_model_parameters2 <- function(alpha,
-                                           beta0,
-                                           covariates,
-                                           beta,
-                                           gamma,
-                                           short_range,
-                                           medium_range,
-                                           long_range,
-                                           types,
-                                           default_number_types,
-                                           ...) {
+make_default_model_parameters <- function(alpha,
+                                          beta0,
+                                          covariates,
+                                          beta,
+                                          gamma,
+                                          short_range,
+                                          medium_range,
+                                          long_range,
+                                          types,
+                                          default_number_types,
+                                          ...) {
   number_types <- get_number_types_and_check_conformance(default_number_types = default_number_types,
                                                          alpha,
                                                          gamma,
@@ -362,17 +362,17 @@ model_parameters <- function(window,
                                         model = model,
                                         medium_range_model = medium_range_model)
 
-  parameters <- make_default_model_parameters2(alpha = alpha,
-                                               beta0 = beta0,
-                                               covariates = defaults$covariates,
-                                               beta = beta,
-                                               gamma = gamma,
-                                               short_range = short_range,
-                                               medium_range = medium_range,
-                                               long_range = long_range,
-                                               types = types,
-                                               default_number_types = default_number_types,
-                                               ...)
+  parameters <- make_default_model_parameters(alpha = alpha,
+                                              beta0 = beta0,
+                                              covariates = defaults$covariates,
+                                              beta = beta,
+                                              gamma = gamma,
+                                              short_range = short_range,
+                                              medium_range = medium_range,
+                                              long_range = long_range,
+                                              types = types,
+                                              default_number_types = default_number_types,
+                                              ...)
 
   # TODO: If user sets model to given length, want to default-construct alpha of the same length
   if(!is.list(defaults$model)) {
