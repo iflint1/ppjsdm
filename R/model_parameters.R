@@ -209,8 +209,9 @@ make_default_model_parameters <- function(alpha,
                       size = number_types,
                       might_contain_name = beta0)
 
-  short_range <- lapply(short_range, function(s) {
-    s <- construct_if_missing(s, 0.1, number_types, matrix = TRUE)
+  default_short_distances <- seq(from = 0, to = 0.1, length.out = length(short_range) + 1)[-1]
+  short_range <- lapply(seq_len(length(short_range)), function(i) {
+    s <- construct_if_missing(short_range[[i]], default_short_distances[i], number_types, matrix = TRUE)
     if(!isSymmetric(s)) {
       stop("One of the short-range interaction radii matrices is not symmetric.");
     }
@@ -312,6 +313,9 @@ model_parameters <- function(window,
     short_range <- lapply(seq_len(number_short_range), function(x) NULL)
   } else if(!is.list(short_range)) {
     if(is.numeric(short_range)) {
+      if(number_short_range > 1) {
+        stop("Detected a numeric short_range (implying a single short-range potential) but other parameters indicate >1 short-range potentials. There is likely a mistake in the model specification.")
+      }
       short_range <- lapply(seq_len(number_short_range), function(x) short_range)
     } else {
       stop("Not sure how to interpret parameter short_range")
@@ -374,7 +378,6 @@ model_parameters <- function(window,
                                               default_number_types = default_number_types,
                                               ...)
 
-  # TODO: If user sets model to given length, want to default-construct alpha of the same length
   if(!is.list(defaults$model)) {
     defaults$model <- lapply(parameters$alpha, function(x) defaults$model)
   }
