@@ -76,7 +76,7 @@ rgibbs.default <- function(window,
                                  medium_range_model = medium_range_model)
 
   if(is.null(only_simulate_these_types)) {
-    only_simulate_these_types <- seq_len(length(beta0))
+    only_simulate_these_types <- seq_len(length(parameters$beta0))
   }
   only_simulate_these_types <- only_simulate_these_types - 1
 
