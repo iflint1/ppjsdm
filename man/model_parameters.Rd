@@ -2,7 +2,7 @@
 % Please edit documentation in R/model_parameters.R
 \name{model_parameters}
 \alias{model_parameters}
-\title{Construct parameters for the model.}
+\title{Generate parameters for the model.}
 \usage{
 model_parameters(
   window,
@@ -25,36 +25,72 @@ model_parameters(
 \arguments{
 \item{window}{Simulation window.}
 
-\item{alpha}{Repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.}
+\item{alpha}{Matrix of short-range interaction coefficients.
+Default is a square matrix, filled with zeroes.}
 
-\item{gamma}{Medium range repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.}
+\item{gamma}{Matrix of medium-range interaction coefficients.
+Default is a square matrix, filled with zeroes.}
 
-\item{beta0}{A vector representing the log-intensities of the point processes.
-Default is a vector of same size as types, filled with ones.}
+\item{beta0}{Vector representing the intercept.
+Default is a vector filled with zeroes.}
 
-\item{covariates}{Covariates, with an empty list as a default.}
+\item{covariates}{List of covariates. These are converted to the \code{im} format by applying \code{as.im} to all elements in the list.
+Default is an empty list.}
 
-\item{beta}{Fitted coefficients related to covariates. Default is square matrix of zeroes of the same
-number of rows/columns as the covariates.}
+\item{beta}{Fitted regression coefficients with respect to covariates.
+Default is a matrix of zeroes, with as many rows as there are types, and number of columns equal to the number of covariates.}
 
-\item{short_range}{Symmetric matrix of short range interaction radii. Filled with 0.1 by default.}
+\item{short_range}{Symmetric matrix of short-range interaction radii. Can also be a list of matrices, each entry representing a different potential.
+Filled with 0.1 by default, or values equidtsirbuted between 0 and 0.1 if the user intends multiple potentials.}
 
-\item{medium_range}{Symmetric matrix of medium range interaction radii. Filled with 0 by default.}
+\item{medium_range}{Symmetric matrix of medium-range interaction radii. Filled with 0 by default.}
 
-\item{long_range}{Symmetric matrix of long range interaction radii. Filled with 0 by default.}
+\item{long_range}{Symmetric matrix of long-range interaction radii. Filled with 0 by default.}
 
 \item{saturation}{Saturation parameter of the point process. Default is 2.}
 
-\item{types}{Types of the points. Default is a vector (type1, type2, ...) of same size as n.}
+\item{types}{Character vector, with entry i representing the name of type i. Default is a vector (type1, type2, ...) of length the number of types.}
 
-\item{model}{String representing the model to use You can check the currently authorised models with a call to `show_short_range_models()`.}
+\item{model}{String representing the short-range model to use. The currently authorised models are obtained with a call to \code{show_short_range_models()}.}
 
-\item{medium_range_model}{String representing the model to use You can check the currently authorised models with a call to `show_medium_range_models()`.}
+\item{medium_range_model}{String representing the medium-range model to use. The currently authorised models are obtained with a call to \code{show_medium_range_models()}.}
 
-\item{default_number_types}{Default number of types.}
+\item{default_number_types}{Default number of types. If no other over-riding number of types can be deduced from the other parameters, this will be used.}
 
-\item{...}{Other parameters used to infer the number of types.}
+\item{...}{Other parameters used to infer the number of types. Typically other relevant vectors/matrices that the user has supplied, and could help identify the number of types.}
 }
 \description{
-Construct parameters for the model.
+Use whatever provided subset of parameters to define defaults for the others.
+The main unknowns are the intended number of potentials, and the number of types.
+The intended number of potentials is deduced from the length of alpha, short_range and/or model
+while the intended number of types is deduced from the dimensions of beta0, alpha, or other parameters.
+Once these unknowns are found, sensible defaults are used for all parameters..
+}
+\examples{
+# Define some of the parameters.
+
+# Two short-range potentials:
+# one with alpha coefficient 0, the second with a 3 x 3 matrix coefficient with 0.1 values.
+alpha <- list(0, matrix(0.1, 3, 3))
+
+# Potentials with an exponential shape.
+model <- "exponential"
+
+# Call the function
+
+parameters <- ppjsdm::model_parameters(alpha = alpha, model = model)
+
+# Inspect the result
+
+# The function has converted alpha into a list of matrices,
+# deducing that the first entry was also intended to be a matrix.
+print(parameters$alpha)
+
+# The single provided potential shape is assumed to model the shape of both potentials.
+print(parameters$model)
+
+# The rest of the parameters are initialised given the provided information,
+# so e.g., gamma is initialised as a 3x3 matrix.
+print(parameters$gamma)
+
 }
