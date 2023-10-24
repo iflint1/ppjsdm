@@ -172,26 +172,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// make_default_model_parameters
-SEXP make_default_model_parameters(Rcpp::List alpha, SEXP beta0, SEXP covariates, SEXP beta, SEXP gamma, Rcpp::List short_range, SEXP medium_range, SEXP long_range, SEXP types, int default_number_types);
-RcppExport SEXP _ppjsdm_make_default_model_parameters(SEXP alphaSEXP, SEXP beta0SEXP, SEXP covariatesSEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP typesSEXP, SEXP default_number_typesSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::List >::type alpha(alphaSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type beta0(beta0SEXP);
-    Rcpp::traits::input_parameter< SEXP >::type covariates(covariatesSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type beta(betaSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type gamma(gammaSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type short_range(short_rangeSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type medium_range(medium_rangeSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type long_range(long_rangeSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type types(typesSEXP);
-    Rcpp::traits::input_parameter< int >::type default_number_types(default_number_typesSEXP);
-    rcpp_result_gen = Rcpp::wrap(make_default_model_parameters(alpha, beta0, covariates, beta, gamma, short_range, medium_range, long_range, types, default_number_types));
-    return rcpp_result_gen;
-END_RCPP
-}
 // make_types
 SEXP make_types(SEXP types, R_xlen_t size, SEXP might_contain_name);
 RcppExport SEXP _ppjsdm_make_types(SEXP typesSEXP, SEXP sizeSEXP, SEXP might_contain_nameSEXP) {
@@ -357,25 +337,27 @@ BEGIN_RCPP
 END_RCPP
 }
 // show_short_range_models
-void show_short_range_models();
+Rcpp::CharacterVector show_short_range_models();
 RcppExport SEXP _ppjsdm_show_short_range_models() {
 BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    show_short_range_models();
-    return R_NilValue;
+    rcpp_result_gen = Rcpp::wrap(show_short_range_models());
+    return rcpp_result_gen;
 END_RCPP
 }
 // show_medium_range_models
-void show_medium_range_models();
+Rcpp::CharacterVector show_medium_range_models();
 RcppExport SEXP _ppjsdm_show_medium_range_models() {
 BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    show_medium_range_models();
-    return R_NilValue;
+    rcpp_result_gen = Rcpp::wrap(show_medium_range_models());
+    return rcpp_result_gen;
 END_RCPP
 }
 
-RcppExport SEXP run_testthat_tests(SEXP);
+RcppExport SEXP run_testthat_tests(void *);
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ppjsdm_compute_papangelou_cpp", (DL_FUNC) &_ppjsdm_compute_papangelou_cpp, 17},
@@ -385,12 +367,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ppjsdm_compute_A2_plus_A3_cpp", (DL_FUNC) &_ppjsdm_compute_A2_plus_A3_cpp, 21},
     {"_ppjsdm_compute_G2_cpp", (DL_FUNC) &_ppjsdm_compute_G2_cpp, 19},
     {"_ppjsdm_has_duplicates", (DL_FUNC) &_ppjsdm_has_duplicates, 1},
-    {"_ppjsdm_make_default_model_parameters", (DL_FUNC) &_ppjsdm_make_default_model_parameters, 10},
     {"_ppjsdm_make_types", (DL_FUNC) &_ppjsdm_make_types, 3},
     {"_ppjsdm_make_types2", (DL_FUNC) &_ppjsdm_make_types2, 4},
     {"_ppjsdm_prepare_gibbsm_data", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data, 19},
     {"_ppjsdm_prepare_gibbsm_data_with_dummy", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data_with_dummy, 16},
     {"_ppjsdm_rbinomialpp_cpp", (DL_FUNC) &_ppjsdm_rbinomialpp_cpp, 6},
+    {"_ppjsdm_rbirth_cpp", (DL_FUNC) &_ppjsdm_rbirth_cpp, 32},
     {"_ppjsdm_rgibbs_cpp", (DL_FUNC) &_ppjsdm_rgibbs_cpp, 23},
     {"_ppjsdm_rppp_cpp", (DL_FUNC) &_ppjsdm_rppp_cpp, 6},
     {"_ppjsdm_rstratpp_cpp", (DL_FUNC) &_ppjsdm_rstratpp_cpp, 7},

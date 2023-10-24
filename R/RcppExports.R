@@ -35,10 +35,6 @@ has_duplicates <- function(configuration) {
     .Call(`_ppjsdm_has_duplicates`, configuration)
 }
 
-make_default_model_parameters <- function(alpha, beta0, covariates, beta, gamma, short_range, medium_range, long_range, types, default_number_types) {
-    .Call(`_ppjsdm_make_default_model_parameters`, alpha, beta0, covariates, beta, gamma, short_range, medium_range, long_range, types, default_number_types)
-}
-
 make_types <- function(types, size, might_contain_name) {
     .Call(`_ppjsdm_make_types`, types, size, might_contain_name)
 }
@@ -77,7 +73,7 @@ rstratpp_cpp <- function(window, delta_x, delta_y, nsim, types, drop, mark_range
 #' @useDynLib ppjsdm, .registration = TRUE
 #' @import Rcpp
 show_short_range_models <- function() {
-    invisible(.Call(`_ppjsdm_show_short_range_models`))
+    .Call(`_ppjsdm_show_short_range_models`)
 }
 
 #' Show the authorised medium range models.
@@ -86,6 +82,6 @@ show_short_range_models <- function() {
 #' @useDynLib ppjsdm, .registration = TRUE
 #' @import Rcpp
 show_medium_range_models <- function() {
-    invisible(.Call(`_ppjsdm_show_medium_range_models`))
+    .Call(`_ppjsdm_show_medium_range_models`)
 }
 
