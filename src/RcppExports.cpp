@@ -372,7 +372,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ppjsdm_prepare_gibbsm_data", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data, 19},
     {"_ppjsdm_prepare_gibbsm_data_with_dummy", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data_with_dummy, 16},
     {"_ppjsdm_rbinomialpp_cpp", (DL_FUNC) &_ppjsdm_rbinomialpp_cpp, 6},
-    {"_ppjsdm_rbirth_cpp", (DL_FUNC) &_ppjsdm_rbirth_cpp, 32},
     {"_ppjsdm_rgibbs_cpp", (DL_FUNC) &_ppjsdm_rgibbs_cpp, 23},
     {"_ppjsdm_rppp_cpp", (DL_FUNC) &_ppjsdm_rppp_cpp, 6},
     {"_ppjsdm_rstratpp_cpp", (DL_FUNC) &_ppjsdm_rstratpp_cpp, 7},
