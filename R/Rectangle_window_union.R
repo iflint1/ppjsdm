@@ -130,3 +130,25 @@ area.Rectangle_window_union <- function(w) {
 volume.Rectangle_window_union <- function(x) {
   area.Rectangle_window_union(x)
 }
+
+#' Convert a union of rectangle windows to an owin from the `spatstat` package.
+#'
+#' @param W Window.
+#' @param ... Unused.
+#' @param fatal Unused.
+#' @importFrom spatstat.geom owin union.owin
+#' @export
+#' @md
+#' @examples
+#' # Construct a window
+#'
+#' window <- ppjsdm::Rectangle_window_union(x_ranges = list(c(0, 1), c(1, 2)), y_ranges = list(c(1, 3), c(2, 3)))
+#'
+#' # Convert it to a spatstat object
+#'
+#' print(as.owin(window))
+#' plot(as.owin(window))
+as.owin.Rectangle_window_union <- function(W, ..., fatal = TRUE) {
+  owins <- lapply(seq_len(length(W$x_ranges)), function(i) owin(W$x_ranges[[i]], W$y_ranges[[i]]))
+  do.call(union.owin, owins)
+}
