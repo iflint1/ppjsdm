@@ -2,7 +2,7 @@
 % Please edit documentation in R/Rectangle_window_union.R
 \name{Rectangle_window_union}
 \alias{Rectangle_window_union}
-\title{Rectangle window union constructor}
+\title{Rectangle window union.}
 \usage{
 Rectangle_window_union(x_ranges = list(c(0, 1)), y_ranges = list(c(0, 1)))
 }
@@ -12,5 +12,18 @@ Rectangle_window_union(x_ranges = list(c(0, 1)), y_ranges = list(c(0, 1)))
 \item{y_ranges}{List of rectangle ranges along the y-axis.}
 }
 \description{
-Rectangle window union constructor
+Rectangle window union.
+}
+\examples{
+# Different ways to construct a union of a [0, 1] x [1, 3] rectangle window
+# and a [1, 2] x [2, 3] rectangle window.
+
+window <- ppjsdm::Rectangle_window_union(x_ranges = list(c(0, 1), c(1, 2)), y_ranges = list(c(1, 3), c(2, 3)))
+print(window)
+
+window <- ppjsdm::Rectangle_window_union(x_ranges = list(c(0, 1), c(1, 2)), y_ranges = list(c(3, 1), c(3, 2)))
+print(window)
+
+window <- ppjsdm::Rectangle_window_union(window)
+print(window)
 }

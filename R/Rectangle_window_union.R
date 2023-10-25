@@ -1,9 +1,21 @@
-#' Rectangle window union constructor
+#' Rectangle window union.
 #'
 #' @param x_ranges List of rectangle ranges along the x-axis.
 #' @param y_ranges List of rectangle ranges along the y-axis.
 #' @importFrom methods is
 #' @export
+#' @examples
+#' # Different ways to construct a union of a [0, 1] x [1, 3] rectangle window
+#' # and a [1, 2] x [2, 3] rectangle window.
+#'
+#' window <- ppjsdm::Rectangle_window_union(x_ranges = list(c(0, 1), c(1, 2)), y_ranges = list(c(1, 3), c(2, 3)))
+#' print(window)
+#'
+#' window <- ppjsdm::Rectangle_window_union(x_ranges = list(c(0, 1), c(1, 2)), y_ranges = list(c(3, 1), c(3, 2)))
+#' print(window)
+#'
+#' window <- ppjsdm::Rectangle_window_union(window)
+#' print(window)
 Rectangle_window_union <- local({
   function(x_ranges = list(c(0, 1)), y_ranges = list(c(0, 1))) {
     # Copy constructor
@@ -28,6 +40,10 @@ Rectangle_window_union <- local({
         stop("The list of x/y ranges should be of the same length.")
       }
 
+      # make sure none of the ranges have inverted intervals
+      x_ranges <- lapply(x_ranges, function(x) c(min(x), max(x)))
+      y_ranges <- lapply(y_ranges, function(x) c(min(x), max(x)))
+
       # Make sure none of the rectangles overlap
       if(length(x_ranges) > 1) {
         for(i in 1:(length(x_ranges) - 1)) {
@@ -49,6 +65,22 @@ Rectangle_window_union <- local({
   }
 })
 
+#' @method print Rectangle_window_union
+#' @export
+print.Rectangle_window_union <- function(x, ...) {
+  str <- "A union of rectangle windows: \n"
+  for(i in seq_len(length(x$x_ranges))) {
+    str <- paste0(str, "(", i, ") [", x$x_ranges[[i]][1], ", ", x$x_ranges[[i]][2], "] x [",
+                  x$y_ranges[[i]][1], ", ", x$y_ranges[[i]][2], "]")
+    if(i < length(x$x_ranges)) {
+      str <- paste0(str, ",\n")
+    } else {
+      str <- paste0(str, ".")
+    }
+  }
+  cat(str)
+}
+
 #' @method x_range Rectangle_window_union
 #' @export
 x_range.Rectangle_window_union <- function(window) {
@@ -63,9 +95,17 @@ y_range.Rectangle_window_union <- function(window) {
 
 #' Return the area of a union of rectangle windows.
 #'
-#' @param w The window.
+#' @param w Window.
 #' @importFrom spatstat.geom area
 #' @export
+#' @examples
+#' # Construct a window
+#'
+#' window <- ppjsdm::Rectangle_window_union(x_ranges = list(c(0, 1), c(1, 2)), y_ranges = list(c(1, 3), c(2, 3)))
+#'
+#' # Compute area of a union of rectangle windows
+#'
+#' print(area(window))
 area.Rectangle_window_union <- function(w) {
   sum(sapply(seq_len(length(w$x_ranges)), function(i) {
     x <- w$x_ranges[[i]]
@@ -76,9 +116,17 @@ area.Rectangle_window_union <- function(w) {
 
 #' Return the volume of a rectangle window.
 #'
-#' @param x The window.
+#' @param x Window.
 #' @importFrom spatstat.geom volume
 #' @export
+#' @examples
+#' # Construct a window
+#'
+#' window <- ppjsdm::Rectangle_window_union(x_ranges = list(c(0, 1), c(1, 2)), y_ranges = list(c(1, 3), c(2, 3)))
+#'
+#' # Compute volume of a union of rectangle windows
+#'
+#' print(volume(window))
 volume.Rectangle_window_union <- function(x) {
   area.Rectangle_window_union(x)
 }
