@@ -2,17 +2,35 @@
 % Please edit documentation in R/potentials.R
 \name{potentials}
 \alias{potentials}
-\title{Recover the interaction potential between two given species from a fitted `gibbsm` object.}
+\title{Recover the interaction potentials between two given types from a fitted \code{gibbsm} object.}
 \usage{
-potentials(fit, species1 = 1, species2 = species1)
+potentials(fit, type1 = 1, type2 = type1)
 }
 \arguments{
-\item{fit}{A `gibbsm` fit object.}
+\item{fit}{A fit object returned by a call to \code{gibbsm}.}
 
-\item{species1}{First interacting species.}
+\item{type1}{First interacting types. Can be either an integer representing the type index,
+or a string representing its label.}
 
-\item{species2}{Second interacting species.}
+\item{type2}{Second interacting types. Can be either an integer representing the type index,
+or a string representing its label.}
 }
 \description{
-Recover the interaction potential between two given species from a fitted `gibbsm` object.
+After calling gibbsm, this function allows the user to visualise the fitted
+potentials. The function returns an object that can then be printed or plotted.
+}
+\examples{
+set.seed(1)
+
+# Simulate a Poisson point process with two types
+
+configuration <- ppjsdm::rppp(lambda = c(A = 100, B = 100))
+
+# Fit with gibbsm
+
+fit <- ppjsdm::gibbsm(configuration, short_range = c(matrix(0.05, 2, 2), matrix(0.1, 2, 2)), medium_range = matrix(0.2, 2, 2), long_range = matrix(0.3, 2, 2))
+
+plot(ppjsdm::potentials(fit))
+plot(ppjsdm::potentials(fit, type1 = "A", type2 = "B"))
+
 }

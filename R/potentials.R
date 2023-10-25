@@ -1,12 +1,32 @@
-#' Recover the interaction potential between two given species from a fitted `gibbsm` object.
+#' Recover the interaction potentials between two given types from a fitted `gibbsm` object.
 #'
-#' @param fit A `gibbsm` fit object.
-#' @param species1 First interacting species.
-#' @param species2 Second interacting species.
+#' After calling gibbsm, this function allows the user to visualise the fitted
+#' potentials. The function returns an object that can then be printed or plotted.
+#'
+#' @param fit A fit object returned by a call to `gibbsm`.
+#' @param type1 First interacting types. Can be either an integer representing the type index,
+#' or a string representing its label.
+#' @param type2 Second interacting types. Can be either an integer representing the type index,
+#' or a string representing its label.
 #' @export
+#' @md
+#' @examples
+#' set.seed(1)
+#'
+#' # Simulate a Poisson point process with two types
+#'
+#' configuration <- ppjsdm::rppp(lambda = c(A = 100, B = 100))
+#'
+#' # Fit with gibbsm
+#'
+#' fit <- ppjsdm::gibbsm(configuration, short_range = c(matrix(0.05, 2, 2), matrix(0.1, 2, 2)), medium_range = matrix(0.2, 2, 2), long_range = matrix(0.3, 2, 2))
+#'
+#' plot(ppjsdm::potentials(fit))
+#' plot(ppjsdm::potentials(fit, type1 = "A", type2 = "B"))
+#'
 potentials <- function(fit,
-                       species1 = 1,
-                       species2 = species1) {
+                       type1 = 1,
+                       type2 = type1) {
   # Check fit type
   if(!is(fit, "gibbsm")) {
     stop(paste0("The fit object does not have the right type, its class is ", class(fit)))
@@ -21,18 +41,18 @@ potentials <- function(fit,
   short_potentials <- lapply(seq_len(length(model)), function(i) {
     mod <- model[[i]]
     if(mod == "exponential") {
-      function(x) alpha[[i]][species1, species2] * exp(-log(2) * x / short_range[[i]][species1, species2])
+      function(x) alpha[[i]][type1, type2] * exp(-log(2) * x / short_range[[i]][type1, type2])
     } else if(mod == "square_exponential") {
-      function(x) alpha[[i]][species1, species2] * exp(-log(2) * x^2 / short_range[[i]][species1, species2]^2)
+      function(x) alpha[[i]][type1, type2] * exp(-log(2) * x^2 / short_range[[i]][type1, type2]^2)
     } else if(mod == "bump") {
-      function(x) alpha[[i]][species1, species2] * (1 - exp(-short_range[[i]][species1, species2] * log(2) / x))
+      function(x) alpha[[i]][type1, type2] * (1 - exp(-short_range[[i]][type1, type2] * log(2) / x))
     } else if(mod == "square_bump") {
-      function(x) alpha[[i]][species1, species2] * (1 - exp(-short_range[[i]][species1, species2] *
-                                                              short_range[[i]][species1, species2] * log(2) / (x * x)))
+      function(x) alpha[[i]][type1, type2] * (1 - exp(-short_range[[i]][type1, type2] *
+                                                              short_range[[i]][type1, type2] * log(2) / (x * x)))
     } else if(mod == "Geyer") {
-      function(x) alpha[[i]][species1, species2] * ifelse(x <= short_range[[i]][species1, species2], 1, 0)
+      function(x) alpha[[i]][type1, type2] * ifelse(x <= short_range[[i]][type1, type2], 1, 0)
     } else if(mod == "linear") {
-      function(x) alpha[[i]][species1, species2] * pmax(0, 1. - x / short_range[[i]][species1, species2])
+      function(x) alpha[[i]][type1, type2] * pmax(0, 1. - x / short_range[[i]][type1, type2])
     } else {
       stop(paste0("Short-range model not recognised: ", mod))
     }
@@ -40,9 +60,9 @@ potentials <- function(fit,
 
   # Extract variables relevant to the medium-range potentials
   medium_range_model <- fit$parameters$medium_range_model
-  medium_range <- fit$coefficients$medium_range[species1, species2]
-  long_range <- fit$coefficients$long_range[species1, species2]
-  gamma <- fit$coefficients$gamma[species1, species2]
+  medium_range <- fit$coefficients$medium_range[type1, type2]
+  long_range <- fit$coefficients$long_range[type1, type2]
+  gamma <- fit$coefficients$gamma[type1, type2]
 
   # Construct the medium-range potentials
   medium_potential <- if(medium_range_model == "square_exponential") {
@@ -97,13 +117,13 @@ potentials <- function(fit,
               overall = function(x) Reduce("+", lapply(short_potentials, function(pot) pot(x))) +
                 medium_potential(x),
               long_range = long_range,
-              short_range = sapply(seq_len(length(model)), function(i) short_range[[i]][species1, species2]))
+              short_range = sapply(seq_len(length(model)), function(i) short_range[[i]][type1, type2]))
   class(ret) <- "potentials"
   ret
 }
 
 format_potentials <- function(potentials) {
-  str <- paste0("An S3 object representing the interaction potentials.\n\n",
+  str <- paste0("Interaction potentials corresponding to a provided fit.\n\n",
                 "The object contains three slots:\n- obj$short is a list containing functions of x, ",
                 "each entry corresponding to one of the short-range potentials.\n",
                 "- obj$medium contains a function of x representing the medium-range potential.\n",
