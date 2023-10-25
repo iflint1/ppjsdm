@@ -2,7 +2,7 @@
 % Please edit documentation in R/x_range.R
 \name{x_range}
 \alias{x_range}
-\title{Range along x-axis of enclosing rectangle of window.}
+\title{Range along x-axis of enclosing rectangle of a window.}
 \usage{
 x_range(window)
 }
@@ -10,5 +10,15 @@ x_range(window)
 \item{window}{Window.}
 }
 \description{
-Range along x-axis of enclosing rectangle of window.
+Range along x-axis of enclosing rectangle of a window.
+}
+\examples{
+# Construct a disk window
+
+window <- ppjsdm::Disk_window(centre = c(2, 1), radius = 2)
+
+# Compute the range along the x-axis
+
+print(ppjsdm::x_range(window))
+
 }

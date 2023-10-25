@@ -2,7 +2,7 @@
 % Please edit documentation in R/Rectangle_window.R
 \name{Rectangle_window}
 \alias{Rectangle_window}
-\title{Rectangle window constructor}
+\title{Rectangle window.}
 \usage{
 Rectangle_window(x_range = c(0, 1), y_range = c(0, 1))
 }
@@ -12,5 +12,21 @@ Rectangle_window(x_range = c(0, 1), y_range = c(0, 1))
 \item{y_range}{Range along the y-axis.}
 }
 \description{
-Rectangle window constructor
+Rectangle window.
+}
+\examples{
+# Different ways to construct a [0, 1] x [1, 3] rectangle window
+
+window <- ppjsdm::Rectangle_window(x_range = c(0, 1), y_range = c(1, 3))
+print(window)
+
+window <- ppjsdm::Rectangle_window(y_range = c(1, 3))
+print(window)
+
+window <- ppjsdm::Rectangle_window(window)
+print(window)
+
+window <- ppjsdm::Rectangle_window(y_range = c(3, 1))
+print(window)
+
 }

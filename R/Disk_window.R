@@ -23,6 +23,7 @@ Disk_window <- local({
 })
 
 #' @method x_range Disk_window
+#' @export
 x_range.Disk_window <- function(window) {
   r <- window$radius
   x <- window$centre[1]
@@ -30,6 +31,7 @@ x_range.Disk_window <- function(window) {
 }
 
 #' @method y_range Disk_window
+#' @export
 y_range.Disk_window <- function(window) {
   r <- window$radius
   y <- window$centre[2]

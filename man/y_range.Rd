@@ -2,7 +2,7 @@
 % Please edit documentation in R/x_range.R
 \name{y_range}
 \alias{y_range}
-\title{Range along y-axis of enclosing rectangle of window.}
+\title{Range along y-axis of enclosing rectangle of a window.}
 \usage{
 y_range(window)
 }
@@ -10,5 +10,15 @@ y_range(window)
 \item{window}{Window.}
 }
 \description{
-Range along y-axis of enclosing rectangle of window.
+Range along y-axis of enclosing rectangle of a window.
+}
+\examples{
+# Construct a disk window
+
+window <- ppjsdm::Disk_window(centre = c(2, 1), radius = 2)
+
+# Compute the range along the y-axis
+
+print(ppjsdm::y_range(window))
+
 }

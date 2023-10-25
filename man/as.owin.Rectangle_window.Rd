@@ -2,7 +2,7 @@
 % Please edit documentation in R/Rectangle_window.R
 \name{as.owin.Rectangle_window}
 \alias{as.owin.Rectangle_window}
-\title{Convert a rectangle window to an owin from the SpatStat package.}
+\title{Convert a rectangle window to an owin from the \code{spatstat} package.}
 \usage{
 \method{as.owin}{Rectangle_window}(W, ..., fatal = TRUE)
 }
@@ -14,5 +14,14 @@
 \item{fatal}{Unused.}
 }
 \description{
-Convert a rectangle window to an owin from the SpatStat package.
+Convert a rectangle window to an owin from the \code{spatstat} package.
+}
+\examples{
+# Construct a window
+
+window <- ppjsdm::Rectangle_window(x_range = c(0, 1), y_range = c(1, 3))
+
+# Convert it to a spatstat object
+
+print(as.owin(window))
 }
