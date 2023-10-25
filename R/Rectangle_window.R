@@ -18,7 +18,6 @@
 #'
 #' window <- ppjsdm::Rectangle_window(y_range = c(3, 1))
 #' print(window)
-#'
 Rectangle_window <- local({
   function(x_range = c(0, 1), y_range = c(0, 1)) {
     # Copy constructor

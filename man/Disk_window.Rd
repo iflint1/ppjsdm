@@ -2,7 +2,7 @@
 % Please edit documentation in R/Disk_window.R
 \name{Disk_window}
 \alias{Disk_window}
-\title{Disk window constructor}
+\title{Disk window.}
 \usage{
 Disk_window(centre = c(0, 0), radius = 1)
 }
@@ -12,5 +12,14 @@ Disk_window(centre = c(0, 0), radius = 1)
 \item{radius}{Radius of the disk.}
 }
 \description{
-Disk window constructor
+Disk window.
+}
+\examples{
+# Construct a disk window with centre (0, 2) and radius 2.
+
+window <- ppjsdm::Disk_window(centre = c(0, 2), radius = 2)
+print(window)
+
+window <- ppjsdm::Disk_window(window)
+print(window)
 }

@@ -16,3 +16,12 @@
 \description{
 Convert a disk window to an owin from the SpatStat package.
 }
+\examples{
+# Construct a window
+
+window <- ppjsdm::Disk_window(centre = c(0, 2), radius = 2)
+
+# Convert it to a spatstat object
+
+print(as.owin(window))
+}

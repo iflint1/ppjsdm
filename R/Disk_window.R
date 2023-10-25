@@ -1,9 +1,17 @@
-#' Disk window constructor
+#' Disk window.
 #'
 #' @param centre Centre of the disk.
 #' @param radius Radius of the disk.
 #' @importFrom methods is
 #' @export
+#' @examples
+#' # Construct a disk window with centre (0, 2) and radius 2.
+#'
+#' window <- ppjsdm::Disk_window(centre = c(0, 2), radius = 2)
+#' print(window)
+#'
+#' window <- ppjsdm::Disk_window(window)
+#' print(window)
 Disk_window <- local({
   function(centre = c(0, 0), radius = 1) {
     # Copy constructor
@@ -21,6 +29,13 @@ Disk_window <- local({
     }
   }
 })
+
+#' @method print Disk_window
+#' @export
+print.Disk_window <- function(x, ...) {
+  str <- paste0("A disk window with centre (", x$centre[1], ", ", x$centre[2], ") and radius ", x$radius, ".")
+  cat(str)
+}
 
 #' @method x_range Disk_window
 #' @export
@@ -40,9 +55,17 @@ y_range.Disk_window <- function(window) {
 
 #' Return the area of a disk window.
 #'
-#' @param w The window.
+#' @param w Window.
 #' @importFrom spatstat.geom area
 #' @export
+#' @examples
+#' # Construct a window
+#'
+#' window <- ppjsdm::Disk_window(centre = c(0, 2), radius = 2)
+#'
+#' # Compute area of a rectangle window
+#'
+#' print(area(window))
 area.Disk_window <- function(w) {
   r <- w$radius
   pi * r * r
@@ -50,9 +73,17 @@ area.Disk_window <- function(w) {
 
 #' Return the volume of a disk window.
 #'
-#' @param x The window.
+#' @param x Window.
 #' @importFrom spatstat.geom volume
 #' @export
+#' @examples
+#' # Construct a window
+#'
+#' window <- ppjsdm::Disk_window(centre = c(0, 2), radius = 2)
+#'
+#' # Compute volume of a rectangle window
+#'
+#' print(volume(window))
 volume.Disk_window <- function(x) {
   area.Disk_window(x)
 }
@@ -64,6 +95,14 @@ volume.Disk_window <- function(x) {
 #' @param fatal Unused.
 #' @importFrom spatstat.geom disc
 #' @export
+#' @examples
+#' # Construct a window
+#'
+#' window <- ppjsdm::Disk_window(centre = c(0, 2), radius = 2)
+#'
+#' # Convert it to a spatstat object
+#'
+#' print(as.owin(window))
 as.owin.Disk_window <- function(W, ..., fatal = TRUE) {
   disc(radius = W$radius, centre = W$centre)
 }
