@@ -19,7 +19,7 @@ coerce_to_named_im_objects <- function(lst, str, window) {
   add_names(str, lst)
 }
 
-#' Construct an object that might already exist as `x`, but if not that should be constructed
+#' Construct an object `x` that might already be constructed, but if not that should be constructed
 #' using default supplied values, as either a matrix or a vector.
 #'
 #' @param x Object that contains either an object, or NULL if it should be constructed.
@@ -29,6 +29,7 @@ coerce_to_named_im_objects <- function(lst, str, window) {
 #' @param matrix Should we construct a matrix or a vector?
 #' @export
 #' @keywords internal
+#' @md
 construct_if_missing <- function(x, def, nrows, ncols = nrows, matrix = FALSE) {
   if(is.null(x)) {
     if(matrix) {
@@ -91,6 +92,10 @@ get_number_types_and_check_conformance <- function(default_number_types,
         if(length_x != best_guess && (best_guess > 1 && length_x > 1)) {
           stop("Two of the given arguments have incompatible sizes.")
         } else {
+          # Either length_x == best_guess, in which case everything makes sense,
+          # or one is == 1 and the other > 1. In this latter case,
+          # the inferred number of types is the larger of the two, and the other has to
+          # be built into a matrix/vector of larger dimensions.
           best_guess <- max(best_guess, length_x)
         }
       } else {
@@ -99,7 +104,7 @@ get_number_types_and_check_conformance <- function(default_number_types,
     }
   }
 
-  if(best_guess == 0) {
+  if(best_guess == 0) { # Nothing allowed us to guess the number of types, so use default
     default_number_types
   } else {
     best_guess
@@ -131,14 +136,14 @@ make_default_model_parameters <- function(alpha,
   alpha <- lapply(alpha, function(a) {
     a <- construct_if_missing(a, 0, number_types, matrix = TRUE)
     if(!isSymmetric(a)) {
-      stop("Alpha is not symmetric.");
+      stop("One of the alphas is not symmetric.")
     }
     a
   })
 
   gamma <- construct_if_missing(gamma, 0, number_types, matrix = TRUE)
   if(!isSymmetric(gamma)) {
-    stop("Gamma is not symmetric.");
+    stop("Gamma is not symmetric.")
   }
 
   beta0 <- construct_if_missing(beta0, 0, number_types, matrix = FALSE)
@@ -148,7 +153,7 @@ make_default_model_parameters <- function(alpha,
 
   beta = construct_if_missing(beta, 1., beta_nrows, beta_ncols, matrix = TRUE)
   if(beta_ncols != 0 && (nrow(beta) != beta_nrows || ncol(beta) != beta_ncols)) {
-    stop("The parameter `beta` does not have the right dimensions.");
+    stop("Beta does not have the right dimensions.")
   }
 
   types <- make_types(types = types,
@@ -159,7 +164,7 @@ make_default_model_parameters <- function(alpha,
   short_range <- lapply(seq_len(length(short_range)), function(i) {
     s <- construct_if_missing(short_range[[i]], default_short_distances[i], number_types, matrix = TRUE)
     if(!isSymmetric(s)) {
-      stop("One of the short-range interaction radii matrices is not symmetric.");
+      stop("One of the short-range interaction radii matrices is not symmetric.")
     }
     s
   })
@@ -171,7 +176,7 @@ make_default_model_parameters <- function(alpha,
 
   long_range <- construct_if_missing(long_range, 0, number_types, matrix = TRUE)
   if(!isSymmetric(long_range)) {
-    stop("The long-range interaction radii matrix is not symmetric.");
+    stop("The long-range interaction radii matrix is not symmetric.")
   }
 
   list(alpha = alpha,
@@ -182,7 +187,7 @@ make_default_model_parameters <- function(alpha,
        short_range = short_range,
        medium_range = medium_range,
        long_range = long_range,
-       types = types);
+       types = types)
 }
 #' Generate parameters for the model.
 #'

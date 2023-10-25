@@ -2,7 +2,7 @@
 % Please edit documentation in R/model_parameters.R
 \name{construct_if_missing}
 \alias{construct_if_missing}
-\title{Construct an object that might already exist as `x`, but if not that should be constructed
+\title{Construct an object \code{x} that might already be constructed, but if not that should be constructed
 using default supplied values, as either a matrix or a vector.}
 \usage{
 construct_if_missing(x, def, nrows, ncols = nrows, matrix = FALSE)
@@ -19,7 +19,7 @@ construct_if_missing(x, def, nrows, ncols = nrows, matrix = FALSE)
 \item{matrix}{Should we construct a matrix or a vector?}
 }
 \description{
-Construct an object that might already exist as `x`, but if not that should be constructed
+Construct an object \code{x} that might already be constructed, but if not that should be constructed
 using default supplied values, as either a matrix or a vector.
 }
 \keyword{internal}
