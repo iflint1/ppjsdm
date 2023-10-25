@@ -25,6 +25,15 @@ test_that("Rectangle_window default constructor", {
   expect_identical(default_window, ppjsdm::Rectangle_window(default_range, default_range))
 })
 
+test_that("Rectangle_window inverted interval", {
+  range <- c(-1, 2)
+  inverted_range <- c(2, -1)
+  window <- ppjsdm::Rectangle_window(range)
+  inverted_window <- ppjsdm::Rectangle_window(inverted_range)
+
+  expect_identical(window, inverted_window)
+})
+
 test_that("Rectangle_window one argument constructor", {
   default_range <- c(0, 1)
   vector1 <- cumsum(stats::runif(n = 2))
@@ -47,8 +56,6 @@ test_that("Rectangle_window unsupported constructors", {
 
   expect_error(ppjsdm::Rectangle_window(c(0, 1, 3)))
   expect_error(ppjsdm::Rectangle_window(c('a', 'b')))
-  expect_error(ppjsdm::Rectangle_window(c(1, 0)))
   expect_error(ppjsdm::Rectangle_window(default_range, c(0, 1, 3)))
   expect_error(ppjsdm::Rectangle_window(default_range, c('a', 'b')))
-  expect_error(ppjsdm::Rectangle_window(default_range, c(1, 0)))
 })
