@@ -96,6 +96,7 @@ y_range.Rectangle_window_union <- function(window) {
 #'
 #' @param w Window.
 #' @importFrom spatstat.geom area
+#' @exportS3Method spatstat.geom::area Rectangle_window_union
 #' @export
 #' @examples
 #' # Construct a window
@@ -117,6 +118,7 @@ area.Rectangle_window_union <- function(w) {
 #'
 #' @param x Window.
 #' @importFrom spatstat.geom volume
+#' @exportS3Method spatstat.geom::volume Rectangle_window_union
 #' @export
 #' @examples
 #' # Construct a window
@@ -135,7 +137,8 @@ volume.Rectangle_window_union <- function(x) {
 #' @param W Window.
 #' @param ... Unused.
 #' @param fatal Unused.
-#' @importFrom spatstat.geom owin union.owin
+#' @importFrom spatstat.geom as.owin union.owin
+#' @exportS3Method spatstat.geom::as.owin Rectangle_window_union
 #' @export
 #' @md
 #' @examples

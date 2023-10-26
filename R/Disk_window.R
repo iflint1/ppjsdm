@@ -57,6 +57,7 @@ y_range.Disk_window <- function(window) {
 #'
 #' @param w Window.
 #' @importFrom spatstat.geom area
+#' @exportS3Method spatstat.geom::area Disk_window
 #' @export
 #' @examples
 #' # Construct a window
@@ -75,6 +76,7 @@ area.Disk_window <- function(w) {
 #'
 #' @param x Window.
 #' @importFrom spatstat.geom volume
+#' @exportS3Method spatstat.geom::volume Disk_window
 #' @export
 #' @examples
 #' # Construct a window
@@ -93,7 +95,8 @@ volume.Disk_window <- function(x) {
 #' @param W Window.
 #' @param ... Unused.
 #' @param fatal Unused.
-#' @importFrom spatstat.geom disc
+#' @importFrom spatstat.geom as.owin disc
+#' @exportS3Method spatstat.geom::as.owin Disk_window
 #' @export
 #' @examples
 #' # Construct a window

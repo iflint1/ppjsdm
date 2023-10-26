@@ -61,7 +61,7 @@ y_range.Rectangle_window <- function(window) {
 #'
 #' @param w Window.
 #' @importFrom spatstat.geom area
-#' @export
+#' @exportS3Method spatstat.geom::area Rectangle_window
 #' @examples
 #' # Construct a window
 #'
@@ -80,7 +80,7 @@ area.Rectangle_window <- function(w) {
 #'
 #' @param x Window.
 #' @importFrom spatstat.geom volume
-#' @export
+#' @exportS3Method spatstat.geom::volume Rectangle_window
 #' @examples
 #' # Construct a window
 #'
@@ -98,8 +98,8 @@ volume.Rectangle_window <- function(x) {
 #' @param W Window.
 #' @param ... Unused.
 #' @param fatal Unused.
-#' @importFrom spatstat.geom owin
-#' @export
+#' @importFrom spatstat.geom as.owin owin
+#' @exportS3Method spatstat.geom::as.owin Rectangle_window
 #' @md
 #' @examples
 #' # Construct a window
