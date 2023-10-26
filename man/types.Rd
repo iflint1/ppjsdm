@@ -7,7 +7,7 @@
 types(configuration)
 }
 \arguments{
-\item{configuration}{The configuration.}
+\item{configuration}{Configuration.}
 }
 \description{
 Access types of a configuration

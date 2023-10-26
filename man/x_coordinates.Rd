@@ -7,7 +7,7 @@
 x_coordinates(configuration)
 }
 \arguments{
-\item{configuration}{The configuration.}
+\item{configuration}{Configuration.}
 }
 \description{
 Access x-coordinates of a configuration

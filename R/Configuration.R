@@ -247,7 +247,7 @@ plot.Configuration <- function(x, window, color, shape, ...) {
 
 #' Access x-coordinates of a configuration
 #'
-#' @param configuration The configuration.
+#' @param configuration Configuration.
 #' @export
 x_coordinates <- function(configuration) {
   configuration$x
@@ -255,7 +255,7 @@ x_coordinates <- function(configuration) {
 
 #' Access y-coordinates of a configuration
 #'
-#' @param configuration The configuration.
+#' @param configuration Configuration.
 #' @export
 y_coordinates <- function(configuration) {
   configuration$y
@@ -263,7 +263,7 @@ y_coordinates <- function(configuration) {
 
 #' Access types of a configuration
 #'
-#' @param configuration The configuration.
+#' @param configuration Configuration.
 #' @export
 types <- function(configuration) {
   configuration$types
@@ -271,10 +271,21 @@ types <- function(configuration) {
 
 #' Access marks of a configuration
 #'
-#' @param configuration The configuration.
-#' @export
-marks <- function(configuration) {
-  configuration$marks
+#' @param x Configuration.
+#' @param ... Unused.
+#' @importFrom spatstat.geom marks
+#' @exportS3Method spatstat.geom::marks Configuration
+#' @examples
+#' set.seed(1)
+#'
+#' # Create a configuration
+#' configuration <- ppjsdm::Configuration(x = 1:4, y = 2:5, marks = runif(4))
+#'
+#' # Get its marks
+#' print(marks(configuration))
+#'
+marks.Configuration <- function(x, ...) {
+  x$marks
 }
 
 #' Convert a configuration class to a ppp from the SpatStat package.
