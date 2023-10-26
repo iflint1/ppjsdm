@@ -161,13 +161,13 @@ make_default_model_parameters <- function(alpha,
                       might_contain_name = beta0)
 
   default_short_distances <- seq(from = 0, to = 0.1, length.out = length(short_range) + 1)[-1]
-  short_range <- lapply(seq_len(length(short_range)), function(i) {
+  short_range <- setNames(lapply(seq_len(length(short_range)), function(i) {
     s <- construct_if_missing(short_range[[i]], default_short_distances[i], number_types, matrix = TRUE)
     if(!isSymmetric(s)) {
       stop("One of the short-range interaction radii matrices is not symmetric.")
     }
     s
-  })
+  }), nm = names(short_range))
 
   medium_range <- construct_if_missing(medium_range, 0, number_types, matrix = TRUE)
   if(!isSymmetric(medium_range)) {
@@ -379,13 +379,13 @@ model_parameters <- function(window,
   }
 
   # Model is a list of length the number of potentials, missing values indicated by NULL
-  model <- lapply(model, function(x) {
+  model <- setNames(lapply(model, function(x) {
     if(is.null(x)) {
       "square_bump"
     } else {
       x
     }
-  })
+  }), nm = names(model))
 
   # Make covariates im objects with proper names.
   covariates <- coerce_to_named_im_objects(covariates, "unnamed_covariate", window)
@@ -408,6 +408,16 @@ model_parameters <- function(window,
                 "], alpha: [", paste0(parameters$alpha, collapse = ", "),
                 "] and short_range: [", paste0(parameters$short_range, collapse = ", "), "]."))
   }
+
+  # See if there exists some potential names
+  potential_names <- if(!is.null(names(model))) {
+    names(model)
+  } else if(!is.null(names(parameters$short_range))) {
+    names(parameters$short_range)
+  } else {
+    NULL
+  }
+  parameters$potential_names <- potential_names
 
   # Set colnames and rownames
   parameters$alpha <- lapply(parameters$alpha, function(a) {

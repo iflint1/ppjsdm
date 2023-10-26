@@ -19,10 +19,16 @@
 #'
 #' # Fit with gibbsm
 #'
-#' fit <- ppjsdm::gibbsm(configuration, short_range = c(matrix(0.05, 2, 2), matrix(0.1, 2, 2)), medium_range = matrix(0.2, 2, 2), long_range = matrix(0.3, 2, 2))
+#' fit <- ppjsdm::gibbsm(configuration, short_range = list(matrix(0.05, 2, 2), matrix(0.1, 2, 2)), medium_range = matrix(0.2, 2, 2), long_range = matrix(0.3, 2, 2))
 #'
 #' plot(ppjsdm::potentials(fit))
 #' plot(ppjsdm::potentials(fit, type1 = "A", type2 = "B"))
+#'
+#' # User wants to give names to the potentials
+#'
+#' fit <- ppjsdm::gibbsm(configuration, short_range = list(`0.05m potential` = matrix(0.05, 2, 2), `0.1m potential` = matrix(0.1, 2, 2)), medium_range = matrix(0.2, 2, 2), long_range = matrix(0.3, 2, 2))
+#'
+#' plot(ppjsdm::potentials(fit))
 #'
 potentials <- function(fit,
                        type1 = 1,
@@ -38,7 +44,7 @@ potentials <- function(fit,
   alpha <- fit$coefficients$alpha
 
   # Construct the short-range potentials
-  short_potentials <- lapply(seq_len(length(model)), function(i) {
+  short_potentials <- setNames(lapply(seq_len(length(model)), function(i) {
     mod <- model[[i]]
     if(mod == "exponential") {
       function(x) alpha[[i]][type1, type2] * exp(-log(2) * x / short_range[[i]][type1, type2])
@@ -56,7 +62,7 @@ potentials <- function(fit,
     } else {
       stop(paste0("Short-range model not recognised: ", mod))
     }
-  })
+  }), nm = fit$potential_names)
 
   # Extract variables relevant to the medium-range potentials
   medium_range_model <- fit$parameters$medium_range_model
@@ -164,7 +170,14 @@ plot.potentials <- function(x, ...) {
     theme(legend.title = element_blank())
 
   for(i in seq_len(length(x$short))) {
-    assign(paste0("name", i), paste0("Short ", i))
+    if(is.null(names(x$short)[i])) {
+      assign(paste0("name", i), paste0("Short ", i))
+    } else if(names(x$short)[i] == "") { # Cannot put this as a conditional in the previous case due to no short-circuiting
+      assign(paste0("name", i), paste0("Short ", i))
+    } else {
+      assign(paste0("name", i), names(x$short)[i])
+    }
+
     g <- g + geom_line(aes_string(x = "x", y = paste0("short", i), colour = paste0("name", i)), size = 1, alpha = 0.8)
   }
 
