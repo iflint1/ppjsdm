@@ -25,8 +25,7 @@ Rectangle_window_union <- local({
       is_range <- function(r) {
         is.vector(r) &
         is.numeric(r) &
-        length(r) == 2 &
-        r[2L] >= r[1L]
+        length(r) == 2
       }
       if(!is.list(x_ranges) | !all(sapply(x_ranges, is_range))) {
         stop("x_ranges should be a list of numeric vectors of length 2 representing intervals (x_min, x_max).")
