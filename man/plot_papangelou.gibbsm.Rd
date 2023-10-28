@@ -28,7 +28,7 @@
 \arguments{
 \item{fit}{Fit object obtained by running gibbsm.}
 
-\item{window}{Observation window.}
+\item{window}{Observation window. Preferably a \code{ppjsdm} Window, such as \code{ppjsdm::Rectangle_window}, but also accepts \code{spatstat} \code{im} or \code{owin} objects.}
 
 \item{type}{Type of the point at which to evaluate the Papangelou conditional intensity.}
 

@@ -32,7 +32,7 @@ gibbsm(
 \arguments{
 \item{configuration_list}{A single configuration or a list of configurations assumed to be drawn from the multivariate Gibbs.}
 
-\item{window}{Observation window.}
+\item{window}{Observation window. Preferably a \code{ppjsdm} Window, such as \code{ppjsdm::Rectangle_window}, but also accepts \code{spatstat} \code{im} or \code{owin} objects.}
 
 \item{covariates}{Environmental covariates driving the intensity.}
 
@@ -68,7 +68,7 @@ gibbsm(
 
 \item{return_raw_fitting_data}{Return the raw fitting data, before calling the GLM fitting package. Mostly used for debugging purposes on large datasets.}
 
-\item{refit_glmnet}{How many times more lambdas to use on a re-run of glmnet (currently only used with fitting_package = glmnet). For example, refit_glmnet = 0.5 re-runs the fitting procedure with a 50\% longer lambda sequence.}
+\item{refit_glmnet}{How many times more lambdas to use on a re-run of glmnet (currently only used with \code{fitting_package = glmnet}). For example, \code{refit_glmnet = 0.5} re-runs the fitting procedure with a 50\% longer lambda sequence.}
 
 \item{dummy_distribution}{How should the dummy distribution be drawn? Choices are "binomial" or "stratified".}
 

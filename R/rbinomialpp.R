@@ -1,7 +1,7 @@
 
 #' Sample a binomial point processes
 #'
-#' @param window Simulation window. Default is a rectangle window [0, 1]^2.
+#' @param window Observation window. Default is a rectangle window \eqn{[0, 1]^2}. Preferably a `ppjsdm` Window, such as `ppjsdm::Rectangle_window`, but also accepts `spatstat` `im` or `owin` objects.
 #' @param n A vector representing the number of points of each types of the multipoint binomial point processes.
 #' Default is a vector of same size as types, filled with ones.
 #' @param nsim Number of samples to generate. Default is 1.
@@ -10,6 +10,7 @@
 #' Default is TRUE.
 #' @param mark_range Range of additional marks to give to the points.
 #' @export
+#' @md
 rbinomialpp <- function(window = Rectangle_window(),
                  n = NULL,
                  nsim = 1,
@@ -21,7 +22,7 @@ rbinomialpp <- function(window = Rectangle_window(),
   number_types <- get_number_types_and_check_conformance(default_number_types = 1, n, types)
   n <- construct_if_missing(x = n, def = 1, nrows = number_types, matrix = FALSE)
   types <- make_types(types = types, size = number_types, might_contain_name = n)
-  rbinomialpp_cpp(window = window,
+  rbinomialpp_cpp(window = as.Window(window),
                   n = n,
                   nsim = nsim,
                   types = types,

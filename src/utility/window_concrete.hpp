@@ -218,8 +218,8 @@ private:
 
 class Im_window {
 public:
-  explicit Im_window(Rcpp::List im, Rcpp::NumericVector marked_range):
-    im_(im),
+  explicit Im_window(Rcpp::List im_window, Rcpp::NumericVector marked_range):
+    im_(Rcpp::as<Rcpp::List>(im_window["im"])),
     volume_(im_.volume()),
     mark_lower_(marked_range[0]),
     delta_mark_(marked_range[1] - marked_range[0]) {}

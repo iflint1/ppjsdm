@@ -23,7 +23,7 @@ model_parameters(
 )
 }
 \arguments{
-\item{window}{Simulation window.}
+\item{window}{Observation window. Preferably a \code{ppjsdm} Window, such as \code{ppjsdm::Rectangle_window}, but also accepts \code{spatstat} \code{im} or \code{owin} objects.}
 
 \item{alpha}{Matrix of short-range interaction coefficients.
 Default is a square matrix, filled with zeroes.}

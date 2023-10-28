@@ -15,7 +15,7 @@ rstratpp(
 )
 }
 \arguments{
-\item{window}{Simulation window. Default is a Rectangle window [0, 1]^2.}
+\item{window}{Observation window. Default is a Rectangle window \eqn{[0, 1]^2}. Preferably a `ppjsdm` Window, such as `ppjsdm::Rectangle_window`, but also accepts `spatstat` `im` or `owin` objects.}
 
 \item{delta_x}{A vector representing the distance between tiles along the x axis, for each type.
 Default is a vector of same size as types, filled with ones.}

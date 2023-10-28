@@ -197,7 +197,7 @@ make_default_model_parameters <- function(alpha,
 #' while the intended number of types is deduced from the dimensions of beta0, alpha, or other parameters.
 #' Once these unknowns are found, sensible defaults are used for all parameters..
 #'
-#' @param window Simulation window.
+#' @param window Observation window. Preferably a `ppjsdm` Window, such as `ppjsdm::Rectangle_window`, but also accepts `spatstat` `im` or `owin` objects.
 #' @param alpha Matrix of short-range interaction coefficients.
 #' Default is a square matrix, filled with zeroes.
 #' @param gamma Matrix of medium-range interaction coefficients.
@@ -218,6 +218,8 @@ make_default_model_parameters <- function(alpha,
 #' @param medium_range_model String representing the medium-range model to use. The currently authorised models are obtained with a call to `show_medium_range_models()`.
 #' @param default_number_types Default number of types. If no other over-riding number of types can be deduced from the other parameters, this will be used.
 #' @param ... Other parameters used to infer the number of types. Typically other relevant vectors/matrices that the user has supplied, and could help identify the number of types.
+#' @importFrom methods is
+#' @importFrom spatstat.geom is.im
 #' @examples
 #' # Define some of the parameters.
 #'
@@ -386,6 +388,9 @@ model_parameters <- function(window,
       x
     }
   }), nm = names(model))
+
+  # Force window to the right class
+  window <- as.Window(window)
 
   # Make covariates im objects with proper names.
   covariates <- coerce_to_named_im_objects(covariates, "unnamed_covariate", window)

@@ -1,6 +1,6 @@
 #' Sample a stratified binomial point processes
 #'
-#' @param window Simulation window. Default is a Rectangle window [0, 1]^2.
+#' @param window Observation window. Default is a Rectangle window \eqn{[0, 1]^2}. Preferably a `ppjsdm` Window, such as `ppjsdm::Rectangle_window`, but also accepts `spatstat` `im` or `owin` objects.
 #' @param delta_x A vector representing the distance between tiles along the x axis, for each type.
 #' Default is a vector of same size as types, filled with ones.
 #' @param delta_y A vector representing the distance between tiles along the y axis, for each type.
@@ -28,7 +28,7 @@ rstratpp <- function(window = Rectangle_window(),
   }
   types <- make_types2(types = types, size = number_types, delta_x, delta_y)
 
-  rstratpp_cpp(window = window,
+  rstratpp_cpp(window = as.Window(window),
                delta_x = unlist(delta_x),
                delta_y = unlist(delta_y),
                nsim = nsim,

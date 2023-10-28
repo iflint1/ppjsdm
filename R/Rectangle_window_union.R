@@ -61,7 +61,7 @@ Rectangle_window_union <- local({
         }
       }
 
-      structure(list(x_ranges = x_ranges, y_ranges = y_ranges), class = c("Window", "Rectangle_window_union"))
+      structure(list(x_ranges = x_ranges, y_ranges = y_ranges), class = c("Rectangle_window_union", "Window"))
     }
   }
 })

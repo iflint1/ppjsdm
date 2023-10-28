@@ -14,7 +14,7 @@ rbinomialpp(
 )
 }
 \arguments{
-\item{window}{Simulation window. Default is a rectangle window [0, 1]^2.}
+\item{window}{Observation window. Default is a rectangle window \eqn{[0, 1]^2}. Preferably a \code{ppjsdm} Window, such as \code{ppjsdm::Rectangle_window}, but also accepts \code{spatstat} \code{im} or \code{owin} objects.}
 
 \item{n}{A vector representing the number of points of each types of the multipoint binomial point processes.
 Default is a vector of same size as types, filled with ones.}

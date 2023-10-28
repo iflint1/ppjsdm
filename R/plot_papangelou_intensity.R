@@ -10,7 +10,7 @@ plot_papangelou <- function(...) {
 
 #' Plot the Papangelou conditional intensity with given parameters.
 #'
-#' @param window Observation window.
+#' @param window Observation window. Preferably a `ppjsdm` Window, such as `ppjsdm::Rectangle_window`, but also accepts `spatstat` `im` or `owin` objects.
 #' @param type Type of the point at which to evaluate the Papangelou conditional intensity.
 #' @param configuration Configuration of points at which to evaluate the Papangelou conditional intensity.
 #' @param model Model for short range interaction.
@@ -43,6 +43,7 @@ plot_papangelou <- function(...) {
 #' @importFrom stats na.omit
 #' @export
 #' @method plot_papangelou default
+#' @md
 plot_papangelou.default <- function(window,
                                     type = 1,
                                     mark = 1.0,
@@ -243,7 +244,7 @@ plot_papangelou.default <- function(window,
 #' Plot the Papangelou conditional intensity from a fit object.
 #'
 #' @param fit Fit object obtained by running gibbsm.
-#' @param window Observation window.
+#' @param window Observation window. Preferably a `ppjsdm` Window, such as `ppjsdm::Rectangle_window`, but also accepts `spatstat` `im` or `owin` objects.
 #' @param type Type of the point at which to evaluate the Papangelou conditional intensity.
 #' @param configuration Configuration of points at which to evaluate the Papangelou conditional intensity.
 #' @param alpha Short range repulsion parameter.
@@ -262,6 +263,7 @@ plot_papangelou.default <- function(window,
 #' @param ... Forwarded to plot_papangelou
 #' @export
 #' @method plot_papangelou gibbsm
+#' @md
 plot_papangelou.gibbsm <- function(fit,
                                    window = fit$window,
                                    type = 1,

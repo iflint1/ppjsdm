@@ -364,7 +364,7 @@ fit_gibbs <- function(gibbsm_data,
 #' Fit a multivariate Gibbs model to a dataset.
 #'
 #' @param configuration_list A single configuration or a list of configurations assumed to be drawn from the multivariate Gibbs.
-#' @param window Observation window.
+#' @param window Observation window. Preferably a `ppjsdm` Window, such as `ppjsdm::Rectangle_window`, but also accepts `spatstat` `im` or `owin` objects.
 #' @param covariates Environmental covariates driving the intensity.
 #' @param model String to represent the model we're calibrating. You can check the currently authorised models with a call to show_short_range_models().
 #' @param medium_range_model String to represent the model we're calibrating. You can check the currently authorised models with a call to show_medium_range_models().
@@ -382,7 +382,7 @@ fit_gibbs <- function(gibbsm_data,
 #' @param nthreads Maximum number of threads for parallel computing.
 #' @param use_regularization Use the fitting package without regularization.
 #' @param return_raw_fitting_data Return the raw fitting data, before calling the GLM fitting package. Mostly used for debugging purposes on large datasets.
-#' @param refit_glmnet How many times more lambdas to use on a re-run of glmnet (currently only used with fitting_package = glmnet). For example, refit_glmnet = 0.5 re-runs the fitting procedure with a 50\% longer lambda sequence.
+#' @param refit_glmnet How many times more lambdas to use on a re-run of glmnet (currently only used with `fitting_package = glmnet`). For example, `refit_glmnet = 0.5` re-runs the fitting procedure with a 50% longer lambda sequence.
 #' @param dummy_distribution How should the dummy distribution be drawn? Choices are "binomial" or "stratified".
 #' @param ... Forwarded to the fitting package.
 #' @importFrom GA ga
@@ -392,6 +392,7 @@ fit_gibbs <- function(gibbsm_data,
 #' @importFrom oem oem
 #' @importFrom stats AIC as.formula BIC binomial coefficients deviance glm lm logLik setNames
 #' @importFrom spatstat.geom as.im as.owin
+#' @md
 #' @export
 gibbsm <- function(configuration_list,
                    window,

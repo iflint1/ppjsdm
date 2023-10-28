@@ -35,7 +35,7 @@ Rectangle_window <- local({
       }
 
       structure(list(x_range = c(min(x_range), max(x_range)),
-                     y_range = c(min(y_range), max(y_range))), class = c("Window", "Rectangle_window"))
+                     y_range = c(min(y_range), max(y_range))), class = c("Rectangle_window", "Window"))
     }
   }
 })
@@ -135,3 +135,44 @@ plot.Window <- function(x, ...) {
   plot.owin(window)
 }
 
+#' Convert another class to Window object.
+#'
+#' @param window Window.
+#' @export
+#' @examples
+#' if(require(spatstat.geom)) { # If no spatstat, im windows cannot be constructed
+#' # Construct an im
+#'
+#' im <- as.im(function(x, y) ifelse(x^2 + y^2 <= 1, 1, NA), W = owin())
+#'
+#' # Convert it to Window
+#'
+#' window <- as.Window(im)
+#'
+#' # Inspect it
+#' print(window)
+#' plot(window)
+#' }
+as.Window <- function(window) {
+  UseMethod("as.Window", window)
+}
+
+#' @method as.Window Window
+#' @export
+as.Window.Window <- function(window) {
+  window
+}
+
+#' @importFrom spatstat.geom owin
+#' @method as.Window owin
+#' @export
+as.Window.owin <- function(window) {
+  Im_window(window)
+}
+
+#' @importFrom spatstat.geom im
+#' @method as.Window im
+#' @export
+as.Window.im <- function(window) {
+  Im_window(window)
+}

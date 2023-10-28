@@ -26,7 +26,7 @@
 \arguments{
 \item{fit}{Fit object obtained by running gibbsm.}
 
-\item{window}{Simulation window.}
+\item{window}{Observation window. Preferably a \code{ppjsdm} Window, such as \code{ppjsdm::Rectangle_window}, but also accepts \code{spatstat} \code{im} or \code{owin} objects.}
 
 \item{alpha}{Repulsion matrix. Default is a square matrix of same size as types, filled with zeroes.}
 
@@ -50,9 +50,9 @@ number of rows/columns as the covariates.}
 
 \item{types}{Types of the points. Default is a vector (type1, type2, ...) of same size as n.}
 
-\item{model}{String representing the model to use You can check the currently authorised models with a call to `show_short_range_models()`.}
+\item{model}{String representing the model to use You can check the currently authorised models with a call to \code{show_short_range_models()}.}
 
-\item{medium_range_model}{String representing the model to use You can check the currently authorised models with a call to `show_medium_range_models()`.}
+\item{medium_range_model}{String representing the model to use You can check the currently authorised models with a call to \code{show_medium_range_models()}.}
 
 \item{mark_range}{Range of additional marks to give to the points.}
 
