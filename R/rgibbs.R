@@ -1,4 +1,5 @@
 #' Sample a multivariate saturated pairwise interaction Gibbs point processes.
+#'
 #' IMPORTANT: Check ?rgibbs.default for the documentation.
 #'
 #' @param ... Parameters to be forwarded to the relevant method. Currently, either

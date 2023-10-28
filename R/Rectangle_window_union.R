@@ -16,6 +16,8 @@
 #'
 #' window <- ppjsdm::Rectangle_window_union(window)
 #' print(window)
+#'
+#' plot(window)
 Rectangle_window_union <- local({
   function(x_ranges = list(c(0, 1)), y_ranges = list(c(0, 1))) {
     # Copy constructor
@@ -59,7 +61,7 @@ Rectangle_window_union <- local({
         }
       }
 
-      structure(list(x_ranges = x_ranges, y_ranges = y_ranges), class = c("Rectangle_window_union"))
+      structure(list(x_ranges = x_ranges, y_ranges = y_ranges), class = c("Window", "Rectangle_window_union"))
     }
   }
 })

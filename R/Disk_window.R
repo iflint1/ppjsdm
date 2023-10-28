@@ -12,6 +12,8 @@
 #'
 #' window <- ppjsdm::Disk_window(window)
 #' print(window)
+#'
+#' plot(window)
 Disk_window <- local({
   function(centre = c(0, 0), radius = 1) {
     # Copy constructor
@@ -25,7 +27,7 @@ Disk_window <- local({
         stop("radius should be a non-negative numeric vector of length 1 representing the radius.")
       }
 
-      structure(list(centre = centre, radius = radius), class = c("Disk_window"))
+      structure(list(centre = centre, radius = radius), class = c("Window", "Disk_window"))
     }
   }
 })

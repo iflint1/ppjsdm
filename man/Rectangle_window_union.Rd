@@ -26,4 +26,6 @@ print(window)
 
 window <- ppjsdm::Rectangle_window_union(window)
 print(window)
+
+plot(window)
 }

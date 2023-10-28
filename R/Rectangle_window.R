@@ -18,6 +18,8 @@
 #'
 #' window <- ppjsdm::Rectangle_window(y_range = c(3, 1))
 #' print(window)
+#'
+#' plot(window)
 Rectangle_window <- local({
   function(x_range = c(0, 1), y_range = c(0, 1)) {
     # Copy constructor
@@ -33,7 +35,7 @@ Rectangle_window <- local({
       }
 
       structure(list(x_range = c(min(x_range), max(x_range)),
-                     y_range = c(min(y_range), max(y_range))), class = c("Rectangle_window"))
+                     y_range = c(min(y_range), max(y_range))), class = c("Window", "Rectangle_window"))
     }
   }
 })
@@ -111,5 +113,25 @@ volume.Rectangle_window <- function(x) {
 #' print(as.owin(window))
 as.owin.Rectangle_window <- function(W, ..., fatal = TRUE) {
   owin(W$x_range, W$y_range)
+}
+
+#' Plot a window.
+#'
+#' @param x Window.
+#' @param ... Ignored.
+#' @importFrom spatstat.geom plot.owin
+#' @method plot Window
+#' @export
+#' @examples
+#' # Construct a window
+#'
+#' window <- ppjsdm::Rectangle_window(x_range = c(0, 1), y_range = c(1, 3))
+#'
+#' # Plot it
+#'
+#' plot(window)
+plot.Window <- function(x, ...) {
+  window <- as.owin(x)
+  plot.owin(window)
 }
 

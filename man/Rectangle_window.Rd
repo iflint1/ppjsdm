@@ -28,4 +28,6 @@ print(window)
 
 window <- ppjsdm::Rectangle_window(y_range = c(3, 1))
 print(window)
+
+plot(window)
 }

@@ -22,4 +22,6 @@ print(window)
 
 window <- ppjsdm::Disk_window(window)
 print(window)
+
+plot(window)
 }
