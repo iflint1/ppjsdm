@@ -68,10 +68,10 @@ compute_A2_plus_A3 <- function(..., list, nthreads = NULL, debug = FALSE, npoint
       colnames(tmp) <- mat@Dimnames[[2]]
       tmp
     }
-    if(!inherits(fit$data_list$regressors, "Matrix")) {
+    if(!inherits(fits[[1]]$data_list$regressors, "Matrix")) {
       stop("Error while converting regression matrix to base::matrix format.")
     } else {
-      regressors <- as_matrix(fit$data_list$regressors)
+      regressors <- as_matrix(fits[[1]]$data_list$regressors)
     }
   }
 
