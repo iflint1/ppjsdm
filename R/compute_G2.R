@@ -52,7 +52,7 @@ compute_G2 <- function(..., list, nthreads = NULL, debug = FALSE, time_limit = I
     }, error = function(e) e, warning = function(w) w)
 
     # If we don't have enough RAM to call Matrix::as.matrix.Matrix, use custom function instead.
-    if(is(tt, "error")) {
+    if(is(tt, "error") | is(tt, "warning")) {
       # Ref: https://programmerah.com/the-sparse-matrix-of-r-language-is-too-large-to-be-used-as-matrix-8856/
       as_matrix <- function(mat) {
         tmp <- matrix(data = 0L, nrow = mat@Dim[1], ncol = mat@Dim[2])
