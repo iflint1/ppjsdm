@@ -297,6 +297,27 @@ marks.Configuration <- function(x, ...) {
   x$marks
 }
 
+#' Convert Configuration to a data.frame.
+#'
+#' @param x Configuration.
+#' @param ... Unused.
+#' @exportS3Method as.data.frame Configuration
+#' @examples
+#' set.seed(1)
+#'
+#' # Create a configuration
+#' configuration <- ppjsdm::Configuration(x = 1:4, y = 2:5, marks = runif(4))
+#'
+#' # Convert it to a data.frame
+#' print(as.data.frame(configuration))
+#'
+as.data.frame.Configuration <- function(x, ...) {
+  data.frame(x = x$x,
+             y = x$y,
+             types = x$types,
+             marks = x$marks)
+}
+
 #' Convert a configuration class to a ppp from the SpatStat package.
 #'
 #' @param X Configuration.
