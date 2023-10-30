@@ -1,10 +1,35 @@
 #' Plot the Papangelou conditional intensity.
 #'
-#' IMPORTANT: Check ?plot_papangelou.default for the documentation.
+#' IMPORTANT: Check ?plot_papangelou.default for the documentation. Here, we only provide a few examples.
 #'
 #' @param ... Parameters to be forwarded to the relevant method. Currently, either
 #' the parameters of the Gibbs point process, or a fit object obtained from running `gibbsm`.
 #' @export
+#' @examples
+#' # Plot the Papangelou conditional intensity of a model specified by some parameters.
+#' # This will generate a configuration from that model, and plot the corresponding intensity.
+#'
+#' ppjsdm::plot_papangelou(alpha = matrix(-0.2, 2, 2), # Short-range interaction coefficients
+#'                         beta0 = c(4, 4),
+#'                         grid_steps = 100)
+#'
+#' # More commonly, one starts from a set of points:
+#'
+#' configuration <- ppjsdm::rppp(lambda = c(A = 500, B = 500))
+#'
+#' # Which is used to fit the model:
+#'
+#' fit <- ppjsdm::gibbsm(configuration)
+#'
+#' # And the fit is then used to generate the conditional intensity:
+#'
+#' ppjsdm::plot_papangelou(fit, type = "A", grid_steps = 100)
+#'
+#' # It is possible to override any of the model parameters, e.g., the window:
+#'
+#' ppjsdm::plot_papangelou(fit, type = "A", grid_steps = 100, window = ppjsdm::Rectangle_window(c(0, 0.5), c(0, 1)))
+#'
+#' @md
 plot_papangelou <- function(...) {
   UseMethod("plot_papangelou")
 }
@@ -12,30 +37,31 @@ plot_papangelou <- function(...) {
 #' Plot the Papangelou conditional intensity with given parameters.
 #'
 #' @param window Observation window. Preferably a `ppjsdm` Window, such as `ppjsdm::Rectangle_window`, but also accepts `spatstat` `im` or `owin` objects.
-#' @param type Type of the point at which to evaluate the Papangelou conditional intensity.
-#' @param configuration Configuration of points at which to evaluate the Papangelou conditional intensity.
-#' @param model Model for short range interaction.
-#' @param medium_range_model Model for medium range interaction.
-#' @param alpha Short range repulsion parameter.
-#' @param beta0 Log-intensity.
-#' @param beta Covariates coefficients.
-#' @param gamma Medium range repulsion parameter.
-#' @param covariates Covariates.
-#' @param short_range Matrix of short range distances.
-#' @param medium_range Matrix of medium range distances.
-#' @param long_range Matrix of long range distances.
-#' @param types Types of the points. Default is a vector (type1, type2, ...) of same size as n.
-#' @param saturation Saturation.
-#' @param grid_steps Vector of length 2, representing the number of horizontal and vertical grid steps.
+#' @param type Type of the point at which to evaluate the Papangelou conditional intensity. Either an integer representing the index of the type, or a string representing its label.
 #' @param mark Mark of the point.
-#' @param steps Nunber of steps in the Metropolis-Hastings simulation algorithm.
-#' @param nthreads Maximum number of threads for parallel computing.
+#' @param configuration Configuration of points at which to evaluate the Papangelou conditional intensity.
+#' @param alpha Matrix of short-range interaction coefficients.
+#' @param gamma Matrix of medium-range interaction coefficients.
+#' @param beta0 Vector representing the intercept.
+#' @param covariates List of covariates. These are converted to the `im` format by applying `as.im` to all elements in the list.
+#' @param beta Fitted regression coefficients with respect to covariates.
+#' @param short_range Symmetric matrix of short-range interaction radii. Can also be a list of matrices, each entry representing a different potential.
+#' @param medium_range Symmetric matrix of medium-range interaction radii.
+#' @param long_range Symmetric matrix of long-range interaction radii.
+#' @param saturation Saturation parameter of the point process.
+#' @param types Character vector, with entry i representing the name of type i.
+#' @param model String representing the short-range model to use. The currently authorised models are obtained with a call to `show_short_range_models()`.
+#' @param medium_range_model String representing the medium-range model to use. The currently authorised models are obtained with a call to `show_medium_range_models()`.
+#' @param grid_steps Vector of length 2, representing the number of horizontal and vertical grid steps. If a single value is given, it is assumed that the dimensions are the same along both axes.
+#' @param steps Number of steps in the Metropolis-Hastings simulation algorithm. A value of 0 uses the CFTP algorithm.
+#' This is only used if no configuration was supplied, in which case we simulate a configuration.
+#' @param nthreads Maximum number of threads to use.
 #' @param use_log Plot the logarithm of the Papangelou conditional intensity instead?
 #' @param use_ggplot Use ggplot for fancier plot?
-#' @param return_papangelou Should we return the Papangelou intensity itself instead of plotting it?
-#' @param drop_type_from_configuration Should we remove the considered type from the configuration?
+#' @param return_papangelou Should we return the Papangelou intensity as an `im` object instead of plotting it?
+#' @param drop_type_from_configuration Should we remove the considered `type` from the configuration?
 #' @param show In the plot, should we show all points, no points, or only the individuals of the configuration with the target type?
-#' @param limits Limits for values of the Papamgelou conditional intensity in plotting functions.
+#' @param limits Limits for values of the Papangelou conditional intensity when plotting.
 #' @param ... Ignored.
 #' @importFrom colorspace scale_fill_continuous_sequential
 #' @importFrom ggplot2 aes coord_equal element_text geom_tile ggplot ggtitle guide_legend guides labs scale_color_manual scale_shape_manual scale_x_continuous scale_y_continuous theme theme_minimal xlab xlim ylab ylim
@@ -49,18 +75,18 @@ plot_papangelou.default <- function(window,
                                     type = 1,
                                     mark = 1.0,
                                     configuration,
-                                    model,
-                                    medium_range_model,
                                     alpha,
-                                    beta0,
-                                    beta,
                                     gamma,
+                                    beta0,
                                     covariates,
+                                    beta,
                                     short_range,
                                     medium_range,
                                     long_range,
-                                    types,
                                     saturation,
+                                    types,
+                                    model,
+                                    medium_range_model,
                                     grid_steps = c(1000, 1000),
                                     steps = 0,
                                     nthreads = 1,
@@ -73,6 +99,17 @@ plot_papangelou.default <- function(window,
                                     ...) {
   # Interpret the show argument
   show <- match.arg(show)
+
+  # Take care of grid_steps argument
+  if(!is.numeric(grid_steps)) {
+    stop("Expected numeric grid_steps")
+  } else {
+    if(length(grid_steps) == 1) {
+      grid_steps <- c(grid_steps, grid_steps)
+    } else if(length(grid_steps) != 2) {
+      stop("Expected grid_steps to have length 1 or 2.")
+    }
+  }
 
   # If user did not supply types, by default they should be those of the configuration
   if(missing(types) & !missing(configuration)) {
@@ -151,14 +188,24 @@ plot_papangelou.default <- function(window,
 
   # If the user supplies a string as the type, they want to evaluate the intensity
   # at that type.
-  if(is.character(type)) {
+  if(length(type) != 1) {
+    stop("Expecting a type of length 1.")
+  } else if(is.character(type)) {
     type <- which(type == names(parameters$beta0))[1]
+  } else if(is.numeric(type)) {
+    type <- as.integer(type)
+  } else {
+    stop("Expecting a type that is either an integer or a character.")
+  }
+
+  # Take care of mark and type arguments
+  if(!is.numeric(mark) | length(mark) != 1) {
+    stop("Expecting mark to be a single numeric value.")
   }
 
   window <- as.owin(parameters$window)
-  grid_points <- as.data.frame(gridcentres(window, nx = grid_steps[1], ny = grid_steps[2]))
-  grid_points <- grid_points[inside.owin(x = grid_points$x, y = grid_points$y, w = window), ]
-  df <- as.data.frame(grid_points)
+  df <- as.data.frame(gridcentres(window, nx = grid_steps[1], ny = grid_steps[2]))
+  df <- df[inside.owin(x = df$x, y = df$y, w = window), ]
 
   df$papangelou <- compute_papangelou(x = df$x,
                                       y = df$y,
@@ -208,6 +255,7 @@ plot_papangelou.default <- function(window,
                          y = configuration$y,
                          Types = droplevels(configuration$types),
                          marks = configuration$marks)
+    points <- points[inside.owin(x = points$x, y = points$y, w = window), ]
     color <- rep(c("#FF0000", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6"), nlevels(points$Types))
     shape <- rep(c(16, 17, 15, 18), nlevels(points$Types))
 
@@ -248,29 +296,29 @@ plot_papangelou.default <- function(window,
 #'
 #' @param fit Fit object obtained by running gibbsm.
 #' @param window Observation window. Preferably a `ppjsdm` Window, such as `ppjsdm::Rectangle_window`, but also accepts `spatstat` `im` or `owin` objects.
-#' @param type Type of the point at which to evaluate the Papangelou conditional intensity.
 #' @param configuration Configuration of points at which to evaluate the Papangelou conditional intensity.
-#' @param alpha Short range repulsion parameter.
-#' @param gamma Medium range repulsion parameter.
-#' @param beta0 Log-intensity.
-#' @param covariates Covariates.
-#' @param beta Covariates coefficients.
-#' @param short_range Matrix of short range distances.
-#' @param medium_range Matrix of medium range distances.
-#' @param long_range Matrix of long range distances.
-#' @param saturation Saturation.
-#' @param types Types of the points. Default is a vector (type1, type2, ...) of same size as n.
-#' @param model Model for short range interaction.
-#' @param medium_range_model Model for medium range interaction.
-#' @param nthreads Maximum number of threads for parallel computing.
+#' @param type Type of the point at which to evaluate the Papangelou conditional intensity. Either an integer representing the index of the type, or a string representing its label.
+#' @param alpha Matrix of short-range interaction coefficients.
+#' @param gamma Matrix of medium-range interaction coefficients.
+#' @param beta0 Vector representing the intercept.
+#' @param covariates List of covariates. These are converted to the `im` format by applying `as.im` to all elements in the list.
+#' @param beta Fitted regression coefficients with respect to covariates.
+#' @param short_range Symmetric matrix of short-range interaction radii. Can also be a list of matrices, each entry representing a different potential.
+#' @param medium_range Symmetric matrix of medium-range interaction radii.
+#' @param long_range Symmetric matrix of long-range interaction radii.
+#' @param saturation Saturation parameter of the point process.
+#' @param types Character vector, with entry i representing the name of type i.
+#' @param model String representing the short-range model to use. The currently authorised models are obtained with a call to `show_short_range_models()`.
+#' @param medium_range_model String representing the medium-range model to use. The currently authorised models are obtained with a call to `show_medium_range_models()`.
+#' @param nthreads Maximum number of threads to use.
 #' @param ... Forwarded to plot_papangelou
 #' @export
 #' @method plot_papangelou gibbsm
 #' @md
 plot_papangelou.gibbsm <- function(fit,
                                    window = fit$window,
-                                   type = 1,
                                    configuration = fit$configuration_list[[1]],
+                                   type = 1,
                                    alpha = fit$coefficients$alpha,
                                    gamma = fit$coefficients$gamma,
                                    beta0 = fit$coefficients$beta0,
@@ -286,8 +334,8 @@ plot_papangelou.gibbsm <- function(fit,
                                    nthreads = fit$nthreads,
                                    ...) {
   plot_papangelou(window = window,
-                  type = type,
                   configuration = configuration,
+                  type = type, # Need to have this here and NOT forwarded, otherwise a given type argument gets matched with types
                   alpha = alpha,
                   gamma = gamma,
                   beta0 = beta0,

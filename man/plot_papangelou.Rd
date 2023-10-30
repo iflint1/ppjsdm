@@ -8,8 +8,33 @@ plot_papangelou(...)
 }
 \arguments{
 \item{...}{Parameters to be forwarded to the relevant method. Currently, either
-the parameters of the Gibbs point process, or a fit object obtained from running `gibbsm`.}
+the parameters of the Gibbs point process, or a fit object obtained from running \code{gibbsm}.}
 }
 \description{
-IMPORTANT: Check ?plot_papangelou.default for the documentation.
+IMPORTANT: Check ?plot_papangelou.default for the documentation. Here, we only provide a few examples.
+}
+\examples{
+# Plot the Papangelou conditional intensity of a model specified by some parameters.
+# This will generate a configuration from that model, and plot the corresponding intensity.
+
+ppjsdm::plot_papangelou(alpha = matrix(-0.2, 2, 2), # Short-range interaction coefficients
+                        beta0 = c(4, 4),
+                        grid_steps = 100)
+
+# More commonly, one starts from a set of points:
+
+configuration <- ppjsdm::rppp(lambda = c(A = 500, B = 500))
+
+# Which is used to fit the model:
+
+fit <- ppjsdm::gibbsm(configuration)
+
+# And the fit is then used to generate the conditional intensity:
+
+ppjsdm::plot_papangelou(fit, type = "A", grid_steps = 100)
+
+# It is possible to override any of the model parameters, e.g., the window:
+
+ppjsdm::plot_papangelou(fit, type = "A", grid_steps = 100, window = ppjsdm::Rectangle_window(c(0, 0.5), c(0, 1)))
+
 }

@@ -7,8 +7,8 @@
 \method{plot_papangelou}{gibbsm}(
   fit,
   window = fit$window,
-  type = 1,
   configuration = fit$configuration_list[[1]],
+  type = 1,
   alpha = fit$coefficients$alpha,
   gamma = fit$coefficients$gamma,
   beta0 = fit$coefficients$beta0,
@@ -30,35 +30,35 @@
 
 \item{window}{Observation window. Preferably a \code{ppjsdm} Window, such as \code{ppjsdm::Rectangle_window}, but also accepts \code{spatstat} \code{im} or \code{owin} objects.}
 
-\item{type}{Type of the point at which to evaluate the Papangelou conditional intensity.}
-
 \item{configuration}{Configuration of points at which to evaluate the Papangelou conditional intensity.}
 
-\item{alpha}{Short range repulsion parameter.}
+\item{type}{Type of the point at which to evaluate the Papangelou conditional intensity. Either an integer representing the index of the type, or a string representing its label.}
 
-\item{gamma}{Medium range repulsion parameter.}
+\item{alpha}{Matrix of short-range interaction coefficients.}
 
-\item{beta0}{Log-intensity.}
+\item{gamma}{Matrix of medium-range interaction coefficients.}
 
-\item{covariates}{Covariates.}
+\item{beta0}{Vector representing the intercept.}
 
-\item{beta}{Covariates coefficients.}
+\item{covariates}{List of covariates. These are converted to the \code{im} format by applying \code{as.im} to all elements in the list.}
 
-\item{short_range}{Matrix of short range distances.}
+\item{beta}{Fitted regression coefficients with respect to covariates.}
 
-\item{medium_range}{Matrix of medium range distances.}
+\item{short_range}{Symmetric matrix of short-range interaction radii. Can also be a list of matrices, each entry representing a different potential.}
 
-\item{long_range}{Matrix of long range distances.}
+\item{medium_range}{Symmetric matrix of medium-range interaction radii.}
 
-\item{saturation}{Saturation.}
+\item{long_range}{Symmetric matrix of long-range interaction radii.}
 
-\item{types}{Types of the points. Default is a vector (type1, type2, ...) of same size as n.}
+\item{saturation}{Saturation parameter of the point process.}
 
-\item{model}{Model for short range interaction.}
+\item{types}{Character vector, with entry i representing the name of type i.}
 
-\item{medium_range_model}{Model for medium range interaction.}
+\item{model}{String representing the short-range model to use. The currently authorised models are obtained with a call to \code{show_short_range_models()}.}
 
-\item{nthreads}{Maximum number of threads for parallel computing.}
+\item{medium_range_model}{String representing the medium-range model to use. The currently authorised models are obtained with a call to \code{show_medium_range_models()}.}
+
+\item{nthreads}{Maximum number of threads to use.}
 
 \item{...}{Forwarded to plot_papangelou}
 }
