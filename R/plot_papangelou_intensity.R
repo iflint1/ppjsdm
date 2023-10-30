@@ -206,10 +206,10 @@ plot_papangelou.default <- function(window,
   if(use_ggplot) {
     points <- data.frame(x = configuration$x,
                          y = configuration$y,
-                         types = droplevels(configuration$types),
+                         Types = droplevels(configuration$types),
                          marks = configuration$marks)
-    color <- rep(c("#FF0000", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6"), nlevels(points$types))
-    shape <- rep(c(16, 17, 15, 18), nlevels(points$types))
+    color <- rep(c("#FF0000", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6"), nlevels(points$Types))
+    shape <- rep(c(16, 17, 15, 18), nlevels(points$Types))
 
     lim <- if(missing(limits)) {
       c(min(df$papangelou), max(df$papangelou))
@@ -233,9 +233,9 @@ plot_papangelou.default <- function(window,
       guides(shape = guide_legend(override.aes = list(size = 5))) # Bigger species symbol size
 
     if(!all(points$marks == 1.)) {
-      g <- g + geom_point(data = points, aes_string(x = 'x', y = 'y', colour = 'types', shape = 'types', size = 'marks'), alpha = 0.5)
+      g <- g + geom_point(data = points, aes_string(x = 'x', y = 'y', colour = 'Types', shape = 'Types', size = 'marks'), alpha = 0.5)
     } else {
-      g <- g + geom_point(data = points, aes_string(x = 'x', y = 'y', colour = 'types', shape = 'types'), size = 1.5, alpha = 0.5)
+      g <- g + geom_point(data = points, aes_string(x = 'x', y = 'y', colour = 'Types', shape = 'Types'), size = 1.5, alpha = 0.5)
     }
     g
   } else {
