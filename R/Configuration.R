@@ -301,7 +301,7 @@ marks.Configuration <- function(x, ...) {
 #'
 #' @param x Configuration.
 #' @param ... Unused.
-#' @exportS3Method as.data.frame Configuration
+#' @method as.data.frame Configuration
 #' @examples
 #' set.seed(1)
 #'
@@ -311,6 +311,7 @@ marks.Configuration <- function(x, ...) {
 #' # Convert it to a data.frame
 #' print(as.data.frame(configuration))
 #'
+#' @export
 as.data.frame.Configuration <- function(x, ...) {
   data.frame(x = x$x,
              y = x$y,
