@@ -179,8 +179,16 @@ as.Configuration.default <- function(configuration) {
 
 format_configuration <- function(configuration) {
   number_points <- length(configuration$x)
-  str <- paste0("An S3 object representing a configuration.\n\nNumber of points: ",
-                paste0(number_points, collapse = ", "),
+  str <- paste0("A configuration of points.\n\nTotal number of points: ",
+                number_points,
+                ".\nTypes: ",
+                paste0(levels(configuration$types), collapse = ", "),
+                ".\nMarks in range [",
+                min(configuration$marks),
+                ", ",
+                max(configuration$marks),
+                "].\nNumber of points by type: ",
+                paste0(paste0(levels(configuration$types), " = ", table(configuration$types)), collapse = ", "),
                 ".\n")
   if(number_points > 0 && number_points < 50) {
     str <- paste0(str, "\nPoints in the format (x-coordinate, y-coordinate, type): ",
