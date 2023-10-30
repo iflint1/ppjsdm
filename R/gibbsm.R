@@ -475,6 +475,15 @@ gibbsm <- function(configuration_list,
   model <- parameters$model
   medium_range_model <- parameters$medium_range_model
 
+  # Subset configurations to the window.
+  configuration_list <- lapply(configuration_list, function(configuration) {
+    configuration <- as.data.frame(configuration)
+    configuration <- configuration[inside.owin(x = configuration$x,
+                                               y = configuration$y,
+                                               w = window), ]
+    configuration <- as.Configuration(configuration)
+  })
+
   # Set types names and covariates names
   types_names <- levels(types(configuration_list[[1]]))
   covariates_names <- names(covariates)

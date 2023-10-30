@@ -203,9 +203,17 @@ plot_papangelou.default <- function(window,
     stop("Expecting mark to be a single numeric value.")
   }
 
+  # Convert window to owin, and subset grid points
   window <- as.owin(parameters$window)
   df <- as.data.frame(gridcentres(window, nx = grid_steps[1], ny = grid_steps[2]))
   df <- df[inside.owin(x = df$x, y = df$y, w = window), ]
+
+  # Subset configuration to window
+  configuration <- as.data.frame(configuration)
+  configuration <- configuration[inside.owin(x = configuration$x,
+                                             y = configuration$y,
+                                             w = window), ]
+  configuration <- as.Configuration(configuration)
 
   df$papangelou <- compute_papangelou(x = df$x,
                                       y = df$y,
@@ -251,11 +259,8 @@ plot_papangelou.default <- function(window,
   }
 
   if(use_ggplot) {
-    points <- data.frame(x = configuration$x,
-                         y = configuration$y,
-                         Types = droplevels(configuration$types),
-                         marks = configuration$marks)
-    points <- points[inside.owin(x = points$x, y = points$y, w = window), ]
+    points <- as.data.frame(configuration)
+    names(points)[names(points) == "types"] <- "Types"
     color <- rep(c("#FF0000", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6"), nlevels(points$Types))
     shape <- rep(c(16, 17, 15, 18), nlevels(points$Types))
 
