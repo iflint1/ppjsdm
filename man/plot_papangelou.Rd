@@ -2,8 +2,7 @@
 % Please edit documentation in R/plot_papangelou_intensity.R
 \name{plot_papangelou}
 \alias{plot_papangelou}
-\title{Plot the Papangelou conditional intensity.
-IMPORTANT: Check ?plot_papangelou.default for the documentation.}
+\title{Plot the Papangelou conditional intensity.}
 \usage{
 plot_papangelou(...)
 }
@@ -12,6 +11,5 @@ plot_papangelou(...)
 the parameters of the Gibbs point process, or a fit object obtained from running `gibbsm`.}
 }
 \description{
-Plot the Papangelou conditional intensity.
 IMPORTANT: Check ?plot_papangelou.default for the documentation.
 }

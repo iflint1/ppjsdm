@@ -1,4 +1,5 @@
 #' Plot the Papangelou conditional intensity.
+#'
 #' IMPORTANT: Check ?plot_papangelou.default for the documentation.
 #'
 #' @param ... Parameters to be forwarded to the relevant method. Currently, either
@@ -39,7 +40,7 @@ plot_papangelou <- function(...) {
 #' @importFrom colorspace scale_fill_continuous_sequential
 #' @importFrom ggplot2 aes coord_equal element_text geom_tile ggplot ggtitle guide_legend guides labs scale_color_manual scale_shape_manual scale_x_continuous scale_y_continuous theme theme_minimal xlab xlim ylab ylim
 #' @importFrom graphics plot
-#' @importFrom spatstat.geom as.im as.owin as.ppp boundingbox gridcentres
+#' @importFrom spatstat.geom as.im as.owin as.ppp boundingbox gridcentres inside.owin
 #' @importFrom stats na.omit
 #' @export
 #' @method plot_papangelou default
@@ -155,7 +156,9 @@ plot_papangelou.default <- function(window,
   }
 
   window <- as.owin(parameters$window)
-  df <- as.data.frame(gridcentres(window, nx = grid_steps[1], ny = grid_steps[2]))
+  grid_points <- as.data.frame(gridcentres(window, nx = grid_steps[1], ny = grid_steps[2]))
+  grid_points <- grid_points[inside.owin(x = grid_points$x, y = grid_points$y, w = window), ]
+  df <- as.data.frame(grid_points)
 
   df$papangelou <- compute_papangelou(x = df$x,
                                       y = df$y,
