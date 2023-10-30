@@ -9,7 +9,7 @@
 #include "../utility/window.hpp"
 
 #include <algorithm> // std::max, std::min
-#include <cmath> // std::round
+#include <cmath> // std::floor
 #include <limits> // std::numeric_limits
 #include <string> // std::string
 #include <tuple> // std::pair
@@ -31,8 +31,8 @@ public:
   explicit Im_wrapper(Rcpp::List im):
     number_row_(Rcpp::as<Rcpp::IntegerVector>(im["dim"])[0]),
     number_col_(Rcpp::as<Rcpp::IntegerVector>(im["dim"])[1]),
-    xcol_(Rf_asReal(im["xcol"])),
-    yrow_(Rf_asReal(im["yrow"])),
+    x_min_(Rcpp::as<Rcpp::NumericVector>(im["xrange"])[0]),
+    y_min_(Rcpp::as<Rcpp::NumericVector>(im["yrange"])[0]),
     xstep_(Rf_asReal(im["xstep"])),
     ystep_(Rf_asReal(im["ystep"])),
     mat_(number_row_ * number_col_) {
@@ -52,11 +52,13 @@ public:
   }
 
   double operator()(double x, double y) const {
-    const R_xlen_t raw_col(std::round((x - xcol_) / xstep_));
-    const R_xlen_t raw_row(std::round((y - yrow_) / ystep_));
-    const R_xlen_t col(std::max<int>(0, std::min<int>(raw_col, number_col_ - 1)));
-    const R_xlen_t row(std::max<int>(0, std::min<int>(raw_row, number_row_ - 1)));
-    return get_matrix(row, col);
+    const R_xlen_t col(std::floor((x - x_min()) / xstep_));
+    const R_xlen_t row(std::floor((y - y_min()) / ystep_));
+    if(col < 0 || col >= number_col_ || row < 0 || row >= number_row_) {
+      return NA_REAL;
+    } else {
+      return get_matrix(row, col);
+    }
   }
 
   Rcpp::NumericVector operator()(Rcpp::NumericVector x, Rcpp::NumericVector y) const {
@@ -91,7 +93,7 @@ public:
   }
 
   double x_min() const {
-    return xcol_;
+    return x_min_;
   }
 
   double delta_x() const {
@@ -99,7 +101,7 @@ public:
   }
 
   double y_min() const {
-    return yrow_;
+    return y_min_;
   }
 
   double delta_y() const {
@@ -108,8 +110,8 @@ public:
 private:
   R_xlen_t number_row_;
   R_xlen_t number_col_;
-  double xcol_;
-  double yrow_;
+  double x_min_;
+  double y_min_;
   double xstep_;
   double ystep_;
   std::vector<double> mat_;

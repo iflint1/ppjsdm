@@ -230,6 +230,7 @@ public:
     const auto y_min(im_.y_min());
     const auto delta_x(im_.delta_x());
     const auto delta_y(im_.delta_y());
+    // TODO: Better algorithm: Index non-NA cells, draw one cell, and runif within that cell.
     while(true) {
       const auto x(delta_x * random_uniform_distribution(generator) + x_min);
       const auto y(delta_y * random_uniform_distribution(generator) + y_min);
@@ -239,6 +240,7 @@ public:
     }
   }
 
+  // TODO: Can factorize with above
   Marked_point sample(int type = 0) const {
     const auto x_min(im_.x_min());
     const auto y_min(im_.y_min());
