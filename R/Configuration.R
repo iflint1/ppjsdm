@@ -213,6 +213,7 @@ plot.Configuration <- function(x, window, color, shape, ...) {
       x_range <- c(min(x$x), max(x$x))
       y_range <- c(min(x$y), max(x$y))
     } else {
+      window <- as.Window(window)
       x_range <- x_range(window)
       y_range <- y_range(window)
     }
