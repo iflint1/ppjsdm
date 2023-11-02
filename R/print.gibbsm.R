@@ -1,7 +1,6 @@
 #' @method print gibbsm
 #' @export
 print.gibbsm <- function(x, ...) {
-  number_points <- length(configuration$x)
   str <- paste0("A fitted saturation pairwise interaction Gibbs point process model.\n\nNumber of replicated samples used for the fit: ",
                 length(x$configuration_list),
                 ".\nNumber of types: ",
