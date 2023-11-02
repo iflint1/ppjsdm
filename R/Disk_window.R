@@ -35,7 +35,7 @@ Disk_window <- local({
 #' @method print Disk_window
 #' @export
 print.Disk_window <- function(x, ...) {
-  str <- paste0("A disk window with centre (", x$centre[1], ", ", x$centre[2], ") and radius ", x$radius, ".")
+  str <- paste0("A disk window with centre (", x$centre[1], ", ", x$centre[2], ") and radius ", x$radius, ".\n")
   cat(str)
 }
 

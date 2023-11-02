@@ -43,7 +43,7 @@ Rectangle_window <- local({
 #' @method print Rectangle_window
 #' @export
 print.Rectangle_window <- function(x, ...) {
-  str <- paste0("A rectangle window [", x$x_range[1], ", ", x$x_range[2], "] x [", x$y_range[1], ", ", x$y_range[2], "].")
+  str <- paste0("A rectangle window [", x$x_range[1], ", ", x$x_range[2], "] x [", x$y_range[1], ", ", x$y_range[2], "].\n")
   cat(str)
 }
 

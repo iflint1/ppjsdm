@@ -76,7 +76,7 @@ print.Rectangle_window_union <- function(x, ...) {
     if(i < length(x$x_ranges)) {
       str <- paste0(str, ",\n")
     } else {
-      str <- paste0(str, ".")
+      str <- paste0(str, ".\n")
     }
   }
   cat(str)
