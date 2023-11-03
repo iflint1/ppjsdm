@@ -26,6 +26,8 @@
 #' @param xmax Optional plot maximum x.
 #' @importFrom ggplot2 aes aes_string element_text facet_grid geom_errorbar geom_point geom_vline ggplot ggtitle guide_legend guides position_dodge scale_color_manual theme theme_bw xlab ylab xlim
 #' @examples
+#' set.seed(1)
+#'
 #' # Construct a configuration
 #'
 #' configuration <- ppjsdm::rppp(lambda = c(A = 500, B = 500))
@@ -45,7 +47,7 @@
 box_plot <- function(...,
                      list,
                      coefficient = "alpha1",
-                     title = "",
+                     title,
                      summ,
                      only_statistically_significant = FALSE,
                      which = c("all", "within", "between"),
@@ -57,7 +59,6 @@ box_plot <- function(...,
                      involving,
                      xmin,
                      xmax) {
-  # TODO: Add default title.
   # TODO: Add option to not compute summaries
   # TODO: Combine any gibbsm objects in ... with list
   # Interpret the which argument
@@ -90,6 +91,9 @@ box_plot <- function(...,
   # In addition, is_interaction tells us whether or not the coefficient is an interaction coefficient (alpha/gamma) or not (beta)
   is_interaction <- TRUE
   if("gamma" == coefficient[1] & length(coefficient) == 1) { # The requested coefficient is gamma
+    if(missing(title)) {
+      title <- "Medium-range interaction coefficients"
+    }
     access <- function(obj) obj[["gamma"]]
   } else {
     is_alpha <- gsub("^alpha([0-9]*)", "\\1", coefficient)
@@ -98,6 +102,9 @@ box_plot <- function(...,
     }
 
     if(length(coefficient) == 1 & is_alpha[1] != coefficient[1]) { # it starts with alpha
+      if(missing(title)) {
+        title <- paste0("Short-range interaction coefficients for potential ", is_alpha[1])
+      }
       access <- function(obj) obj[["alpha"]][[as.numeric(is_alpha)]]
     } else {
       is_interaction <- FALSE
@@ -108,8 +115,16 @@ box_plot <- function(...,
           colnames(as.matrix(fit$coefficients[["beta"]]))
         })
         is_beta <- as.character(unique(Reduce(c, list_covariates)))
+        if(missing(title)) {
+          title <- "Beta coefficients."
+        }
       } else if(!all(is.na(suppressWarnings(as.numeric(is_beta))))) { # is_beta is an integer, telling us which beta to access
         is_beta <- as.numeric(is_beta)
+        if(missing(title)) {
+          title <- paste0("Beta coefficient for covariate number ", is_beta)
+        }
+      } else if(missing(title)) {
+        title <- paste0("Beta coefficient for ", is_beta)
       }
 
       # If it starts with beta, then this works. If not, assume that coefficient is an env covariate and access in this way too.

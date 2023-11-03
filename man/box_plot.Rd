@@ -8,7 +8,7 @@ box_plot(
   ...,
   list,
   coefficient = "alpha1",
-  title = "",
+  title,
   summ,
   only_statistically_significant = FALSE,
   which = c("all", "within", "between"),
@@ -64,6 +64,8 @@ Formally, these are theoretical asymptotic 95\% confidence intervals.
 As a convenience, this function can alternatively be applied by calling \code{plot} on a fit object.
 }
 \examples{
+set.seed(1)
+
 # Construct a configuration
 
 configuration <- ppjsdm::rppp(lambda = c(A = 500, B = 500))
