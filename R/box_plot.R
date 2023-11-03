@@ -7,7 +7,7 @@
 #' As a convenience, this function can alternatively be applied by calling `plot` on a fit object.
 #'
 #' @param ... Any number of fit objects obtained by a call to `ppjsdm::gibbsm`.
-#' @param list Alternatively, fits provided as a list object.
+#' @param list Some more fits provided as a list.
 #' @param coefficient A string representing the coefficient to plot.
 #' Choice of alpha1, alpha2, ..., for one of the short-range interaction coefficients;
 #' gamma for the medium-range interaction coefficient;
@@ -61,7 +61,6 @@ box_plot <- function(...,
                      involving,
                      xmin,
                      xmax) {
-  # TODO: Combine any gibbsm objects in ... with list
   # Interpret the which argument
   which <- match.arg(which)
 
@@ -69,8 +68,18 @@ box_plot <- function(...,
   fits <- if(missing(list)) {
     base::list(...)
   } else {
-    list
+    c(base::list(...), list)
   }
+
+  # Subset to objects which have the right class, discarding others
+  which_gibbsm <- sapply(fits, function(fit) inherits(fit, "gibbsm"))
+  if(!all(which_gibbsm)) {
+    warning("Provided some arguments that were not fit objects, these were discarded.")
+  }
+  if(length(which_gibbsm) == 0) {
+    stop("No valid fits were provided.")
+  }
+  fits <- fits[which_gibbsm]
 
   # If user did not give names to the fits, add some default names
   default_names <- paste0("Fit ", seq_len(length(fits)))

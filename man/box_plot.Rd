@@ -26,7 +26,7 @@ box_plot(
 \arguments{
 \item{...}{Any number of fit objects obtained by a call to \code{ppjsdm::gibbsm}.}
 
-\item{list}{Alternatively, fits provided as a list object.}
+\item{list}{Some more fits provided as a list.}
 
 \item{coefficient}{A string representing the coefficient to plot.
 Choice of alpha1, alpha2, ..., for one of the short-range interaction coefficients;
