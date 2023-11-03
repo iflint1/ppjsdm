@@ -12,5 +12,5 @@
 \item{...}{Forwarded to \code{ppjsdm::box_plot}.}
 }
 \description{
-This calls \code{ppjsdm::box_plot}, see the documentation for that function for details.
+This calls \code{ppjsdm::box_plot}, see that function's documentation for details.
 }

@@ -1,6 +1,6 @@
 #' Plot the coefficients of a fit object.
 #'
-#' We use a box-like plot.
+#' The coefficients and corresponding confidence intervals are shown in a box-like plot.
 #' The inner thick parts of the error bars represent numerical uncertainty, due to the number and distribution of dummy points.
 #' The outer thin part of the error bars represent the total statistical + numerical uncertainty.
 #' Formally, these are theoretical asymptotic 95% confidence intervals.
@@ -9,9 +9,9 @@
 #' @param ... Any number of fit objects obtained by a call to `ppjsdm::gibbsm`.
 #' @param list Some more fits provided as a list.
 #' @param coefficient A string representing the coefficient to plot.
-#' Choice of alpha1, alpha2, ..., for one of the short-range interaction coefficients;
-#' gamma for the medium-range interaction coefficient;
-#' beta1, beta2, ... or actual name of the env. covariate for one of the regression coefficients.
+#' Choice of `alpha1`, `alpha2`, ..., to show one of the short-range interaction coefficients;
+#' `gamma` to show the medium-range interaction coefficient;
+#' `beta1`, `beta2`, ... or actual name of the covariate for one of the regression coefficients.
 #' @param title Plot title.
 #' @param summ Optional list of summaries corresponding to the fits; if not provided they are obtained by calling `ppjsdm::summary.gibbsm`
 #' @param only_statistically_significant Only show statistically significant coefficients?
@@ -122,7 +122,7 @@ box_plot <- function(...,
       is_interaction <- FALSE
       is_beta <- gsub("^beta([0-9]*)", "\\1", coefficient)
       if("" == is_beta[1] & length(is_beta) == 1) { # it starts with beta, but has no integer afterwards
-        # In this case, we want to get all environmental covariates involved, and use all
+        # In this case, we want to get all covariates involved, and use all
         list_covariates <- lapply(fits, function(fit) {
           colnames(as.matrix(fit$coefficients[["beta"]]))
         })
@@ -139,7 +139,7 @@ box_plot <- function(...,
         title <- paste0("Beta coefficient for ", is_beta)
       }
 
-      # If it starts with beta, then this works. If not, assume that coefficient is an env covariate and access in this way too.
+      # If it starts with beta, then this works. If not, assume that coefficient is a covariate and access in this way too.
       access <- function(obj) {
         beta <- as.matrix(obj[["beta"]])
         if(is.character(is_beta)) {
@@ -244,7 +244,7 @@ box_plot <- function(...,
   x <- factor(1:nc)
   if(is_interaction && which != "within") {
     levels(x) <- ifelse(df$from < df$to, paste0(df$from, enc2utf8(" \u2194 "), df$to), paste0(df$to, enc2utf8(" \u2194 "), df$from)) # Order lhs and rhs of interaction alphabetically
-  } else { # In this, we are plotting env. covariates
+  } else { # In this, we are plotting covariates
     levels(x) <- df$from
   }
 
@@ -316,7 +316,7 @@ box_plot <- function(...,
 
 #' Plot a `ppjsdm::gibbsm` object.
 #'
-#' This calls `ppjsdm::box_plot`, see the documentation for that function for details.
+#' This calls `ppjsdm::box_plot`, see that function's documentation for details.
 #' @method plot gibbsm
 #' @param x A fit object obtained by calling `ppjsdm::gibbsm`.
 #' @param ... Forwarded to `ppjsdm::box_plot`.

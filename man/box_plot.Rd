@@ -29,9 +29,9 @@ box_plot(
 \item{list}{Some more fits provided as a list.}
 
 \item{coefficient}{A string representing the coefficient to plot.
-Choice of alpha1, alpha2, ..., for one of the short-range interaction coefficients;
-gamma for the medium-range interaction coefficient;
-beta1, beta2, ... or actual name of the env. covariate for one of the regression coefficients.}
+Choice of \code{alpha1}, \code{alpha2}, ..., to show one of the short-range interaction coefficients;
+\code{gamma} to show the medium-range interaction coefficient;
+\code{beta1}, \code{beta2}, ... or actual name of the covariate for one of the regression coefficients.}
 
 \item{title}{Plot title.}
 
@@ -60,7 +60,7 @@ beta1, beta2, ... or actual name of the env. covariate for one of the regression
 \item{xmax}{Optional plot maximum x.}
 }
 \description{
-We use a box-like plot.
+The coefficients and corresponding confidence intervals are shown in a box-like plot.
 The inner thick parts of the error bars represent numerical uncertainty, due to the number and distribution of dummy points.
 The outer thin part of the error bars represent the total statistical + numerical uncertainty.
 Formally, these are theoretical asymptotic 95\% confidence intervals.
