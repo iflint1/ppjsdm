@@ -20,6 +20,7 @@
 #' @param text_size Text size.
 #' @param base_size Base size.
 #' @param full_names Optional list of full names of types, if for example abbreviations were used when running the fit.
+#' @param compute_confidence_intervals Compute the confidence intervals (which is slower) or just show the point estimates?
 #' @param colours Optional vector of colours to represent the different fits.
 #' @param involving Optional vector/list of types. Only coefficients involving these types will be plotted.
 #' @param xmin Optional plot minimum x.
@@ -55,11 +56,11 @@ box_plot <- function(...,
                      text_size = 16,
                      base_size = 20,
                      full_names = NULL,
+                     compute_confidence_intervals = TRUE,
                      colours,
                      involving,
                      xmin,
                      xmax) {
-  # TODO: Add option to not compute summaries
   # TODO: Combine any gibbsm objects in ... with list
   # Interpret the which argument
   which <- match.arg(which)
@@ -78,13 +79,15 @@ box_plot <- function(...,
   }
   names(fits) <- ifelse(names(fits) == "", default_names, names(fits))
 
-  if(!missing(summ)) { # Make sure summaries and fits are compatible
-    if(!is(summ, "list")) {
-      summ <- base::list(summ)
+  if(compute_confidence_intervals) {
+    if(!missing(summ)) { # Make sure summaries and fits are compatible
+      if(!is(summ, "list")) {
+        summ <- base::list(summ)
+      }
+      stopifnot(length(fits) == length(summ))
+    } else { # Construct the summaries
+      summ <- lapply(fits, function(f) summary(f))
     }
-    stopifnot(length(fits) == length(summ))
-  } else { # Construct the summaries
-    summ <- lapply(fits, function(f) summary(f))
   }
 
   # Below, we translate the coefficient parameter into a function "access" that allows us to access it in the fit object
@@ -116,7 +119,7 @@ box_plot <- function(...,
         })
         is_beta <- as.character(unique(Reduce(c, list_covariates)))
         if(missing(title)) {
-          title <- "Beta coefficients."
+          title <- "Beta coefficients"
         }
       } else if(!all(is.na(suppressWarnings(as.numeric(is_beta))))) { # is_beta is an integer, telling us which beta to access
         is_beta <- as.numeric(is_beta)
@@ -148,19 +151,20 @@ box_plot <- function(...,
     tryCatch(access(f$coefficients), error = function(err) NA)
   })
 
-  # The fits could perhaps relate to fits which do not involve the same species. Construct a set of all species that appear in some of the fits
-  species <- lapply(estimates, function(e) rownames(e))
-  species <- unique(Reduce(c, species))
+  # The fits could perhaps relate to fits which do not involve the same types.
+  # Construct a set of all types that appear in some of the fits
+  types <- lapply(estimates, function(e) rownames(e))
+  types <- unique(Reduce(c, types))
 
-  # Species involving the focal ones
-  species_subset <- if(!missing(involving)) {
-    intersect(species, involving)
+  # Types involving the focal ones
+  types_subset <- if(!missing(involving)) {
+    intersect(types, involving)
   } else {
-    species
+    types
   }
 
-  if(is_interaction) { # Create dataframe of two columns with all possible pairs of species
-    df <- as.data.frame(expand.grid(from = species, to = species_subset, stringsAsFactors = FALSE))
+  if(is_interaction) { # Create dataframe of two columns with all possible pairs of types
+    df <- as.data.frame(expand.grid(from = types, to = types_subset, stringsAsFactors = FALSE))
     df <- df[!duplicated(t(apply(df, 1, sort))), ]
 
     if(which == "within") { # in this case, remove columns that are the same, so shows only between interactions
@@ -169,36 +173,39 @@ box_plot <- function(...,
       df <- df[df$to != df$from, ]
     }
   } else {
-    df <- Reduce(rbind, lapply(is_beta, function(i) data.frame(from = species_subset, to = i)))
+    df <- Reduce(rbind, lapply(is_beta, function(i) data.frame(from = types_subset, to = i)))
   }
 
-  # At this point, df is a single dataframe containing all relevant pairs of species.
+  # At this point, df is a single dataframe containing all relevant pairs of types.
   # Since our estimates are a list of fits, convert df to a list of dataframe, each one corresponding to one of the fits.
   dfs <- lapply(seq_len(length(fits)), function(k) {
     d <- df
-    d$lo <- sapply(seq_len(nrow(d)), function(i) { # Get the lower-endpoint of the CIs, apply function to sequence of numbers 1 to nrow.df
-      tryCatch(access(summ[[k]]$lo)[d$from[i], d$to[i]], error = function(err) NA) # retrieve numbers from summ and apply to the rows
-    })
-
-    d$hi <- sapply(seq_len(nrow(d)), function(i) { # Get the upper-endpoint of the CIs
-      tryCatch(access(summ[[k]]$hi)[d$from[i], d$to[i]], error = function(err) NA)
-    })
-
-    if(only_statistically_significant) { # in this case, remove non-stat significant
-      d <- d[d$lo > 0 | d$hi < 0, ] # If non-statistically significant, remove row,. i.e. if low is > 0 or if high < 0, the row is kept
-    }
 
     d$E <- sapply(seq_len(nrow(d)), function(i) { #these and below parts specify the values of point and bars
       tryCatch(estimates[[k]][d$from[i], d$to[i]], error = function(err) NA)
     })
 
-    d$lo_numerical <- sapply(seq_len(nrow(d)), function(i) { # Lower-endpoint of the numerical CI (relating to the numerical error due to dummy points)
-      tryCatch(access(summ[[k]]$lo_numerical)[d$from[i], d$to[i]], error = function(err) NA)
-    })
+    if(compute_confidence_intervals) {
+      d$lo <- sapply(seq_len(nrow(d)), function(i) { # Get the lower-endpoint of the CIs, apply function to sequence of numbers 1 to nrow.df
+        tryCatch(access(summ[[k]]$lo)[d$from[i], d$to[i]], error = function(err) NA) # retrieve numbers from summ and apply to the rows
+      })
 
-    d$hi_numerical <- sapply(seq_len(nrow(d)), function(i) { # Upper-endpoint of the numerical CI (relating to the numerical error due to dummy points)
-      tryCatch(access(summ[[k]]$hi_numerical)[d$from[i], d$to[i]], error = function(err) NA)
-    })
+      d$hi <- sapply(seq_len(nrow(d)), function(i) { # Get the upper-endpoint of the CIs
+        tryCatch(access(summ[[k]]$hi)[d$from[i], d$to[i]], error = function(err) NA)
+      })
+
+      if(only_statistically_significant) { # in this case, remove non-stat significant
+        d <- d[d$lo > 0 | d$hi < 0, ] # If non-statistically significant, remove row,. i.e. if low is > 0 or if high < 0, the row is kept
+      }
+
+      d$lo_numerical <- sapply(seq_len(nrow(d)), function(i) { # Lower-endpoint of the numerical CI (relating to the numerical error due to dummy points)
+        tryCatch(access(summ[[k]]$lo_numerical)[d$from[i], d$to[i]], error = function(err) NA)
+      })
+
+      d$hi_numerical <- sapply(seq_len(nrow(d)), function(i) { # Upper-endpoint of the numerical CI (relating to the numerical error due to dummy points)
+        tryCatch(access(summ[[k]]$hi_numerical)[d$from[i], d$to[i]], error = function(err) NA)
+      })
+    }
 
     if(!is.null(full_names)) { # specifying names
       full_names <- as.list(full_names)
@@ -226,16 +233,10 @@ box_plot <- function(...,
   # Define and order y-axis labels
   nc <- nrow(df)
   x <- factor(1:nc)
-  if(is_interaction) {
+  if(is_interaction && which != "within") {
     levels(x) <- ifelse(df$from < df$to, paste0(df$from, enc2utf8(" \u2194 "), df$to), paste0(df$to, enc2utf8(" \u2194 "), df$from)) # Order lhs and rhs of interaction alphabetically
   } else { # In this, we are plotting env. covariates
-    # If there is only one of them to plot, legend should just be the species
-    # If not, we will be plotting multiple env. cov x species coefficients.
-    if(length(is_beta) > 1) {
-      levels(x) <- df$from
-    } else {
-      levels(x) <- df$from
-    }
+    levels(x) <- df$from
   }
 
   df$x <- factor(x, levels = levels(x)[order(df$average_estimates)])
@@ -269,12 +270,6 @@ box_plot <- function(...,
 
   g <- g +
     geom_point(aes_string(colour = "Fit"), size = 3, position = position_dodge(width = 0.2)) + # Size of point estimates
-    geom_errorbar(aes_string(colour = "Fit",
-                      xmin = "lo_numerical",
-                      xmax = "hi_numerical"), width = 0, linewidth = 2, position = position_dodge(width = 0.2)) +
-    geom_errorbar(aes_string(colour = "Fit",
-                      xmin = "lo",
-                      xmax = "hi"), width = 0.2, linewidth = 0.5, position = position_dodge(width = 0.2)) +
     scale_color_manual(values = colours) + # Fit colours
     xlab(NULL) + # Remove x labels
     ylab(NULL) + # Remove y labels
@@ -285,6 +280,15 @@ box_plot <- function(...,
     guides(colour = guide_legend(title = "",
                                  keywidth = 2.5,
                                  override.aes = aes(size = 4, linewidth = 1)))
+
+  if(compute_confidence_intervals) {
+    g <- g + geom_errorbar(aes_string(colour = "Fit",
+                                      xmin = "lo_numerical",
+                                      xmax = "hi_numerical"), width = 0, linewidth = 2, position = position_dodge(width = 0.2)) +
+      geom_errorbar(aes_string(colour = "Fit",
+                               xmin = "lo",
+                               xmax = "hi"), width = 0.2, linewidth = 0.5, position = position_dodge(width = 0.2))
+  }
 
   # If xmin and xmax are given use those instead of defaults
   if(!missing(xmin) && !missing(xmax)) {
@@ -300,6 +304,7 @@ box_plot <- function(...,
   }
   g
 }
+
 #' Plot a `ppjsdm::gibbsm` object.
 #'
 #' This calls `ppjsdm::box_plot`, see the documentation for that function for details.

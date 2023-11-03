@@ -16,6 +16,7 @@ box_plot(
   text_size = 16,
   base_size = 20,
   full_names = NULL,
+  compute_confidence_intervals = TRUE,
   colours,
   involving,
   xmin,
@@ -47,6 +48,8 @@ beta1, beta2, ... or actual name of the env. covariate for one of the regression
 \item{base_size}{Base size.}
 
 \item{full_names}{Optional list of full names of types, if for example abbreviations were used when running the fit.}
+
+\item{compute_confidence_intervals}{Compute the confidence intervals (which is slower) or just show the point estimates?}
 
 \item{colours}{Optional vector of colours to represent the different fits.}
 
