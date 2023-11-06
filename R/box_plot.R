@@ -12,6 +12,7 @@
 #' Choice of `alpha1`, `alpha2`, ..., to show one of the short-range interaction coefficients;
 #' `gamma` to show the medium-range interaction coefficient;
 #' `beta1`, `beta2`, ... or actual name of the covariate for one of the regression coefficients.
+#' `alpha` shows a facet plot of all short-range interaction coefficients, while `beta` does the same for the regression coefficients.
 #' @param title Plot title.
 #' @param summ Optional list of summaries corresponding to the fits; if not provided they are obtained by calling `ppjsdm::summary.gibbsm`
 #' @param only_statistically_significant Only show statistically significant coefficients?
@@ -22,6 +23,9 @@
 #' @param full_names Optional list of full names of types, if for example abbreviations were used when running the fit.
 #' @param compute_confidence_intervals Compute the confidence intervals (which is slower) or just show the point estimates?
 #' @param colours Optional vector of colours to represent the different fits.
+#' @param classes If this parameter is supplied, then colours are used to distinguish classes instead of fits.
+#' Only works when given a single fit.
+#' Should be a named vector/list, with the names corresponding to types, and the value equal to the class name.
 #' @param involving Optional vector/list of types. Only coefficients involving these types will be plotted.
 #' @param xmin Optional plot minimum x.
 #' @param xmax Optional plot maximum x.
@@ -58,6 +62,7 @@ box_plot <- function(...,
                      full_names = NULL,
                      compute_confidence_intervals = TRUE,
                      colours,
+                     classes = NULL,
                      involving,
                      xmin,
                      xmax) {
@@ -80,6 +85,14 @@ box_plot <- function(...,
     stop("No valid fits were provided.")
   }
   fits <- fits[which_gibbsm]
+
+  # Take care of the classes argument
+  if(!is.null(classes)) {
+    classes <- as.list(classes)
+    if(length(fits) > 1) {
+      stop("If classes is supplied, then there should be a single fit. Otherwise, colours are used to distinguish fits, not classes.")
+    }
+  }
 
   # If user did not give names to the fits, add some default names
   default_names <- paste0("Fit ", seq_len(length(fits)))
@@ -224,6 +237,11 @@ box_plot <- function(...,
         })
       }
 
+      # If classes was supplied, fill in class
+      if(!is.null(classes)) {
+        d$Class <- sapply(as.character(d$from), function(sp)  classes[[sp]])
+      }
+
       if(!is.null(full_names)) { # specifying names
         full_names <- as.list(full_names)
 
@@ -278,11 +296,21 @@ box_plot <- function(...,
   # Remove NAs
   df <- df[rowSums(is.na(df)) == 0, ]
 
+  # What do colours represent?
+  if(is.null(classes)) {
+    colour_string <- "Fit"
+    ncolours <- nlevels(df$Fit)
+  } else {
+    df$Class <- factor(df$Class)
+    colour_string <- "Class"
+    ncolours <- nlevels(df$Class)
+  }
+
   # Set colours
   if(missing(colours)) {
-    colours <- rep(c("black", "#5BBCD6", "#F2AD00", "#00A08A", "#FF0000"), length.out = length(fits))
+    colours <- rep(c("black", "#5BBCD6", "#F2AD00", "#00A08A", "#FF0000"), length.out = ncolours)
   } else {
-    colours <- rep(colours, length.out = length(fits))
+    colours <- rep(colours, length.out = ncolours)
   }
 
   g <- ggplot(df, aes_string(y = "x", x = "E")) # Visualisation
@@ -292,7 +320,7 @@ box_plot <- function(...,
   }
 
   g <- g +
-    geom_point(aes_string(colour = "Fit"), size = 3, position = position_dodge(width = 0.2)) + # Size of point estimates
+    geom_point(aes_string(colour = colour_string), size = 3, position = position_dodge(width = 0.2)) + # Size of point estimates
     scale_color_manual(values = colours) + # Fit colours
     xlab(NULL) + # Remove x labels
     ylab(NULL) + # Remove y labels
@@ -305,10 +333,10 @@ box_plot <- function(...,
                                  override.aes = aes(size = 4, linewidth = 1)))
 
   if(compute_confidence_intervals) {
-    g <- g + geom_errorbar(aes_string(colour = "Fit",
+    g <- g + geom_errorbar(aes_string(colour = colour_string,
                                       xmin = "lo_numerical",
                                       xmax = "hi_numerical"), width = 0, linewidth = 2, position = position_dodge(width = 0.2)) +
-      geom_errorbar(aes_string(colour = "Fit",
+      geom_errorbar(aes_string(colour = colour_string,
                                xmin = "lo",
                                xmax = "hi"), width = 0.2, linewidth = 0.5, position = position_dodge(width = 0.2))
   }
@@ -319,7 +347,7 @@ box_plot <- function(...,
   }
 
   # If there is a single fit, do not show legend
-  if(length(fits) == 1) {
+  if(colour_string == "Fit" & nlevels(df$Fit) == 1 | colour_string == "Class" & nlevels(df$Class) == 1) {
     g <- g + guides(colour = "none")
   }
   if(do_split) {

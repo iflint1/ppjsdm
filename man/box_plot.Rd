@@ -18,6 +18,7 @@ box_plot(
   full_names = NULL,
   compute_confidence_intervals = TRUE,
   colours,
+  classes = NULL,
   involving,
   xmin,
   xmax
@@ -31,7 +32,8 @@ box_plot(
 \item{coefficient}{A string representing the coefficient to plot.
 Choice of \code{alpha1}, \code{alpha2}, ..., to show one of the short-range interaction coefficients;
 \code{gamma} to show the medium-range interaction coefficient;
-\code{beta1}, \code{beta2}, ... or actual name of the covariate for one of the regression coefficients.}
+\code{beta1}, \code{beta2}, ... or actual name of the covariate for one of the regression coefficients.
+\code{alpha} shows a facet plot of all short-range interaction coefficients, while \code{beta} does the same for the regression coefficients.}
 
 \item{title}{Plot title.}
 
@@ -52,6 +54,10 @@ Choice of \code{alpha1}, \code{alpha2}, ..., to show one of the short-range inte
 \item{compute_confidence_intervals}{Compute the confidence intervals (which is slower) or just show the point estimates?}
 
 \item{colours}{Optional vector of colours to represent the different fits.}
+
+\item{classes}{If this parameter is supplied, then colours are used to distinguish classes instead of fits.
+Only works when given a single fit.
+Should be a named vector/list, with the names corresponding to types, and the value equal to the class name.}
 
 \item{involving}{Optional vector/list of types. Only coefficients involving these types will be plotted.}
 
