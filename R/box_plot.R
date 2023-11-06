@@ -102,22 +102,29 @@ box_plot <- function(...,
   # Below, we translate the coefficient parameter into a function "access" that allows us to access it in the fit object
   # In addition, is_interaction tells us whether or not the coefficient is an interaction coefficient (alpha/gamma) or not (beta)
   is_interaction <- TRUE
+  is_alpha <- NULL
+  is_beta <- NULL
   if("gamma" == coefficient[1] & length(coefficient) == 1) { # The requested coefficient is gamma
     if(missing(title)) {
       title <- "Medium-range interaction coefficients"
     }
-    access <- function(obj) obj[["gamma"]]
+    access <- function(obj) base::list(obj[["gamma"]])
   } else {
     is_alpha <- gsub("^alpha([0-9]*)", "\\1", coefficient)
     if("" == is_alpha[1] & length(is_alpha) == 1) { # it starts with alpha, but has no integer afterwards
-      is_alpha <- 1 # by default, take first alpha
+      is_alpha <- seq_len(max(sapply(fits, function(fit) {
+        length(fit$coefficients$alpha)
+      }))) # show a facet plot of all potentials
+      if(missing(title)) {
+        title <- "Short-range interaction coefficients"
+      }
     }
 
     if(length(coefficient) == 1 & is_alpha[1] != coefficient[1]) { # it starts with alpha
       if(missing(title)) {
         title <- paste0("Short-range interaction coefficients for potential ", is_alpha[1])
       }
-      access <- function(obj) obj[["alpha"]][[as.numeric(is_alpha)]]
+      access <- function(obj) obj[["alpha"]][as.numeric(is_alpha)]
     } else {
       is_interaction <- FALSE
       is_beta <- gsub("^beta([0-9]*)", "\\1", coefficient)
@@ -146,23 +153,23 @@ box_plot <- function(...,
           i <- intersect(is_beta, colnames(beta))
           z <- as.matrix(beta[, i])
           colnames(z) <- i
-          z
+          base::list(z)
         } else {
-          beta
+          base::list(beta)
         }
       }
     }
   }
 
 
-  # Extract list of alpha coefficients, each one corresponding to one of the fits
+  # Extract list of coefficients, each one corresponding to one of the fits
   estimates <- lapply(fits, function(f) {
     tryCatch(access(f$coefficients), error = function(err) NA)
   })
 
   # The fits could perhaps relate to fits which do not involve the same types.
   # Construct a set of all types that appear in some of the fits
-  types <- lapply(estimates, function(e) rownames(e))
+  types <- lapply(estimates, function(e) unique(Reduce(c, lapply(e, function(f) rownames(f)))))
   types <- unique(Reduce(c, types))
 
   # Types involving the focal ones
@@ -187,48 +194,53 @@ box_plot <- function(...,
 
   # At this point, df is a single dataframe containing all relevant pairs of types.
   # Since our estimates are a list of fits, convert df to a list of dataframe, each one corresponding to one of the fits.
-  dfs <- lapply(seq_len(length(fits)), function(k) {
-    d <- df
+  dfs <- lapply(seq_len(length(estimates)), function(k) {
+    dfs_by_potential <- lapply(seq_len(length(estimates[[k]])), function(n) {
+      d <- df
 
-    d$E <- sapply(seq_len(nrow(d)), function(i) { #these and below parts specify the values of point and bars
-      tryCatch(estimates[[k]][d$from[i], d$to[i]], error = function(err) NA)
+      d$E <- sapply(seq_len(nrow(d)), function(i) { #these and below parts specify the values of point and bars
+        tryCatch(estimates[[k]][[n]][d$from[i], d$to[i]], error = function(err) NA)
+      })
+
+      if(compute_confidence_intervals) {
+        d$lo <- sapply(seq_len(nrow(d)), function(i) { # Get the lower-endpoint of the CIs, apply function to sequence of numbers 1 to nrow.df
+          tryCatch(access(summ[[k]]$lo)[[n]][d$from[i], d$to[i]], error = function(err) NA) # retrieve numbers from summ and apply to the rows
+        })
+
+        d$hi <- sapply(seq_len(nrow(d)), function(i) { # Get the upper-endpoint of the CIs
+          tryCatch(access(summ[[k]]$hi)[[n]][d$from[i], d$to[i]], error = function(err) NA)
+        })
+
+        if(only_statistically_significant) { # in this case, remove non-stat significant
+          d <- d[d$lo > 0 | d$hi < 0, ] # If non-statistically significant, remove row,. i.e. if low is > 0 or if high < 0, the row is kept
+        }
+
+        d$lo_numerical <- sapply(seq_len(nrow(d)), function(i) { # Lower-endpoint of the numerical CI (relating to the numerical error due to dummy points)
+          tryCatch(access(summ[[k]]$lo_numerical)[[n]][d$from[i], d$to[i]], error = function(err) NA)
+        })
+
+        d$hi_numerical <- sapply(seq_len(nrow(d)), function(i) { # Upper-endpoint of the numerical CI (relating to the numerical error due to dummy points)
+          tryCatch(access(summ[[k]]$hi_numerical)[[n]][d$from[i], d$to[i]], error = function(err) NA)
+        })
+      }
+
+      if(!is.null(full_names)) { # specifying names
+        full_names <- as.list(full_names)
+
+        d$from <- sapply(as.character(d$from), function(sp) if(length(full_names[[sp]]) == 0) sp else full_names[[sp]])
+        if(is_interaction) {
+          d$to <- sapply(as.character(d$to), function(sp) if(length(full_names[[sp]]) == 0) sp else full_names[[sp]])
+        }
+      }
+
+      # Set name of the fit
+      d$Fit <- names(fits)[k]
+      d$Potential <- paste0("Potential ", n)
+
+      d
     })
 
-    if(compute_confidence_intervals) {
-      d$lo <- sapply(seq_len(nrow(d)), function(i) { # Get the lower-endpoint of the CIs, apply function to sequence of numbers 1 to nrow.df
-        tryCatch(access(summ[[k]]$lo)[d$from[i], d$to[i]], error = function(err) NA) # retrieve numbers from summ and apply to the rows
-      })
-
-      d$hi <- sapply(seq_len(nrow(d)), function(i) { # Get the upper-endpoint of the CIs
-        tryCatch(access(summ[[k]]$hi)[d$from[i], d$to[i]], error = function(err) NA)
-      })
-
-      if(only_statistically_significant) { # in this case, remove non-stat significant
-        d <- d[d$lo > 0 | d$hi < 0, ] # If non-statistically significant, remove row,. i.e. if low is > 0 or if high < 0, the row is kept
-      }
-
-      d$lo_numerical <- sapply(seq_len(nrow(d)), function(i) { # Lower-endpoint of the numerical CI (relating to the numerical error due to dummy points)
-        tryCatch(access(summ[[k]]$lo_numerical)[d$from[i], d$to[i]], error = function(err) NA)
-      })
-
-      d$hi_numerical <- sapply(seq_len(nrow(d)), function(i) { # Upper-endpoint of the numerical CI (relating to the numerical error due to dummy points)
-        tryCatch(access(summ[[k]]$hi_numerical)[d$from[i], d$to[i]], error = function(err) NA)
-      })
-    }
-
-    if(!is.null(full_names)) { # specifying names
-      full_names <- as.list(full_names)
-
-      d$from <- sapply(as.character(d$from), function(sp) if(length(full_names[[sp]]) == 0) sp else full_names[[sp]])
-      if(is_interaction) {
-        d$to <- sapply(as.character(d$to), function(sp) if(length(full_names[[sp]]) == 0) sp else full_names[[sp]])
-      }
-    }
-
-    # Set name of the fit
-    d$Fit <- names(fits)[k]
-
-    d
+    Reduce(rbind, dfs_by_potential)
   })
 
   # Flatten dfs
@@ -250,12 +262,14 @@ box_plot <- function(...,
 
   df$x <- factor(x, levels = levels(x)[order(df$average_estimates)])
   do_split <- FALSE
-  if(!is_interaction) { # In this case, alphabetical order seems to be reasonable
-    if(length(is_beta) > 1) {
-      do_split <- TRUE
-      df$split <- df$to
-      df$x <- factor(x, levels = sort(levels(x), decreasing = TRUE))
-    }
+  if(!is_interaction  & length(is_beta) > 1) { # In this case, alphabetical order + facet plot
+    do_split <- TRUE
+    df$split <- df$to
+    df$x <- factor(x, levels = sort(levels(x), decreasing = TRUE))
+  } else if(is_interaction & length(is_alpha) > 1) { # Same as above, but facet plot on potential name
+    do_split <- TRUE
+    df$split <- df$Potential
+    df$x <- factor(x, levels = sort(levels(x), decreasing = TRUE))
   }
 
   # Order Fit legend according to fits object
