@@ -11,7 +11,7 @@ box_plot(
   title,
   summ,
   only_statistically_significant = FALSE,
-  which = c("all", "within", "between"),
+  which = c("all", "within", "between", "average_between"),
   highlight_zero = TRUE,
   text_size = 16,
   base_size = 20,

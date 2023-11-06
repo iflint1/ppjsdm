@@ -55,7 +55,7 @@ box_plot <- function(...,
                      title,
                      summ,
                      only_statistically_significant = FALSE,
-                     which = c("all", "within", "between"),
+                     which = c("all", "within", "between", "average_between"),
                      highlight_zero = TRUE,
                      text_size = 16,
                      base_size = 20,
@@ -101,17 +101,6 @@ box_plot <- function(...,
   }
   names(fits) <- ifelse(names(fits) == "", default_names, names(fits))
 
-  if(compute_confidence_intervals) {
-    if(!missing(summ)) { # Make sure summaries and fits are compatible
-      if(!is(summ, "list")) {
-        summ <- base::list(summ)
-      }
-      stopifnot(length(fits) == length(summ))
-    } else { # Construct the summaries
-      summ <- lapply(fits, function(f) summary(f))
-    }
-  }
-
   # Below, we translate the coefficient parameter into a function "access" that allows us to access it in the fit object
   # In addition, is_interaction tells us whether or not the coefficient is an interaction coefficient (alpha/gamma) or not (beta)
   is_interaction <- TRUE
@@ -140,6 +129,10 @@ box_plot <- function(...,
       access <- function(obj) obj[["alpha"]][as.numeric(is_alpha)]
     } else {
       is_interaction <- FALSE
+      if(which != "") {
+        warning("Plotting regression coefficient but parameter \"which\" was set to something other than \"all\". Assuming this is a typo and setting \"which\" to \"all\".")
+        which <- "all"
+      }
       is_beta <- gsub("^beta([0-9]*)", "\\1", coefficient)
       if("" == is_beta[1] & length(is_beta) == 1) { # it starts with beta, but has no integer afterwards
         # In this case, we want to get all covariates involved, and use all
@@ -174,6 +167,19 @@ box_plot <- function(...,
     }
   }
 
+  # Do not compute CIs if average_between
+  compute_confidence_intervals <- compute_confidence_intervals & which != "average_between"
+
+  if(compute_confidence_intervals) {
+    if(!missing(summ)) { # Make sure summaries and fits are compatible
+      if(!is(summ, "list")) {
+        summ <- base::list(summ)
+      }
+      stopifnot(length(fits) == length(summ))
+    } else { # Construct the summaries
+      summ <- lapply(fits, function(f) summary(f))
+    }
+  }
 
   # Extract list of coefficients, each one corresponding to one of the fits
   estimates <- lapply(fits, function(f) {
@@ -198,7 +204,7 @@ box_plot <- function(...,
 
     if(which == "within") { # in this case, remove columns that are the same, so shows only between interactions
       df <- df[df$to == df$from, ]
-    } else if(which == "between") {
+    } else if(which == "between" | which == "average_between") {
       df <- df[df$to != df$from, ]
     }
   } else {
@@ -255,6 +261,17 @@ box_plot <- function(...,
       d$Fit <- names(fits)[k]
       d$Potential <- paste0("Potential ", n)
 
+      # Compute average of the coefficient for each type
+      if(which == "average_between") {
+        d <- Reduce(rbind, lapply(union(unique(d$from), unique(d$to)), function(ty) {
+          g <- d[d$from == ty | d$to == ty, ][1, ]
+          g$from <- ty
+          g$to <- ty
+          g$E <- mean(d$E[d$from == ty | d$to == ty], na.rm = TRUE)
+          g
+        }))
+      }
+
       d
     })
 
@@ -272,14 +289,12 @@ box_plot <- function(...,
   # Define and order y-axis labels
   nc <- nrow(df)
   x <- factor(1:nc)
-  if(is_interaction && which != "within") {
+  if(is_interaction && which != "within" && which != "average_between") {
     levels(x) <- ifelse(df$from < df$to, paste0(df$from, enc2utf8(" \u2194 "), df$to), paste0(df$to, enc2utf8(" \u2194 "), df$from)) # Order lhs and rhs of interaction alphabetically
-  } else { # In this, we are plotting covariates
+  } else {
     levels(x) <- df$from
   }
 
-  df$x <- factor(x, levels = levels(x)[order(df$average_estimates)])
-  do_split <- FALSE
   if(!is_interaction  & length(is_beta) > 1) { # In this case, alphabetical order + facet plot
     do_split <- TRUE
     df$split <- df$to
@@ -288,6 +303,9 @@ box_plot <- function(...,
     do_split <- TRUE
     df$split <- df$Potential
     df$x <- factor(x, levels = sort(levels(x), decreasing = TRUE))
+  } else {
+    df$x <- factor(x, levels = levels(x)[order(df$average_estimates)])
+    do_split <- FALSE
   }
 
   # Order Fit legend according to fits object
