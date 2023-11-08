@@ -8,18 +8,18 @@ box_plot(
   ...,
   list,
   coefficient = "alpha1",
-  title,
   summ,
   only_statistically_significant = FALSE,
   which = c("all", "within", "between", "average_between"),
+  full_names = NULL,
+  compute_confidence_intervals = TRUE,
+  classes = NULL,
+  involving = NULL,
+  title,
+  colours = c("black", "#5BBCD6", "#F2AD00", "#00A08A", "#FF0000"),
   highlight_zero = TRUE,
   text_size = 16,
   base_size = 20,
-  full_names = NULL,
-  compute_confidence_intervals = TRUE,
-  colours,
-  classes = NULL,
-  involving,
   xmin,
   xmax
 )
@@ -35,31 +35,31 @@ Choice of \code{alpha1}, \code{alpha2}, ..., to show one of the short-range inte
 \code{beta1}, \code{beta2}, ... or actual name of the covariate for one of the regression coefficients.
 \code{alpha} shows a facet plot of all short-range interaction coefficients, while \code{beta} does the same for the regression coefficients.}
 
-\item{title}{Plot title.}
-
 \item{summ}{Optional list of summaries corresponding to the fits; if not provided they are obtained by calling \code{ppjsdm::summary.gibbsm}}
 
 \item{only_statistically_significant}{Only show statistically significant coefficients?}
 
 \item{which}{If plotting interaction coefficients, which ones do we want to plot?}
 
-\item{highlight_zero}{Highlight the zero value with a red line?}
-
-\item{text_size}{Text size.}
-
-\item{base_size}{Base size.}
-
 \item{full_names}{Optional list of full names of types, if for example abbreviations were used when running the fit.}
 
 \item{compute_confidence_intervals}{Compute the confidence intervals (which is slower) or just show the point estimates?}
-
-\item{colours}{Optional vector of colours to represent the different fits.}
 
 \item{classes}{If this parameter is supplied, then colours are used to distinguish classes instead of fits.
 Only works when given a single fit.
 Should be a named vector/list, with the names corresponding to types, and the value equal to the class name.}
 
 \item{involving}{Optional vector/list of types. Only coefficients involving these types will be plotted.}
+
+\item{title}{Plot title.}
+
+\item{colours}{Optional vector of colours to represent the different fits.}
+
+\item{highlight_zero}{Highlight the zero value with a red line?}
+
+\item{text_size}{Text size.}
+
+\item{base_size}{Base size.}
 
 \item{xmin}{Optional plot minimum x.}
 
