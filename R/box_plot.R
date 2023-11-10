@@ -100,6 +100,40 @@ access_coefficient <- function(fits,
        index = index)
 }
 
+#' Convert a vector of names to their corresponding entry in a named list.
+#'
+#' @param x A vector of names.
+#' @param named_list A named list, where names correspond to EITHER elements in x OR x converted according to one of the extra supplied objects
+#' , and the value in `named_list` represent what we are converting to.
+#' @param ... We assume that the names in `named_list` might correspond to a conversion of x according to named lists in these objects.
+#' @export
+#' @keywords internal
+#' @md
+convert_names <- function(x,
+                          named_list,
+                          ...) {
+  possible_names <- list(...)
+  if(!is.list(named_list)) {
+    stop("named_list should be a named list, with names corresponding to the abbreviated names.")
+  }
+  sapply(as.character(x), function(ty) {
+    if(length(named_list[[ty]]) > 0) {
+      return(named_list[[ty]])
+    }
+    for(possible_names in possible_names) {
+      if(!is.list(possible_names)) {
+        stop("The extra supplied objects should all be (named) lists.")
+      }
+      if(length(possible_names[[ty]]) > 0) {
+        if(length(named_list[[possible_names[[ty]]]]) > 0) {
+          return(named_list[[possible_names[[ty]]]])
+        }
+      }
+    }
+    ty
+  })
+}
+
 #' Construct a `data.frame` containing estimated coefficients and their confidence intervals from some fit objects.
 #'
 #' This function is used to prepare data for use in the `box_plot` and `diagram_plot` functions.
@@ -136,6 +170,14 @@ make_summary_df <- function(fits,
     classes <- as.list(classes)
     if(length(fits) > 1) {
       stop("If classes is supplied, then there should be a single fit. Otherwise, colours are used to distinguish fits, not classes.")
+    }
+  }
+
+  # Take care of the full_names argument
+  if(!is.null(full_names)) {
+    full_names <- as.list(full_names)
+    if(length(unique(full_names)) != length(full_names)) {
+      stop("full_names does not contain unique names: this will cause some issues later on, please supply distinct names.")
     }
   }
 
@@ -219,23 +261,40 @@ make_summary_df <- function(fits,
           tryCatch(access(summ[[k]]$hi_numerical)[[n]][d$from[i], d$to[i]], error = function(err) NA)
         })
       }
-      # If classes was supplied, fill in class
-      if(!is.null(classes)) {
-        d$Class <- sapply(as.character(d$from), function(sp) if(length(classes[[sp]]) == 0) sp else classes[[sp]])
-      }
 
-      if(!is.null(full_names)) { # specifying names
-        full_names <- as.list(full_names)
-
-        d$from <- sapply(as.character(d$from), function(sp) if(length(full_names[[sp]]) == 0) sp else full_names[[sp]])
+      # Convert names to full names
+      if(!is.null(full_names)) {
+        # We do not yet convert the names, because to decide class we want to look at original names first
+        d$new_from <- convert_names(d$from, full_names)
         if(identification != "beta") {
-          d$to <- sapply(as.character(d$to), function(sp) if(length(full_names[[sp]]) == 0) sp else full_names[[sp]])
+          d$new_to <- convert_names(d$to, full_names)
         }
       }
 
+      # If classes was supplied, fill in class
+      if(!is.null(classes)) {
+        if(!is.null(full_names)) {
+          d$Class <- convert_names(d$from, classes, full_names)
+        } else {
+          d$Class <- convert_names(d$from, classes)
+        }
+      }
+
+      # At this point, we can discard the temporary column names chosen above
+      if("new_from" %in% colnames(d)) {
+        d$from <- d$new_from
+        d$new_from <- NULL
+      }
+      if("new_to" %in% colnames(d)) {
+        d$to <- d$new_to
+        d$new_to <- NULL
+      }
+
       # Set name of the fit
-      d$Fit <- names(fits)[k]
-      d$Potential <- paste0("Potential ", index[n])
+      if(nrow(d) > 0) {
+        d$Fit <- names(fits)[k]
+        d$Potential <- paste0("Potential ", index[n])
+      }
 
       # Compute average of the coefficient for each type
       if(which == "average_between") {
@@ -261,11 +320,6 @@ make_summary_df <- function(fits,
   # Flatten dfs
   df <- as.data.frame(Reduce(rbind, dfs))
 
-  # Compute average (over the fits) estimate for each coefficient
-  df$average_over_fits <- sapply(seq_len(nrow(df)), function(i) {
-    mean(df$E[df$from == df$from[i] & df$to == df$to[i]], na.rm = TRUE)
-  })
-
   # Make into factor and order them correctly
   if(!is.null(df$Fit)) {
     df$Fit <- factor(df$Fit, levels = names(fits))
@@ -282,7 +336,7 @@ make_summary_df <- function(fits,
   df
 }
 
-#' Plot the coefficients of a fit object.
+#' Plot the coefficients of fit objects.
 #'
 #' The coefficients and corresponding confidence intervals are shown in a box-like plot.
 #' The inner thick parts of the error bars represent numerical uncertainty, due to the number and distribution of dummy points.
@@ -408,18 +462,24 @@ box_plot <- function(...,
   } else {
     levels(ylabels) <- df$from
   }
+  df$ylabels <- ylabels
 
   # Do we want a facet plot? How about ordering of y labels?
   if(identification == "beta" & length(unique(df$to)) > 1) { # In this case, alphabetical order + facet plot
     do_split <- TRUE
     df$split <- df$to
-    df$ylabels <- factor(ylabels, levels = sort(levels(ylabels), decreasing = TRUE))
+    df$ylabels <- factor(df$ylabels, levels = sort(levels(df$ylabels), decreasing = TRUE))
   } else if(identification == "alpha" & length(unique(df$Potential)) > 1) { # Same as above, but facet plot on potential name
     do_split <- TRUE
     df$split <- df$Potential
-    df$ylabels <- factor(ylabels, levels = sort(levels(ylabels), decreasing = TRUE))
+    df$ylabels <- factor(df$ylabels, levels = sort(levels(df$ylabels), decreasing = TRUE))
   } else {
-    df$ylabels <- factor(ylabels, levels = levels(ylabels)[order(df$average_over_fits)])
+    # Compute average (over the fits) estimate for each coefficient
+    average_over_fits <- sapply(levels(df$ylabels), function(ylab) {
+      mean(df[df$ylabels == ylab, identification], na.rm = TRUE)
+    })
+
+    df$ylabels <- factor(df$ylabels, levels = levels(df$ylabels)[order(average_over_fits)])
     do_split <- FALSE
   }
 

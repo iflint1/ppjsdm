@@ -2,7 +2,7 @@
 % Please edit documentation in R/box_plot.R
 \name{box_plot}
 \alias{box_plot}
-\title{Plot the coefficients of a fit object.}
+\title{Plot the coefficients of fit objects.}
 \usage{
 box_plot(
   ...,
