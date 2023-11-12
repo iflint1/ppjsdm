@@ -226,7 +226,7 @@ chord_diagram_plot(fit1, summ = summ[[1]], only_statistically_significant = FALS
 
 chord_diagram_plot(fit3, summ = summ[[3]], only_statistically_significant = FALSE, coefficient = "alpha1")
 
-chord_diagram_plot(fit3, summ = summ[[3]], only_statistically_significant = FALSE, compute_confidence_intervals = FALSE,
+chord_diagram_plot(fit3, summ = summ[[3]], compute_confidence_intervals = FALSE,
                    coefficient = "alpha")
 
 chord_diagram_plot(fit1, summ = summ[[1]], only_statistically_significant = FALSE,
@@ -253,11 +253,11 @@ chord_diagram_plot(fit3, summ = summ[[3]], only_statistically_significant = FALS
 chord_diagram_plot(fit3, summ = summ[[3]], only_statistically_significant = FALSE,
                    coefficient = "gamma")
 
-chord_diagram_plot(fit3, summ = summ[[3]], nlink = 5, only_statistically_significant = FALSE,
+chord_diagram_plot(fit3, summ = summ[[3]], ninteractions = 5, only_statistically_significant = FALSE,
                    coefficient = "gamma")
 
 chord_diagram_plot(fit3, summ = summ[[3]], classes = c(t1 = "A", t2 = "A", t3 = "B", t4 = "B"),
-                   nlink = 2, only_statistically_significant = FALSE,
+                   ninteractions = 2, only_statistically_significant = FALSE,
                    coefficient = "gamma")
 
 chord_diagram_plot(fit3, summ = summ[[3]], only_statistically_significant = FALSE,

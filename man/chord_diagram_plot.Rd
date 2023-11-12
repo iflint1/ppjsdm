@@ -8,7 +8,7 @@ chord_diagram_plot(
   fit,
   coefficient = "alpha1",
   summ,
-  only_statistically_significant = TRUE,
+  only_statistically_significant = FALSE,
   full_names = NULL,
   compute_confidence_intervals = TRUE,
   classes = NULL,
@@ -17,7 +17,7 @@ chord_diagram_plot(
   show_legend = TRUE,
   cex = 1,
   legend_cex = cex,
-  nlinks = 100,
+  ninteractions = 100,
   track_height = 0.05,
   show_bottom_left = TRUE,
   outward_facing_names = FALSE,
@@ -35,15 +35,15 @@ chord_diagram_plot(
 \item{coefficient}{A string representing the coefficient to plot.
 Choice of \code{alpha1}, \code{alpha2}, ..., to show one of the short-range interaction coefficients;
 \code{alpha} to show all of the short-range potentials on the same chord diagram;
-\code{gamma} to show the medium-range interaction coefficient;}
+\code{gamma} to show the medium-range interaction coefficient.}
 
-\item{summ}{Optional summary corresponding to the fit; if not provided it is obtained by calling \code{ppjsdm::summary.gibbsm}}
+\item{summ}{Optional summary corresponding to the fit; if not provided it is obtained by calling \code{ppjsdm::summary.gibbsm}.}
 
 \item{only_statistically_significant}{Only show statistically significant coefficients?}
 
 \item{full_names}{Optional list of full names of types, if for example abbreviations were used when running the fit.}
 
-\item{compute_confidence_intervals}{Compute the confidence intervals (which is slower) or just show the point estimates?}
+\item{compute_confidence_intervals}{Compute the confidence intervals (which is slower) to highlight statistically significant interactions?}
 
 \item{classes}{If this parameter is supplied, then colours are used to distinguish classes.
 Should be a named vector/list, with the names corresponding to types, and the value equal to the class name.}
@@ -58,11 +58,11 @@ Should be a named vector/list, with the names corresponding to types, and the va
 
 \item{legend_cex}{Cex of the legend.}
 
-\item{nlinks}{Maximum number of links to include.}
+\item{ninteractions}{Maximum number of interactions to include.}
 
 \item{track_height}{Proportion of the chord diagram that the outer rim should occupy.}
 
-\item{show_bottom_left}{Show the legend in the bottom-left?}
+\item{show_bottom_left}{Show the legend in the bottom-left? Only used if \code{classes} parameter is provided.}
 
 \item{outward_facing_names}{Should the names of the types be outward facing or along the circle?}
 
@@ -84,4 +84,16 @@ The inner thick parts of the error bars represent numerical uncertainty, due to 
 The outer thin part of the error bars represent the total statistical + numerical uncertainty.
 Formally, these are theoretical asymptotic 95\% confidence intervals.
 As a convenience, this function can alternatively be applied by calling \code{plot} on a fit object.
+}
+\examples{
+set.seed(1)
+
+# Draw a configuration
+configuration <- ppjsdm::rppp(lambda = c(A = 100, B = 100, C = 100, D = 100))
+
+# Fit the data
+fit <- ppjsdm::gibbsm(configuration)
+
+# Chord diagram plot
+ppjsdm::chord_diagram_plot(fit)
 }

@@ -10,11 +10,11 @@
 #' @param coefficient A string representing the coefficient to plot.
 #' Choice of `alpha1`, `alpha2`, ..., to show one of the short-range interaction coefficients;
 #' `alpha` to show all of the short-range potentials on the same chord diagram;
-#' `gamma` to show the medium-range interaction coefficient;
-#' @param summ Optional summary corresponding to the fit; if not provided it is obtained by calling `ppjsdm::summary.gibbsm`
+#' `gamma` to show the medium-range interaction coefficient.
+#' @param summ Optional summary corresponding to the fit; if not provided it is obtained by calling `ppjsdm::summary.gibbsm`.
 #' @param only_statistically_significant Only show statistically significant coefficients?
 #' @param full_names Optional list of full names of types, if for example abbreviations were used when running the fit.
-#' @param compute_confidence_intervals Compute the confidence intervals (which is slower) or just show the point estimates?
+#' @param compute_confidence_intervals Compute the confidence intervals (which is slower) to highlight statistically significant interactions?
 #' @param classes If this parameter is supplied, then colours are used to distinguish classes.
 #' Should be a named vector/list, with the names corresponding to types, and the value equal to the class name.
 #' @param involving Optional vector/list of types. Only coefficients involving these types will be plotted.
@@ -22,9 +22,9 @@
 #' @param show_legend Show legend(s)?
 #' @param cex Cex.
 #' @param legend_cex Cex of the legend.
-#' @param nlinks Maximum number of links to include.
+#' @param ninteractions Maximum number of interactions to include.
 #' @param track_height Proportion of the chord diagram that the outer rim should occupy.
-#' @param show_bottom_left Show the legend in the bottom-left?
+#' @param show_bottom_left Show the legend in the bottom-left? Only used if `classes` parameter is provided.
 #' @param outward_facing_names Should the names of the types be outward facing or along the circle?
 #' @param show_grid_ticks Show grid ticks on each of the sectors?
 #' @param sort_interactions Should the interactions originating from a given type be sorted?
@@ -37,10 +37,21 @@
 #' @importFrom grDevices adjustcolor col2rgb colorRampPalette rgb
 #' @export
 #' @md
+#' @examples
+#' set.seed(1)
+#'
+#' # Draw a configuration
+#' configuration <- ppjsdm::rppp(lambda = c(A = 100, B = 100, C = 100, D = 100))
+#'
+#' # Fit the data
+#' fit <- ppjsdm::gibbsm(configuration)
+#'
+#' # Chord diagram plot
+#' ppjsdm::chord_diagram_plot(fit)
 chord_diagram_plot <- function(fit,
                                coefficient = "alpha1",
                                summ,
-                               only_statistically_significant = TRUE,
+                               only_statistically_significant = FALSE,
                                full_names = NULL,
                                compute_confidence_intervals = TRUE,
                                classes = NULL,
@@ -49,7 +60,7 @@ chord_diagram_plot <- function(fit,
                                show_legend = TRUE,
                                cex = 1,
                                legend_cex = cex,
-                               nlinks = 100,
+                               ninteractions = 100,
                                track_height = 0.05,
                                show_bottom_left = TRUE,
                                outward_facing_names = FALSE,
@@ -85,7 +96,7 @@ chord_diagram_plot <- function(fit,
   chord_diagram <- chord_diagram[rowSums(is.na(chord_diagram)) == 0, ]
 
   if(nrow(chord_diagram) == 0) {
-    warning("There were no links to plot. This could be due to all links being non-statistically significant, with option only_statistically_significant active.")
+    warning("There were no interactions to plot. This could be due to all interactions being non-statistically significant, with option only_statistically_significant active.")
     return()
   }
 
@@ -96,12 +107,12 @@ chord_diagram_plot <- function(fit,
     stop(paste0("Could not identify the intended coefficient by analysing the colnames of the dataframe; identification variable = ", identification))
   }
 
-  # Keep nlinks largest links
-  if(nlinks < nrow(chord_diagram)) {
-    chord_diagram <- chord_diagram[order(abs(chord_diagram[, identification]), decreasing = TRUE)[seq_len(nlinks)], ]
+  # Keep ninteractions largest interactions
+  if(ninteractions < nrow(chord_diagram)) {
+    chord_diagram <- chord_diagram[order(abs(chord_diagram[, identification]), decreasing = TRUE)[seq_len(ninteractions)], ]
   }
 
-  # Order them from largest links to smallest
+  # Order them from largest interactions to smallest
   chord_diagram <- chord_diagram[order(chord_diagram[, identification], decreasing = TRUE), ]
 
   # Set colour vector
@@ -118,13 +129,13 @@ chord_diagram_plot <- function(fit,
   # Extract type names
   types_names <- unique(c(chord_diagram$from, chord_diagram$to))
 
-  # Compute mean value of link for each type
-  mean_link <- setNames(sapply(types_names, function(ty) {
+  # Compute mean value of interactions for each type
+  mean_interaction <- setNames(sapply(types_names, function(ty) {
     mean(chord_diagram[chord_diagram$from == ty | chord_diagram$to == ty, identification])
   }), nm = types_names)
 
   if(missing(classes)) {
-    type_order <- types_names[order(mean_link, decreasing = TRUE)]
+    type_order <- types_names[order(mean_interaction, decreasing = TRUE)]
     grid.col <- setNames(colorRampPalette(c("black", "lightgreen"))(length(types_names)), nm = type_order)
     # gap.after controls the spacing between sectors in the chord diagram
     gap.after <- rep(1, length(type_order))
@@ -153,7 +164,7 @@ chord_diagram_plot <- function(fit,
       as.list(classes_colours)
     }
 
-    type_order <- types_names[order(class_of_types, mean_link, decreasing = TRUE)]
+    type_order <- types_names[order(class_of_types, mean_interaction, decreasing = TRUE)]
     grid.col <- setNames(sapply(type_order, function(nm) {
       classes_colours[[class_of_types[nm]]]
     }), nm = type_order)
@@ -180,7 +191,7 @@ chord_diagram_plot <- function(fit,
 
   if(sort_interactions) {
     # In this case, the option link.sort from chordDiagramFromDataFrame DOES NOT WORK
-    # We therefore use our own patched version (see below) that actually sorts link in the way we want
+    # We therefore use our own patched version (see below) that actually sorts interactions in the way we want
     plot_fun <- .chordDiagramFromDataFrame
   } else {
     plot_fun <- chordDiagramFromDataFrame
