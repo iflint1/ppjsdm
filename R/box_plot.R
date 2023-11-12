@@ -274,9 +274,11 @@ make_summary_df <- function(fits,
       # If classes was supplied, fill in class
       if(!is.null(classes)) {
         if(!is.null(full_names)) {
-          d$Class <- convert_names(d$from, classes, full_names)
+          d$class_from <- convert_names(d$from, classes, full_names)
+          d$class_to <- convert_names(d$to, classes, full_names)
         } else {
-          d$Class <- convert_names(d$from, classes)
+          d$class_from <- convert_names(d$from, classes)
+          d$class_to <- convert_names(d$to, classes)
         }
       }
 
@@ -324,11 +326,14 @@ make_summary_df <- function(fits,
   if(!is.null(df$Fit)) {
     df$Fit <- factor(df$Fit, levels = names(fits))
   }
-  if(!is.null(df$df$Potential)) {
+  if(!is.null(df$Potential)) {
     df$Potential <- factor(df$Potential)
   }
-  if(!is.null(df$Class)) {
-    df$Class <- factor(df$Class)
+  if(!is.null(df$class_from)) {
+    df$class_from <- factor(df$class_from)
+  }
+  if(!is.null(df$class_to)) {
+    df$class_to <- factor(df$class_to)
   }
 
   colnames(df)[colnames(df) == "E"] <- identification
@@ -484,12 +489,13 @@ box_plot <- function(...,
   }
 
   # What do colours represent?
-  if(is.null(df$Class)) {
+  if(is.null(df$class_from)) {
     colour_string <- "Fit"
     ncolours <- nlevels(df$Fit)
   } else {
     colour_string <- "Class"
-    ncolours <- nlevels(df$Class)
+    df$Class <- df$class_from
+    ncolours <- nlevels(df$class_from)
   }
 
   # Set colours
