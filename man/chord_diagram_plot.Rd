@@ -2,7 +2,7 @@
 % Please edit documentation in R/chord_diagram.R
 \name{chord_diagram_plot}
 \alias{chord_diagram_plot}
-\title{Plot the coefficients of a fit object.}
+\title{Plot a chord diagram of the coefficients of a fit object.}
 \usage{
 chord_diagram_plot(
   fit,
@@ -79,11 +79,9 @@ Should be a named vector/list, with the names corresponding to types, and the va
 \item{classes_colours}{Colours to represent the different classes.}
 }
 \description{
-The coefficients and corresponding confidence intervals are shown in a box-like plot.
-The inner thick parts of the error bars represent numerical uncertainty, due to the number and distribution of dummy points.
-The outer thin part of the error bars represent the total statistical + numerical uncertainty.
-Formally, these are theoretical asymptotic 95\% confidence intervals.
-As a convenience, this function can alternatively be applied by calling \code{plot} on a fit object.
+The coefficients are shown in a chord diagram.
+Highlighted opaque interactions are statistically significant.
+The types are ordered according to their mean interaction, or alternatively sorted into classes if the \code{classes} argument is set.
 }
 \examples{
 set.seed(1)
