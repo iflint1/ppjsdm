@@ -16,7 +16,7 @@ gibbsm(
   saturation,
   dummy = NULL,
   debug = FALSE,
-  fitting_package = "glmnet",
+  fitting_package = c("glm", "glmnet"),
   which_lambda = "AIC",
   max_dummy = 0,
   min_dummy = 0,
@@ -25,7 +25,7 @@ gibbsm(
   use_regularization = FALSE,
   return_raw_fitting_data = FALSE,
   refit_glmnet = 0,
-  dummy_distribution = "binomial",
+  dummy_distribution = "stratified",
   ...
 )
 }
@@ -52,7 +52,7 @@ gibbsm(
 
 \item{debug}{Print debugging information?}
 
-\item{fitting_package}{Choices are glmnet, oem or glm.}
+\item{fitting_package}{Which fitting package to use to solve the logistic regression?}
 
 \item{which_lambda}{Which lambda to choose in the regularised fit? Choices are "AIC" (lambda that minimises AIC), "BIC" (lambda that minimises BIC) or "smallest" (smallest lambda).}
 

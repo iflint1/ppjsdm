@@ -235,26 +235,26 @@ test_that("gibbsm works with infinite saturation for Geyer potentials potentials
   z <- ppjsdm::rppp(lambda = rep(1e2, ntypes))
 
   set.seed(1)
-  fit_large <- gibbsm(z, short_range = short_range,
-                      medium_range = medium_range,
-                      long_range = long_range,
-                      fitting_package = "glm",
-                      max_dummy = max_dummy,
-                      dummy_factor = dummy_factor,
-                      saturation = 1e6,
-                      model = "Geyer",
-                      medium_range_model = "Geyer")
+  fit_large <- suppressWarnings(gibbsm(z, short_range = short_range,
+                                       medium_range = medium_range,
+                                       long_range = long_range,
+                                       fitting_package = "glm",
+                                       max_dummy = max_dummy,
+                                       dummy_factor = dummy_factor,
+                                       saturation = 1e6,
+                                       model = "Geyer",
+                                       medium_range_model = "Geyer"))
 
   set.seed(1)
-  fit_infinite <- gibbsm(z, short_range = short_range,
-                         medium_range = medium_range,
-                         long_range = long_range,
-                         fitting_package = "glm",
-                         max_dummy = max_dummy,
-                         dummy_factor = dummy_factor,
-                         saturation = Inf,
-                         model = "Geyer",
-                         medium_range_model = "Geyer")
+  fit_infinite <- suppressWarnings(gibbsm(z, short_range = short_range,
+                                          medium_range = medium_range,
+                                          long_range = long_range,
+                                          fitting_package = "glm",
+                                          max_dummy = max_dummy,
+                                          dummy_factor = dummy_factor,
+                                          saturation = Inf,
+                                          model = "Geyer",
+                                          medium_range_model = "Geyer"))
 
   expect_equal(as.vector(fit_large$coefficients$alpha[[1]]), as.vector(fit_infinite$coefficients$alpha[[1]]))
   expect_equal(as.vector(fit_large$coefficients$gamma), as.vector(fit_infinite$coefficients$gamma))
