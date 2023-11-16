@@ -14,18 +14,20 @@ the parameters of the Gibbs point process, or a fit object obtained from running
 IMPORTANT: Check ?plot_papangelou.default for the documentation. Here, we only provide a few examples.
 }
 \examples{
-# Plot the Papangelou conditional intensity of a model specified by some parameters.
-# This will generate a configuration from that model, and plot the corresponding intensity.
+set.seed(1)
 
-ppjsdm::plot_papangelou(alpha = matrix(-0.2, 2, 2), # Short-range interaction coefficients
-                        beta0 = c(4, 4),
-                        grid_steps = 100)
-
-# More commonly, one starts from a set of points:
+# Draw some points
 
 configuration <- ppjsdm::rppp(lambda = c(A = 500, B = 500))
 
-# Which is used to fit the model:
+# Plot the Papangelou conditional intensity of a model specified by some parameters.
+
+ppjsdm::plot_papangelou(configuration = configuration,
+                        alpha = matrix(-0.2, 2, 2), # Short-range interaction coefficients
+                        beta0 = c(4, 4),
+                        grid_steps = 100)
+
+# More commonly, the points are used to fit the model:
 
 fit <- ppjsdm::gibbsm(configuration)
 

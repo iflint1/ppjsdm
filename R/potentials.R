@@ -143,7 +143,8 @@ print.potentials <- function(x, ...) {
   cat(format_potentials(x))
 }
 
-#' @importFrom ggplot2 aes aes_string element_blank geom_line ggplot theme theme_minimal xlab ylab
+#' @importFrom ggplot2 aes element_blank geom_line ggplot theme theme_minimal xlab ylab
+#' @importFrom rlang .data
 #' @importFrom stats complete.cases
 #' @method plot potentials
 #' @export
@@ -151,18 +152,24 @@ plot.potentials <- function(x, ...) {
   max_distance <- 2 * max(Reduce("max", x$short_range), x$long_range)
   xseq <- seq(from = 0, to = max_distance, length.out = 1e3)
   df <- data.frame(x = xseq,
-                   overall = x$overall(xseq),
-                   medium = x$medium(xseq))
+                   Overall = x$overall(xseq),
+                   Medium = x$medium(xseq))
 
   for(i in seq_len(length(x$short))) {
     df[, paste0("short", i)] <- x$short[[i]](xseq)
+    if(is.null(names(x$short)[i])) {
+      df[, paste0("name", i)] <- paste0("Short ", i)
+    } else if(names(x$short)[i] == "") { # Cannot put this as a conditional in the previous case due to no short-circuiting
+      df[, paste0("name", i)] <- paste0("Short ", i)
+    } else {
+      df[, paste0("name", i)] <- names(x$short)[i]
+    }
   }
 
   df <- df[complete.cases(df), ]
 
-  Overall <- "Overall"
   g <- ggplot(data = df) +
-    geom_line(aes_string(x = "x", y = "overall", colour = "Overall"), size = 2) +
+    geom_line(aes(x = .data$x, y = .data$Overall, colour = "Overall"), size = 2) +
     geom_line(aes(x = x, y = 0), colour = "black") +
     xlab(NULL) +
     ylab(NULL) +
@@ -170,20 +177,11 @@ plot.potentials <- function(x, ...) {
     theme(legend.title = element_blank())
 
   for(i in seq_len(length(x$short))) {
-    if(is.null(names(x$short)[i])) {
-      assign(paste0("name", i), paste0("Short ", i))
-    } else if(names(x$short)[i] == "") { # Cannot put this as a conditional in the previous case due to no short-circuiting
-      assign(paste0("name", i), paste0("Short ", i))
-    } else {
-      assign(paste0("name", i), names(x$short)[i])
-    }
-
-    g <- g + geom_line(aes_string(x = "x", y = paste0("short", i), colour = paste0("name", i)), size = 1, alpha = 0.8)
+    g <- g + geom_line(aes(x = .data$x, y = .data[[paste0("short", i)]], colour = .data[[paste0("name", i)]]), size = 1, alpha = 0.8)
   }
 
-  if(any(df$medium != 0, na.rm = TRUE)) {
-    Medium <- "Medium"
-    g <- g + geom_line(aes_string(x = "x", y = "medium", colour = "Medium"), size = 1, alpha = 0.8)
+  if(any(df$Medium != 0, na.rm = TRUE)) {
+    g <- g + geom_line(aes(x = .data$x, y = .data$Medium, colour = "Medium"), size = 1, alpha = 0.8)
   }
   g
 }

@@ -6,18 +6,20 @@
 #' the parameters of the Gibbs point process, or a fit object obtained from running `gibbsm`.
 #' @export
 #' @examples
-#' # Plot the Papangelou conditional intensity of a model specified by some parameters.
-#' # This will generate a configuration from that model, and plot the corresponding intensity.
+#' set.seed(1)
 #'
-#' ppjsdm::plot_papangelou(alpha = matrix(-0.2, 2, 2), # Short-range interaction coefficients
-#'                         beta0 = c(4, 4),
-#'                         grid_steps = 100)
-#'
-#' # More commonly, one starts from a set of points:
+#' # Draw some points
 #'
 #' configuration <- ppjsdm::rppp(lambda = c(A = 500, B = 500))
 #'
-#' # Which is used to fit the model:
+#' # Plot the Papangelou conditional intensity of a model specified by some parameters.
+#'
+#' ppjsdm::plot_papangelou(configuration = configuration,
+#'                         alpha = matrix(-0.2, 2, 2), # Short-range interaction coefficients
+#'                         beta0 = c(4, 4),
+#'                         grid_steps = 100)
+#'
+#' # More commonly, the points are used to fit the model:
 #'
 #' fit <- ppjsdm::gibbsm(configuration)
 #'
@@ -73,6 +75,7 @@ plot_papangelou <- function(...) {
 #' @importFrom colorspace scale_fill_continuous_sequential
 #' @importFrom ggplot2 aes coord_equal element_text geom_tile ggplot ggtitle guide_legend guides labs scale_color_manual scale_shape_manual scale_size scale_x_continuous scale_y_continuous theme theme_minimal xlab xlim ylab ylim
 #' @importFrom graphics plot
+#' @importFrom rlang .data
 #' @importFrom spatstat.geom as.im as.owin as.ppp boundingbox gridcentres inside.owin
 #' @importFrom stats na.omit
 #' @export
@@ -229,8 +232,8 @@ plot_papangelou.default <- function(window,
       limits
     }
 
-    g <- ggplot(data = df, aes_string(x = "x", y = "y")) +
-      geom_tile(aes_string(fill = "papangelou"), alpha = 0.5) +
+    g <- ggplot(data = df, aes(x = .data$x, y = .data$y)) +
+      geom_tile(aes(fill = .data$papangelou), alpha = 0.5) +
       scale_fill_continuous_sequential(palette = "Purple-Yellow", limits = lim) +
       labs(fill = legend_title) +
       scale_color_manual(values = color) + # Obtained by wesanderson::wes_palette("Darjeeling1")
@@ -245,11 +248,11 @@ plot_papangelou.default <- function(window,
       guides(shape = guide_legend(override.aes = list(size = 5))) # Bigger types symbol size
 
     if(!all(points[, mark_description] == 1.)) {
-      g <- g + geom_point(data = points, aes_string(x = "x", y = "y", colour = type_description,
-                                                    shape = type_description, size = mark_description), alpha = 0.5)
+      g <- g + geom_point(data = points, aes(x = .data$x, y = .data$y, colour = .data[[type_description]],
+                                             shape = .data[[type_description]], size = .data[[mark_description]]), alpha = 0.5)
     } else {
-      g <- g + geom_point(data = points, aes_string(x = "x", y = "y", colour = type_description,
-                                                    shape = type_description), size = 1.5, alpha = 0.5)
+      g <- g + geom_point(data = points, aes(x = .data$x, y = .data$y, colour = .data[[type_description]],
+                                             shape = .data[[type_description]]), size = 1.5, alpha = 0.5)
     }
 
     if(!missing(mark_range)) {

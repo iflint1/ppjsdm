@@ -372,7 +372,8 @@ make_summary_df <- function(fits,
 #' @param base_size Base size.
 #' @param xmin Optional plot minimum x.
 #' @param xmax Optional plot maximum x.
-#' @importFrom ggplot2 aes aes_string element_text facet_grid geom_errorbar geom_point geom_vline ggplot ggtitle guide_legend guides position_dodge scale_color_manual theme theme_bw xlab ylab xlim
+#' @importFrom ggplot2 aes element_text facet_grid geom_errorbar geom_point geom_vline ggplot ggtitle guide_legend guides position_dodge scale_color_manual theme theme_bw xlab ylab xlim
+#' @importFrom rlang .data
 #' @examples
 #' set.seed(1)
 #'
@@ -386,9 +387,9 @@ make_summary_df <- function(fits,
 #'
 #' # Plot the coefficients
 #'
-#' box_plot(fit)
+#' ppjsdm::box_plot(fit)
 #'
-#' box_plot(fit, coefficient = "x")
+#' ppjsdm::box_plot(fit, coefficient = "x")
 #'
 #' @export
 #' @md
@@ -501,14 +502,14 @@ box_plot <- function(...,
   # Set colours
   colours <- rep(colours, length.out = ncolours)
 
-  g <- ggplot(df, aes_string(y = "ylabels", x = identification)) # Visualisation
+  g <- ggplot(df, aes(y = .data$ylabels, x = .data[[identification]])) # Visualisation
 
   if(highlight_zero) { # If this option is chosen, draw a red line before doing anything else
     g <- g + geom_vline(xintercept = 0, color = "red", linewidth = 1.5) # Vertical line at 0
   }
 
   g <- g +
-    geom_point(aes_string(colour = colour_string), size = 3, position = position_dodge(width = 0.2)) + # Size of point estimates
+    geom_point(aes(colour = .data[[colour_string]]), size = 3, position = position_dodge(width = 0.2)) + # Size of point estimates
     scale_color_manual(values = colours) + # Fit colours
     xlab(NULL) + # Remove x labels
     ylab(NULL) + # Remove y labels
@@ -521,12 +522,12 @@ box_plot <- function(...,
                                  override.aes = aes(size = 4, linewidth = 1)))
 
   if(all(c("lo_numerical", "hi_numerical", "lo", "hi") %in% colnames(df))) {
-    g <- g + geom_errorbar(aes_string(colour = colour_string,
-                                      xmin = "lo_numerical",
-                                      xmax = "hi_numerical"), width = 0, linewidth = 2, position = position_dodge(width = 0.2)) +
-      geom_errorbar(aes_string(colour = colour_string,
-                               xmin = "lo",
-                               xmax = "hi"), width = 0.2, linewidth = 0.5, position = position_dodge(width = 0.2))
+    g <- g + geom_errorbar(aes(colour = .data[[colour_string]],
+                               xmin = .data$lo_numerical,
+                               xmax = .data$hi_numerical), width = 0, linewidth = 2, position = position_dodge(width = 0.2)) +
+      geom_errorbar(aes(colour = .data[[colour_string]],
+                        xmin = .data$lo,
+                        xmax = .data$hi), width = 0.2, linewidth = 0.5, position = position_dodge(width = 0.2))
   }
 
   # If xmin and xmax are given use those instead of defaults

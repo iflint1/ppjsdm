@@ -85,8 +85,8 @@ fit <- ppjsdm::gibbsm(configuration, covariates = list(x = function(x, y) x))
 
 # Plot the coefficients
 
-box_plot(fit)
+ppjsdm::box_plot(fit)
 
-box_plot(fit, coefficient = "x")
+ppjsdm::box_plot(fit, coefficient = "x")
 
 }

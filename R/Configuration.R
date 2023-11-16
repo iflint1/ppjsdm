@@ -222,7 +222,8 @@ print.Configuration <- function(x, ...) {
   cat(format_configuration(x))
 }
 
-#' @importFrom ggplot2 aes_string coord_equal element_text geom_point ggplot ggtitle scale_color_manual scale_shape_manual theme theme_minimal xlab xlim ylab ylim
+#' @importFrom ggplot2 aes coord_equal element_text geom_point ggplot ggtitle scale_color_manual scale_shape_manual theme theme_minimal xlab xlim ylab ylim
+#' @importFrom rlang .data
 #' @method plot Configuration
 #' @export
 plot.Configuration <- function(x, window, color, shape, ...) {
@@ -245,9 +246,9 @@ plot.Configuration <- function(x, window, color, shape, ...) {
     }
     g <- ggplot(data = df)
     if(!all(df$Marks == 1.)) {
-      g <- g + geom_point(aes_string(x = 'x', y = 'y', colour = 'Types', shape = 'Types', size = 'Marks'))
+      g <- g + geom_point(aes(x = .data$x, y = .data$y, colour = .data$Types, shape = .data$Types, size = .data$Marks))
     } else {
-      g <- g + geom_point(aes_string(x = 'x', y = 'y', colour = 'Types', shape = 'Types'))
+      g <- g + geom_point(aes(x = .data$x, y = .data$y, colour = .data$Types, shape = .data$Types))
     }
     g + xlim(x_range[1], x_range[2]) +
       ylim(y_range[1], y_range[2]) +
