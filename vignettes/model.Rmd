@@ -47,7 +47,6 @@ configuration <- rgibbs(beta0 = beta0, model = model)
 and plot it below.
 
 ```{r, fig.align = 'center', fig}
-par(mar = c(5, 4, 4, 13) + 0.1)
 plot(configuration)
 ```
 
@@ -193,10 +192,10 @@ model <- "Geyer"
 covariates <- list(temperature = function(x, y) x - 0.5)
 beta <- 2
 configuration <- rgibbs(model = model,
-                alpha = alpha,
-                beta0 = beta0,
-                beta = beta,
-                covariates = covariates)
+                        alpha = alpha,
+                        beta0 = beta0,
+                        beta = beta,
+                        covariates = covariates)
 plot_papangelou(configuration = configuration,
                 model = model,
                 alpha = alpha,

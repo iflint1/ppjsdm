@@ -1,4 +1,5 @@
 #' Compute the Papangelou conditional intensity of the model.
+#'
 #' IMPORTANT: Check ?compute_papangelou.default for the documentation.
 #'
 #' @param ... Parameters to be forwarded to the relevant method. Currently, either
@@ -13,22 +14,21 @@ compute_papangelou <- function(...) {
 #' @param configuration Configuration.
 #' @param x Coordinates along the x-axis of the points at which to evaluate the Papangelou conditional intensity.
 #' @param y Coordinates along the y-axis of the points at which to evaluate the Papangelou conditional intensity.
-#' @param type Type of the point (as an integer >= 1).
-#' @param model String representing the model to use. You can check the currently authorised models with a call to `show_models()`.
-#' @param medium_range_model String representing the medium range model to use. You can check the currently authorised models with a call to `show_medium_range_models()`.
-#' @param alpha Short range repulsion matrix.
-#' @param beta0 A vector representing the log-intensities of the point processes.
-#' @param beta Coefficients related to covariates.
-#' @param gamma Medium range repulsion matrix.
-#' @param covariates Covariates.
-#' @param short_range Short range interaction radii.
-#' @param medium_range Medium range interaction radii.
-#' @param long_range Long range interaction radii.
-#' @param saturation Saturation parameter.
-#' @param types Types of the points. Default is a vector (type1, type2, ...) of same size as n.
-#' @param drop_type_from_configuration Should we remove the considered type(s) from the configuration?
-#' @importFrom stats na.omit
+#' @param type Type of the point (as an integer >= 1 or string representing the type).
 #' @param mark Mark of the point to add.
+#' @param alpha Matrix of short-range interaction coefficients.
+#' @param gamma Matrix of medium-range interaction coefficients.
+#' @param beta0 Vector representing the intercept.
+#' @param covariates List of covariates. These are converted to the `im` format by applying `as.im` to all elements in the list.
+#' @param beta Fitted regression coefficients with respect to covariates.
+#' @param short_range Symmetric matrix of short-range interaction radii. Can also be a list of matrices, each entry representing a different potential.
+#' @param medium_range Symmetric matrix of medium-range interaction radii.
+#' @param long_range Symmetric matrix of long-range interaction radii.
+#' @param saturation Saturation parameter of the point process.
+#' @param types Character vector, with entry i representing the name of type i.
+#' @param model String representing the short-range model to use. The currently authorised models are obtained with a call to `show_short_range_models()`.
+#' @param medium_range_model String representing the medium-range model to use. The currently authorised models are obtained with a call to `show_medium_range_models()`.
+#' @param drop_type_from_configuration Should we remove the considered type(s) from the configuration?
 #' @param nthreads Maximum number of threads for parallel computing.
 #' @param ... Ignored.
 #' @export
@@ -38,18 +38,18 @@ compute_papangelou.default <- function(configuration,
                                        y,
                                        type = rep(1, length(x)),
                                        mark = rep(1.0, length(x)),
-                                       model,
-                                       medium_range_model,
                                        alpha,
-                                       beta0,
-                                       beta,
                                        gamma,
+                                       beta0,
                                        covariates,
+                                       beta,
                                        short_range,
                                        medium_range,
                                        long_range,
                                        saturation,
                                        types,
+                                       model,
+                                       medium_range_model,
                                        drop_type_from_configuration = FALSE,
                                        nthreads = 1,
                                        ...) {
@@ -61,7 +61,7 @@ compute_papangelou.default <- function(configuration,
       types <- NULL
     }
 
-    # If the user supplied types, then add them to the list of types
+    # If the user supplied type, then add them to the list of types
     if(all(is.character(type))) {
       types <- sort(union(types, unique(type)))
     }
@@ -87,6 +87,7 @@ compute_papangelou.default <- function(configuration,
   type <- check_type_mark(type, force_numeric = FALSE)
   mark <- check_type_mark(mark, force_numeric = TRUE)
 
+  # Relevant types contains types mentioned by the user by name, we want to make sure that these are included
   relevant_types <- if(is.character(type)) {
     sort(unique(type))
   } else {
@@ -98,8 +99,11 @@ compute_papangelou.default <- function(configuration,
     if(nlevels(configuration$types) > 0) {
       relevant_types <- sort(union(relevant_types, levels(configuration$types)))
     }
+  } else {
+    configuration <- Configuration()
   }
 
+  # Relevant indices contains types mentioned by the user by index
   relevant_indices <- if(is.numeric(type)) {
     unique(type)
   } else {
@@ -122,10 +126,6 @@ compute_papangelou.default <- function(configuration,
                                  relevant_types = relevant_types,
                                  relevant_indices = relevant_indices)
 
-  if(missing(configuration)) {
-    configuration <- Configuration()
-  }
-
   # If the user supplies a string as the type, they want to evaluate the intensity
   # at that type.
   if(is.character(type)) {
@@ -139,6 +139,7 @@ compute_papangelou.default <- function(configuration,
     configuration <- configuration[setdiff(configuration$types, names(parameters$beta0)[unique(type)])]
   }
 
+  # Check type format to avoid segfaults in C++ code
   if(!(is.integer(type) & all(type >= 1 & type <= length(parameters$beta0)))) {
     stop("Type does not have the right format")
   }
@@ -171,18 +172,18 @@ compute_papangelou.default <- function(configuration,
 #' @param fit Fit object obtained by running gibbsm.
 #' @param type Type of the point at which to evaluate the Papangelou conditional intensity.
 #' @param configuration Configuration of points at which to evaluate the Papangelou conditional intensity.
-#' @param alpha Short range repulsion parameter.
-#' @param gamma Medium range repulsion parameter.
-#' @param beta0 Log-intensity.
-#' @param covariates Covariates.
-#' @param beta Covariates coefficients.
-#' @param short_range Matrix of short range distances.
-#' @param medium_range Matrix of medium range distances.
-#' @param long_range Matrix of long range distances.
-#' @param saturation Saturation.
-#' @param types Types of the points. Default is a vector (type1, type2, ...) of same size as n.
-#' @param model Model for short range interaction.
-#' @param medium_range_model Model for medium range interaction.
+#' @param alpha Matrix of short-range interaction coefficients.
+#' @param gamma Matrix of medium-range interaction coefficients.
+#' @param beta0 Vector representing the intercept.
+#' @param covariates List of covariates. These are converted to the `im` format by applying `as.im` to all elements in the list.
+#' @param beta Fitted regression coefficients with respect to covariates.
+#' @param short_range Symmetric matrix of short-range interaction radii. Can also be a list of matrices, each entry representing a different potential.
+#' @param medium_range Symmetric matrix of medium-range interaction radii.
+#' @param long_range Symmetric matrix of long-range interaction radii.
+#' @param saturation Saturation parameter of the point process.
+#' @param types Character vector, with entry i representing the name of type i.
+#' @param model String representing the short-range model to use. The currently authorised models are obtained with a call to `show_short_range_models()`.
+#' @param medium_range_model String representing the medium-range model to use. The currently authorised models are obtained with a call to `show_medium_range_models()`.
 #' @param nthreads Maximum number of threads for parallel computing.
 #' @param ... Forwarded to plot_papangelou
 #' @export

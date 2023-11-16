@@ -302,11 +302,11 @@ test_that("Subsetting types in different ways gives same result", {
                                            marks = configuration$marks[configuration$types == "b"],
                                            types = configuration$types[configuration$types == "b"])
 
-  papangelou_subset1 <- compute_papangelou(x = 0.5, y = 0.5, configuration = configuration_b, type = "a",
-                                           alpha = alpha)
+  papangelou_subset1 <- ppjsdm::compute_papangelou(x = 0.5, y = 0.5, configuration = configuration_b, type = "a",
+                                                   alpha = alpha)
 
-  papangelou_subset2 <- compute_papangelou(x = 0.5, y = 0.5, configuration = configuration["b"], type = "a",
-                                           alpha = alpha)
+  papangelou_subset2 <- ppjsdm::compute_papangelou(x = 0.5, y = 0.5, configuration = configuration["b"], type = "a",
+                                                   alpha = alpha)
 
   expect_equal(papangelou_subset1, papangelou_subset2)
 })

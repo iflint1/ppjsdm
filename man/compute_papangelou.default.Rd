@@ -10,18 +10,18 @@
   y,
   type = rep(1, length(x)),
   mark = rep(1, length(x)),
-  model,
-  medium_range_model,
   alpha,
-  beta0,
-  beta,
   gamma,
+  beta0,
   covariates,
+  beta,
   short_range,
   medium_range,
   long_range,
   saturation,
   types,
+  model,
+  medium_range_model,
   drop_type_from_configuration = FALSE,
   nthreads = 1,
   ...
@@ -34,33 +34,33 @@
 
 \item{y}{Coordinates along the y-axis of the points at which to evaluate the Papangelou conditional intensity.}
 
-\item{type}{Type of the point (as an integer >= 1).}
+\item{type}{Type of the point (as an integer >= 1 or string representing the type).}
 
 \item{mark}{Mark of the point to add.}
 
-\item{model}{String representing the model to use. You can check the currently authorised models with a call to `show_models()`.}
+\item{alpha}{Matrix of short-range interaction coefficients.}
 
-\item{medium_range_model}{String representing the medium range model to use. You can check the currently authorised models with a call to `show_medium_range_models()`.}
+\item{gamma}{Matrix of medium-range interaction coefficients.}
 
-\item{alpha}{Short range repulsion matrix.}
+\item{beta0}{Vector representing the intercept.}
 
-\item{beta0}{A vector representing the log-intensities of the point processes.}
+\item{covariates}{List of covariates. These are converted to the `im` format by applying `as.im` to all elements in the list.}
 
-\item{beta}{Coefficients related to covariates.}
+\item{beta}{Fitted regression coefficients with respect to covariates.}
 
-\item{gamma}{Medium range repulsion matrix.}
+\item{short_range}{Symmetric matrix of short-range interaction radii. Can also be a list of matrices, each entry representing a different potential.}
 
-\item{covariates}{Covariates.}
+\item{medium_range}{Symmetric matrix of medium-range interaction radii.}
 
-\item{short_range}{Short range interaction radii.}
+\item{long_range}{Symmetric matrix of long-range interaction radii.}
 
-\item{medium_range}{Medium range interaction radii.}
+\item{saturation}{Saturation parameter of the point process.}
 
-\item{long_range}{Long range interaction radii.}
+\item{types}{Character vector, with entry i representing the name of type i.}
 
-\item{saturation}{Saturation parameter.}
+\item{model}{String representing the short-range model to use. The currently authorised models are obtained with a call to `show_short_range_models()`.}
 
-\item{types}{Types of the points. Default is a vector (type1, type2, ...) of same size as n.}
+\item{medium_range_model}{String representing the medium-range model to use. The currently authorised models are obtained with a call to `show_medium_range_models()`.}
 
 \item{drop_type_from_configuration}{Should we remove the considered type(s) from the configuration?}
 

@@ -126,7 +126,6 @@ plot_papangelou.default <- function(window,
     stop("Expecting mark to be a single numeric value.")
   }
 
-  # Check that type has right length
   if(!(is.numeric(type) | is.character(type)) | length(type) != 1) {
     stop("Expecting a char/numeric type of length 1.")
   }

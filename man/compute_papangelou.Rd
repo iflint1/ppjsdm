@@ -2,8 +2,7 @@
 % Please edit documentation in R/compute_papangelou.R
 \name{compute_papangelou}
 \alias{compute_papangelou}
-\title{Compute the Papangelou conditional intensity of the model.
-IMPORTANT: Check ?compute_papangelou.default for the documentation.}
+\title{Compute the Papangelou conditional intensity of the model.}
 \usage{
 compute_papangelou(...)
 }
@@ -12,6 +11,5 @@ compute_papangelou(...)
 the parameters of the Gibbs point process, or a fit object obtained from running `gibbsm`.}
 }
 \description{
-Compute the Papangelou conditional intensity of the model.
 IMPORTANT: Check ?compute_papangelou.default for the documentation.
 }

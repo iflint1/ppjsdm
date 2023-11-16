@@ -31,29 +31,29 @@
 
 \item{configuration}{Configuration of points at which to evaluate the Papangelou conditional intensity.}
 
-\item{alpha}{Short range repulsion parameter.}
+\item{alpha}{Matrix of short-range interaction coefficients.}
 
-\item{gamma}{Medium range repulsion parameter.}
+\item{gamma}{Matrix of medium-range interaction coefficients.}
 
-\item{beta0}{Log-intensity.}
+\item{beta0}{Vector representing the intercept.}
 
-\item{covariates}{Covariates.}
+\item{covariates}{List of covariates. These are converted to the `im` format by applying `as.im` to all elements in the list.}
 
-\item{beta}{Covariates coefficients.}
+\item{beta}{Fitted regression coefficients with respect to covariates.}
 
-\item{short_range}{Matrix of short range distances.}
+\item{short_range}{Symmetric matrix of short-range interaction radii. Can also be a list of matrices, each entry representing a different potential.}
 
-\item{medium_range}{Matrix of medium range distances.}
+\item{medium_range}{Symmetric matrix of medium-range interaction radii.}
 
-\item{long_range}{Matrix of long range distances.}
+\item{long_range}{Symmetric matrix of long-range interaction radii.}
 
-\item{saturation}{Saturation.}
+\item{saturation}{Saturation parameter of the point process.}
 
-\item{types}{Types of the points. Default is a vector (type1, type2, ...) of same size as n.}
+\item{types}{Character vector, with entry i representing the name of type i.}
 
-\item{model}{Model for short range interaction.}
+\item{model}{String representing the short-range model to use. The currently authorised models are obtained with a call to `show_short_range_models()`.}
 
-\item{medium_range_model}{Model for medium range interaction.}
+\item{medium_range_model}{String representing the medium-range model to use. The currently authorised models are obtained with a call to `show_medium_range_models()`.}
 
 \item{nthreads}{Maximum number of threads for parallel computing.}
 
