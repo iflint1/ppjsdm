@@ -199,6 +199,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// make_default_types
+SEXP make_default_types(R_xlen_t size);
+RcppExport SEXP _ppjsdm_make_default_types(SEXP sizeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< R_xlen_t >::type size(sizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(make_default_types(size));
+    return rcpp_result_gen;
+END_RCPP
+}
 // prepare_gibbsm_data
 Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list, SEXP window, Rcpp::List covariates, Rcpp::List model, Rcpp::CharacterVector medium_range_model, Rcpp::List short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, Rcpp::NumericVector mark_range, R_xlen_t max_dummy, R_xlen_t min_dummy, double dummy_factor, Rcpp::List estimate_alpha, Rcpp::LogicalMatrix estimate_gamma, int nthreads, bool debug, std::string dummy_distribution, Rcpp::CharacterVector type_names);
 RcppExport SEXP _ppjsdm_prepare_gibbsm_data(SEXP configuration_listSEXP, SEXP windowSEXP, SEXP covariatesSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP mark_rangeSEXP, SEXP max_dummySEXP, SEXP min_dummySEXP, SEXP dummy_factorSEXP, SEXP estimate_alphaSEXP, SEXP estimate_gammaSEXP, SEXP nthreadsSEXP, SEXP debugSEXP, SEXP dummy_distributionSEXP, SEXP type_namesSEXP) {
@@ -369,6 +380,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ppjsdm_has_duplicates", (DL_FUNC) &_ppjsdm_has_duplicates, 1},
     {"_ppjsdm_make_types", (DL_FUNC) &_ppjsdm_make_types, 3},
     {"_ppjsdm_make_types2", (DL_FUNC) &_ppjsdm_make_types2, 4},
+    {"_ppjsdm_make_default_types", (DL_FUNC) &_ppjsdm_make_default_types, 1},
     {"_ppjsdm_prepare_gibbsm_data", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data, 19},
     {"_ppjsdm_prepare_gibbsm_data_with_dummy", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data_with_dummy, 16},
     {"_ppjsdm_rbinomialpp_cpp", (DL_FUNC) &_ppjsdm_rbinomialpp_cpp, 6},

@@ -179,14 +179,24 @@ as.Configuration.default <- function(configuration) {
 
 format_configuration <- function(configuration) {
   number_points <- length(configuration$x)
+  min_marks <- if(number_points > 0) {
+    min(configuration$marks)
+  } else {
+    -Inf
+  }
+  max_marks <- if(number_points > 0) {
+    max(configuration$marks)
+  } else {
+    Inf
+  }
   str <- paste0("A configuration of points.\n\nTotal number of points: ",
                 number_points,
                 ".\nTypes: ",
                 paste0(levels(configuration$types), collapse = ", "),
                 ".\nMarks in range [",
-                min(configuration$marks),
+                min_marks,
                 ", ",
-                max(configuration$marks),
+                max_marks,
                 "].\nNumber of points by type: ",
                 paste0(paste0(levels(configuration$types), " = ", table(configuration$types)), collapse = ", "),
                 ".\n")

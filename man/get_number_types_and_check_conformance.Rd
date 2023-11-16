@@ -4,7 +4,7 @@
 \alias{get_number_types_and_check_conformance}
 \title{Deduce from a list of objects the number of types the user has in mind.}
 \usage{
-get_number_types_and_check_conformance(default_number_types, ...)
+get_number_types_and_check_conformance(default_number_types, types, ...)
 }
 \arguments{
 \item{default_number_types}{Default number of types.}

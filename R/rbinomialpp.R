@@ -19,7 +19,7 @@ rbinomialpp <- function(window = Rectangle_window(),
                  mark_range = c(1.0, 1.0)) {
   n <- unlist(n)
   types <- unlist(types)
-  number_types <- get_number_types_and_check_conformance(default_number_types = 1, n, types)
+  number_types <- get_number_types_and_check_conformance(default_number_types = 1, types = types, n)$number_types
   n <- construct_if_missing(x = n, def = 1, nrows = number_types, matrix = FALSE)
   types <- make_types(types = types, size = number_types, might_contain_name = n)
   rbinomialpp_cpp(window = as.Window(window),

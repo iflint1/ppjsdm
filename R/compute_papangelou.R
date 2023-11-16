@@ -55,14 +55,56 @@ compute_papangelou.default <- function(configuration,
                                        ...) {
   # If user did not supply types, by default they should be those of the configuration
   if(missing(types) & !missing(configuration)) {
-    types <- levels(as.Configuration(configuration)$types)
+    if(nlevels(as.Configuration(configuration)$types) > 0) {
+      types <- levels(as.Configuration(configuration)$types)
+    } else {
+      types <- NULL
+    }
+
+    # If the user supplied types, then add them to the list of types
+    if(all(is.character(type))) {
+      types <- sort(union(types, unique(type)))
+    }
   }
 
-  # Construct a default configuration if not supplied
-  if(missing(configuration)) {
-    configuration <- Configuration()
+  # Check format of type and mark parameters
+  check_type_mark <- function(obj, force_numeric) {
+    if(length(obj) != length(x)) {
+      if(length(obj) == 1) {
+        rep(obj, length(x))
+      } else {
+        stop("Unknown format for type or mark.")
+      }
+    } else {
+      if(all(is.numeric(obj)) | (all(is.character(obj)) & !force_numeric)) {
+        obj
+      } else {
+        stop("Type or mark are not of the right class.")
+      }
+    }
   }
-  configuration <- as.Configuration(configuration)
+
+  type <- check_type_mark(type, force_numeric = FALSE)
+  mark <- check_type_mark(mark, force_numeric = TRUE)
+
+  relevant_types <- if(is.character(type)) {
+    sort(unique(type))
+  } else {
+    NULL
+  }
+
+  if(!missing(configuration)) {
+    configuration <- as.Configuration(configuration)
+    if(nlevels(configuration$types) > 0) {
+      relevant_types <- sort(union(relevant_types, levels(configuration$types)))
+    }
+  }
+
+  relevant_indices <- if(is.numeric(type)) {
+    unique(type)
+  } else {
+    NULL
+  }
 
   # Construct defaults for the rest of the parameters
   parameters <- model_parameters(alpha = alpha,
@@ -76,70 +118,34 @@ compute_papangelou.default <- function(configuration,
                                  saturation = saturation,
                                  model = model,
                                  types = types,
-                                 medium_range_model = medium_range_model)
+                                 medium_range_model = medium_range_model,
+                                 relevant_types = relevant_types,
+                                 relevant_indices = relevant_indices)
 
-  # There are some cases where configuration might only have a subset of all types,
-  # e.g., if one wants to predict at a new location.
-  if(nlevels(configuration$types) != length(parameters$types)) {
-    # In this case, everything is ok, we can evaluate the parameters on the subset of types
-    if(all(levels(configuration$types) %in% parameters$types)) {
-      parameters$alpha <- lapply(parameters$alpha, function(a) a[levels(configuration$types), levels(configuration$types)])
-      parameters$gamma <- parameters$gamma[levels(configuration$types), levels(configuration$types)]
-      parameters$short_range <- lapply(parameters$short_range, function(s) s[levels(configuration$types), levels(configuration$types)])
-      parameters$medium_range <- parameters$medium_range[levels(configuration$types), levels(configuration$types)]
-      parameters$long_range <- parameters$long_range[levels(configuration$types), levels(configuration$types)]
-
-      parameters$beta0 <- parameters$beta0[levels(configuration$types)]
-      parameters$beta <- parameters$beta[levels(configuration$types), ]
-    } else {
-      stop(paste0("The types of the configuration are not a subset of those given by the parameters, configuration: ",
-                  paste0(levels(configuration$types), collapse = ", "),
-                  " and supplied types: ",
-                  paste0(parameters$types, collapse = ", ")))
-    }
-  } else if(!all(levels(configuration$types) == parameters$types)) {
-    stop(paste0("The types of the configuration do not correspond to those given by the parameters, configuration: ",
-                paste0(levels(configuration$types), collapse = ", "),
-                " and supplied types: ",
-                paste0(parameters$types, collapse = ", ")))
+  if(missing(configuration)) {
+    configuration <- Configuration()
   }
-
-  # At this point, the parameters should exactly correspond to the types of the configuration
-  if(!all(names(parameters$beta0) == levels(configuration$types))) {
-    stop(paste0("Unexpected setting when computing the Papangelou intensity: the supplied parameters do not refer to the same types as the configuration, configuration: ",
-                paste0(levels(configuration$types), collapse = ", "),
-                " and supplied parameters: ",
-                paste0(names(parameters$beta0), collapse = ", ")))
-  }
-
-  check_type_mark <- function(obj) {
-    if(length(obj) != length(x)) {
-      if(length(obj) == 1) {
-        rep(obj, length(x))
-      } else {
-        stop("Unknown format for type or mark.")
-      }
-    } else {
-      obj
-    }
-  }
-
-  type <- check_type_mark(type)
-  mark <- check_type_mark(mark)
 
   # If the user supplies a string as the type, they want to evaluate the intensity
   # at that type.
   if(is.character(type)) {
     type <- sapply(type, function(t) which(t == names(parameters$beta0))[1])
+  } else {
+    type <- sapply(type, function(i) which(parameters$full_types[i] == names(parameters$beta0))[1])
   }
 
   # Remove type from the configuration?
   if(drop_type_from_configuration) {
-    configuration <- Configuration(x = configuration$x[!(configuration$types %in% names(parameters$beta0)[unique(type)])],
-                                   y = configuration$y[!(configuration$types %in% names(parameters$beta0)[unique(type)])],
-                                   types = configuration$types[!(configuration$types %in% names(parameters$beta0)[unique(type)])],
-                                   marks = configuration$marks[!(configuration$types %in% names(parameters$beta0)[unique(type)])])
+    configuration <- configuration[setdiff(configuration$types, names(parameters$beta0)[unique(type)])]
   }
+
+  if(!(is.integer(type) & all(type >= 1 & type <= length(parameters$beta0)))) {
+    stop("Type does not have the right format")
+  }
+
+  # Fix type levels (configuration types might have fewer levels than the ones implied by other parameters,
+  # causing issues in the C++ code)
+  configuration$types <- factor(as.character(configuration$types), levels = names(parameters$beta0))
 
   compute_papangelou_cpp(x = x,
                          y = y,

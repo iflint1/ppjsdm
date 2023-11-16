@@ -19,6 +19,8 @@ model_parameters(
   model,
   medium_range_model,
   default_number_types = 1,
+  relevant_types = NULL,
+  relevant_indices = NULL,
   ...
 )
 }
@@ -56,6 +58,10 @@ Filled with 0.1 by default, or values equidtsirbuted between 0 and 0.1 if the us
 \item{medium_range_model}{String representing the medium-range model to use. The currently authorised models are obtained with a call to \code{show_medium_range_models()}.}
 
 \item{default_number_types}{Default number of types. If no other over-riding number of types can be deduced from the other parameters, this will be used.}
+
+\item{relevant_types}{(Optional) Some types that we are interested in. All the model parameters will then be subsetted to include only these types.}
+
+\item{relevant_indices}{(Optional) Indices of some of the types that we are interested in. All the model parameters will then be subsetted to include only types with these indices.}
 
 \item{...}{Other parameters used to infer the number of types. Typically other relevant vectors/matrices that the user has supplied, and could help identify the number of types.}
 }

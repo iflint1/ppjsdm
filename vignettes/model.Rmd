@@ -90,7 +90,8 @@ We can plot the Papangelou conditional intensity by a call to that function.
 The circles represent a sample from the target distribution, and we have added the Papangelou conditional intensity as an overlay.
 
 ```{r}
-plot_papangelou(alpha = alpha, beta0 = beta0, model = model)
+configuration <- rgibbs(alpha = alpha, beta0 = beta0, model = model)
+plot_papangelou(configuration = configuration, alpha = alpha, beta0 = beta0, model = model)
 ```
 
 The plot indicates repulsion within a given interaction radius: at locations far from existing individuals in the configuration, the Papangelou conditional intensity is equal to `exp(beta0)`, and it decreases within the interaction radius.
@@ -98,14 +99,16 @@ The parameter `alpha` controls the strength of the repulsion, and when it is inc
 
 ```{r}
 alpha <- -4
-plot_papangelou(alpha = alpha, beta0 = beta0, model = model)
+configuration <- rgibbs(alpha = alpha, beta0 = beta0, model = model)
+plot_papangelou(configuration = configuration, alpha = alpha, beta0 = beta0, model = model)
 ```
 
 Making `alpha` positive instead of negative changes the behaviour.
 
 ```{r}
 alpha <- 0.1
-plot_papangelou(alpha = alpha, beta0 = beta0, model = model)
+configuration <- rgibbs(alpha = alpha, beta0 = beta0, model = model)
+plot_papangelou(configuration = configuration, alpha = alpha, beta0 = beta0, model = model)
 ```
 
 The Papangelou conditional intensity is now larger at locations closer to existing individuals, indicating that the point process is attractive.
@@ -118,7 +121,15 @@ gamma <- -0.1
 medium_range <- 0.1
 long_range <- 0.2
 medium_range_model <- "Geyer"
-plot_papangelou(alpha = alpha, 
+configuration <- rgibbs(alpha = alpha, 
+                        beta0 = beta0, 
+                        model = model, 
+                        gamma = gamma, 
+                        medium_range = medium_range,
+                        long_range = long_range,
+                        medium_range_model = medium_range_model)
+plot_papangelou(configuration = configuration,
+                alpha = alpha, 
                 beta0 = beta0, 
                 model = model, 
                 gamma = gamma, 
@@ -135,7 +146,8 @@ To begin with, you can control the radii of interaction (which correspond to $r_
 ```{r}
 alpha <- -0.1
 short_range <- 0.05
-plot_papangelou(alpha = alpha, beta0 = beta0, model = model, short_range = short_range)
+configuration <- rgibbs(alpha = alpha, beta0 = beta0, model = model, short_range = short_range)
+plot_papangelou(configuration = configuration, alpha = alpha, beta0 = beta0, model = model, short_range = short_range)
 ```
 
 There are also various kinds of smoothing functions available via the `model` parameter (which correspond to $\varphi_{r_{i,j}}$ in the model).
@@ -143,7 +155,8 @@ Here is what the square exponential smoothing looks like.
 
 ```{r}
 model <- "square_exponential"
-plot_papangelou(alpha = alpha, beta0 = beta0, model = model)
+configuration <- rgibbs(alpha = alpha, beta0 = beta0, model = model)
+plot_papangelou(configuration = configuration, alpha = alpha, beta0 = beta0, model = model)
 ```
 
 # Discussion of the different variations
@@ -179,7 +192,13 @@ It is best to provide the covariates as `spatstat::im` objects, and it is usuall
 model <- "Geyer"
 covariates <- list(temperature = function(x, y) x - 0.5)
 beta <- 2
-plot_papangelou(model = model,
+configuration <- rgibbs(model = model,
+                alpha = alpha,
+                beta0 = beta0,
+                beta = beta,
+                covariates = covariates)
+plot_papangelou(configuration = configuration,
+                model = model,
                 alpha = alpha,
                 beta0 = beta0,
                 beta = beta,

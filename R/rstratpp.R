@@ -21,7 +21,7 @@ rstratpp <- function(window = Rectangle_window(),
   delta_x <- unlist(delta_x)
   delta_y <- unlist(delta_y)
   types <- unlist(types)
-  number_types <- get_number_types_and_check_conformance(default_number_types = 1, delta_x, delta_y, types)
+  number_types <- get_number_types_and_check_conformance(default_number_types = 1, types = types, delta_x, delta_y)$number_types
   delta_x <- construct_if_missing(x = delta_x, def = 1, nrows = number_types, matrix = FALSE)
   if(is.null(delta_y)) {
     delta_y <- delta_x

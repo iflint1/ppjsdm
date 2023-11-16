@@ -282,3 +282,11 @@ chord_diagram_plot(fit3, summ = summ[[3]], show_grid_ticks = FALSE,
                    coefficient = "gamma", classes = c(t1 = "A", t2 = "A", type3 = "B", t4 = "B"),
                    full_names = c(t3 = "type3", t4 = "type4"), outward_facing_names = TRUE, circle_margin = 1)
 
+# Try with tiny coefficients
+fit3$coefficients$gamma[2, 3] <- fit3$coefficients$gamma[3, 2] <- fit3$coefficients$gamma[2, 3] * 1e-6
+summ[[3]]$lo$gamma[2, 3] <- summ[[3]]$lo$gamma[3, 2] <- summ[[3]]$lo$gamma[2, 3] * 1e-6
+summ[[3]]$hi$gamma[2, 3] <- summ[[3]]$hi$gamma[3, 2] <- summ[[3]]$hi$gamma[2, 3] * 1e-6
+summ[[3]]$lo_numerical$gamma[2, 3] <- summ[[3]]$lo_numerical$gamma[3, 2] <- summ[[3]]$lo_numerical$gamma[2, 3] * 1e-6
+summ[[3]]$hi_numerical$gamma[2, 3] <- summ[[3]]$hi_numerical$gamma[3, 2] <- summ[[3]]$hi_numerical$gamma[2, 3] * 1e-6
+
+chord_diagram_plot(fit3, summ = summ[[3]], include_self = FALSE, coefficient = "gamma")

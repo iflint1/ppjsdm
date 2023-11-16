@@ -197,6 +197,7 @@ chord_diagram_plot <- function(fit,
 
   circos.par(gap.after = gap.after, circle.margin = circle_margin)
   plot_fun(chord_diagram,
+           reduce = 0, # Default value causes errors when there are tiny sectors
            link.lwd = 1, # Width for link borders
            link.border = link.border, # Solid black lines around links that are highlighted
            col = col,

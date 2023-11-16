@@ -52,24 +52,83 @@ construct_if_missing <- function(x, def, nrows, ncols = nrows, matrix = FALSE) {
   }
 }
 
-get_number_types_implied_by_object <- function(x) {
+get_number_types_implied_by_object <- function(x, types) {
+  # TODO: Horrible function, factorise...
   if(is.null(x)) {
-    0
+    list(length = 0,
+         types = types)
   } else if(is.matrix(x)) {
-    nrow(x)
+    if(is.null(types)) {
+      ty <- if(!is.null(rownames(x))) {
+        rownames(x)
+      } else {
+        NULL
+      }
+      list(length = nrow(x),
+           types = ty)
+    } else if(!is.null(rownames(x))) {
+      if(all(types %in% rownames(x))) { # The matrix x will be subset to only include the relevant types
+        list(length = nrow(x),
+             types = rownames(x))
+      } else if(all(rownames(x) %in% types)) { # The types will be subset to only include the rows in x
+        list(length = length(types),
+             types = types)
+      } else {
+        print(x)
+        print(types)
+        stop("Found a matrix (printed above) that has rownames, but provided types (printed afterwards) that are not compatible.")
+      }
+    } else {
+      list(length = nrow(x),
+           types = types)
+    }
   } else if(is.numeric(x) | is.character(x)) {
-    length(x)
+    if(is.null(types)) {
+      ty <- if(!is.null(names(x))) {
+        names(x)
+      } else {
+        NULL
+      }
+      list(length = length(x),
+           types = ty)
+    } else if(!is.null(names(x))) {
+      if(all(types %in% names(x))) { # The vector x will be subset to only include the relevant types
+        list(length = length(x),
+             types = names(x))
+      } else if(all(names(x) %in% types)) {
+        list(length = length(types),
+             types = types)
+      } else {
+        print(x)
+        print(types)
+        stop("Found a vector (printed above) that has rownames, but provided types (printed afterwards) that are not compatible.")
+      }
+    } else {
+      list(length = length(x),
+           types = types)
+    }
   } else if(is.list(x)) {
-    initial_length <- get_number_types_implied_by_object(x[[1]])
+    g <- get_number_types_implied_by_object(x[[1]], types = types)
+    initial_length <- g$length
+    ty <- g$types
+    if(!all(types %in% ty)) {
+      stop(paste0("Considering an object ", x[[1]], " that has implied type names incompatible with ", types))
+    }
     if(length(x) > 1) {
       for(i in 2:length(x)) {
-        if(initial_length > 1 & get_number_types_implied_by_object(x[[i]]) > 1 & get_number_types_implied_by_object(x[[i]]) != initial_length) {
+        g <- get_number_types_implied_by_object(x[[i]], types = ty)
+        if(initial_length > 1 & g$length > 1 & g$length != initial_length) {
           stop("At least two objects in a list had incompatible sizes.")
         }
-        initial_length <- max(initial_length, get_number_types_implied_by_object(x[[i]]))
+        initial_length <- max(initial_length, g$length)
+        if(!all(ty %in% g$ty)) {
+          stop(paste0("Considering an object ", x[[i]], " that has implied type names incompatible with ", ty))
+        }
+        ty <- g$ty
       }
     }
-    initial_length
+    list(length = initial_length,
+         types = ty)
   } else {
     stop(paste0("Not sure how to get number of types from this object: ", x))
   }
@@ -82,22 +141,26 @@ get_number_types_implied_by_object <- function(x) {
 #' @export
 #' @keywords internal
 get_number_types_and_check_conformance <- function(default_number_types,
+                                                   types,
                                                    ...) {
-  best_guess <- 0
+  best_guess <- if(!is.null(types)) {
+    length(types)
+  } else {
+    0
+  }
+
+  best_types <- types
 
   for(x in list(...)) {
-    length_x <- get_number_types_implied_by_object(x)
+    g <- get_number_types_implied_by_object(x, best_types)
+    length_x <- g$length
+    best_types <- g$types
     if(!is.null(x) & length_x != 0) {
       if(best_guess != 0) {
-        if(length_x != best_guess && (best_guess > 1 && length_x > 1)) {
-          stop("Two of the given arguments have incompatible sizes.")
-        } else {
-          # Either length_x == best_guess, in which case everything makes sense,
-          # or one is == 1 and the other > 1. In this latter case,
-          # the inferred number of types is the larger of the two, and the other has to
-          # be built into a matrix/vector of larger dimensions.
-          best_guess <- max(best_guess, length_x)
-        }
+        # We are looking for the full number of types, it is the largest of the two.
+        # It is assumed that if length_x < best_guess, then we will later subset to
+        # only some of the types for this object.
+        best_guess <- max(best_guess, length_x)
       } else {
         best_guess <- length_x
       }
@@ -105,9 +168,11 @@ get_number_types_and_check_conformance <- function(default_number_types,
   }
 
   if(best_guess == 0) { # Nothing allowed us to guess the number of types, so use default
-    default_number_types
+    list(number_types = default_number_types,
+         types = best_types)
   } else {
-    best_guess
+    list(number_types = best_guess,
+         types = best_types)
   }
 }
 
@@ -122,21 +187,30 @@ make_default_model_parameters <- function(alpha,
                                           types,
                                           default_number_types,
                                           ...) {
-  number_types <- get_number_types_and_check_conformance(default_number_types = default_number_types,
-                                                         alpha,
-                                                         gamma,
-                                                         beta0,
-                                                         beta,
-                                                         short_range,
-                                                         medium_range,
-                                                         long_range,
-                                                         types,
-                                                         ...)
+  g <- get_number_types_and_check_conformance(default_number_types = default_number_types,
+                                              types = types,
+                                              alpha,
+                                              gamma,
+                                              beta0,
+                                              beta,
+                                              short_range,
+                                              medium_range,
+                                              long_range,
+                                              ...)
+  number_types <- g$number_types
+  full_types <- g$types
+
+  if(is.null(full_types)) {
+    full_types <- make_default_types(size = number_types)
+  }
 
   alpha <- lapply(alpha, function(a) {
     a <- construct_if_missing(a, 0, number_types, matrix = TRUE)
     if(!isSymmetric(a)) {
       stop("One of the alphas is not symmetric.")
+    }
+    if(is.null(colnames(a)) & is.null(rownames(a))) {
+      colnames(a) <- rownames(a) <- full_types
     }
     a
   })
@@ -145,26 +219,35 @@ make_default_model_parameters <- function(alpha,
   if(!isSymmetric(gamma)) {
     stop("Gamma is not symmetric.")
   }
+  if(is.null(colnames(gamma)) & is.null(rownames(gamma))) {
+    colnames(gamma) <- rownames(gamma) <- full_types
+  }
 
   beta0 <- construct_if_missing(beta0, 0, number_types, matrix = FALSE)
+  if(is.null(names(beta0))) {
+    names(beta0) <- full_types
+  }
 
   beta_nrows <- number_types
   beta_ncols <- length(covariates)
 
-  beta = construct_if_missing(beta, 1., beta_nrows, beta_ncols, matrix = TRUE)
+  beta <- construct_if_missing(beta, 1., beta_nrows, beta_ncols, matrix = TRUE)
   if(beta_ncols != 0 && (nrow(beta) != beta_nrows || ncol(beta) != beta_ncols)) {
-    stop("Beta does not have the right dimensions.")
+    print(beta)
+    stop("Beta (printed above) does not have the right dimensions.")
   }
-
-  types <- make_types(types = types,
-                      size = number_types,
-                      might_contain_name = beta0)
+  if(is.null(rownames(beta))) {
+    rownames(beta) <- full_types
+  }
 
   default_short_distances <- seq(from = 0, to = 0.1, length.out = length(short_range) + 1)[-1]
   short_range <- setNames(lapply(seq_len(length(short_range)), function(i) {
     s <- construct_if_missing(short_range[[i]], default_short_distances[i], number_types, matrix = TRUE)
     if(!isSymmetric(s)) {
       stop("One of the short-range interaction radii matrices is not symmetric.")
+    }
+    if(is.null(colnames(s)) & is.null(rownames(s))) {
+      colnames(s) <- rownames(s) <- full_types
     }
     s
   }), nm = names(short_range))
@@ -173,10 +256,16 @@ make_default_model_parameters <- function(alpha,
   if(!isSymmetric(medium_range)) {
     stop("The medium-range interaction radii matrix is not symmetric.");
   }
+  if(is.null(colnames(medium_range)) & is.null(rownames(medium_range))) {
+    colnames(medium_range) <- rownames(medium_range) <- full_types
+  }
 
   long_range <- construct_if_missing(long_range, 0, number_types, matrix = TRUE)
   if(!isSymmetric(long_range)) {
     stop("The long-range interaction radii matrix is not symmetric.")
+  }
+  if(is.null(colnames(long_range)) & is.null(rownames(long_range))) {
+    colnames(long_range) <- rownames(long_range) <- full_types
   }
 
   list(alpha = alpha,
@@ -187,7 +276,7 @@ make_default_model_parameters <- function(alpha,
        short_range = short_range,
        medium_range = medium_range,
        long_range = long_range,
-       types = types)
+       full_types = full_types)
 }
 #' Generate parameters for the model.
 #'
@@ -217,6 +306,8 @@ make_default_model_parameters <- function(alpha,
 #' @param model String representing the short-range model to use. The currently authorised models are obtained with a call to `show_short_range_models()`.
 #' @param medium_range_model String representing the medium-range model to use. The currently authorised models are obtained with a call to `show_medium_range_models()`.
 #' @param default_number_types Default number of types. If no other over-riding number of types can be deduced from the other parameters, this will be used.
+#' @param relevant_types (Optional) Some types that we are interested in. All the model parameters will then be subsetted to include only these types.
+#' @param relevant_indices (Optional) Indices of some of the types that we are interested in. All the model parameters will then be subsetted to include only types with these indices.
 #' @param ... Other parameters used to infer the number of types. Typically other relevant vectors/matrices that the user has supplied, and could help identify the number of types.
 #' @importFrom methods is
 #' @importFrom spatstat.geom is.im
@@ -263,6 +354,8 @@ model_parameters <- function(window,
                              model,
                              medium_range_model,
                              default_number_types = 1,
+                             relevant_types = NULL,
+                             relevant_indices = NULL,
                              ...) {
   # We start with setting all the default arguments.
   # The reason we do not set these as defaults in the function definition
@@ -424,21 +517,70 @@ model_parameters <- function(window,
   }
   parameters$potential_names <- potential_names
 
-  # Set colnames and rownames
-  parameters$alpha <- lapply(parameters$alpha, function(a) {
-    colnames(a) <- rownames(a) <- parameters$types
-    a
-  })
-  colnames(parameters$gamma) <- rownames(parameters$gamma) <- parameters$types
-  parameters$short_range <- lapply(parameters$short_range, function(s) {
-    colnames(s) <- rownames(s) <- parameters$types
-    s
-  })
-  colnames(parameters$medium_range) <- rownames(parameters$medium_range) <- parameters$types
-  colnames(parameters$long_range) <- rownames(parameters$long_range) <- parameters$types
-  rownames(parameters$beta) <- parameters$types
-  colnames(parameters$beta) <- names(covariates)
-  names(parameters$beta0) <- parameters$types
+  if(!is.null(relevant_indices)) {
+    relevant <- sort(parameters$full_types[relevant_indices])
+  } else {
+    relevant <- NULL
+  }
+
+  if(!is.null(relevant_types)) {
+    relevant <- sort(unique(c(relevant, relevant_types)))
+  }
+
+  if(!is.null(relevant)) {
+    # If relevant types are supplied, make sure everything is coherent
+    # In this case, relevant have to be a subset of the types
+    if(all(relevant %in% parameters$full_types)) {
+      parameters$alpha <- lapply(parameters$alpha, function(a) {
+        z <- as.matrix(a[relevant, relevant])
+        colnames(z) <- rownames(z) <- relevant
+        z
+      })
+
+      parameters$gamma <- as.matrix(parameters$gamma[relevant, relevant])
+      colnames(parameters$gamma) <- rownames(parameters$gamma) <- relevant
+
+      parameters$short_range <- lapply(parameters$short_range, function(s) {
+        z <- as.matrix(s[relevant, relevant])
+        colnames(z) <- rownames(z) <- relevant
+        z
+      })
+
+      parameters$medium_range <- as.matrix(parameters$medium_range[relevant, relevant])
+      colnames(parameters$medium_range) <- rownames(parameters$medium_range) <- relevant
+
+      parameters$long_range <- as.matrix(parameters$long_range[relevant, relevant])
+      colnames(parameters$long_range) <- rownames(parameters$long_range) <- relevant
+
+      parameters$beta0 <- parameters$beta0[relevant]
+
+      parameters$beta <- if(ncol(parameters$beta) > 0) {
+        if(length(relevant) == 1) { # This avoids some annoying bugs when only one relevant type
+          z <- matrix(parameters$beta[relevant, ], nrow = length(relevant))
+          colnames(z) <- colnames(parameters$beta)
+          z
+        } else {
+          as.matrix(parameters$beta[relevant, ])
+        }
+      } else { # And this avoids some annoying bugs when no covariates
+        matrix(NA, ncol = 0, nrow = length(relevant))
+      }
+      rownames(parameters$beta) <- relevant
+    } else {
+      stop(paste0("The types of the configuration are not a subset of those given by the parameters, configuration: ",
+                  paste0(relevant, collapse = ", "),
+                  " and supplied types: ",
+                  paste0(parameters$full_types, collapse = ", ")))
+    }
+
+    # At this point, the parameters should exactly correspond to the types of the configuration
+    if(!all(names(parameters$beta0) == relevant)) {
+      stop(paste0("Unexpected setting when computing the Papangelou intensity: the supplied parameters do not refer to the same types as the configuration, configuration: ",
+                  paste0(relevant, collapse = ", "),
+                  " and supplied parameters: ",
+                  paste0(names(parameters$beta0), collapse = ", ")))
+    }
+  }
 
   # Add the other parameters to the return object
   parameters$window <- window

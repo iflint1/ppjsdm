@@ -33,6 +33,284 @@ test_that("Default values", {
   expect_equal(papangelou, papangelou_explicit)
 })
 
+test_that("Subsetting types from a fit object", {
+  npoints <- 5
+  nconditional <- 10
+
+  types <- c("a", "b", "c", "d")
+
+  set.seed(1)
+
+  x <- stats::runif(n = npoints)
+  y <- stats::runif(n = npoints)
+
+  xs <- stats::runif(n = nconditional)
+  ys <- stats::runif(n = nconditional)
+  marks <- stats::runif(n = nconditional)
+  configuration <- ppjsdm::Configuration(x = xs, y = ys, types = rep(types, length.out = nconditional), marks = marks)
+
+  fit <- ppjsdm::gibbsm(configuration)
+
+  expect_error(ppjsdm::compute_papangelou(fit,
+                                          configuration = configuration["b"],
+                                          x = x,
+                                          y = y,
+                                          type = "a"), NA)
+})
+
+test_that("Subsetting types, condition on one type", {
+  npoints <- 5
+  nconditional <- 10
+
+  types <- c("a", "b", "c", "d")
+
+  independent_alpha <- diag(c(1, -1, 2, 0))
+  colnames(independent_alpha) <- rownames(independent_alpha) <- types
+
+  set.seed(1)
+
+  x <- stats::runif(n = npoints)
+  y <- stats::runif(n = npoints)
+
+  xs <- stats::runif(n = nconditional)
+  ys <- stats::runif(n = nconditional)
+  marks <- stats::runif(n = nconditional)
+  configuration <- ppjsdm::Configuration(x = xs, y = ys, types = rep(types, length.out = nconditional), marks = marks)
+
+  papangelou_full <- ppjsdm::compute_papangelou(configuration = configuration,
+                                                x = x,
+                                                y = y,
+                                                type = "a",
+                                                alpha = independent_alpha)
+
+  papangelou_subset <- ppjsdm::compute_papangelou(configuration = configuration["a"],
+                                                  x = x,
+                                                  y = y,
+                                                  type = "a",
+                                                  alpha = independent_alpha)
+
+  expect_equal(papangelou_full, papangelou_subset)
+})
+
+test_that("Subsetting types with covariates", {
+  npoints <- 5
+  nconditional <- 10
+
+  covariates <- list(x = function(x, y) x, y = function(x, y) y)
+
+  types <- c("a", "b", "c", "d")
+
+  beta <- matrix(1, nrow = length(types), ncol = length(covariates))
+
+  independent_alpha <- diag(c(1, -1, 2, 0))
+  colnames(independent_alpha) <- rownames(independent_alpha) <- types
+
+  set.seed(1)
+
+  x <- stats::runif(n = npoints)
+  y <- stats::runif(n = npoints)
+
+  xs <- stats::runif(n = nconditional)
+  ys <- stats::runif(n = nconditional)
+  marks <- stats::runif(n = nconditional)
+  configuration <- ppjsdm::Configuration(x = xs, y = ys, types = rep(types, length.out = nconditional), marks = marks)
+
+  papangelou_full <- ppjsdm::compute_papangelou(configuration = configuration,
+                                                x = x,
+                                                y = y,
+                                                covariates = covariates,
+                                                beta = beta,
+                                                type = "a",
+                                                alpha = independent_alpha)
+
+  papangelou_subset <- ppjsdm::compute_papangelou(configuration = configuration[c("a", "b")],
+                                                  x = x,
+                                                  y = y,
+                                                  covariates = covariates,
+                                                  beta = beta,
+                                                  type = "a",
+                                                  alpha = independent_alpha)
+
+  expect_equal(papangelou_full, papangelou_subset)
+})
+
+test_that("Subsetting types, condition on two types", {
+  npoints <- 5
+  nconditional <- 10
+
+  types <- c("a", "b", "c", "d")
+
+  independent_alpha <- diag(c(1, -1, 2, 0))
+  colnames(independent_alpha) <- rownames(independent_alpha) <- types
+
+  set.seed(1)
+
+  x <- stats::runif(n = npoints)
+  y <- stats::runif(n = npoints)
+
+  xs <- stats::runif(n = nconditional)
+  ys <- stats::runif(n = nconditional)
+  marks <- stats::runif(n = nconditional)
+  configuration <- ppjsdm::Configuration(x = xs, y = ys, types = rep(types, length.out = nconditional), marks = marks)
+
+  papangelou_full <- ppjsdm::compute_papangelou(configuration = configuration,
+                                                x = x,
+                                                y = y,
+                                                type = rep(c("a", "b"), length.out = length(x)),
+                                                alpha = independent_alpha)
+
+  papangelou_subset <- ppjsdm::compute_papangelou(configuration = configuration[c("a", "b")],
+                                                  x = x,
+                                                  y = y,
+                                                  type = rep(c("a", "b"), length.out = length(x)),
+                                                  alpha = independent_alpha)
+
+  expect_equal(papangelou_full, papangelou_subset)
+})
+
+test_that("Subsetting types, condition on two types specified by numbers", {
+  npoints <- 5
+  nconditional <- 10
+
+  types <- c("a", "b", "c", "d")
+
+  independent_alpha <- diag(c(1, -1, 2, 0))
+  colnames(independent_alpha) <- rownames(independent_alpha) <- types
+
+  set.seed(1)
+
+  x <- stats::runif(n = npoints)
+  y <- stats::runif(n = npoints)
+
+  xs <- stats::runif(n = nconditional)
+  ys <- stats::runif(n = nconditional)
+  marks <- stats::runif(n = nconditional)
+  configuration <- ppjsdm::Configuration(x = xs, y = ys, types = rep(types, length.out = nconditional), marks = marks)
+
+  papangelou_full <- ppjsdm::compute_papangelou(configuration = configuration,
+                                                x = x,
+                                                y = y,
+                                                type = rep(c("c", "b"), length.out = length(x)),
+                                                alpha = independent_alpha)
+
+  papangelou_subset <- ppjsdm::compute_papangelou(configuration = configuration[c("b", "c")],
+                                                  x = x,
+                                                  y = y,
+                                                  type = rep(c(3, 2), length.out = length(x)),
+                                                  alpha = independent_alpha)
+
+  expect_equal(papangelou_full, papangelou_subset)
+})
+
+test_that("Subsetting types, condition on two types with odd order", {
+  npoints <- 5
+  nconditional <- 10
+
+  types <- c("a", "b", "c", "d")
+  considered_types <- c("c", "b")
+
+  set.seed(1)
+
+  full_alpha <- diag(c(1, -1, 2, 3))
+  colnames(full_alpha) <- rownames(full_alpha) <- types
+  # Code below makes a matrix filled for both types in considered_types,
+  # but with 0 on the off-diagonal elsewhere.
+  # Therefore considering considered_types in isolation is identical to considering all points
+  for(i in considered_types) {
+    for(j in considered_types) {
+      if(i < j) {
+        full_alpha[i, j] <- full_alpha[j, i] <- runif(1)
+      }
+    }
+  }
+
+  x <- stats::runif(n = npoints)
+  y <- stats::runif(n = npoints)
+
+  xs <- stats::runif(n = nconditional)
+  ys <- stats::runif(n = nconditional)
+  marks <- stats::runif(n = nconditional)
+  configuration <- ppjsdm::Configuration(x = xs, y = ys, types = rep(types, length.out = nconditional), marks = marks)
+
+  papangelou_full <- ppjsdm::compute_papangelou(configuration = configuration,
+                                                x = x,
+                                                y = y,
+                                                type = rep(considered_types, length.out = length(x)),
+                                                alpha = full_alpha)
+
+  papangelou_subset <- ppjsdm::compute_papangelou(configuration = configuration[rev(considered_types)],
+                                                  x = x,
+                                                  y = y,
+                                                  type = rep(considered_types, length.out = length(x)),
+                                                  alpha = full_alpha[considered_types, considered_types])
+
+  expect_equal(papangelou_full, papangelou_subset)
+})
+
+test_that("Subsetting types, condition on empty configuration", {
+  npoints <- 5
+  nconditional <- 10
+
+  types <- c("a", "b", "c", "d")
+
+  independent_alpha <- diag(c(1, -1, 2, 0))
+  colnames(independent_alpha) <- rownames(independent_alpha) <- types
+
+  set.seed(1)
+
+  x <- stats::runif(n = npoints)
+  y <- stats::runif(n = npoints)
+
+  xs <- stats::runif(n = nconditional)
+  ys <- stats::runif(n = nconditional)
+  marks <- stats::runif(n = nconditional)
+  configuration <- ppjsdm::Configuration(x = xs, y = ys, types = rep(types, length.out = nconditional), marks = marks)
+  papangelou_full <- ppjsdm::compute_papangelou(configuration = configuration,
+                                                x = x,
+                                                y = y,
+                                                type = "d",
+                                                alpha = independent_alpha)
+
+  papangelou_subset <- ppjsdm::compute_papangelou(configuration = configuration[""],
+                                                  x = x,
+                                                  y = y,
+                                                  type = "d",
+                                                  alpha = independent_alpha)
+
+  expect_equal(papangelou_full, papangelou_subset)
+})
+
+test_that("Subsetting types in different ways gives same result", {
+  npoints <- 5
+  nconditional <- 10
+
+  types <- c("a", "b")
+
+  alpha <- matrix(1, length(types), length(types))
+
+  set.seed(1)
+
+  x <- stats::runif(n = npoints)
+  y <- stats::runif(n = npoints)
+
+  xs <- stats::runif(n = nconditional)
+  ys <- stats::runif(n = nconditional)
+  marks <- stats::runif(n = nconditional)
+  configuration <- ppjsdm::Configuration(x = xs, y = ys, types = rep(types, length.out = nconditional), marks = marks)
+  configuration_b <- ppjsdm::Configuration(x = configuration$x[configuration$types == "b"],
+                                           y = configuration$y[configuration$types == "b"],
+                                           marks = configuration$marks[configuration$types == "b"],
+                                           types = configuration$types[configuration$types == "b"])
+
+  papangelou_subset1 <- compute_papangelou(x = 0.5, y = 0.5, configuration = configuration_b, type = "a",
+                                           alpha = alpha)
+
+  papangelou_subset2 <- compute_papangelou(x = 0.5, y = 0.5, configuration = configuration["b"], type = "a",
+                                           alpha = alpha)
+
+  expect_equal(papangelou_subset1, papangelou_subset2)
+})
+
 test_that("Correct Papangelou conditional intensity value", {
   set.seed(42)
   Ntests <- 200
@@ -201,3 +479,84 @@ test_that("Correct Papangelou conditional intensity value", {
     expect_equal(papangelou_direct, papangelou_package)
   }
 })
+
+test_that("Basic test of plot_papangelou", {
+  expect_error(ppjsdm::plot_papangelou(grid_steps = 10), NA)
+})
+
+test_that("Subsetting types for plot_papangelou", {
+  npoints <- 5
+  nconditional <- 10
+
+  types <- c("a", "b", "c", "d")
+
+  set.seed(1)
+
+  x <- stats::runif(n = npoints)
+  y <- stats::runif(n = npoints)
+
+  xs <- stats::runif(n = nconditional)
+  ys <- stats::runif(n = nconditional)
+  marks <- stats::runif(n = nconditional)
+  configuration <- ppjsdm::Configuration(x = xs, y = ys, types = rep(types, length.out = nconditional), marks = marks)
+
+  fit <- ppjsdm::gibbsm(configuration)
+
+  expect_error(ppjsdm::plot_papangelou(fit,
+                                       configuration = configuration["b"],
+                                       type = "a",
+                                       grid_steps = 10), NA)
+})
+
+test_that("Subsetting types for plot_papangelou with covariates", {
+  npoints <- 5
+  nconditional <- 10
+
+  covariates <- list(x = function(x, y) x, y = function(x, y) y)
+
+  types <- c("a", "b", "c", "d")
+
+  set.seed(1)
+
+  x <- stats::runif(n = npoints)
+  y <- stats::runif(n = npoints)
+
+  xs <- stats::runif(n = nconditional)
+  ys <- stats::runif(n = nconditional)
+  marks <- stats::runif(n = nconditional)
+  configuration <- ppjsdm::Configuration(x = xs, y = ys, types = rep(types, length.out = nconditional), marks = marks)
+
+  fit <- ppjsdm::gibbsm(configuration, covariates = covariates)
+
+  expect_error(ppjsdm::plot_papangelou(fit,
+                                       configuration = configuration["a"],
+                                       type = "a",
+                                       grid_steps = 10), NA)
+})
+
+test_that("Subsetting types for plot_papangelou with covariates", {
+  npoints <- 5
+  nconditional <- 10
+
+  covariates <- list(x = function(x, y) x, y = function(x, y) y)
+
+  types <- c("a", "b", "c", "d")
+
+  set.seed(1)
+
+  x <- stats::runif(n = npoints)
+  y <- stats::runif(n = npoints)
+
+  xs <- stats::runif(n = nconditional)
+  ys <- stats::runif(n = nconditional)
+  marks <- stats::runif(n = nconditional)
+  configuration <- ppjsdm::Configuration(x = xs, y = ys, types = rep(types, length.out = nconditional), marks = marks)
+
+  fit <- ppjsdm::gibbsm(configuration, covariates = covariates)
+
+  expect_error(ppjsdm::plot_papangelou(fit,
+                                       configuration = configuration["a"],
+                                       type = "a",
+                                       grid_steps = 10), NA)
+})
+

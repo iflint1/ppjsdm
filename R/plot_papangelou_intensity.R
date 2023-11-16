@@ -53,18 +53,25 @@ plot_papangelou <- function(...) {
 #' @param model String representing the short-range model to use. The currently authorised models are obtained with a call to `show_short_range_models()`.
 #' @param medium_range_model String representing the medium-range model to use. The currently authorised models are obtained with a call to `show_medium_range_models()`.
 #' @param grid_steps Vector of length 2, representing the number of horizontal and vertical grid steps. If a single value is given, it is assumed that the dimensions are the same along both axes.
-#' @param steps Number of steps in the Metropolis-Hastings simulation algorithm. A value of 0 uses the CFTP algorithm.
-#' This is only used if no configuration was supplied, in which case we simulate a configuration.
 #' @param nthreads Maximum number of threads to use.
 #' @param use_log Plot the logarithm of the Papangelou conditional intensity instead?
 #' @param use_ggplot Use ggplot for fancier plot?
 #' @param return_papangelou Should we return the Papangelou intensity as an `im` object instead of plotting it?
 #' @param drop_type_from_configuration Should we remove the considered `type` from the configuration?
-#' @param show In the plot, should we show all points, no points, or only the individuals of the configuration with the target type?
+#' @param show In the plot, should we show all points, no points, or only the individuals of the configuration with certain types?
+#' `show = "all"` shows all points, `show = "none"` shows no points, `show = "type"` shows only the focal type,
+#' and `show` can otherwise be a vector of types, in which case all the corresponding types will be shown.
 #' @param limits Limits for values of the Papangelou conditional intensity when plotting.
+#' @param mark_range (Optional) Vector of length two, representing the range of sizes used when plotting points with different marks.
+#' @param base_size Font size.
+#' @param full_configuration (Optional) Configuration object, perhaps different from `configuration`, to overlay on the Papangelou conditional intensity.
+#' This need not be the configuration used to compute the intensity, indeed, one might wanr to condition on some types, but show others on the final plot.
+#' @param legend_title Title to give to the legend describing the conditional intensity.
+#' @param type_description Name to give the types in the legend (e.g., "species" or "classes").
+#' @param mark_description Name to give the marks in the legend (e.g., "size" or "DBH").
 #' @param ... Ignored.
 #' @importFrom colorspace scale_fill_continuous_sequential
-#' @importFrom ggplot2 aes coord_equal element_text geom_tile ggplot ggtitle guide_legend guides labs scale_color_manual scale_shape_manual scale_x_continuous scale_y_continuous theme theme_minimal xlab xlim ylab ylim
+#' @importFrom ggplot2 aes coord_equal element_text geom_tile ggplot ggtitle guide_legend guides labs scale_color_manual scale_shape_manual scale_size scale_x_continuous scale_y_continuous theme theme_minimal xlab xlim ylab ylim
 #' @importFrom graphics plot
 #' @importFrom spatstat.geom as.im as.owin as.ppp boundingbox gridcentres inside.owin
 #' @importFrom stats na.omit
@@ -87,18 +94,21 @@ plot_papangelou.default <- function(window,
                                     types,
                                     model,
                                     medium_range_model,
-                                    grid_steps = c(1000, 1000),
-                                    steps = 0,
+                                    grid_steps = c(100, 100),
                                     nthreads = 1,
                                     use_log = FALSE,
                                     use_ggplot = TRUE,
                                     return_papangelou = FALSE,
                                     drop_type_from_configuration = FALSE,
-                                    show = c("all", "none", "type"),
+                                    show = "all",
                                     limits,
+                                    mark_range,
+                                    base_size = 11,
+                                    full_configuration,
+                                    legend_title,
+                                    type_description = "Types",
+                                    mark_description = "Marks",
                                     ...) {
-  # Interpret the show argument
-  show <- match.arg(show)
 
   # Take care of grid_steps argument
   if(!is.numeric(grid_steps)) {
@@ -111,135 +121,70 @@ plot_papangelou.default <- function(window,
     }
   }
 
-  # If user did not supply types, by default they should be those of the configuration
-  if(missing(types) & !missing(configuration)) {
-    types <- levels(as.Configuration(configuration)$types)
-  }
-
-  parameters <- model_parameters(window = window,
-                                 alpha = alpha,
-                                 gamma = gamma,
-                                 beta0 = beta0,
-                                 covariates = covariates,
-                                 beta = beta,
-                                 short_range = short_range,
-                                 medium_range = medium_range,
-                                 long_range = long_range,
-                                 saturation = saturation,
-                                 types = types,
-                                 model = model,
-                                 medium_range_model = medium_range_model)
-
-  if(missing(configuration)) {
-    configuration <- rgibbs(window = parameters$window,
-                            alpha = parameters$alpha,
-                            beta0 = parameters$beta0,
-                            beta = parameters$beta,
-                            covariates = parameters$covariates,
-                            short_range = parameters$short_range,
-                            medium_range = parameters$medium_range,
-                            long_range = parameters$long_range,
-                            saturation = parameters$saturation,
-                            model = parameters$model,
-                            medium_range_model = parameters$medium_range_model,
-                            gamma = parameters$gamma,
-                            types = parameters$types,
-                            steps = steps,
-                            nthreads = nthreads)
-  }
-  configuration <- as.Configuration(configuration)
-
-  # TODO: There is a lot of code duplication here and in compute_papangelou, try to factorise...
-  # There are some cases where configuration might only have a subset of all types,
-  # e.g., if one wants to predict at a new location.
-  if(nlevels(configuration$types) != length(parameters$types)) {
-    # In this case, everything is ok, we can evaluate the parameters on the subset of types
-    if(all(levels(configuration$types) %in% parameters$types)) {
-      parameters$alpha <- lapply(parameters$alpha, function(a) a[levels(configuration$types), levels(configuration$types)])
-      parameters$gamma <- parameters$gamma[levels(configuration$types), levels(configuration$types)]
-      parameters$short_range <- lapply(parameters$short_range, function(s) s[levels(configuration$types), levels(configuration$types)])
-      parameters$medium_range <- parameters$medium_range[levels(configuration$types), levels(configuration$types)]
-      parameters$long_range <- parameters$long_range[levels(configuration$types), levels(configuration$types)]
-
-      parameters$beta0 <- parameters$beta0[levels(configuration$types)]
-      parameters$beta <- parameters$beta[levels(configuration$types), ]
-
-      parameters$types <- levels(configuration$types)
-    } else {
-      stop(paste0("The types of the configuration are not a subset of those given by the parameters, configuration: ",
-                  paste0(levels(configuration$types), collapse = ", "),
-                  " and supplied types: ",
-                  paste0(parameters$types, collapse = ", ")))
-    }
-  } else if(!all(levels(configuration$types) == parameters$types)) {
-    stop(paste0("The types of the configuration do not correspond to those given by the parameters, configuration: ",
-                paste0(levels(configuration$types), collapse = ", "),
-                " and supplied types: ",
-                paste0(parameters$types, collapse = ", ")))
-  }
-
-  # At this point, the parameters should exactly correspond to the types of the configuration
-  if(!all(names(parameters$beta0) == levels(configuration$types))) {
-    stop(paste0("Unexpected setting when computing the Papangelou intensity: the supplied parameters do not refer to the same types as the configuration, configuration: ",
-                paste0(levels(configuration$types), collapse = ", "),
-                " and supplied parameters: ",
-                paste0(names(parameters$beta0), collapse = ", ")))
-  }
-
-  # If the user supplies a string as the type, they want to evaluate the intensity
-  # at that type.
-  if(length(type) != 1) {
-    stop("Expecting a type of length 1.")
-  } else if(is.character(type)) {
-    type <- which(type == names(parameters$beta0))[1]
-  } else if(is.numeric(type)) {
-    type <- as.integer(type)
-  } else {
-    stop("Expecting a type that is either an integer or a character.")
-  }
-
   # Take care of mark and type arguments
   if(!is.numeric(mark) | length(mark) != 1) {
     stop("Expecting mark to be a single numeric value.")
   }
 
+  # Check that type has right length
+  if(!(is.numeric(type) | is.character(type)) | length(type) != 1) {
+    stop("Expecting a char/numeric type of length 1.")
+  }
+
   # Convert window to owin, and subset grid points
-  window <- as.owin(parameters$window)
+  window <- as.owin(model_parameters(window = window)$window)
   df <- as.data.frame(gridcentres(window, nx = grid_steps[1], ny = grid_steps[2]))
   df <- df[inside.owin(x = df$x, y = df$y, w = window), ]
 
   # Subset configuration to window
-  configuration <- as.data.frame(configuration)
-  configuration <- configuration[inside.owin(x = configuration$x,
-                                             y = configuration$y,
-                                             w = window), ]
-  configuration <- as.Configuration(configuration)
+  if(missing(configuration)) {
+    configuration <- Configuration()
+  } else {
+    configuration <- as.data.frame(configuration)
+    configuration <- configuration[inside.owin(x = configuration$x,
+                                               y = configuration$y,
+                                               w = window), ]
+    configuration <- as.Configuration(configuration)
+  }
+
+  # Subset full_configuration to window
+  if(missing(full_configuration)) {
+    full_configuration <- configuration
+  } else {
+    full_configuration <- as.data.frame(full_configuration)
+    full_configuration <- full_configuration[inside.owin(x = full_configuration$x,
+                                                         y = full_configuration$y,
+                                                         w = window), ]
+    full_configuration <- as.Configuration(full_configuration)
+  }
 
   df$papangelou <- compute_papangelou(x = df$x,
                                       y = df$y,
-                                      type = rep(type, length(df$x)),
-                                      mark = rep(mark, length(df$x)),
+                                      type = type,
+                                      mark = mark,
                                       configuration = configuration,
-                                      model = parameters$model,
-                                      medium_range_model = parameters$medium_range_model,
-                                      alpha = parameters$alpha,
-                                      beta0 = parameters$beta0,
-                                      beta = parameters$beta,
-                                      gamma = parameters$gamma,
-                                      covariates = parameters$covariates,
-                                      short_range = parameters$short_range,
-                                      medium_range = parameters$medium_range,
-                                      long_range = parameters$long_range,
-                                      saturation = parameters$saturation,
-                                      types = parameters$types,
+                                      model = model,
+                                      medium_range_model = medium_range_model,
+                                      alpha = alpha,
+                                      beta0 = beta0,
+                                      beta = beta,
+                                      gamma = gamma,
+                                      covariates = covariates,
+                                      short_range = short_range,
+                                      medium_range = medium_range,
+                                      long_range = long_range,
+                                      saturation = saturation,
+                                      types = types,
                                       drop_type_from_configuration = drop_type_from_configuration,
                                       nthreads = nthreads)
 
   if(use_log) {
     df$papangelou <- log(df$papangelou)
-    title <- "log-Papangelou conditional intensity"
-  } else {
-    title <- "Papangelou conditional intensity"
+    if(missing(legend_title)) {
+      legend_title <- "log-Papangelou conditional intensity"
+    }
+  } else if(missing(legend_title)) {
+    legend_title <- "Papangelou conditional intensity"
   }
 
   papangelou_im <- as.im(df)
@@ -249,23 +194,38 @@ plot_papangelou.default <- function(window,
   }
 
   # Which individuals do we want to show on the plot?
-  if(show == "type") {
-    configuration <- Configuration(x = configuration$x[configuration$types %in% parameters$types[type]],
-                                   y = configuration$y[configuration$types %in% parameters$types[type]],
-                                   types = configuration$types[configuration$types %in% parameters$types[type]],
-                                   marks = configuration$marks[configuration$types %in% parameters$types[type]])
-  } else if(show == "none") {
-    configuration <- Configuration()
+  if(all(show %in% levels(full_configuration$types))) {
+    full_configuration <- Configuration(x = full_configuration$x[full_configuration$types %in% show],
+                                        y = full_configuration$y[full_configuration$types %in% show],
+                                        types = full_configuration$types[full_configuration$types %in% show],
+                                        marks = full_configuration$marks[full_configuration$types %in% show])
+  } else if(length(show) == 1) {
+    if(show == "none") {
+      full_configuration <- Configuration()
+    } else if(show == "type") {
+      #full_configuration <- full_configuration[names(parameters$beta0)[type]]
+      stop("Parameter show == \"type\" not allowed for now.")
+    } else if(show != "all") {
+      print(show)
+      stop("Could not interpret the parameter show, printed above.")
+    }
+  } else {
+    print(show)
+    stop("Parameter show was of length != 1, but its values were not types found in the configuration. The provided parameters was printed above.")
   }
 
   if(use_ggplot) {
-    points <- as.data.frame(configuration)
-    names(points)[names(points) == "types"] <- "Types"
-    color <- rep(c("#FF0000", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6"), nlevels(points$Types))
-    shape <- rep(c(16, 17, 15, 18), nlevels(points$Types))
+    points <- as.data.frame(full_configuration)
+    names(points)[names(points) == "types"] <- type_description
+    names(points)[names(points) == "marks"] <- mark_description
+    color <- rep(c("#FF0000", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6"), nlevels(points[, type_description]))
+    shape <- rep(c(16, 17, 15, 18), nlevels(points[, type_description]))
 
     lim <- if(missing(limits)) {
       c(min(df$papangelou), max(df$papangelou))
+    } else if(!is.null(limits) & !(is.numeric(limits) & length(limits) == 2)) {
+      print(limits)
+      stop("Did not understand supplied limits parameter (printed above)")
     } else {
       limits
     }
@@ -273,27 +233,34 @@ plot_papangelou.default <- function(window,
     g <- ggplot(data = df, aes_string(x = "x", y = "y")) +
       geom_tile(aes_string(fill = "papangelou"), alpha = 0.5) +
       scale_fill_continuous_sequential(palette = "Purple-Yellow", limits = lim) +
-      labs(fill = title) +
+      labs(fill = legend_title) +
       scale_color_manual(values = color) + # Obtained by wesanderson::wes_palette("Darjeeling1")
       scale_shape_manual(values = shape) +
       xlab(NULL) + # Remove x labels
       ylab(NULL) + # Remove y labels
       ggtitle("") +
       coord_equal() +
-      theme_minimal(base_size = 12) + # Theme
+      theme_minimal(base_size = base_size) + # Theme
       xlim(boundingbox(window)$xrange) +
       ylim(boundingbox(window)$yrange) +
-      guides(shape = guide_legend(override.aes = list(size = 5))) # Bigger species symbol size
+      guides(shape = guide_legend(override.aes = list(size = 5))) # Bigger types symbol size
 
-    if(!all(points$marks == 1.)) {
-      g <- g + geom_point(data = points, aes_string(x = 'x', y = 'y', colour = 'Types', shape = 'Types', size = 'marks'), alpha = 0.5)
+    if(!all(points[, mark_description] == 1.)) {
+      g <- g + geom_point(data = points, aes_string(x = "x", y = "y", colour = type_description,
+                                                    shape = type_description, size = mark_description), alpha = 0.5)
     } else {
-      g <- g + geom_point(data = points, aes_string(x = 'x', y = 'y', colour = 'Types', shape = 'Types'), size = 1.5, alpha = 0.5)
+      g <- g + geom_point(data = points, aes_string(x = "x", y = "y", colour = type_description,
+                                                    shape = type_description), size = 1.5, alpha = 0.5)
+    }
+
+    if(!missing(mark_range)) {
+      g <- g + scale_size(name = mark_description, range = mark_range)
     }
     g
+
   } else {
-    plot(papangelou_im, main = title)
-    plot(as.ppp(configuration, window), add = TRUE, cols = 'white')
+    plot(papangelou_im, main = legend_title)
+    plot(as.ppp(full_configuration, window), add = TRUE, cols = 'white')
   }
 }
 
@@ -354,5 +321,6 @@ plot_papangelou.gibbsm <- function(fit,
                   model = model,
                   medium_range_model = medium_range_model,
                   nthreads = nthreads,
+                  full_configuration = fit$configuration_list[[1]],
                   ...)
 }

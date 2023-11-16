@@ -21,15 +21,20 @@
   types,
   model,
   medium_range_model,
-  grid_steps = c(1000, 1000),
-  steps = 0,
+  grid_steps = c(100, 100),
   nthreads = 1,
   use_log = FALSE,
   use_ggplot = TRUE,
   return_papangelou = FALSE,
   drop_type_from_configuration = FALSE,
-  show = c("all", "none", "type"),
+  show = "all",
   limits,
+  mark_range,
+  base_size = 11,
+  full_configuration,
+  legend_title,
+  type_description = "Types",
+  mark_description = "Marks",
   ...
 )
 }
@@ -68,9 +73,6 @@
 
 \item{grid_steps}{Vector of length 2, representing the number of horizontal and vertical grid steps. If a single value is given, it is assumed that the dimensions are the same along both axes.}
 
-\item{steps}{Number of steps in the Metropolis-Hastings simulation algorithm. A value of 0 uses the CFTP algorithm.
-This is only used if no configuration was supplied, in which case we simulate a configuration.}
-
 \item{nthreads}{Maximum number of threads to use.}
 
 \item{use_log}{Plot the logarithm of the Papangelou conditional intensity instead?}
@@ -81,9 +83,24 @@ This is only used if no configuration was supplied, in which case we simulate a 
 
 \item{drop_type_from_configuration}{Should we remove the considered \code{type} from the configuration?}
 
-\item{show}{In the plot, should we show all points, no points, or only the individuals of the configuration with the target type?}
+\item{show}{In the plot, should we show all points, no points, or only the individuals of the configuration with certain types?
+\code{show = "all"} shows all points, \code{show = "none"} shows no points, \code{show = "type"} shows only the focal type,
+and \code{show} can otherwise be a vector of types, in which case all the corresponding types will be shown.}
 
 \item{limits}{Limits for values of the Papangelou conditional intensity when plotting.}
+
+\item{mark_range}{(Optional) Vector of length two, representing the range of sizes used when plotting points with different marks.}
+
+\item{base_size}{Font size.}
+
+\item{full_configuration}{(Optional) Configuration object, perhaps different from \code{configuration}, to overlay on the Papangelou conditional intensity.
+This need not be the configuration used to compute the intensity, indeed, one might wanr to condition on some types, but show others on the final plot.}
+
+\item{legend_title}{Title to give to the legend describing the conditional intensity.}
+
+\item{type_description}{Name to give the types in the legend (e.g., "species" or "classes").}
+
+\item{mark_description}{Name to give the marks in the legend (e.g., "size" or "DBH").}
 
 \item{...}{Ignored.}
 }
