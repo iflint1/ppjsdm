@@ -377,3 +377,37 @@ test_that("gibbsm works with infinite saturation for Exponential/Square exponent
   expect_equal(as.vector(fit_large$coefficients$gamma), as.vector(fit_infinite$coefficients$gamma))
   expect_equal(as.vector(fit_large$coefficients$beta0), as.vector(fit_infinite$coefficients$beta0))
 })
+
+test_that("gibbsm can handle points on the boundary of a window", {
+  library(spatstat)
+
+  covariates <- as.im(function(x, y) x - 0.5, W = owin())
+
+  set.seed(1)
+
+  configuration <- ppjsdm::rppp(lambda = 100)
+  configuration <- ppjsdm::Configuration(x = c(configuration$x, c(0, 0,   0, 0.5, 0.5, 0.5, 1, 1,   1)),
+                                         y = c(configuration$y, c(0, 0.5, 1, 0,   0.5, 1,   0, 0.5, 1)))
+
+  # Points land exactly on the border: no warning
+  expect_warning(ppjsdm::gibbsm(configuration, covariates = list(covariates)), NA)
+})
+
+# TODO: This test is problematic: the stratified point process G2 computation requires an independent draw of the dummy points
+# WITH THE EXACT SAME NUMBER OF POINTS. But if there are some covariates with NA values, the dummy points with NA values on them are removed.
+# The same is done on the independent draw... but in the end the same cells need not be included.
+# Solving this is not at all straightforward, so commenting the test for now.
+# test_that("gibbsm can handle summary of fit with NA covariate values", {
+#   library(spatstat)
+#
+#   covariates <- list(x = as.im(function(x, y) ifelse(x < 0.5, NA, x - 0.5), W = owin()))
+#
+#   set.seed(1)
+#
+#   configuration <- ppjsdm::rppp(lambda = 100)
+#
+#   expect_warning(fit <- ppjsdm::gibbsm(configuration, dummy_distribution = "binomial", covariates = covariates))
+#   expect_error(summary(fit), NA)
+# })
+
+

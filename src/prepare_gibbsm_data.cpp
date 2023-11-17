@@ -19,6 +19,7 @@
 #include "utility/im_wrapper.hpp"
 #include "utility/is_symmetric_matrix.hpp"
 #include "utility/lightweight_matrix.hpp"
+#include "utility/subset_to_nonNA.hpp"
 #include "utility/timer.hpp"
 #include "utility/window.hpp"
 
@@ -26,7 +27,6 @@
 #include <cmath> // std::log
 #include <iterator> // std::next
 #include <string> // std::string, std::to_string
-#include <sstream> // std::stringstream
 #include <type_traits> // std::remove_cv_t
 #include <vector> // std::vector
 
@@ -45,16 +45,15 @@ inline auto convert_list_of_boolean_matrices_to_vector(Rcpp::List boolean_matric
 
 } // detail
 
-template<typename computation_t, typename Vector>
+template<typename Configuration, typename Vector>
 auto make_dummy_points(const ppjsdm::Window& window,
                        const Vector& rho_times_volume,
                        std::string dummy_distribution) {
-  using dummy_configuration_t = std::vector<ppjsdm::Marked_point>;
-  dummy_configuration_t D;
+  Configuration D;
   if(dummy_distribution == std::string("binomial")) {
-    D = ppjsdm::rbinomialpp_single<dummy_configuration_t>(window, rho_times_volume);
+    D = ppjsdm::rbinomialpp_single<Configuration>(window, rho_times_volume);
   } else if(dummy_distribution == std::string("stratified")) {
-    D = ppjsdm::rstratpp_single<dummy_configuration_t>(window, rho_times_volume);
+    D = ppjsdm::rstratpp_single<Configuration>(window, rho_times_volume);
   } else {
     Rcpp::stop("Unexpected dummy_distribution parameter.");
   }
@@ -140,17 +139,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   }
 
   // Remove points in D which generate NA values for one of the regressors.
-  Dummy D_no_NA_covariates(D);
-  D_no_NA_covariates.erase(std::remove_if(D_no_NA_covariates.begin(), D_no_NA_covariates.end(),
-      [&covariates](const auto& point) {
-        for(std::remove_cv_t<decltype(covariates.size())> covariate_index(0); covariate_index < covariates.size(); ++covariate_index) {
-          const auto covariate(covariates[covariate_index](point));
-          if(R_IsNA(covariate)) {
-            return true;
-          }
-        }
-        return false;
-      }), D_no_NA_covariates.end());
+  Dummy D_no_NA_covariates(ppjsdm::subset_to_nonNA(D, covariates));
 
   // Make shift vector
   Rcpp::NumericVector shift(Rcpp::no_init(number_types));
@@ -191,29 +180,13 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   }
 
   // Precompute how many of the points in the configuration we'll have to drop due to NA values on the covariates.
-  size_t total_configuration_length(0), total_removed_points(0);
+  size_t total_configuration_length(0);
   for(size_t i(0); i < configuration_list.size(); ++i) {
     total_configuration_length += ppjsdm::size(configuration_list[i]);
-    for(size_t point_index(0); point_index < ppjsdm::size(configuration_list[i]); ++point_index) {
-      for(std::remove_cv_t<decltype(covariates.size())> k(0); k < covariates.size(); ++k) {
-        const auto covariate(covariates[k](configuration_list[i][point_index]));
-        if(R_IsNA(covariate)) {
-          ++total_removed_points;
-          break;
-        }
-      }
-    }
-  }
-
-  // Send a warning if we had to drop any
-  if(total_removed_points > 0) {
-    std::stringstream ss;
-    ss << "Some of the covariates had an NA value on " << total_removed_points << " of the configuration points; these have been removed.";
-    Rcpp::warning(ss.str());
   }
 
   // Compute a few parameters necessary for the construction of regressors
-  const auto total_points(total_configuration_length - total_removed_points + D_no_NA_covariates.size() * configuration_list.size());
+  const auto total_points(total_configuration_length + D_no_NA_covariates.size() * configuration_list.size());
   const auto number_parameters_struct(ppjsdm::get_number_parameters(number_types,
                                                                     covariates.size(),
                                                                     estimate_alpha,
@@ -239,17 +212,12 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
                                  D_no_NA_covariates[point_index - ppjsdm::size(configuration_list[configuration_index])]);
       // Check if the points generates any NA values, move on if so
       std::vector<decltype(covariates[0](current_point))> covariates_values(covariates.size());
-      bool found_na_point(false);
       for(size_t covariate_index(0); covariate_index < static_cast<size_t>(covariates.size()); ++covariate_index) {
         const auto covariate(covariates[covariate_index](current_point));
         if(R_IsNA(covariate)) {
-          found_na_point = true;
-          break;
+          Rcpp::warning("Some of the covariates had an NA value on points in the configuration. This should not happen, as the configurations have been subset to non-NA points.");
         }
         covariates_values[covariate_index] = covariate;
-      }
-      if(found_na_point) {
-        continue;
       }
 
       // fill response
@@ -334,6 +302,7 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
                                bool debug,
                                std::string dummy_distribution,
                                Rcpp::CharacterVector type_names) {
+  // TODO: A lot of code duplication between this function and the one below
   using computation_t = double;
 
   // Construct std::vector of configurations.
@@ -378,9 +347,9 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
                                                                    dummy_factor));
 
   // Sample the dummy points D.
-  auto D(make_dummy_points<computation_t>(cpp_window,
-                                          rho_times_volume,
-                                          dummy_distribution));
+  auto D(make_dummy_points<std::vector<ppjsdm::Marked_point>>(cpp_window,
+                                                              rho_times_volume,
+                                                              dummy_distribution));
 
   return prepare_gibbsm_data_helper(vector_configurations,
                                     D,

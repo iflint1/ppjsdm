@@ -35,7 +35,7 @@ test_that("Default values", {
 
 test_that("Subsetting types from a fit object", {
   npoints <- 5
-  nconditional <- 10
+  nconditional <- 100
 
   types <- c("a", "b", "c", "d")
 
@@ -486,7 +486,7 @@ test_that("Basic test of plot_papangelou", {
 
 test_that("Subsetting types for plot_papangelou", {
   npoints <- 5
-  nconditional <- 10
+  nconditional <- 100
 
   types <- c("a", "b", "c", "d")
 
@@ -510,7 +510,7 @@ test_that("Subsetting types for plot_papangelou", {
 
 test_that("Subsetting types for plot_papangelou with covariates", {
   npoints <- 5
-  nconditional <- 10
+  nconditional <- 100
 
   covariates <- list(x = function(x, y) x, y = function(x, y) y)
 
@@ -536,7 +536,7 @@ test_that("Subsetting types for plot_papangelou with covariates", {
 
 test_that("Subsetting types for plot_papangelou with covariates", {
   npoints <- 5
-  nconditional <- 10
+  nconditional <- 100
 
   covariates <- list(x = function(x, y) x, y = function(x, y) y)
 

@@ -21,6 +21,7 @@
 #include "utility/im_wrapper.hpp"
 #include "utility/is_symmetric_matrix.hpp"
 #include "utility/lightweight_matrix.hpp"
+#include "utility/subset_to_nonNA.hpp"
 #include "utility/timer.hpp"
 #include "utility/window.hpp"
 #include "utility/window_concrete.hpp"
@@ -244,11 +245,11 @@ inline auto make_G2_stratified(const Configuration& configuration,
   for(decltype(rho.size()) i(0); i < rho.size(); ++i) {
     delta[i] = static_cast<computation_t>(1.) / std::sqrt(static_cast<computation_t>(rho[i]));
   }
-  const auto other_stratified(ppjsdm::rstratpp_single<Configuration>(window, delta, delta));
+  const auto other_stratified(subset_to_nonNA(ppjsdm::rstratpp_single<Configuration>(window, delta, delta), covariates));
 
   if(ppjsdm::size(dummy) != ppjsdm::size(other_stratified)) {
     Rcpp::Rcout << "Size dummy: " << ppjsdm::size(dummy) << " and size new stratified: " << ppjsdm::size(other_stratified) << ".\n";
-    Rcpp::stop("The dummy points and the independent draw of a stratified binomial point process should have the same number of points.");
+    Rcpp::stop("The dummy points and the independent draw of a stratified binomial point process should have the same number of points. This could be due to NA values on the covariates, causing some of the dummy points to be removed on the draws. To solve this, either subset the window to locations where the covariates are non-NA, or avoid dummy points distributed as a stratified point process.");
   }
 
   ppjsdm::Lightweight_square_matrix<computation_t> G2(number_parameters);
@@ -1321,8 +1322,8 @@ Rcpp::NumericMatrix compute_G2_cpp(SEXP configuration,
                                   cpp_window.volume(),
                                   nthreads);
   } else if(dummy_distribution == std::string("stratified")) {
-    G2 = detail::make_G2_stratified(wrapped_configuration,
-                                    wrapped_dummy,
+    G2 = detail::make_G2_stratified(vector_configuration,
+                                    vector_dummy,
                                     cpp_window,
                                     Rcpp::as<std::vector<double>>(theta),
                                     Rcpp::as<std::vector<double>>(rho),

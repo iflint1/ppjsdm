@@ -1,366 +1,3 @@
-fit_gibbs <- function(gibbsm_data,
-                      fitting_package,
-                      which_lambda,
-                      estimate_alpha,
-                      estimate_gamma,
-                      types_names,
-                      covariates_names,
-                      use_regularization,
-                      nthreads,
-                      refit_glmnet,
-                      debug,
-                      ...) {
-  # Extract a few useful quantities used in most regressions
-  regressors <- gibbsm_data$regressors
-  if(any(is.na(regressors))) {
-    max_indices <- 10
-    na_row_indices <- which(rowSums(is.na(regressors)) > 0)[seq_len(max_indices)]
-    na_row_indices <- na_row_indices[!is.na(na_row_indices)]
-    warning(paste0("Some NA values detected in regression matrix; indices: "),
-            na_row_indices)
-    print(regressors[na_row_indices, ])
-  }
-
-  number_types <- length(gibbsm_data$shift)
-  nregressors <- ncol(regressors)
-
-  # Penalty factor used in penalized regressions
-  pfactor <- rep(1, nregressors)
-  pfactor[startsWith(colnames(regressors), "beta0")] <- 0
-
-  if(fitting_package == "glmnet") {
-    # Avoid a bug in glmnet: if intercept = FALSE, and there's a column of ones, it gets ignored by glmnet
-    # even though its penalty factor is zero.
-    if(all(1 == regressors[, startsWith(colnames(regressors), "beta0")])) {
-      regressors[1, startsWith(colnames(regressors), "beta0")] <- 1.00001
-    }
-
-    # We don't use an offset explicitely because the call to glmnet above returns nonsensical results or hangs.
-    # Instead, we'll use a shift for all the beta0 regressors according to -log(rho).
-    arguments <- list(x = Matrix(regressors, sparse = TRUE),
-                      y = Matrix(gibbsm_data$response, sparse = TRUE),
-                      intercept = FALSE,
-                      family = "binomial")
-    user_supplied <- list(...)
-
-    if(use_regularization) {
-      # Add penalty factor
-      arguments <- append(arguments, list(penalty.factor = pfactor))
-
-      # Call glmnet
-      arguments <- append(arguments, user_supplied)
-      if(debug) {
-        tm <- Sys.time()
-        message("Calling glmnet...")
-      }
-      fit <- do.call(glmnet, arguments)
-      if(debug) {
-        message("Finished call to glmnet.")
-        print(Sys.time() - tm)
-      }
-      if(refit_glmnet > 0) {
-        lambda_seq <- fit$lambda
-        N <- (1 + refit_glmnet) * length(lambda_seq)
-        lambda_new <- vector(mode = 'numeric', length = N)
-        lambda_new[1] <- lambda_seq[1]
-        by <- (lambda_seq[1] - lambda_seq[2]) / lambda_seq[1]
-        for(i in 2:N) {
-          lambda_new[i] <- (1 - by) * lambda_new[i - 1]
-        }
-
-        arguments$lambda <- lambda_new
-        arguments$nlambda <- length(lambda_new)
-
-        if(debug) {
-          tm <- Sys.time()
-          message("Calling glmnet again...")
-        }
-        fit <- do.call(glmnet, arguments)
-        if(debug) {
-          message("Finished call to glmnet.")
-          print(Sys.time() - tm)
-        }
-      }
-
-      # Compute AIC or BIC for the vector of lambdas
-      # Reference: https://stackoverflow.com/questions/40920051/r-getting-aic-bic-likelihood-from-glmnet
-      tLL <- fit$nulldev - deviance(fit)
-      k <- fit$df
-      n <- fit$nobs
-      aic <- -tLL + 2 * k + 2 * k * (k + 1) / (n - k - 1)
-      bic <- log(n) * k - tLL
-
-      # Choose lambda that minimizes AIC or BIC.
-      if(which_lambda == "AIC") {
-        coef <- coefficients(fit)[, which.min(aic)]
-        aic <- min(aic)
-        bic <- bic[which.min(aic)]
-      } else if(which_lambda == "BIC") {
-        coef <- coefficients(fit)[, which.min(bic)]
-        aic <- aic[which.min(bic)]
-        bic <- min(bic)
-      } else if(which_lambda == "smallest") {
-        coef <- coefficients(fit)
-        coef <- coef[, which.min(fit$lambda)]
-        aic <- aic[length(aic)]
-        bic <- bic[length(bic)]
-      } else {
-        stop("Unrecognised option for which_lambda, should be one of 'AIC', 'BIC' or 'smallest'.")
-      }
-    } else {
-      # Call glmnet with a decreasing sequence of lambdas
-      if(!("lambda" %in% names(user_supplied))) {
-        arguments <- append(arguments, list(lambda = rev(0:99)))
-      }
-      arguments <- append(arguments, user_supplied)
-      if(debug) {
-        tm <- Sys.time()
-        message("Calling glmnet...")
-      }
-      fit <- do.call(glmnet, arguments)
-      if(debug) {
-        message("Finished call to glmnet.")
-        print(Sys.time() - tm)
-      }
-
-      # Compute AIC or BIC for the vector of lambdas
-      # Reference: https://stackoverflow.com/questions/40920051/r-getting-aic-bic-likelihood-from-glmnet
-      tLL <- fit$nulldev - deviance(fit)
-      k <- fit$df
-      n <- fit$nobs
-      aic <- -tLL + 2 * k + 2 * k * (k + 1) / (n - k - 1)
-      bic <- log(n) * k - tLL
-
-      # Choose AIC / BIC corresponding to lambda = 0
-      aic <- aic[length(aic)]
-      bic <- bic[length(bic)]
-
-      # Extract the corresponding coefficients
-      coef <- coefficients(fit, s = 0)
-      coef <- setNames(as.vector(coef), nm = rownames(coef))
-    }
-
-    # Even with intercept = FALSE, glmnet still returns an intercept 0-valued coefficient
-    coef <- coef[-which(names(coef) == "(Intercept)")]
-
-    # We didn't actually use an offset so we have to shift back the intercept coefficients
-    shift <- gibbsm_data$shift
-    for(i in seq_len(number_types)) {
-      coef[match(paste0("beta0_", i), names(coef))] <- coef[match(paste0("beta0_", i), names(coef))] - shift[i]
-    }
-
-    # Clean up
-    fit_algorithm <- "glmnet"
-  # } else if(fitting_package == "oem") {
-  #
-  #   arguments <- list(x = regressors,
-  #                     y = gibbsm_data$response,
-  #                     intercept = FALSE,
-  #                     family = "binomial",
-  #                     ncores = nthreads)
-  #   user_supplied <- list(...)
-  #
-  #   if(!("compute.loss" %in% names(user_supplied))) {
-  #     arguments <- append(arguments, list(compute.loss = TRUE))
-  #   }
-  #
-  #   if(use_regularization) {
-  #     # Add penalty factor
-  #     arguments <- append(arguments, list(penalty.factor = pfactor))
-  #
-  #     # Add penalty type
-  #     if(!("penalty" %in% names(user_supplied))) {
-  #       arguments <- append(arguments, list(penalty = "lasso"))
-  #     }
-  #
-  #     # Call oem
-  #     arguments <- append(arguments, user_supplied)
-  #     if(debug) {
-  #       tm <- Sys.time()
-  #       message("Calling oem...")
-  #     }
-  #     fit <- do.call(oem, arguments)
-  #     if(debug) {
-  #       message("Finished call to oem.")
-  #       print(Sys.time() - tm)
-  #     }
-  #
-  #     # Extract coefficients
-  #     coef <- fit$beta$lasso
-  #
-  #     # Compute AIC/BIC for vector of lambdas
-  #     # Reference: https://stackoverflow.com/questions/40920051/r-getting-aic-bic-likelihood-from-glmnet
-  #     k <- sapply(seq_len(ncol(coef)), function(col) sum(coef[, col] != 0.))
-  #     n <- fit$nobs
-  #     LL <- 2 * logLik(fit)
-  #     aic <- -LL + 2 * k + 2 * k * (k + 1) / (n - k - 1)
-  #     bic <- -LL + log(n) * k
-  #
-  #     # Choose lambda that minimizes AIC or BIC
-  #     if(which_lambda == "AIC") {
-  #       coef <- coef[, which.min(aic)]
-  #       aic <- min(aic)
-  #       bic <- bic[which.min(aic)]
-  #     } else if(which_lambda == "BIC") {
-  #       coef <- coef[, which.min(bic)]
-  #       aic <- aic[which.min(bic)]
-  #       bic <- min(bic)
-  #     } else if(which_lambda == "smallest") {
-  #       coef <- coef[, ncol(coef)]
-  #       aic <- aic[length(aic)]
-  #       bic <- bic[length(bic)]
-  #     } else {
-  #       stop("Unrecognised option for which_lambda, should be one of 'AIC', 'BIC' or 'smallest'.")
-  #     }
-  #
-  #     # Put coef in correct format
-  #     coef <- setNames(as.vector(coef), nm = names(coef))
-  #   } else {
-  #     # Use 'ols' penalty for non-regularized regression
-  #     if(!("penalty" %in% names(user_supplied))) {
-  #       arguments <- append(arguments, list(penalty = "ols"))
-  #     }
-  #
-  #     # Call oem
-  #     arguments <- append(arguments, user_supplied)
-  #     if(debug) {
-  #       tm <- Sys.time()
-  #       message("Calling oem...")
-  #     }
-  #     fit <- do.call(oem, arguments)
-  #     if(debug) {
-  #       message("Finished call to oem.")
-  #       print(Sys.time() - tm)
-  #     }
-  #
-  #     # Extract AIC/BIC using oem functions
-  #     aic <- AIC(fit)
-  #     bic <- BIC(fit)
-  #
-  #     # Extract coefficients
-  #     coef <- fit$beta$ols
-  #     coef <- setNames(as.vector(coef), nm = rownames(coef))
-  #   }
-  #
-  #   # Remove intercept
-  #   coef <- coef[-which(names(coef) == "(Intercept)")]
-  #
-  #   # We didn't actually use an offset so we have to shift back the intercept coefficients
-  #   shift <- gibbsm_data$shift
-  #   for(i in seq_len(number_types)) {
-  #     coef[match(paste0("beta0_", i), names(coef))] <- coef[match(paste0("beta0_", i), names(coef))] - shift[i]
-  #   }
-  #
-  #   # Clean up
-  #   fit_algorithm <- "oem"
-  # } else if(fitting_package == "h2o") {
-  #   # Initialization
-  #   h2o.init(nthreads = nthreads)
-  #
-  #   # Put everything into a unique data.frame
-  #   regressors <- as.data.frame(regressors)
-  #   regressors$response <- gibbsm_data$response
-  #   regressors$offset <- gibbsm_data$shift[gibbsm_data$type]
-  #
-  #   arguments <- list(training_frame = as.h2o(regressors),
-  #                     y = 'response',
-  #                     intercept = FALSE,
-  #                     family = "binomial",
-  #                     offset_column = 'offset',
-  #                     standardize = FALSE,
-  #                     link = 'logit')
-  #   user_supplied <- list(...)
-  #
-  #   if(use_regularization) {
-  #     stop("Not implemented yet")
-  #   } else {
-  #     # Non-regularized corresponds to lambda = 0
-  #     if(!("lambda" %in% names(user_supplied))) {
-  #       arguments <- append(arguments, list(lambda = 0))
-  #     }
-  #
-  #     # Call h2o
-  #     arguments <- append(arguments, user_supplied)
-  #     if(debug) {
-  #       tm <- Sys.time()
-  #       message("Calling h2o")
-  #     }
-  #     fit <- do.call(h2o.glm, arguments)
-  #     if(debug) {
-  #       message("Finished call to h2o")
-  #       print(Sys.time() - tm)
-  #     }
-  #
-  #     # Compute AIC/BIC
-  #     warning("AIC/BIC not implemented yet for h2o fitting package")
-  #     aic <- NA
-  #     bic <- NA
-  #
-  #     # Extract coefs
-  #     coef <- h2o.coef(fit)
-  #   }
-  #
-  #   # Remove intercept from coefficients
-  #   coef <- coef[-which(names(coef) == "Intercept")]
-  #
-  #   # Shift intercepts back
-  #   shift <- gibbsm_data$shift
-  #   for(i in seq_len(number_types)) {
-  #     coef[match(paste0("beta0_", i), names(coef))] <- coef[match(paste0("beta0_", i), names(coef))] - shift[i]
-  #   }
-  #
-  #   # Clean up
-  #   fit_algorithm <- "h2o"
-  } else if(fitting_package == "glm") {
-    if(use_regularization) {
-      warning("Cannot have regularization with glm, doing a regular glm fit.")
-    }
-
-    # Formula for the GLM regression
-    fmla <- as.formula(paste0("response ~ 0 + offset(offset) + ", paste0(colnames(regressors), collapse = ' + ')))
-
-    # Put all the required vectors into a data.frame to send to glm
-    regressors <- as.data.frame(regressors)
-    regressors$offset <- gibbsm_data$shift[gibbsm_data$type]
-    regressors$response <- gibbsm_data$response
-
-    # Call GLM
-    if(debug) {
-      tm <- Sys.time()
-      message("Calling glm...")
-    }
-    fit <- glm(fmla, family = binomial(), data = regressors, ...)
-    if(debug) {
-      message("Finished call to glm.")
-      print(Sys.time() - tm)
-    }
-
-    # Compute AIC/BIC
-    aic <- AIC(fit)
-    bic <- BIC(fit)
-
-    # Clean up
-    coef <- coefficients(fit)
-    fit_algorithm <- "glm"
-  } else {
-    stop("Supplied fitting package not recognized.")
-  }
-
-  # Clean up
-  list(fit = fit,
-       coefficients = format_coefficient_vector(coefficient_vector = coef,
-                                                number_types = number_types,
-                                                types_names = types_names,
-                                                covariates_names = covariates_names,
-                                                estimate_alpha = estimate_alpha,
-                                                estimate_gamma = estimate_gamma),
-       coefficients_vector = coef,
-       aic = aic,
-       bic = bic,
-       fit_algorithm = fit_algorithm)
-}
-
-
 #' Fit a multivariate Gibbs model to a dataset.
 #'
 #' @param configuration_list A single configuration or a list of configurations assumed to be drawn from the multivariate Gibbs.
@@ -389,7 +26,7 @@ fit_gibbs <- function(gibbsm_data,
 #' @importFrom glmnet glmnet
 #' @importFrom Matrix Matrix
 #' @importFrom stats AIC as.formula BIC binomial coefficients deviance glm lm logLik setNames
-#' @importFrom spatstat.geom as.im as.owin
+#' @importFrom spatstat.geom as.im as.owin inside.owin
 #' @md
 #' @export
 gibbsm <- function(configuration_list,
@@ -479,10 +116,15 @@ gibbsm <- function(configuration_list,
   # Subset configurations to the window.
   configuration_list <- lapply(configuration_list, function(configuration) {
     configuration <- as.data.frame(configuration)
-    configuration <- configuration[inside.owin(x = configuration$x,
-                                               y = configuration$y,
-                                               w = window), ]
+    configuration <- configuration[spatstat.geom::inside.owin(x = configuration$x,
+                                                              y = configuration$y,
+                                                              w = window), ]
     configuration <- as.Configuration(configuration)
+  })
+
+  # Subset configurations to points with non-NA covariate values
+  configuration_list <- lapply(configuration_list, function(configuration) {
+    remove_NA_on_covariates(configuration, covariates = covariates)
   })
 
   # Set types names and covariates names
@@ -812,4 +454,379 @@ gibbsm <- function(configuration_list,
                                                      long_range = long_range))))
   class(ret) <- "gibbsm"
   ret
+}
+
+# Return a subset of the configuration that does not give any NA values on the covariates
+remove_NA_on_covariates <- function(configuration, covariates) {
+  keep <- rep(TRUE, length(configuration$x))
+  for(cov in covariates) {
+    keep <- keep & spatstat.geom::inside.owin(configuration$x, configuration$y,
+                                              w = as.owin(cov))
+  }
+  Configuration(x = configuration$x[keep],
+                y = configuration$y[keep],
+                marks = configuration$marks[keep],
+                types = configuration$types[keep])
+}
+
+fit_gibbs <- function(gibbsm_data,
+                      fitting_package,
+                      which_lambda,
+                      estimate_alpha,
+                      estimate_gamma,
+                      types_names,
+                      covariates_names,
+                      use_regularization,
+                      nthreads,
+                      refit_glmnet,
+                      debug,
+                      ...) {
+  # Extract a few useful quantities used in most regressions
+  regressors <- gibbsm_data$regressors
+  if(any(is.na(regressors))) {
+    max_indices <- 10
+    na_row_indices <- which(rowSums(is.na(regressors)) > 0)[seq_len(max_indices)]
+    na_row_indices <- na_row_indices[!is.na(na_row_indices)]
+    warning(paste0("Some NA values detected in regression matrix; indices: "),
+            na_row_indices)
+    print(regressors[na_row_indices, ])
+  }
+
+  number_types <- length(gibbsm_data$shift)
+  nregressors <- ncol(regressors)
+
+  # Penalty factor used in penalized regressions
+  pfactor <- rep(1, nregressors)
+  pfactor[startsWith(colnames(regressors), "beta0")] <- 0
+
+  if(fitting_package == "glmnet") {
+    # Avoid a bug in glmnet: if intercept = FALSE, and there's a column of ones, it gets ignored by glmnet
+    # even though its penalty factor is zero.
+    if(all(1 == regressors[, startsWith(colnames(regressors), "beta0")])) {
+      regressors[1, startsWith(colnames(regressors), "beta0")] <- 1.00001
+    }
+
+    # We don't use an offset explicitely because the call to glmnet above returns nonsensical results or hangs.
+    # Instead, we'll use a shift for all the beta0 regressors according to -log(rho).
+    arguments <- list(x = Matrix(regressors, sparse = TRUE),
+                      y = Matrix(gibbsm_data$response, sparse = TRUE),
+                      intercept = FALSE,
+                      family = "binomial")
+    user_supplied <- list(...)
+
+    if(use_regularization) {
+      # Add penalty factor
+      arguments <- append(arguments, list(penalty.factor = pfactor))
+
+      # Call glmnet
+      arguments <- append(arguments, user_supplied)
+      if(debug) {
+        tm <- Sys.time()
+        message("Calling glmnet...")
+      }
+      fit <- do.call(glmnet, arguments)
+      if(debug) {
+        message("Finished call to glmnet.")
+        print(Sys.time() - tm)
+      }
+      if(refit_glmnet > 0) {
+        lambda_seq <- fit$lambda
+        N <- (1 + refit_glmnet) * length(lambda_seq)
+        lambda_new <- vector(mode = 'numeric', length = N)
+        lambda_new[1] <- lambda_seq[1]
+        by <- (lambda_seq[1] - lambda_seq[2]) / lambda_seq[1]
+        for(i in 2:N) {
+          lambda_new[i] <- (1 - by) * lambda_new[i - 1]
+        }
+
+        arguments$lambda <- lambda_new
+        arguments$nlambda <- length(lambda_new)
+
+        if(debug) {
+          tm <- Sys.time()
+          message("Calling glmnet again...")
+        }
+        fit <- do.call(glmnet, arguments)
+        if(debug) {
+          message("Finished call to glmnet.")
+          print(Sys.time() - tm)
+        }
+      }
+
+      # Compute AIC or BIC for the vector of lambdas
+      # Reference: https://stackoverflow.com/questions/40920051/r-getting-aic-bic-likelihood-from-glmnet
+      tLL <- fit$nulldev - deviance(fit)
+      k <- fit$df
+      n <- fit$nobs
+      aic <- -tLL + 2 * k + 2 * k * (k + 1) / (n - k - 1)
+      bic <- log(n) * k - tLL
+
+      # Choose lambda that minimizes AIC or BIC.
+      if(which_lambda == "AIC") {
+        coef <- coefficients(fit)[, which.min(aic)]
+        aic <- min(aic)
+        bic <- bic[which.min(aic)]
+      } else if(which_lambda == "BIC") {
+        coef <- coefficients(fit)[, which.min(bic)]
+        aic <- aic[which.min(bic)]
+        bic <- min(bic)
+      } else if(which_lambda == "smallest") {
+        coef <- coefficients(fit)
+        coef <- coef[, which.min(fit$lambda)]
+        aic <- aic[length(aic)]
+        bic <- bic[length(bic)]
+      } else {
+        stop("Unrecognised option for which_lambda, should be one of 'AIC', 'BIC' or 'smallest'.")
+      }
+    } else {
+      # Call glmnet with a decreasing sequence of lambdas
+      if(!("lambda" %in% names(user_supplied))) {
+        arguments <- append(arguments, list(lambda = rev(0:99)))
+      }
+      arguments <- append(arguments, user_supplied)
+      if(debug) {
+        tm <- Sys.time()
+        message("Calling glmnet...")
+      }
+      fit <- do.call(glmnet, arguments)
+      if(debug) {
+        message("Finished call to glmnet.")
+        print(Sys.time() - tm)
+      }
+
+      # Compute AIC or BIC for the vector of lambdas
+      # Reference: https://stackoverflow.com/questions/40920051/r-getting-aic-bic-likelihood-from-glmnet
+      tLL <- fit$nulldev - deviance(fit)
+      k <- fit$df
+      n <- fit$nobs
+      aic <- -tLL + 2 * k + 2 * k * (k + 1) / (n - k - 1)
+      bic <- log(n) * k - tLL
+
+      # Choose AIC / BIC corresponding to lambda = 0
+      aic <- aic[length(aic)]
+      bic <- bic[length(bic)]
+
+      # Extract the corresponding coefficients
+      coef <- coefficients(fit, s = 0)
+      coef <- setNames(as.vector(coef), nm = rownames(coef))
+    }
+
+    # Even with intercept = FALSE, glmnet still returns an intercept 0-valued coefficient
+    coef <- coef[-which(names(coef) == "(Intercept)")]
+
+    # We didn't actually use an offset so we have to shift back the intercept coefficients
+    shift <- gibbsm_data$shift
+    for(i in seq_len(number_types)) {
+      coef[match(paste0("beta0_", i), names(coef))] <- coef[match(paste0("beta0_", i), names(coef))] - shift[i]
+    }
+
+    # Clean up
+    fit_algorithm <- "glmnet"
+    # } else if(fitting_package == "oem") {
+    #
+    #   arguments <- list(x = regressors,
+    #                     y = gibbsm_data$response,
+    #                     intercept = FALSE,
+    #                     family = "binomial",
+    #                     ncores = nthreads)
+    #   user_supplied <- list(...)
+    #
+    #   if(!("compute.loss" %in% names(user_supplied))) {
+    #     arguments <- append(arguments, list(compute.loss = TRUE))
+    #   }
+    #
+    #   if(use_regularization) {
+    #     # Add penalty factor
+    #     arguments <- append(arguments, list(penalty.factor = pfactor))
+    #
+    #     # Add penalty type
+    #     if(!("penalty" %in% names(user_supplied))) {
+    #       arguments <- append(arguments, list(penalty = "lasso"))
+    #     }
+    #
+    #     # Call oem
+    #     arguments <- append(arguments, user_supplied)
+    #     if(debug) {
+    #       tm <- Sys.time()
+    #       message("Calling oem...")
+    #     }
+    #     fit <- do.call(oem, arguments)
+    #     if(debug) {
+    #       message("Finished call to oem.")
+    #       print(Sys.time() - tm)
+    #     }
+    #
+    #     # Extract coefficients
+    #     coef <- fit$beta$lasso
+    #
+    #     # Compute AIC/BIC for vector of lambdas
+    #     # Reference: https://stackoverflow.com/questions/40920051/r-getting-aic-bic-likelihood-from-glmnet
+    #     k <- sapply(seq_len(ncol(coef)), function(col) sum(coef[, col] != 0.))
+    #     n <- fit$nobs
+    #     LL <- 2 * logLik(fit)
+    #     aic <- -LL + 2 * k + 2 * k * (k + 1) / (n - k - 1)
+    #     bic <- -LL + log(n) * k
+    #
+    #     # Choose lambda that minimizes AIC or BIC
+    #     if(which_lambda == "AIC") {
+    #       coef <- coef[, which.min(aic)]
+    #       aic <- min(aic)
+    #       bic <- bic[which.min(aic)]
+    #     } else if(which_lambda == "BIC") {
+    #       coef <- coef[, which.min(bic)]
+    #       aic <- aic[which.min(bic)]
+    #       bic <- min(bic)
+    #     } else if(which_lambda == "smallest") {
+    #       coef <- coef[, ncol(coef)]
+    #       aic <- aic[length(aic)]
+    #       bic <- bic[length(bic)]
+    #     } else {
+    #       stop("Unrecognised option for which_lambda, should be one of 'AIC', 'BIC' or 'smallest'.")
+    #     }
+    #
+    #     # Put coef in correct format
+    #     coef <- setNames(as.vector(coef), nm = names(coef))
+    #   } else {
+    #     # Use 'ols' penalty for non-regularized regression
+    #     if(!("penalty" %in% names(user_supplied))) {
+    #       arguments <- append(arguments, list(penalty = "ols"))
+    #     }
+    #
+    #     # Call oem
+    #     arguments <- append(arguments, user_supplied)
+    #     if(debug) {
+    #       tm <- Sys.time()
+    #       message("Calling oem...")
+    #     }
+    #     fit <- do.call(oem, arguments)
+    #     if(debug) {
+    #       message("Finished call to oem.")
+    #       print(Sys.time() - tm)
+    #     }
+    #
+    #     # Extract AIC/BIC using oem functions
+    #     aic <- AIC(fit)
+    #     bic <- BIC(fit)
+    #
+    #     # Extract coefficients
+    #     coef <- fit$beta$ols
+    #     coef <- setNames(as.vector(coef), nm = rownames(coef))
+    #   }
+    #
+    #   # Remove intercept
+    #   coef <- coef[-which(names(coef) == "(Intercept)")]
+    #
+    #   # We didn't actually use an offset so we have to shift back the intercept coefficients
+    #   shift <- gibbsm_data$shift
+    #   for(i in seq_len(number_types)) {
+    #     coef[match(paste0("beta0_", i), names(coef))] <- coef[match(paste0("beta0_", i), names(coef))] - shift[i]
+    #   }
+    #
+    #   # Clean up
+    #   fit_algorithm <- "oem"
+    # } else if(fitting_package == "h2o") {
+    #   # Initialization
+    #   h2o.init(nthreads = nthreads)
+    #
+    #   # Put everything into a unique data.frame
+    #   regressors <- as.data.frame(regressors)
+    #   regressors$response <- gibbsm_data$response
+    #   regressors$offset <- gibbsm_data$shift[gibbsm_data$type]
+    #
+    #   arguments <- list(training_frame = as.h2o(regressors),
+    #                     y = 'response',
+    #                     intercept = FALSE,
+    #                     family = "binomial",
+    #                     offset_column = 'offset',
+    #                     standardize = FALSE,
+    #                     link = 'logit')
+    #   user_supplied <- list(...)
+    #
+    #   if(use_regularization) {
+    #     stop("Not implemented yet")
+    #   } else {
+    #     # Non-regularized corresponds to lambda = 0
+    #     if(!("lambda" %in% names(user_supplied))) {
+    #       arguments <- append(arguments, list(lambda = 0))
+    #     }
+    #
+    #     # Call h2o
+    #     arguments <- append(arguments, user_supplied)
+    #     if(debug) {
+    #       tm <- Sys.time()
+    #       message("Calling h2o")
+    #     }
+    #     fit <- do.call(h2o.glm, arguments)
+    #     if(debug) {
+    #       message("Finished call to h2o")
+    #       print(Sys.time() - tm)
+    #     }
+    #
+    #     # Compute AIC/BIC
+    #     warning("AIC/BIC not implemented yet for h2o fitting package")
+    #     aic <- NA
+    #     bic <- NA
+    #
+    #     # Extract coefs
+    #     coef <- h2o.coef(fit)
+    #   }
+    #
+    #   # Remove intercept from coefficients
+    #   coef <- coef[-which(names(coef) == "Intercept")]
+    #
+    #   # Shift intercepts back
+    #   shift <- gibbsm_data$shift
+    #   for(i in seq_len(number_types)) {
+    #     coef[match(paste0("beta0_", i), names(coef))] <- coef[match(paste0("beta0_", i), names(coef))] - shift[i]
+    #   }
+    #
+    #   # Clean up
+    #   fit_algorithm <- "h2o"
+  } else if(fitting_package == "glm") {
+    if(use_regularization) {
+      warning("Cannot have regularization with glm, doing a regular glm fit.")
+    }
+
+    # Formula for the GLM regression
+    fmla <- as.formula(paste0("response ~ 0 + offset(offset) + ", paste0(colnames(regressors), collapse = ' + ')))
+
+    # Put all the required vectors into a data.frame to send to glm
+    regressors <- as.data.frame(regressors)
+    regressors$offset <- gibbsm_data$shift[gibbsm_data$type]
+    regressors$response <- gibbsm_data$response
+
+    # Call GLM
+    if(debug) {
+      tm <- Sys.time()
+      message("Calling glm...")
+    }
+    fit <- glm(fmla, family = binomial(), data = regressors, ...)
+    if(debug) {
+      message("Finished call to glm.")
+      print(Sys.time() - tm)
+    }
+
+    # Compute AIC/BIC
+    aic <- AIC(fit)
+    bic <- BIC(fit)
+
+    # Clean up
+    coef <- coefficients(fit)
+    fit_algorithm <- "glm"
+  } else {
+    stop("Supplied fitting package not recognized.")
+  }
+
+  # Clean up
+  list(fit = fit,
+       coefficients = format_coefficient_vector(coefficient_vector = coef,
+                                                number_types = number_types,
+                                                types_names = types_names,
+                                                covariates_names = covariates_names,
+                                                estimate_alpha = estimate_alpha,
+                                                estimate_gamma = estimate_gamma),
+       coefficients_vector = coef,
+       aic = aic,
+       bic = bic,
+       fit_algorithm = fit_algorithm)
 }

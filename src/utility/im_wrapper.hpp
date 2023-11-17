@@ -52,11 +52,27 @@ public:
   }
 
   double operator()(double x, double y) const {
-    const R_xlen_t col(std::floor((x - x_min()) / xstep_));
-    const R_xlen_t row(std::floor((y - y_min()) / ystep_));
-    if(col < 0 || col >= number_col_ || row < 0 || row >= number_row_) {
+    const double index_x((x - x_min()) / xstep_);
+    const double index_y((y - y_min()) / ystep_);
+    if((index_x < 0) || (index_y < 0)) {
       return NA_REAL;
+    } else if(index_x >= static_cast<double>(number_col_)) {
+      if(index_x == static_cast<double>(number_col_)) { // x is on rhs boundary
+        const R_xlen_t row(std::floor(index_y));
+        return get_matrix(row, number_col_ - 1);
+      } else {
+        return NA_REAL;
+      }
+    } else if(index_y >= static_cast<double>(number_row_)) {
+      if(index_y == static_cast<double>(number_row_)) { // y is on top boundary
+        const R_xlen_t col(std::floor(index_x));
+        return get_matrix(number_row_ - 1, col);
+      } else {
+        return NA_REAL;
+      }
     } else {
+      const R_xlen_t row(std::floor(index_y));
+      const R_xlen_t col(std::floor(index_x));
       return get_matrix(row, col);
     }
   }
