@@ -379,9 +379,7 @@ test_that("gibbsm works with infinite saturation for Exponential/Square exponent
 })
 
 test_that("gibbsm can handle points on the boundary of a window", {
-  library(spatstat)
-
-  covariates <- as.im(function(x, y) x - 0.5, W = owin())
+  covariates <- list(function(x, y) x - 0.5)
 
   set.seed(1)
 
@@ -390,7 +388,7 @@ test_that("gibbsm can handle points on the boundary of a window", {
                                          y = c(configuration$y, c(0, 0.5, 1, 0,   0.5, 1,   0, 0.5, 1)))
 
   # Points land exactly on the border: no warning
-  expect_warning(ppjsdm::gibbsm(configuration, covariates = list(covariates)), NA)
+  expect_warning(ppjsdm::gibbsm(configuration, covariates = covariates), NA)
 })
 
 # TODO: This test is problematic: the stratified point process G2 computation requires an independent draw of the dummy points
@@ -398,9 +396,7 @@ test_that("gibbsm can handle points on the boundary of a window", {
 # The same is done on the independent draw... but in the end the same cells need not be included.
 # Solving this is not at all straightforward, so commenting the test for now.
 # test_that("gibbsm can handle summary of fit with NA covariate values", {
-#   library(spatstat)
-#
-#   covariates <- list(x = as.im(function(x, y) ifelse(x < 0.5, NA, x - 0.5), W = owin()))
+#   covariates <- list(x = function(x, y) ifelse(x < 0.5, NA, x - 0.5))
 #
 #   set.seed(1)
 #
@@ -409,5 +405,4 @@ test_that("gibbsm can handle points on the boundary of a window", {
 #   expect_warning(fit <- ppjsdm::gibbsm(configuration, dummy_distribution = "binomial", covariates = covariates))
 #   expect_error(summary(fit), NA)
 # })
-
 

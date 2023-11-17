@@ -559,4 +559,3 @@ test_that("Subsetting types for plot_papangelou with covariates", {
                                        type = "a",
                                        grid_steps = 10), NA)
 })
-
