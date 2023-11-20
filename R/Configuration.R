@@ -222,11 +222,13 @@ print.Configuration <- function(x, ...) {
   cat(format_configuration(x))
 }
 
-#' @importFrom ggplot2 aes coord_equal element_text geom_point ggplot ggtitle scale_color_manual scale_shape_manual theme theme_minimal xlab xlim ylab ylim
+#' @importFrom ggplot2 aes coord_equal element_text geom_point ggplot ggtitle guides scale_colour_manual scale_colour_viridis_d scale_shape_manual theme_minimal xlab xlim ylab ylim
 #' @importFrom rlang .data
+#' @importFrom scales breaks_extended
 #' @method plot Configuration
 #' @export
-plot.Configuration <- function(x, window, color, shape, ...) {
+plot.Configuration <- function(x, window, colours, shapes,
+                               base_size = 12, mark_range = c(1, 6), ...) {
   if(length(x$x) > 0) {
     if(missing(window)) {
       x_range <- c(min(x$x), max(x$x))
@@ -238,30 +240,47 @@ plot.Configuration <- function(x, window, color, shape, ...) {
     }
 
     df <- data.frame(x = x$x, y = x$y, Types = droplevels(x$types), Marks = x$marks)
-    if(missing(color)) {
-      color <- rep(c("#FF0000", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6"), nlevels(df$Types))
+
+    if(missing(shapes)) {
+      shapes <- rep(c(16, 17, 15, 18), length.out = nlevels(df$Types))
     }
-    if(missing("shape")) {
-      shape <- rep(c(16, 17, 15), nlevels(df$Types))
-    }
+
     g <- ggplot(data = df)
+
     if(!all(df$Marks == 1.)) {
-      g <- g + geom_point(aes(x = .data$x, y = .data$y, colour = .data$Types, shape = .data$Types, size = .data$Marks))
+      g <- g + geom_point(aes(x = .data$x, y = .data$y, colour = .data$Types,
+                              shape = .data$Types, size = .data$Marks), alpha = 0.8) +
+        scale_size(range = mark_range, breaks = breaks_extended(6))
+      nr <- 6
     } else {
-      g <- g + geom_point(aes(x = .data$x, y = .data$y, colour = .data$Types, shape = .data$Types))
+      g <- g + geom_point(aes(x = .data$x, y = .data$y, colour = .data$Types,
+                              shape = .data$Types), size = 2.5, alpha = 0.8)
+      nr <- 8
     }
-    g + xlim(x_range[1], x_range[2]) +
+
+    g <- g + xlim(x_range[1], x_range[2]) +
       ylim(y_range[1], y_range[2]) +
-      scale_color_manual(values = color) +
-      scale_shape_manual(values = shape) +
+      scale_shape_manual(values = shapes) +
       xlab(NULL) +
       ylab(NULL) +
       ggtitle("") +
       coord_equal() +
-      theme_minimal(base_size = 12) +
-      theme(plot.title = element_text(size = 11, hjust = 0.5),
-            axis.text.y = element_text(size = 12),
-            axis.text.x = element_text(size = 12))
+      theme_minimal(base_size = base_size)
+
+    if(!missing(colours)) {
+      g <- g + scale_colour_manual(values = rep(colours, nlevels(df$Types)))
+    } else {
+      g <- g + scale_colour_viridis_d(end = 0.9, option = "turbo")
+    }
+
+    g <- g + guides(colour = guide_legend(order = 1,
+                                          nrow = nr,
+                                          override.aes = list(size = 5)),
+                    shape = guide_legend(order = 1,
+                                         nrow = nr),
+                    size =  guide_legend(order = 2))
+
+    g
   }
 }
 

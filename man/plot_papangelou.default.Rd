@@ -29,12 +29,14 @@
   drop_type_from_configuration = FALSE,
   show = "all",
   limits,
-  mark_range,
+  mark_range = c(1, 6),
   base_size = 11,
   full_configuration,
   legend_title,
   type_description = "Types",
   mark_description = "Marks",
+  colours,
+  shapes,
   ...
 )
 }
@@ -101,6 +103,10 @@ This need not be the configuration used to compute the intensity, indeed, one mi
 \item{type_description}{Name to give the types in the legend (e.g., "species" or "classes").}
 
 \item{mark_description}{Name to give the marks in the legend (e.g., "size" or "DBH").}
+
+\item{colours}{(Optional) Colours to use when plotting points.}
+
+\item{shapes}{(Optional) Shapes to use when plotting points.}
 
 \item{...}{Ignored.}
 }

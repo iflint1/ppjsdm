@@ -71,11 +71,14 @@ plot_papangelou <- function(...) {
 #' @param legend_title Title to give to the legend describing the conditional intensity.
 #' @param type_description Name to give the types in the legend (e.g., "species" or "classes").
 #' @param mark_description Name to give the marks in the legend (e.g., "size" or "DBH").
+#' @param colours (Optional) Colours to use when plotting points.
+#' @param shapes (Optional) Shapes to use when plotting points.
 #' @param ... Ignored.
 #' @importFrom colorspace scale_fill_continuous_sequential
-#' @importFrom ggplot2 aes coord_equal element_text geom_tile ggplot ggtitle guide_legend guides labs scale_color_manual scale_shape_manual scale_size scale_x_continuous scale_y_continuous theme theme_minimal xlab xlim ylab ylim
+#' @importFrom ggplot2 aes coord_equal element_text geom_tile ggplot ggtitle guide_colourbar guide_legend guides labs scale_color_manual scale_shape_manual scale_size scale_x_continuous scale_y_continuous theme theme_minimal xlab xlim ylab ylim
 #' @importFrom graphics plot
 #' @importFrom rlang .data
+#' @importFrom scales breaks_extended
 #' @importFrom spatstat.geom as.im as.owin as.ppp boundingbox gridcentres inside.owin
 #' @importFrom stats na.omit
 #' @export
@@ -105,12 +108,14 @@ plot_papangelou.default <- function(window,
                                     drop_type_from_configuration = FALSE,
                                     show = "all",
                                     limits,
-                                    mark_range,
+                                    mark_range = c(1, 6),
                                     base_size = 11,
                                     full_configuration,
                                     legend_title,
                                     type_description = "Types",
                                     mark_description = "Marks",
+                                    colours,
+                                    shapes,
                                     ...) {
 
   # Take care of grid_steps argument
@@ -220,8 +225,6 @@ plot_papangelou.default <- function(window,
     points <- as.data.frame(full_configuration)
     names(points)[names(points) == "types"] <- type_description
     names(points)[names(points) == "marks"] <- mark_description
-    color <- rep(c("#FF0000", "#00A08A", "#F2AD00", "#F98400", "#5BBCD6"), nlevels(points[, type_description]))
-    shape <- rep(c(16, 17, 15, 18), nlevels(points[, type_description]))
 
     lim <- if(missing(limits)) {
       c(min(df$papangelou), max(df$papangelou))
@@ -232,34 +235,52 @@ plot_papangelou.default <- function(window,
       limits
     }
 
+    if(missing(shapes)) {
+      shapes <- rep(c(16, 17, 15, 18), length.out = nlevels(points[, type_description]))
+    }
+
     g <- ggplot(data = df, aes(x = .data$x, y = .data$y)) +
-      geom_tile(aes(fill = .data$papangelou), alpha = 0.5) +
+      geom_tile(aes(fill = .data$papangelou), alpha = 1) +
       scale_fill_continuous_sequential(palette = "Purple-Yellow", limits = lim) +
       labs(fill = legend_title) +
-      scale_color_manual(values = color) + # Obtained by wesanderson::wes_palette("Darjeeling1")
-      scale_shape_manual(values = shape) +
+      scale_shape_manual(values = shapes) +
       xlab(NULL) + # Remove x labels
       ylab(NULL) + # Remove y labels
       ggtitle("") +
       coord_equal() +
       theme_minimal(base_size = base_size) + # Theme
       xlim(boundingbox(window)$xrange) +
-      ylim(boundingbox(window)$yrange) +
-      guides(shape = guide_legend(override.aes = list(size = 5))) # Bigger types symbol size
+      ylim(boundingbox(window)$yrange)
 
     if(!all(points[, mark_description] == 1.)) {
       g <- g + geom_point(data = points, aes(x = .data$x, y = .data$y, colour = .data[[type_description]],
-                                             shape = .data[[type_description]], size = .data[[mark_description]]), alpha = 0.5)
+                                             shape = .data[[type_description]],
+                                             size = .data[[mark_description]]), alpha = 0.8) +
+        scale_size(name = mark_description, range = mark_range, breaks = breaks_extended(6))
+
+      nr <- 6
     } else {
       g <- g + geom_point(data = points, aes(x = .data$x, y = .data$y, colour = .data[[type_description]],
-                                             shape = .data[[type_description]]), size = 1.5, alpha = 0.5)
+                                             shape = .data[[type_description]]), size = 2.5, alpha = 0.8)
+
+      nr <- 8
     }
 
-    if(!missing(mark_range)) {
-      g <- g + scale_size(name = mark_description, range = mark_range)
+    if(!missing(colours)) {
+      g <- g + scale_colour_manual(values = rep(colours, nlevels(df$Types)))
+    } else {
+      g <- g + scale_colour_viridis_d(end = 0.9, option = "turbo")
     }
+
+    g <- g + guides(colour = guide_legend(order = 1,
+                                          nrow = nr,
+                                          override.aes = list(size = 5)),
+                    shape = guide_legend(order = 1,
+                                         nrow = nr),
+                    size = guide_legend(order = 2),
+                    fill = guide_colourbar(order = 3))
+
     g
-
   } else {
     plot(papangelou_im, main = legend_title)
     plot(as.ppp(full_configuration, window), add = TRUE, cols = 'white')
