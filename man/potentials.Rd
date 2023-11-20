@@ -4,7 +4,7 @@
 \alias{potentials}
 \title{Recover the interaction potentials between two given types from a fitted \code{gibbsm} object.}
 \usage{
-potentials(fit, type1 = 1, type2 = type1)
+potentials(fit, type1 = 1, type2 = type1, how = c("all", "pairs"))
 }
 \arguments{
 \item{fit}{A fit object returned by a call to \code{gibbsm}.}
@@ -14,6 +14,9 @@ or a string representing its label.}
 
 \item{type2}{Second interacting types. Can be either an integer representing the type index,
 or a string representing its label.}
+
+\item{how}{Used when \code{type1} and/or \code{type2} are vectors of types, in which case we need to either combine them by pairs
+(this assumes that they have the same length) or consider all possible combinations of \code{type1} with \code{type2}.}
 }
 \description{
 After calling gibbsm, this function allows the user to visualise the fitted
@@ -32,6 +35,7 @@ fit <- ppjsdm::gibbsm(configuration, short_range = list(matrix(0.05, 2, 2), matr
 
 plot(ppjsdm::potentials(fit))
 plot(ppjsdm::potentials(fit, type1 = "A", type2 = "B"))
+plot(ppjsdm::potentials(fit, type1 = c("A", "B"), type2 = c("A", "B")))
 
 # User wants to give names to the potentials
 
