@@ -47,7 +47,7 @@ potentials <- function(fit,
 
   # Compute how many pairs of types we need to consider
   to_consider <- if(how == "all") {
-    length(type1) * (length(type2) + 1) / 2
+    length(type1) * length(type2)
   } else if(how == "pairs") {
     if(length(type1) != length(type2)) {
       stop("Cannot use this option if the length of type1 and type2 are different.")
@@ -61,25 +61,19 @@ potentials <- function(fit,
   type1 <- as.list(type1)
   type2 <- as.list(type2)
 
-  # Initialise return variables
-  short_range <- vector(mode = "list", length = to_consider)
-  long_range <- vector(mode = "list", length = to_consider)
-  short_potentials <- vector(mode = "list", length = to_consider)
-  medium_potential <- vector(mode = "list", length = to_consider)
-  overall <- vector(mode = "list", length = to_consider)
-  t1 <- vector(mode = "list", length = to_consider)
-  t2 <- vector(mode = "list", length = to_consider)
+  t1 <- vector(mode = "character", length = to_consider)
+  t2 <- vector(mode = "character", length = to_consider)
 
   k1 <- k2 <- 1
 
   for(k in seq_len(to_consider)) {
     # Current types
-    t1[[k]] <- if(is.numeric(type1[[k1]])) {
+    t1[k] <- if(is.numeric(type1[[k1]])) {
       rownames(fit$coefficients$medium_range)[type1[[k1]]]
     } else {
       type1[[k1]]
     }
-    t2[[k]] <- if(is.numeric(type2[[k2]])) {
+    t2[k] <- if(is.numeric(type2[[k2]])) {
       rownames(fit$coefficients$medium_range)[type2[[k2]]]
     } else {
       type2[[k2]]
@@ -90,18 +84,34 @@ potentials <- function(fit,
       k2 <- k2 + 1
       if(k2 > length(type2)) {
         k1 <- k1 + 1
-        k2 <- k1
+        k2 <- 1
       }
     } else {
       k1 <- k2 <- k + 1
     }
   }
 
+  # Order the types by alphabetical order
+  m <- pmin(t1, t2)
+  M <- pmax(t1, t2)
+  t1 <- m # Need to do this in two steps otherwise t1 is overwritten
+  t2 <- M
+  prs <- paste0(t1, t2)
+  t1 <- t1[match(unique(prs), prs)]
+  t2 <- t2[match(unique(prs), prs)]
+
+  # Initialise return variables
+  short_range <- vector(mode = "list", length = length(t1))
+  long_range <- vector(mode = "list", length = length(t1))
+  short_potentials <- vector(mode = "list", length = length(t1))
+  medium_potential <- vector(mode = "list", length = length(t1))
+  overall <- vector(mode = "list", length = length(t1))
+
   eval_k <- function(k) {
     # Extract variables relevant to the short-range potentials
     model <- fit$parameters$model
-    short_range <- lapply(fit$coefficients$short_range, function(s) s[t1[[k]], t2[[k]]])
-    alpha <- lapply(fit$coefficients$alpha, function(a) a[t1[[k]], t2[[k]]])
+    short_range <- lapply(fit$coefficients$short_range, function(s) s[t1[k], t2[k]])
+    alpha <- lapply(fit$coefficients$alpha, function(a) a[t1[k], t2[k]])
 
     # Construct the short-range potentials
     short_potentials <- setNames(lapply(seq_along(model), function(i) {
@@ -125,9 +135,9 @@ potentials <- function(fit,
 
     # Extract variables relevant to the medium-range potentials
     medium_range_model <- fit$parameters$medium_range_model
-    medium_range <- fit$coefficients$medium_range[t1[[k]], t2[[k]]]
-    long_range <- fit$coefficients$long_range[t1[[k]], t2[[k]]]
-    gamma <- fit$coefficients$gamma[t1[[k]], t2[[k]]]
+    medium_range <- fit$coefficients$medium_range[t1[k], t2[k]]
+    long_range <- fit$coefficients$long_range[t1[k], t2[k]]
+    gamma <- fit$coefficients$gamma[t1[k], t2[k]]
 
     # Construct the medium-range potentials
     medium_potential <- if(medium_range_model == "square_exponential") {
@@ -186,7 +196,7 @@ potentials <- function(fit,
   }
 
   # Return object
-  rev <- lapply(seq_len(to_consider), eval_k)
+  rev <- lapply(seq_len(length(t1)), eval_k)
   ret <- list(short = lapply(rev, function(r) r$short),
               medium = lapply(rev, function(r) r$medium),
               overall = lapply(rev, function(r) r$overall),
@@ -198,12 +208,45 @@ potentials <- function(fit,
   ret
 }
 
-format_potentials <- function(potentials) {
+compute_xseq <- function(potentials, nsteps = 1e3) {
+  max_distance <- 1.5 * max(max(sapply(potentials$short_range, function(y) Reduce("max", y))), Reduce("max", potentials$long_range))
+  seq(from = 0, to = max_distance, length.out = nsteps)
+}
+
+format_potentials <- function(pot,
+                              epsilon = 1e-4) { # epsilon controls the change in potential that is worth considering when classifying curves
   str <- paste0("Interaction potentials corresponding to a provided fit.\n\n",
                 "The object contains three slots:\n- obj$short is a list containing functions of x, ",
                 "each entry corresponding to one of the short-range potentials.\n",
                 "- obj$medium contains a function of x representing the medium-range potential.\n",
-                "- obj$overall contains a function of x representing the sum of all potentials.")
+                "- obj$overall contains a function of x representing the sum of all potentials.\n")
+
+  is_one_pair <- length(pot$type1) == 1
+  if(!is_one_pair) {
+    xseq <- compute_xseq(pot)
+
+    prs <- paste0(pot$type1, pot$type2)
+
+    possible_behaviours <- c("Always decreasing",
+                             "Always increasing",
+                             "Decreasing, then increasing",
+                             "Increasing, then decreasing")
+    behaviour_pair <- setNames(sapply(unique(prs), function(pr) {
+      val <- pot$overall[[which(unique(prs) == pr)]](xseq)
+      val <- val[!is.na(val)]
+      first_change <- val[-1][abs(val[-1] - val[1]) > epsilon][1]
+      ifelse(all(sort(val, decreasing = TRUE) == val),
+             possible_behaviours[1],
+             ifelse(all(sort(val, decreasing = FALSE) == val),
+                    possible_behaviours[2],
+                    ifelse(first_change < val[1],
+                           possible_behaviours[3],
+                           possible_behaviours[4])))
+    }), nm = unique(prs))
+
+    behaviour_pair <- setNames(sapply(possible_behaviours, function(b) sum(behaviour_pair == b)), nm = possible_behaviours)
+    str <- paste0(str, "\nSummary of curve behaviour: ", paste0(names(behaviour_pair), " = ", behaviour_pair,  collapse = "; "), ".\n")
+  }
   str
 }
 
@@ -219,10 +262,8 @@ print.potentials <- function(x, ...) {
 #' @importFrom stats complete.cases median
 #' @method plot potentials
 #' @export
-plot.potentials <- function(x, base_size = 11, compute_average = TRUE, compute_median = TRUE, ...) {
-  # Compute xseq
-  max_distance <- 1.5 * max(max(sapply(x$short_range, function(y) Reduce("max", y))), Reduce("max", x$long_range))
-  xseq <- seq(from = 0, to = max_distance, length.out = 1e3)
+plot.potentials <- function(x, base_size = 11, max_npairs = 100, compute_average = TRUE, compute_median = TRUE, ...) {
+  xseq <- compute_xseq(x)
 
   # Number of pairs of types to consider
   npairs <- length(x$type1)
@@ -252,21 +293,23 @@ plot.potentials <- function(x, base_size = 11, compute_average = TRUE, compute_m
 
   df <- df[complete.cases(df), ]
 
-  is_one_pair <- length(unique(df$pair)) == 1
+  npairs <- length(unique(df$pair))
 
-  if(!is_one_pair & (compute_average | compute_median)) {
+  if(npairs > 1 & (compute_average | compute_median)) {
     pairs <- unique(df$pair)
 
     avg <- lapply(pairs, function(pr) {
-      df$Overall[df$pair == pr]
+      df[df$pair == pr, c("x", "Overall")]
     })
 
+    avg_df <- data.frame(x = unique(Reduce(c, lapply(avg, function(a) a$x))))
+
     if(compute_median) {
-      md <- sapply(seq_along(avg[[1]]), function(i) median(sapply(avg, function(a) a[i])))
+      avg_df$median <- sapply(avg_df$x, function(x) median(sapply(avg, function(a) a$Overall[a$x == x])))
     }
 
     if(compute_average) {
-      avg <- Reduce("+", avg) / length(avg)
+      avg_df$average <- sapply(avg_df$x, function(x) mean(sapply(avg, function(a) a$Overall[a$x == x])))
     }
   }
 
@@ -277,46 +320,60 @@ plot.potentials <- function(x, base_size = 11, compute_average = TRUE, compute_m
     theme_minimal(base_size = base_size) +
     theme(legend.title = element_blank())
 
-  if(is_one_pair) {
+  # Hide legend and make curves more transparent if too many pairs
+  if(npairs > max_npairs) {
+    alpha_main <- 0.3
+    alpha_secondary <- 0.1
+  } else {
+    alpha_main <- 0.6
+    alpha_secondary <- 0.5
+  }
+
+  if(npairs == 1) {
     g <- g + geom_line(aes(x = .data$x, y = .data$Overall, colour = "Overall"), size = 1.5)
   } else {
-    g <- g + geom_line(aes(x = .data$x, y = .data$Overall, linetype = "Overall", colour = .data$pair), size = 1.5, alpha = 0.6)
+    g <- g + geom_line(aes(x = .data$x, y = .data$Overall, linetype = "Overall", colour = .data$pair), size = 1.5, alpha = alpha_main)
   }
 
 
   nshorts <- sum(startsWith(colnames(df), "short"))
   for(i in seq_len(nshorts)) {
-    if(is_one_pair) {
+    if(npairs == 1) {
       g <- g + geom_line(aes(x = .data$x, y = .data[[paste0("short", i)]],
                              colour = .data[[paste0("name", i)]]), size = 1, alpha = 0.7)
     } else {
       g <- g + geom_line(aes(x = .data$x, y = .data[[paste0("short", i)]],
-                             linetype = "Short/Medium", colour = .data$pair), size = 1, alpha = 0.5)
+                             linetype = "Short/Medium", colour = .data$pair), size = 1, alpha = alpha_secondary)
     }
   }
 
   if(any(df$Medium != 0, na.rm = TRUE)) {
-    if(is_one_pair) {
+    if(npairs == 1) {
       g <- g + geom_line(aes(x = .data$x, y = .data$Medium, colour = "Medium"), size = 1, alpha = 0.7)
     } else {
-      g <- g + geom_line(aes(x = .data$x, y = .data$Medium, linetype = "Short/Medium", colour = .data$pair), size = 1, alpha = 0.5)
+      g <- g + geom_line(aes(x = .data$x, y = .data$Medium, linetype = "Short/Medium", colour = .data$pair), size = 1, alpha = alpha_secondary)
     }
+  }
+
+  if(npairs > max_npairs) {
+    g <- g + scale_colour_viridis_d(guide = "none")
+  } else {
+    g <- g + scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "turbo",
+                           guide = guide_legend(order = 2, nrow = 10))
   }
 
   g <- g +
     scale_linetype_manual(values = c(Overall = "solid", `Short/Medium` = "dotted")) +
-    scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "turbo",
-                           guide = guide_legend(order = 2, nrow = 10)) +
     guides(linetype = guide_legend(order = 3,
                                    keywidth = 3,
                                    override.aes = list(linewidth = 1))) +
     new_scale_colour()
 
-  if(!is_one_pair & compute_median) {
-    g <- g + geom_line(data = data.frame(x = xseq, md = md), aes(x = .data$x, y = .data$md, colour = "Median"), alpha = 0.9, size = 2.5)
+  if(npairs > 1 & compute_median) {
+    g <- g + geom_line(data = avg_df, aes(x = .data$x, y = .data$median, colour = "Median"), alpha = 0.9, size = 2.5)
   }
-  if(!is_one_pair & compute_average) {
-    g <- g + geom_line(data = data.frame(x = xseq, avg = avg), aes(x = .data$x, y = .data$avg, colour = "Average"), alpha = 0.9, size = 2.5)
+  if(npairs > 1 & compute_average) {
+    g <- g + geom_line(data = avg_df, aes(x = .data$x, y = .data$average, colour = "Average"), alpha = 0.9, size = 2.5)
   }
 
   g <- g + scale_colour_manual(values = c(Average = "black", Median = "red"), guide = guide_legend(order = 1))
