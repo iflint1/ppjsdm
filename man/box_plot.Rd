@@ -53,7 +53,7 @@ Should be a named vector/list, with the names corresponding to types, and the va
 
 \item{title}{Plot title.}
 
-\item{colours}{Optional vector of colours to represent the different fits.}
+\item{colours}{Optional vector of colours to represent the different fits/classes.}
 
 \item{highlight_zero}{Highlight the zero value with a red line?}
 

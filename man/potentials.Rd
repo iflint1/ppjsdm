@@ -4,7 +4,13 @@
 \alias{potentials}
 \title{Recover the interaction potentials between two given types from a fitted \code{gibbsm} object.}
 \usage{
-potentials(fit, type1 = 1, type2 = type1, how = c("all", "pairs"))
+potentials(
+  fit,
+  type1 = 1,
+  type2 = type1,
+  how = c("all", "pairs"),
+  exclude_same_types = FALSE
+)
 }
 \arguments{
 \item{fit}{A fit object returned by a call to \code{gibbsm}.}
@@ -17,6 +23,8 @@ or a string representing its label.}
 
 \item{how}{Used when \code{type1} and/or \code{type2} are vectors of types, in which case we need to either combine them by pairs
 (this assumes that they have the same length) or consider all possible combinations of \code{type1} with \code{type2}.}
+
+\item{exclude_same_types}{Should pairs of potentials involving the same types be excluded from consideration?}
 }
 \description{
 After calling gibbsm, this function allows the user to visualise the fitted

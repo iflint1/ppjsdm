@@ -366,7 +366,7 @@ make_summary_df <- function(fits,
 #' Should be a named vector/list, with the names corresponding to types, and the value equal to the class name.
 #' @param involving Optional vector/list of types. Only coefficients involving these types will be plotted.
 #' @param title Plot title.
-#' @param colours Optional vector of colours to represent the different fits.
+#' @param colours Optional vector of colours to represent the different fits/classes.
 #' @param highlight_zero Highlight the zero value with a red line?
 #' @param text_size Text size.
 #' @param base_size Base size.

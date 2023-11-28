@@ -10,6 +10,7 @@
 #' or a string representing its label.
 #' @param how Used when `type1` and/or `type2` are vectors of types, in which case we need to either combine them by pairs
 #' (this assumes that they have the same length) or consider all possible combinations of `type1` with `type2`.
+#' @param exclude_same_types Should pairs of potentials involving the same types be excluded from consideration?
 #' @export
 #' @md
 #' @examples
@@ -36,7 +37,8 @@
 potentials <- function(fit,
                        type1 = 1,
                        type2 = type1,
-                       how = c("all", "pairs")) {
+                       how = c("all", "pairs"),
+                       exclude_same_types = FALSE) {
   # Check fit type
   if(!is(fit, "gibbsm")) {
     stop(paste0("The fit object does not have the right type, its class is ", class(fit)))
@@ -99,6 +101,13 @@ potentials <- function(fit,
   prs <- paste0(t1, t2)
   t1 <- t1[match(unique(prs), prs)]
   t2 <- t2[match(unique(prs), prs)]
+
+  # Take care of exclude_same_types
+  if(exclude_same_types) {
+    z <- t1[t1 != t2] # Need to do this in two steps otherwise t1 is overwritten
+    t2 <- t2[t1 != t2]
+    t1 <- z
+  }
 
   # Initialise return variables
   short_range <- vector(mode = "list", length = length(t1))
