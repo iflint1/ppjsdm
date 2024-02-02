@@ -22,6 +22,7 @@
   model = fit$parameters$model,
   medium_range_model = fit$parameters$medium_range_model,
   nthreads = fit$nthreads,
+  full_configuration = fit$configuration_list[[1]],
   ...
 )
 }
@@ -59,6 +60,8 @@
 \item{medium_range_model}{String representing the medium-range model to use. The currently authorised models are obtained with a call to \code{show_medium_range_models()}.}
 
 \item{nthreads}{Maximum number of threads to use.}
+
+\item{full_configuration}{(Optional) Configuration object, perhaps different from \code{configuration}, to overlay on the Papangelou conditional intensity.}
 
 \item{...}{Forwarded to plot_papangelou}
 }

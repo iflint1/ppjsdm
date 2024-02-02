@@ -147,7 +147,7 @@ plot_papangelou.default <- function(window,
   if(missing(configuration)) {
     configuration <- Configuration()
   } else {
-    configuration <- as.data.frame(configuration)
+    configuration <- as.data.frame(as.Configuration(configuration))
     configuration <- configuration[inside.owin(x = configuration$x,
                                                y = configuration$y,
                                                w = window), ]
@@ -158,7 +158,7 @@ plot_papangelou.default <- function(window,
   if(missing(full_configuration)) {
     full_configuration <- configuration
   } else {
-    full_configuration <- as.data.frame(full_configuration)
+    full_configuration <- as.data.frame(as.Configuration(full_configuration))
     full_configuration <- full_configuration[inside.owin(x = full_configuration$x,
                                                          y = full_configuration$y,
                                                          w = window), ]
@@ -306,6 +306,7 @@ plot_papangelou.default <- function(window,
 #' @param model String representing the short-range model to use. The currently authorised models are obtained with a call to `show_short_range_models()`.
 #' @param medium_range_model String representing the medium-range model to use. The currently authorised models are obtained with a call to `show_medium_range_models()`.
 #' @param nthreads Maximum number of threads to use.
+#' @param full_configuration (Optional) Configuration object, perhaps different from `configuration`, to overlay on the Papangelou conditional intensity.
 #' @param ... Forwarded to plot_papangelou
 #' @export
 #' @method plot_papangelou gibbsm
@@ -327,6 +328,7 @@ plot_papangelou.gibbsm <- function(fit,
                                    model = fit$parameters$model,
                                    medium_range_model = fit$parameters$medium_range_model,
                                    nthreads = fit$nthreads,
+                                   full_configuration = fit$configuration_list[[1]],
                                    ...) {
   plot_papangelou(window = window,
                   configuration = configuration,
@@ -344,6 +346,6 @@ plot_papangelou.gibbsm <- function(fit,
                   model = model,
                   medium_range_model = medium_range_model,
                   nthreads = nthreads,
-                  full_configuration = fit$configuration_list[[1]],
+                  full_configuration = full_configuration,
                   ...)
 }
