@@ -241,11 +241,11 @@ inline auto make_G2_stratified(const Configuration& configuration,
 #endif
 
   // Construct other stratified point process
-  std::vector<computation_t> delta(rho.size());
-  for(decltype(rho.size()) i(0); i < rho.size(); ++i) {
-    delta[i] = static_cast<computation_t>(1.) / std::sqrt(static_cast<computation_t>(rho[i]));
-  }
-  const auto other_stratified(subset_to_nonNA(ppjsdm::rstratpp_single<Configuration>(window, delta, delta), covariates));
+  // std::vector<computation_t> delta(rho.size());
+  // for(decltype(rho.size()) i(0); i < rho.size(); ++i) {
+  //   delta[i] = static_cast<computation_t>(1.) / std::sqrt(static_cast<computation_t>(rho[i]));
+  // }
+  const auto other_stratified(subset_to_nonNA(ppjsdm::rstratpp_single<Configuration>(window, ppjsdm::get_number_points(dummy)), covariates));
 
   if(ppjsdm::size(dummy) != ppjsdm::size(other_stratified)) {
     Rcpp::Rcout << "Size dummy: " << ppjsdm::size(dummy) << " and size new stratified: " << ppjsdm::size(other_stratified) << ".\n";
