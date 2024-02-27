@@ -48,7 +48,7 @@ inline auto convert_list_of_boolean_matrices_to_vector(Rcpp::List boolean_matric
 template<typename Configuration, typename Vector>
 auto make_dummy_points(const ppjsdm::Window& window,
                        const Vector& rho_times_volume,
-                       std::string dummy_distribution) {
+                       const std::string& dummy_distribution) {
   Configuration D;
   if(dummy_distribution == std::string("binomial")) {
     D = ppjsdm::rbinomialpp_single<Configuration>(window, rho_times_volume);
@@ -110,7 +110,8 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
                                       int number_types,
                                       int nthreads,
                                       bool debug,
-                                      Rcpp::CharacterVector type_names) {
+                                      Rcpp::CharacterVector type_names,
+                                      bool is_stratified) {
   using size_t = ppjsdm::size_t<Configuration>;
 
   // Set up timer for debugging purposes
@@ -144,8 +145,13 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   // Make shift vector
   Rcpp::NumericVector shift(Rcpp::no_init(number_types));
   const auto volume = static_cast<double>(window.volume());
+  const auto points_by_type(ppjsdm::get_number_points(D_no_NA_covariates));
   for(int j(0); j < number_types; ++j) {
-    shift[j] = static_cast<double>(-std::log(static_cast<double>(rho_times_volume[j]) / volume));
+    if(is_stratified) { // In this case, the intensity is not given by rho_times_volume due to rounding. Instead, note that a stratified point process always has the same number of points.
+      shift[j] = static_cast<double>(-std::log(static_cast<double>(points_by_type[j]) / volume));
+    } else {
+      shift[j] = static_cast<double>(-std::log(static_cast<double>(rho_times_volume[j]) / volume));
+    }
   }
 
   // Precompute short and medium range dispersions
@@ -363,7 +369,8 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
                                     number_types,
                                     nthreads,
                                     debug,
-                                    type_names);
+                                    type_names,
+                                    dummy_distribution == std::string("stratified"));
 }
 
 // [[Rcpp::export]]
@@ -438,5 +445,6 @@ Rcpp::List prepare_gibbsm_data_with_dummy(Rcpp::List configuration_list,
                                     number_types,
                                     nthreads,
                                     debug,
-                                    type_names);
+                                    type_names,
+                                    false);
 }
