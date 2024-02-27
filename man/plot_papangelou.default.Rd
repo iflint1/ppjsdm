@@ -35,6 +35,7 @@
   legend_title,
   type_description = "Types",
   mark_description = "Marks",
+  types_order,
   colours,
   shapes,
   ...
@@ -103,6 +104,8 @@ This need not be the configuration used to compute the intensity, indeed, one mi
 \item{type_description}{Name to give the types in the legend (e.g., "species" or "classes").}
 
 \item{mark_description}{Name to give the marks in the legend (e.g., "size" or "DBH").}
+
+\item{types_order}{(Optional) Order of the types in figure legend. Vector of the names of types to plot, ordered in a given way.}
 
 \item{colours}{(Optional) Colours to use when plotting points.}
 

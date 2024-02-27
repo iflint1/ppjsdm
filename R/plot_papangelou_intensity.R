@@ -71,6 +71,7 @@ plot_papangelou <- function(...) {
 #' @param legend_title Title to give to the legend describing the conditional intensity.
 #' @param type_description Name to give the types in the legend (e.g., "species" or "classes").
 #' @param mark_description Name to give the marks in the legend (e.g., "size" or "DBH").
+#' @param types_order (Optional) Order of the types in figure legend. Vector of the names of types to plot, ordered in a given way.
 #' @param colours (Optional) Colours to use when plotting points.
 #' @param shapes (Optional) Shapes to use when plotting points.
 #' @param ... Ignored.
@@ -114,6 +115,7 @@ plot_papangelou.default <- function(window,
                                     legend_title,
                                     type_description = "Types",
                                     mark_description = "Marks",
+                                    types_order,
                                     colours,
                                     shapes,
                                     ...) {
@@ -211,7 +213,7 @@ plot_papangelou.default <- function(window,
       full_configuration <- Configuration()
     } else if(show == "type") {
       #full_configuration <- full_configuration[names(parameters$beta0)[type]]
-      stop("Parameter show == \"type\" not allowed for now.")
+      stop("Parameter show == \"type\" not allowed for now, use the actual name of the type to show instead.")
     } else if(show != "all") {
       print(show)
       stop("Could not interpret the parameter show, printed above.")
@@ -237,6 +239,14 @@ plot_papangelou.default <- function(window,
 
     if(missing(shapes)) {
       shapes <- rep(c(16, 17, 15, 18), length.out = nlevels(points[, type_description]))
+    }
+
+    if(!missing(types_order)) {
+      points[, type_description] <- droplevels(points[, type_description])
+      if(!identical(sort(types_order), sort(levels(points[, type_description])))) {
+        stop("The parameter \"types_order\" should contain exactly the same name as those to be plotted, with perhaps their order changed.")
+      }
+      points[, type_description] <- factor(points[, type_description], levels = types_order)
     }
 
     g <- ggplot(data = df, aes(x = .data$x, y = .data$y)) +
