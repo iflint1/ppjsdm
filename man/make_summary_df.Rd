@@ -13,7 +13,8 @@ make_summary_df(
   full_names,
   compute_confidence_intervals,
   classes,
-  involving
+  involving,
+  how
 )
 }
 \arguments{
@@ -40,6 +41,8 @@ Only works when given a single fit.
 Should be a named vector/list, with the names corresponding to types, and the value equal to the class name.}
 
 \item{involving}{Optional vector/list of types. Only coefficients involving these types will be plotted.}
+
+\item{how}{If the \code{involving} argument is supplied, should it involve \emph{only} those types, or at least \emph{one} of those types (which is relevant if inter-type interactions are involved).}
 }
 \description{
 This function is used to prepare data for use in the \code{box_plot} and \code{diagram_plot} functions.

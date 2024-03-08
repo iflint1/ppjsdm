@@ -16,6 +16,7 @@
 #' @param classes If this parameter is supplied, then colours are used to distinguish classes.
 #' Should be a named vector/list, with the names corresponding to types, and the value equal to the class name.
 #' @param involving Optional vector/list of types. Only coefficients involving these types will be plotted.
+#' @param how If the `involving` argument is supplied, should it involve *only* those types, or at least *one* of those types (which is relevant if inter-type interactions are involved).
 #' @param include_self Include self-interactions?
 #' @param show_legend Show legend(s)?
 #' @param cex Cex.
@@ -54,6 +55,7 @@ chord_diagram_plot <- function(fit,
                                compute_confidence_intervals = TRUE,
                                classes = NULL,
                                involving = NULL,
+                               how = c("only", "one"),
                                include_self = TRUE,
                                show_legend = TRUE,
                                cex = 1,
@@ -68,6 +70,9 @@ chord_diagram_plot <- function(fit,
                                big_gap = 5,
                                repulsion_attraction_colours = c("blue", "red"),
                                classes_colours) {
+  # Interpret the how argument
+  how <- match.arg(how)
+
   # Take care of repulsion_attraction_colours argument
   if(!is.character(repulsion_attraction_colours) | length(repulsion_attraction_colours) != 2) {
     stop("repulsion_attraction_colours should be a vector containing two strings, the first one a colour to represent negative interactions, the second one representing positive interactions.")
@@ -88,7 +93,8 @@ chord_diagram_plot <- function(fit,
                                    full_names = full_names,
                                    compute_confidence_intervals = compute_confidence_intervals,
                                    classes = classes,
-                                   involving = involving)
+                                   involving = involving,
+                                   how = how)
 
   # Remove NAs
   chord_diagram <- chord_diagram[rowSums(is.na(chord_diagram)) == 0, ]

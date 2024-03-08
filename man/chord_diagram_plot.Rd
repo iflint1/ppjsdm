@@ -13,6 +13,7 @@ chord_diagram_plot(
   compute_confidence_intervals = TRUE,
   classes = NULL,
   involving = NULL,
+  how = c("only", "one"),
   include_self = TRUE,
   show_legend = TRUE,
   cex = 1,
@@ -49,6 +50,8 @@ Choice of \code{alpha1}, \code{alpha2}, ..., to show one of the short-range inte
 Should be a named vector/list, with the names corresponding to types, and the value equal to the class name.}
 
 \item{involving}{Optional vector/list of types. Only coefficients involving these types will be plotted.}
+
+\item{how}{If the \code{involving} argument is supplied, should it involve \emph{only} those types, or at least \emph{one} of those types (which is relevant if inter-type interactions are involved).}
 
 \item{include_self}{Include self-interactions?}
 

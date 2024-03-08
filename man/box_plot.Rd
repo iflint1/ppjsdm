@@ -15,6 +15,7 @@ box_plot(
   compute_confidence_intervals = TRUE,
   classes = NULL,
   involving = NULL,
+  how = c("only", "one"),
   title,
   colours = c("black", "#5BBCD6", "#F2AD00", "#00A08A", "#FF0000"),
   highlight_zero = TRUE,
@@ -50,6 +51,8 @@ Only works when given a single fit.
 Should be a named vector/list, with the names corresponding to types, and the value equal to the class name.}
 
 \item{involving}{Optional vector/list of types. Only coefficients involving these types will be plotted.}
+
+\item{how}{If the \code{involving} argument is supplied, should it involve \emph{only} those types, or at least \emph{one} of those types (which is relevant if inter-type interactions are involved).}
 
 \item{title}{Plot title.}
 

@@ -153,6 +153,7 @@ convert_names <- function(x,
 #' Only works when given a single fit.
 #' Should be a named vector/list, with the names corresponding to types, and the value equal to the class name.
 #' @param involving Optional vector/list of types. Only coefficients involving these types will be plotted.
+#' @param how If the `involving` argument is supplied, should it involve *only* those types, or at least *one* of those types (which is relevant if inter-type interactions are involved).
 #' @export
 #' @keywords internal
 #' @md
@@ -164,7 +165,8 @@ make_summary_df <- function(fits,
                             full_names,
                             compute_confidence_intervals,
                             classes,
-                            involving) {
+                            involving,
+                            how) {
   # Take care of the classes argument
   if(!is.null(classes)) {
     classes <- as.list(classes)
@@ -225,8 +227,15 @@ make_summary_df <- function(fits,
         types
       }
 
+      # Should other types be considered?
+      other_types_subset <- if(how == "only") {
+        types_subset
+      } else {
+        types
+      }
+
       if(identification != "beta") { # Create dataframe of two columns with all possible pairs of types
-        d <- as.data.frame(expand.grid(from = types, to = types_subset, stringsAsFactors = FALSE))
+        d <- as.data.frame(expand.grid(from = other_types_subset, to = types_subset, stringsAsFactors = FALSE))
         d <- d[!duplicated(t(apply(d, 1, sort))), ]
 
         if(which == "within") { # in this case, remove columns that are the same, so shows only between interactions
@@ -365,6 +374,7 @@ make_summary_df <- function(fits,
 #' Only works when given a single fit.
 #' Should be a named vector/list, with the names corresponding to types, and the value equal to the class name.
 #' @param involving Optional vector/list of types. Only coefficients involving these types will be plotted.
+#' @param how If the `involving` argument is supplied, should it involve *only* those types, or at least *one* of those types (which is relevant if inter-type interactions are involved).
 #' @param title Plot title.
 #' @param colours Optional vector of colours to represent the different fits/classes.
 #' @param highlight_zero Highlight the zero value with a red line?
@@ -403,6 +413,7 @@ box_plot <- function(...,
                      compute_confidence_intervals = TRUE,
                      classes = NULL,
                      involving = NULL,
+                     how = c("only", "one"),
                      title,
                      colours = c("black", "#5BBCD6", "#F2AD00", "#00A08A", "#FF0000"),
                      highlight_zero = TRUE,
@@ -410,6 +421,9 @@ box_plot <- function(...,
                      base_size = 20,
                      xmin,
                      xmax) {
+  # Interpret the how argument
+  how <- match.arg(how)
+
   # TODO: Avoid NULL default arguments for args forwarded to internal function, just set those to NULL in there
   # TODO: Is there a clean way to copy the documentation between functions when they have the same arguments? See box_plot and chord_diagram, all the gibbsm rgibbs functions, etc.
   # Interpret the which argument
@@ -425,7 +439,8 @@ box_plot <- function(...,
                         full_names = full_names,
                         compute_confidence_intervals = compute_confidence_intervals,
                         classes = classes,
-                        involving = involving)
+                        involving = involving,
+                        how = how)
 
   # Remove NAs
   df <- df[rowSums(is.na(df)) == 0, ]
