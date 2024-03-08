@@ -339,7 +339,7 @@ plot.potentials <- function(x, base_size = 11, max_npairs = 100, compute_average
   }
 
   if(npairs == 1) {
-    g <- g + geom_line(aes(x = .data$x, y = .data$Overall, colour = "Overall"), size = 1.5)
+    g <- g + geom_line(aes(x = .data$x, y = .data$Overall, colour = "Overall", linetype = "Overall"), size = 2)
   } else {
     g <- g + geom_line(aes(x = .data$x, y = .data$Overall, linetype = "Overall", colour = .data$pair), size = 1.5, alpha = alpha_main)
   }
@@ -348,8 +348,8 @@ plot.potentials <- function(x, base_size = 11, max_npairs = 100, compute_average
   nshorts <- sum(startsWith(colnames(df), "short"))
   for(i in seq_len(nshorts)) {
     if(npairs == 1) {
-      g <- g + geom_line(aes(x = .data$x, y = .data[[paste0("short", i)]],
-                             colour = .data[[paste0("name", i)]]), size = 1, alpha = 0.7)
+      g <- g + geom_line(aes(x = .data$x, y = .data[[paste0("short", i)]], linetype = .data[[paste0("name", i)]],
+                             colour = .data[[paste0("name", i)]]), size = 1.5, alpha = 0.7)
     } else {
       g <- g + geom_line(aes(x = .data$x, y = .data[[paste0("short", i)]],
                              linetype = "Short/Medium", colour = .data$pair), size = 1, alpha = alpha_secondary)
@@ -358,34 +358,51 @@ plot.potentials <- function(x, base_size = 11, max_npairs = 100, compute_average
 
   if(any(df$Medium != 0, na.rm = TRUE)) {
     if(npairs == 1) {
-      g <- g + geom_line(aes(x = .data$x, y = .data$Medium, colour = "Medium"), size = 1, alpha = 0.7)
+      g <- g + geom_line(aes(x = .data$x, y = .data$Medium, colour = "Medium", linetype = "Medium"), size = 1.5, alpha = 0.7)
     } else {
       g <- g + geom_line(aes(x = .data$x, y = .data$Medium, linetype = "Short/Medium", colour = .data$pair), size = 1, alpha = alpha_secondary)
     }
   }
 
-  if(npairs > max_npairs) {
-    g <- g + scale_colour_viridis_d(guide = "none")
+  if(npairs == 1) {
+    lab <- "Overall"
+    for(i in seq_len(nshorts)) {
+      lab[length(lab) + 1] <- df[1, paste0("name", i)]
+    }
+    if(any(df$Medium != 0, na.rm = TRUE)) {
+      lab[length(lab) + 1] <- "Medium"
+    }
+    val <- "solid"
+    if(length(lab) > 1) {
+      val <- c(val, rep(c("dotted", "longdash"), length(lab) - 1))
+    }
+    val <- val[order(lab)]
+    lab <- sort(lab)
+    g <- g +
+      scale_colour_viridis_d(name = "", labels = lab, begin = 0.1, end = 0.9, option = "turbo") +
+      scale_linetype_manual(name = "", values = val, labels = lab) +
+      guides(colour = guide_legend(keywidth = 5, override.aes = list(linewidth = 1.5)))
   } else {
-    g <- g + scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "turbo",
-                           guide = guide_legend(order = 2, nrow = 10))
+    if(npairs > max_npairs) {
+      g <- g + scale_colour_viridis_d(guide = "none")
+    } else {
+      g <- g + scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "turbo",
+                                      guide = guide_legend(order = 2, nrow = 10))
+    }
+    g <- g +
+      scale_linetype_manual(values = c("solid", "dotted", "longdash")) +
+      guides(linetype = guide_legend(order = 3,
+                                     keywidth = 3,
+                                     override.aes = list(linewidth = 1))) +
+      new_scale_colour()
+    if(compute_median) {
+      g <- g + geom_line(data = avg_df, aes(x = .data$x, y = .data$median, colour = "Median"), alpha = 0.9, size = 2.5)
+    }
+    if(compute_average) {
+      g <- g + geom_line(data = avg_df, aes(x = .data$x, y = .data$average, colour = "Average"), alpha = 0.9, size = 2.5)
+    }
+    g <- g + scale_colour_manual(values = c(Average = "black", Median = "red"), guide = guide_legend(order = 1))
   }
-
-  g <- g +
-    scale_linetype_manual(values = c(Overall = "solid", `Short/Medium` = "dotted")) +
-    guides(linetype = guide_legend(order = 3,
-                                   keywidth = 3,
-                                   override.aes = list(linewidth = 1))) +
-    new_scale_colour()
-
-  if(npairs > 1 & compute_median) {
-    g <- g + geom_line(data = avg_df, aes(x = .data$x, y = .data$median, colour = "Median"), alpha = 0.9, size = 2.5)
-  }
-  if(npairs > 1 & compute_average) {
-    g <- g + geom_line(data = avg_df, aes(x = .data$x, y = .data$average, colour = "Average"), alpha = 0.9, size = 2.5)
-  }
-
-  g <- g + scale_colour_manual(values = c(Average = "black", Median = "red"), guide = guide_legend(order = 1))
 
   g
 }
