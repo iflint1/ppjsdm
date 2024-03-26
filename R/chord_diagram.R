@@ -101,7 +101,7 @@ chord_diagram_plot <- function(fit,
   identification <- identification[identification %in% colnames(chord_diagram)]
 
   # Remove NAs
-  chord_diagram <- chord_diagram[!is.na(df[, identification]), ]
+  chord_diagram <- chord_diagram[!is.na(chord_diagram[, identification]), ]
 
   if(nrow(chord_diagram) == 0) {
     warning("There were no interactions to plot. This could be due to all interactions being non-statistically significant, with option only_statistically_significant active.")
