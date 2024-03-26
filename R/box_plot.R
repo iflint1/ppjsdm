@@ -442,11 +442,12 @@ box_plot <- function(...,
                         involving = involving,
                         how = how)
 
-  # Remove NAs
-  df <- df[rowSums(is.na(df)) == 0, ]
-
+  # Name of the coefficient we are plotting
   identification <- c("gamma", "alpha", "beta")
   identification <- identification[identification %in% colnames(df)]
+
+  # Remove NAs
+  df <- df[!is.na(df[, identification]), ]
 
   if(length(identification) != 1) {
     stop("Could not identify the intended coefficient by analysing the colnames of the dataframe.")

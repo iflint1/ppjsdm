@@ -96,16 +96,17 @@ chord_diagram_plot <- function(fit,
                                    involving = involving,
                                    how = how)
 
+  # Name of the coefficient we are plotting
+  identification <- c("gamma", "alpha")
+  identification <- identification[identification %in% colnames(chord_diagram)]
+
   # Remove NAs
-  chord_diagram <- chord_diagram[rowSums(is.na(chord_diagram)) == 0, ]
+  chord_diagram <- chord_diagram[!is.na(df[, identification]), ]
 
   if(nrow(chord_diagram) == 0) {
     warning("There were no interactions to plot. This could be due to all interactions being non-statistically significant, with option only_statistically_significant active.")
     return()
   }
-
-  identification <- c("gamma", "alpha")
-  identification <- identification[identification %in% colnames(chord_diagram)]
 
   if(length(identification) != 1) {
     stop(paste0("Could not identify the intended coefficient by analysing the colnames of the dataframe; identification variable = ", identification))
