@@ -27,6 +27,7 @@
 #' @param outward_facing_names Should the names of the types be outward facing or along the circle?
 #' @param show_grid_ticks Show grid ticks on each of the sectors?
 #' @param sort_interactions Should the interactions originating from a given type be sorted?
+#' @param only_between Should we only plot interactions between different *classes*? Only useful if classes were specified.
 #' @param circle_margin Margin on the four sides of the circle.
 #' @param big_gap Gap size between classes.
 #' @param repulsion_attraction_colours Colours to represent repulsion and attraction.
@@ -66,6 +67,7 @@ chord_diagram_plot <- function(fit,
                                outward_facing_names = FALSE,
                                show_grid_ticks = TRUE,
                                sort_interactions = TRUE,
+                               only_between = FALSE,
                                circle_margin = 0.1,
                                big_gap = 5,
                                repulsion_attraction_colours = c("blue", "red"),
@@ -102,6 +104,11 @@ chord_diagram_plot <- function(fit,
 
   # Remove NAs
   chord_diagram <- chord_diagram[!is.na(chord_diagram[, identification]), ]
+
+  # Remove interactions  that involve the same class
+  if(only_between & !is.null(classes)) {
+    chord_diagram <- chord_diagram[chord_diagram$class_from != chord_diagram$class_to, ]
+  }
 
   if(nrow(chord_diagram) == 0) {
     warning("There were no interactions to plot. This could be due to all interactions being non-statistically significant, with option only_statistically_significant active.")

@@ -197,6 +197,7 @@ make_default_model_parameters <- function(alpha,
                                               medium_range,
                                               long_range,
                                               ...)
+
   number_types <- g$number_types
   full_types <- g$types
 

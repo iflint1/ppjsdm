@@ -24,6 +24,7 @@ chord_diagram_plot(
   outward_facing_names = FALSE,
   show_grid_ticks = TRUE,
   sort_interactions = TRUE,
+  only_between = FALSE,
   circle_margin = 0.1,
   big_gap = 5,
   repulsion_attraction_colours = c("blue", "red"),
@@ -72,6 +73,8 @@ Should be a named vector/list, with the names corresponding to types, and the va
 \item{show_grid_ticks}{Show grid ticks on each of the sectors?}
 
 \item{sort_interactions}{Should the interactions originating from a given type be sorted?}
+
+\item{only_between}{Should we only plot interactions between different \emph{classes}? Only useful if classes were specified.}
 
 \item{circle_margin}{Margin on the four sides of the circle.}
 

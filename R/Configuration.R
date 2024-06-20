@@ -239,7 +239,7 @@ plot.Configuration <- function(x, window, colours, shapes,
       y_range <- y_range(window)
     }
 
-    df <- data.frame(x = x$x, y = x$y, Types = droplevels(x$types), Marks = x$marks)
+    df <- data.frame(x = x$x, y = x$y, Types = x$types, Marks = x$marks)
 
     if(missing(shapes)) {
       shapes <- rep(c(16, 17, 15, 18), length.out = nlevels(df$Types))
