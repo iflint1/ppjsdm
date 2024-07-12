@@ -54,27 +54,10 @@ public:
   double operator()(double x, double y) const {
     const double index_x((x - x_min()) / xstep_);
     const double index_y((y - y_min()) / ystep_);
-    if((index_x < 0) || (index_y < 0)) {
-      return NA_REAL;
-    } else if(index_x >= static_cast<double>(number_col_)) {
-      if(std::abs(index_x - static_cast<double>(number_col_)) <= std::numeric_limits<double>::epsilon()) { // x is on rhs boundary
-        const R_xlen_t row(std::floor(index_y));
-        return get_matrix(row, number_col_ - 1);
-      } else {
-        return NA_REAL;
-      }
-    } else if(index_y >= static_cast<double>(number_row_)) {
-      if(std::abs(index_y - static_cast<double>(number_row_)) <= std::numeric_limits<double>::epsilon()) { // y is on top boundary
-        const R_xlen_t col(std::floor(index_x));
-        return get_matrix(number_row_ - 1, col);
-      } else {
-        return NA_REAL;
-      }
-    } else {
-      const R_xlen_t row(std::floor(index_y));
-      const R_xlen_t col(std::floor(index_x));
-      return get_matrix(row, col);
-    }
+    const R_xlen_t row(std::floor(index_y));
+    const R_xlen_t col(std::floor(index_x));
+    return get_matrix(std::max(static_cast<R_xlen_t>(0), std::min(number_row_ - 1, row)),
+                      std::max(static_cast<R_xlen_t>(0), std::min(number_col_ - 1, col)));
   }
 
   Rcpp::NumericVector operator()(Rcpp::NumericVector x, Rcpp::NumericVector y) const {
