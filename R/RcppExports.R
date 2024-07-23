@@ -59,6 +59,10 @@ rbinomialpp_cpp <- function(window, n, nsim, types, drop, mark_range) {
     .Call(`_ppjsdm_rbinomialpp_cpp`, window, n, nsim, types, drop, mark_range)
 }
 
+rbirth_cpp <- function(nsim, horizon, types, nquad, window, drop, seed, mark_range, starting_configuration, dummy, nthreads, birth_alpha, birth_beta0, birth_covariates, birth_beta, birth_gamma, birth_short_range, birth_medium_range, birth_long_range, birth_saturation, birth_model, birth_medium_range_model, death_alpha, death_beta0, death_covariates, death_beta, death_gamma, death_short_range, death_medium_range, death_long_range, death_saturation, death_model, death_medium_range_model) {
+    .Call(`_ppjsdm_rbirth_cpp`, nsim, horizon, types, nquad, window, drop, seed, mark_range, starting_configuration, dummy, nthreads, birth_alpha, birth_beta0, birth_covariates, birth_beta, birth_gamma, birth_short_range, birth_medium_range, birth_long_range, birth_saturation, birth_model, birth_medium_range_model, death_alpha, death_beta0, death_covariates, death_beta, death_gamma, death_short_range, death_medium_range, death_long_range, death_saturation, death_model, death_medium_range_model)
+}
+
 rgibbs_cpp <- function(window, alpha, beta0, covariates, beta, gamma, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, mark_range, only_simulate_these_types, conditional_configuration, starting_configuration, seed, nthreads, debug) {
     .Call(`_ppjsdm_rgibbs_cpp`, window, alpha, beta0, covariates, beta, gamma, short_range, medium_range, long_range, saturation, steps, nsim, types, model, medium_range_model, drop, mark_range, only_simulate_these_types, conditional_configuration, starting_configuration, seed, nthreads, debug)
 }

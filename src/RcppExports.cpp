@@ -281,6 +281,49 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rbirth_cpp
+SEXP rbirth_cpp(R_xlen_t nsim, double horizon, Rcpp::CharacterVector types, R_xlen_t nquad, SEXP window, bool drop, R_xlen_t seed, Rcpp::NumericVector mark_range, SEXP starting_configuration, SEXP dummy, int nthreads, SEXP birth_alpha, Rcpp::NumericVector birth_beta0, SEXP birth_covariates, SEXP birth_beta, SEXP birth_gamma, SEXP birth_short_range, SEXP birth_medium_range, SEXP birth_long_range, R_xlen_t birth_saturation, SEXP birth_model, SEXP birth_medium_range_model, SEXP death_alpha, Rcpp::NumericVector death_beta0, SEXP death_covariates, SEXP death_beta, SEXP death_gamma, SEXP death_short_range, SEXP death_medium_range, SEXP death_long_range, R_xlen_t death_saturation, SEXP death_model, SEXP death_medium_range_model);
+RcppExport SEXP _ppjsdm_rbirth_cpp(SEXP nsimSEXP, SEXP horizonSEXP, SEXP typesSEXP, SEXP nquadSEXP, SEXP windowSEXP, SEXP dropSEXP, SEXP seedSEXP, SEXP mark_rangeSEXP, SEXP starting_configurationSEXP, SEXP dummySEXP, SEXP nthreadsSEXP, SEXP birth_alphaSEXP, SEXP birth_beta0SEXP, SEXP birth_covariatesSEXP, SEXP birth_betaSEXP, SEXP birth_gammaSEXP, SEXP birth_short_rangeSEXP, SEXP birth_medium_rangeSEXP, SEXP birth_long_rangeSEXP, SEXP birth_saturationSEXP, SEXP birth_modelSEXP, SEXP birth_medium_range_modelSEXP, SEXP death_alphaSEXP, SEXP death_beta0SEXP, SEXP death_covariatesSEXP, SEXP death_betaSEXP, SEXP death_gammaSEXP, SEXP death_short_rangeSEXP, SEXP death_medium_rangeSEXP, SEXP death_long_rangeSEXP, SEXP death_saturationSEXP, SEXP death_modelSEXP, SEXP death_medium_range_modelSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< R_xlen_t >::type nsim(nsimSEXP);
+    Rcpp::traits::input_parameter< double >::type horizon(horizonSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type types(typesSEXP);
+    Rcpp::traits::input_parameter< R_xlen_t >::type nquad(nquadSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type window(windowSEXP);
+    Rcpp::traits::input_parameter< bool >::type drop(dropSEXP);
+    Rcpp::traits::input_parameter< R_xlen_t >::type seed(seedSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type mark_range(mark_rangeSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type starting_configuration(starting_configurationSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type dummy(dummySEXP);
+    Rcpp::traits::input_parameter< int >::type nthreads(nthreadsSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type birth_alpha(birth_alphaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type birth_beta0(birth_beta0SEXP);
+    Rcpp::traits::input_parameter< SEXP >::type birth_covariates(birth_covariatesSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type birth_beta(birth_betaSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type birth_gamma(birth_gammaSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type birth_short_range(birth_short_rangeSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type birth_medium_range(birth_medium_rangeSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type birth_long_range(birth_long_rangeSEXP);
+    Rcpp::traits::input_parameter< R_xlen_t >::type birth_saturation(birth_saturationSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type birth_model(birth_modelSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type birth_medium_range_model(birth_medium_range_modelSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type death_alpha(death_alphaSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type death_beta0(death_beta0SEXP);
+    Rcpp::traits::input_parameter< SEXP >::type death_covariates(death_covariatesSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type death_beta(death_betaSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type death_gamma(death_gammaSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type death_short_range(death_short_rangeSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type death_medium_range(death_medium_rangeSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type death_long_range(death_long_rangeSEXP);
+    Rcpp::traits::input_parameter< R_xlen_t >::type death_saturation(death_saturationSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type death_model(death_modelSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type death_medium_range_model(death_medium_range_modelSEXP);
+    rcpp_result_gen = Rcpp::wrap(rbirth_cpp(nsim, horizon, types, nquad, window, drop, seed, mark_range, starting_configuration, dummy, nthreads, birth_alpha, birth_beta0, birth_covariates, birth_beta, birth_gamma, birth_short_range, birth_medium_range, birth_long_range, birth_saturation, birth_model, birth_medium_range_model, death_alpha, death_beta0, death_covariates, death_beta, death_gamma, death_short_range, death_medium_range, death_long_range, death_saturation, death_model, death_medium_range_model));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rgibbs_cpp
 SEXP rgibbs_cpp(SEXP window, SEXP alpha, Rcpp::NumericVector beta0, SEXP covariates, SEXP beta, SEXP gamma, SEXP short_range, SEXP medium_range, SEXP long_range, R_xlen_t saturation, R_xlen_t steps, R_xlen_t nsim, SEXP types, SEXP model, SEXP medium_range_model, bool drop, Rcpp::NumericVector mark_range, Rcpp::IntegerVector only_simulate_these_types, SEXP conditional_configuration, SEXP starting_configuration, R_xlen_t seed, R_xlen_t nthreads, bool debug);
 RcppExport SEXP _ppjsdm_rgibbs_cpp(SEXP windowSEXP, SEXP alphaSEXP, SEXP beta0SEXP, SEXP covariatesSEXP, SEXP betaSEXP, SEXP gammaSEXP, SEXP short_rangeSEXP, SEXP medium_rangeSEXP, SEXP long_rangeSEXP, SEXP saturationSEXP, SEXP stepsSEXP, SEXP nsimSEXP, SEXP typesSEXP, SEXP modelSEXP, SEXP medium_range_modelSEXP, SEXP dropSEXP, SEXP mark_rangeSEXP, SEXP only_simulate_these_typesSEXP, SEXP conditional_configurationSEXP, SEXP starting_configurationSEXP, SEXP seedSEXP, SEXP nthreadsSEXP, SEXP debugSEXP) {
@@ -368,7 +411,7 @@ BEGIN_RCPP
 END_RCPP
 }
 
-RcppExport SEXP run_testthat_tests(void *);
+RcppExport SEXP run_testthat_tests(SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ppjsdm_compute_papangelou_cpp", (DL_FUNC) &_ppjsdm_compute_papangelou_cpp, 17},
@@ -384,6 +427,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ppjsdm_prepare_gibbsm_data", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data, 19},
     {"_ppjsdm_prepare_gibbsm_data_with_dummy", (DL_FUNC) &_ppjsdm_prepare_gibbsm_data_with_dummy, 16},
     {"_ppjsdm_rbinomialpp_cpp", (DL_FUNC) &_ppjsdm_rbinomialpp_cpp, 6},
+    {"_ppjsdm_rbirth_cpp", (DL_FUNC) &_ppjsdm_rbirth_cpp, 33},
     {"_ppjsdm_rgibbs_cpp", (DL_FUNC) &_ppjsdm_rgibbs_cpp, 23},
     {"_ppjsdm_rppp_cpp", (DL_FUNC) &_ppjsdm_rppp_cpp, 6},
     {"_ppjsdm_rstratpp_cpp", (DL_FUNC) &_ppjsdm_rstratpp_cpp, 7},
