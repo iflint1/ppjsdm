@@ -90,6 +90,7 @@ as.Configuration.ppp <- function(configuration) {
 }
 
 #' @method as.Configuration numeric
+#' @export
 as.Configuration.numeric <- function(configuration) {
   if(is.vector(configuration)) {
     x <- configuration
@@ -103,6 +104,7 @@ as.Configuration.numeric <- function(configuration) {
 }
 
 #' @method as.Configuration matrix
+#' @export
 as.Configuration.matrix <- function(configuration) {
   if(ncol(configuration) < 2) {
     stop("Matrix cannot be converted to a configuration.")
@@ -121,6 +123,7 @@ as.Configuration.matrix <- function(configuration) {
 }
 
 #' @method as.Configuration default
+#' @export
 as.Configuration.default <- function(configuration) {
   configuration <- as.data.frame(configuration)
   x_indices <- which(names(configuration) == "x")
