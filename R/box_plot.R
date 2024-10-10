@@ -87,6 +87,7 @@ access_coefficient <- function(fits,
           i <- intersect(index, colnames(beta))
           z <- as.matrix(beta[, i])
           colnames(z) <- i
+          rownames(z) <- rownames(beta)
           base::list(z)
         } else {
           base::list(beta)
