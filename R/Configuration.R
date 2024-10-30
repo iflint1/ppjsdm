@@ -230,8 +230,13 @@ print.Configuration <- function(x, ...) {
 #' @importFrom scales breaks_extended
 #' @method plot Configuration
 #' @export
-plot.Configuration <- function(x, window, colours, shapes,
-                               base_size = 12, mark_range = c(1, 6), ...) {
+plot.Configuration <- function(x,
+                               window,
+                               colours,
+                               shapes,
+                               base_size = 12,
+                               types_name = "Types",
+                               mark_range = c(1, 6), ...) {
   if(length(x$x) > 0) {
     if(missing(window)) {
       x_range <- c(min(x$x), max(x$x))
@@ -242,22 +247,24 @@ plot.Configuration <- function(x, window, colours, shapes,
       y_range <- y_range(window)
     }
 
-    df <- data.frame(x = x$x, y = x$y, Types = x$types, Marks = x$marks)
+    df <- data.frame(x = x$x, y = x$y, Marks = x$marks)
+
+    df[[types_name]] <- x$types
 
     if(missing(shapes)) {
-      shapes <- rep(c(16, 17, 15, 18), length.out = nlevels(df$Types))
+      shapes <- rep(c(16, 17, 15, 18), length.out = nlevels(df[[types_name]]))
     }
 
     g <- ggplot(data = df)
 
     if(!all(df$Marks == 1.)) {
-      g <- g + geom_point(aes(x = .data$x, y = .data$y, colour = .data$Types,
-                              shape = .data$Types, size = .data$Marks), alpha = 0.8) +
+      g <- g + geom_point(aes(x = .data$x, y = .data$y, colour = .data[[types_name]],
+                              shape = .data[[types_name]], size = .data$Marks), alpha = 0.8) +
         scale_size(range = mark_range, breaks = breaks_extended(6))
       nr <- 6
     } else {
-      g <- g + geom_point(aes(x = .data$x, y = .data$y, colour = .data$Types,
-                              shape = .data$Types), size = 2.5, alpha = 0.8)
+      g <- g + geom_point(aes(x = .data$x, y = .data$y, colour = .data[[types_name]],
+                              shape = .data[[types_name]]), size = 2.5, alpha = 0.8)
       nr <- 8
     }
 
@@ -271,7 +278,7 @@ plot.Configuration <- function(x, window, colours, shapes,
       theme_minimal(base_size = base_size)
 
     if(!missing(colours)) {
-      g <- g + scale_colour_manual(values = rep(colours, nlevels(df$Types)))
+      g <- g + scale_colour_manual(values = rep(colours, nlevels(df[[types_name]])))
     } else {
       g <- g + scale_colour_viridis_d(end = 0.9, option = "turbo")
     }
