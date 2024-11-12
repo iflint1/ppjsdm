@@ -282,13 +282,22 @@ plot_papangelou.default <- function(window,
       g <- g + scale_colour_viridis_d(end = 0.9, option = "turbo")
     }
 
-    g <- g + guides(colour = guide_legend(order = 1,
-                                          nrow = nr,
-                                          override.aes = list(size = 5)),
-                    shape = guide_legend(order = 1,
-                                         nrow = nr),
-                    size = guide_legend(order = 2),
-                    fill = guide_colourbar(order = 3))
+    if(!all(points[, mark_description] == 1.)) {
+      g <- g + guides(colour = guide_legend(order = 1,
+                                            nrow = nr,
+                                            override.aes = list(size = 5)),
+                      shape = guide_legend(order = 1,
+                                           nrow = nr),
+                      size = guide_legend(order = 2),
+                      fill = guide_colourbar(order = 3))
+    } else {
+      g <- g + guides(colour = guide_legend(order = 1,
+                                            nrow = nr,
+                                            override.aes = list(size = 5)),
+                      shape = guide_legend(order = 1,
+                                           nrow = nr),
+                      fill = guide_colourbar(order = 2))
+    }
 
     g
   } else {
