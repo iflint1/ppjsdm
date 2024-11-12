@@ -271,13 +271,13 @@ plot_papangelou.default <- function(window,
       nr <- 6
     } else {
       g <- g + geom_point(data = points, aes(x = .data$x, y = .data$y, colour = .data[[type_description]],
-                                             shape = .data[[type_description]]), size = 2.5, alpha = 0.8)
+                                             shape = .data[[type_description]]), size = mean(mark_range), alpha = 0.8)
 
       nr <- 8
     }
 
     if(!missing(colours)) {
-      g <- g + scale_colour_manual(values = rep(colours, nlevels(df$Types)))
+      g <- g + scale_colour_manual(values = rep(colours, nlevels(points[, type_description])))
     } else {
       g <- g + scale_colour_viridis_d(end = 0.9, option = "turbo")
     }
