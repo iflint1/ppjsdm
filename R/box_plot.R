@@ -549,7 +549,7 @@ box_plot <- function(...,
 
   # If xmin and xmax are given use those instead of defaults
   if(!missing(xmin) && !missing(xmax)) {
-    g <- g + xlim(xmin, xmax) # Fix the x-axis range
+    g <- g + coord_cartesian(xlim = c(xmin, xmax)) # Fix the x-axis range
   }
 
   # If there is a single fit, do not show legend
