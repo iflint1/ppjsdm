@@ -383,7 +383,7 @@ make_summary_df <- function(fits,
 #' @param base_size Base size.
 #' @param xmin Optional plot minimum x.
 #' @param xmax Optional plot maximum x.
-#' @importFrom ggplot2 aes element_text facet_grid geom_errorbar geom_point geom_vline ggplot ggtitle guide_legend guides position_dodge scale_color_manual theme theme_bw xlab ylab xlim
+#' @importFrom ggplot2 aes coord_cartesian element_text facet_grid geom_errorbar geom_point geom_vline ggplot ggtitle guide_legend guides position_dodge scale_color_manual theme theme_bw xlab ylab xlim
 #' @importFrom rlang .data
 #' @examples
 #' set.seed(1)
