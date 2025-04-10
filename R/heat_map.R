@@ -29,13 +29,12 @@
 #' ppjsdm::heat_map(fit, coefficient = "x", show_values = FALSE)
 #'
 heat_map <- function(fit,
-                         coefficient = c("alpha", "beta"),
-                         show_values = TRUE,
-                         limits = NULL,
-                         include_y = NULL,
-                         include_x = NULL,
-                         names = NULL)
-  {
+                     coefficient = c("alpha", "beta"),
+                     show_values = TRUE,
+                     limits = NULL,
+                     include_y = NULL,
+                     include_x = NULL,
+                     names = NULL) {
 
   if(coefficient == "alpha") {
     estimates <- fit$coefficients$alpha[[1]]
@@ -43,87 +42,72 @@ heat_map <- function(fit,
     estimates <- fit$coefficients$beta}
 
 
-unique_names <- colnames(estimates)
-df <- as.data.frame(expand.grid(from = rownames(estimates), to = colnames(estimates)))
-#insert coefficient values
-df$value <- sapply(seq_len(nrow(df)), function(i) {
-  val <- estimates[df$from[i], df$to[i]]
-  if(length(val) == 0) {
-    val <- estimates[df$to[i], df$from[i]]
+  unique_names <- colnames(estimates)
+  df <- as.data.frame(expand.grid(from = rownames(estimates), to = colnames(estimates)))
+  #insert coefficient values
+  df$value <- sapply(seq_len(nrow(df)), function(i) {
+    val <- estimates[df$from[i], df$to[i]]
+    if(length(val) == 0) {
+      val <- estimates[df$to[i], df$from[i]]
+    }
+    val
+  })
+
+  if(!is.null(include_x)){
+
+    df <- df %>% filter(from %in% include_x)
+
   }
-  val
-})
 
-if(!is.null(include_x)){
+  if(!is.null(include_y)){
 
-  df <- df %>% filter(from %in% include_x)
+    df <- df %>% filter(to %in% include_y)
 
-}
+  }
 
-if(!is.null(include_y)){
+  if(!is.null(names)){
+    df <- df %>% mutate(from = recode(from, !!!names))
 
-  df <- df %>% filter(to %in% include_y)
-
-}
-
-if(!is.null(names)){
-  df <- df %>% mutate(from = recode(from, !!!names))
-
-  df <- df %>% mutate(to = recode(to, !!!names))
-}
+    df <- df %>% mutate(to = recode(to, !!!names))
+  }
 
 
-if(!is.null(limits)){
-breaks <- seq(limits[1], limits[2], by = 1)
+  if(!is.null(limits)){
+    breaks <- seq(limits[1], limits[2], by = 1)
 
-custom_labels <- c(paste0(">", limits[1]), breaks[2:(length(breaks) - 1)], paste0(">",limits[2]))
-} else{
-  breaks <- waiver()
-  custom_labels <- waiver()
-}
+    custom_labels <- c(paste0(">", limits[1]), breaks[2:(length(breaks) - 1)], paste0(">", limits[2]))
+  } else{
+    breaks <- waiver()
+    custom_labels <- waiver()
+  }
 
 
-p <- ggplot(df, aes(x = from, y = to, fill = value)) +
-
-     geom_tile(colour = "white", height = 1.0, alpha = 0.75 ) +
-
-     scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0, limits = limits, breaks = breaks, labels = custom_labels, name = "Coefficient", oob = squish) +
-
-     labs(x = "", y = "") +
-
+  p <- ggplot(df, aes(x = from, y = to, fill = value)) +
+    geom_tile(colour = "white", height = 1.0, alpha = 0.75 ) +
+    scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0, limits = limits, breaks = breaks, labels = custom_labels, name = "Coefficient", oob = squish) +
+    labs(x = "", y = "") +
     theme(panel.grid.major = element_blank(),
-
           panel.grid.minor = element_blank(),
-
           panel.background = element_blank(),
-
-         legend.position = "right",
-
-         legend.title=element_text(size=15),
-
-          legend.text=element_text(size=12),
-
-         axis.title.x = element_text(size=25),
-
-          axis.title.y = element_text(size=25),
-
-          axis.text.x = element_text(size=15, angle = 45, hjust = 1, face = "bold"),
-
-        axis.text.y = element_text(size=15, face = "bold"),
-
+          legend.position = "right",
+          legend.title=element_text(size = 15),
+          legend.text=element_text(size = 12),
+          axis.title.x = element_text(size = 25),
+          axis.title.y = element_text(size = 25),
+          axis.text.x = element_text(size = 15, angle = 45, hjust = 1, face = "bold"),
+          axis.text.y = element_text(size = 15, face = "bold"),
           strip.text.y = element_text(size = 15),
-
           strip.text.x = element_text(size = 15))
 
 
 
 
-if(show_values == TRUE){
-  p <- p + geom_text(aes(label = round(value, 2)), color = "black", size = 4.25)
+  if(show_values == TRUE){
+    p <- p + geom_text(aes(label = round(value, 2)), color = "black", size = 4.25)
   }
 
 
- print(p)
+  print(p)
 
- }
+}
 
