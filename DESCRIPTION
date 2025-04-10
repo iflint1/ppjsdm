@@ -10,6 +10,7 @@ License: MIT + file LICENSE
 Imports: 
     circlize,
     colorspace,
+    dplyr,
     GA,
     ggnewscale,
     ggplot2,
