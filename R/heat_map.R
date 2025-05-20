@@ -1,7 +1,7 @@
 #' Heatmap of coefficient values of a fit object
 #'
 #' @param fit A fit object obtained by a call to 'ppjsdm::gibbsm'
-#' @param coefficient A strong representing the coefficient to plot
+#' @param coefficient A string representing the coefficient to plot
 #' @param show_values Should the cells show the coefficient value?
 #' @param limits Optional vector that gives what coefficient values should be plotted
 #' @param include_y Optional vector of types that should be included on the y-axis
