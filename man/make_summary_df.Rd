@@ -47,4 +47,3 @@ Should be a named vector/list, with the names corresponding to types, and the va
 \description{
 This function is used to prepare data for use in the \code{box_plot} and \code{diagram_plot} functions.
 }
-\keyword{internal}

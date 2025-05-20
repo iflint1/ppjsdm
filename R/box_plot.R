@@ -156,7 +156,6 @@ convert_names <- function(x,
 #' @param involving Optional vector/list of types. Only coefficients involving these types will be plotted.
 #' @param how If the `involving` argument is supplied, should it involve *only* those types, or at least *one* of those types (which is relevant if inter-type interactions are involved).
 #' @export
-#' @keywords internal
 #' @md
 make_summary_df <- function(fits,
                             coefficient,
