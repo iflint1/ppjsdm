@@ -38,8 +38,8 @@ inline auto sample(Generator& generator, const Model& model) {
 }
 
 template<typename Configuration, typename Generator, typename Model, typename... Args>
-inline auto sample(Generator& generator, const Model& model, R_xlen_t steps, bool debug, Args&&... args) {
-  return ppjsdm::simulate_metropolis_hastings<Configuration>(generator, model, steps, debug, std::forward<Args>(args)...);
+inline auto sample(Generator& generator, const Model& model, R_xlen_t steps, R_xlen_t number_types, bool debug, Args&&... args) {
+  return ppjsdm::simulate_metropolis_hastings<Configuration>(generator, model, steps, number_types, debug, std::forward<Args>(args)...);
 }
 
 } // namespace detail
@@ -161,6 +161,7 @@ SEXP rgibbs_cpp(SEXP window,
                                                drop,
                                                exponential_model,
                                                steps,
+                                               beta0.size(),
                                                debug,
                                                vector_starting_configuration,
                                                Rcpp::as<std::vector<R_xlen_t>>(only_simulate_these_types),
@@ -173,6 +174,7 @@ SEXP rgibbs_cpp(SEXP window,
                                                drop,
                                                exponential_model,
                                                steps,
+                                               beta0.size(),
                                                debug,
                                                Rcpp::as<std::vector<R_xlen_t>>(only_simulate_these_types),
                                                vector_conditional_configuration);

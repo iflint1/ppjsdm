@@ -20,42 +20,54 @@
 #include <vector> // std::vector
 
 namespace ppjsdm {
+namespace detail {
+
+template<typename Configuration, typename Vector>
+inline auto thinned_configuration(const Vector& only_simulate_these_types,
+                                  const Configuration& configuration) {
+  Configuration thinned_configuration{};
+  reserve_if_possible(thinned_configuration, size(configuration));
+  for(const auto& point: configuration) {
+    for(decltype(only_simulate_these_types.size()) j(0); j < only_simulate_these_types.size(); ++j) {
+      if(get_type(point) == only_simulate_these_types[j]) {
+        add_point(thinned_configuration, point);
+        break;
+      }
+    }
+  }
+
+  return thinned_configuration;
+}
+
+} // namespace detail
 
 template<typename Configuration, typename Generator, typename Model, typename Vector>
 inline auto simulate_metropolis_hastings(Generator& generator,
                                          const Model& model,
                                          unsigned long long int steps,
+                                         unsigned long long int number_types,
                                          bool debug,
                                          const Vector& only_simulate_these_types,
                                          const Configuration& conditional_configuration) {
   // Start from a rough approximate draw and go from there.
   const auto starting_configuration(approximate_draw<Configuration>(generator, model));
 
-  // Remove points which are not of the right type
-  Configuration thinned_starting_configuration{};
-  reserve_if_possible(thinned_starting_configuration, size(starting_configuration));
-  for(const auto& point: starting_configuration) {
-    for(decltype(only_simulate_these_types.size()) j(0); j < only_simulate_these_types.size(); ++j) {
-      if(get_type(point) == only_simulate_these_types[j]) {
-        add_point(thinned_starting_configuration, point);
-        break;
-      }
-    }
-  }
-
   return simulate_metropolis_hastings(generator,
                                       model,
                                       steps,
+                                      number_types,
                                       debug,
-                                      thinned_starting_configuration,
-                                      only_simulate_these_types,
-                                      conditional_configuration);
+                                      detail::thinned_configuration(only_simulate_these_types,
+                                                                    starting_configuration),
+                                                                    only_simulate_these_types,
+                                                                    conditional_configuration);
 }
 
 template<typename Configuration, typename Generator, typename Model, typename Vector>
 inline auto simulate_metropolis_hastings(Generator& generator,
                                          const Model& model,
                                          unsigned long long int steps,
+                                         unsigned long long int number_types,
                                          bool debug,
                                          const Configuration& starting_configuration,
                                          const Vector& only_simulate_these_types,
@@ -63,24 +75,24 @@ inline auto simulate_metropolis_hastings(Generator& generator,
   // Probability of drawing tentative births
   constexpr double birth_probability(0.5);
 
-  // Number of types we are simulating from
-  const auto number_types(only_simulate_these_types.size());
+  // Remove irrelevant points from starting configuration
+  const auto thinned_starting_configuration(detail::thinned_configuration(only_simulate_these_types, starting_configuration));
 
   // Initialise a vector of the number of points by type
-  std::vector<decltype(get_number_points(starting_configuration))> points_by_type(steps + 1);
-  points_by_type[0] = get_number_points(starting_configuration, number_types);
+  std::vector<decltype(get_number_points(thinned_starting_configuration))> points_by_type(steps + 1);
+  points_by_type[0] = get_number_points(thinned_starting_configuration, number_types);
 
   // Random distributions
-  std::uniform_int_distribution<decltype(only_simulate_these_types.size())> random_type_distribution(0, number_types - 1);
+  std::uniform_int_distribution<decltype(only_simulate_these_types.size())> random_type_distribution(0, only_simulate_these_types.size() - 1);
   std::uniform_real_distribution<double> random_uniform_distribution(0, 1);
 
   // Simulation window
   const auto window(model.get_window());
 
   // Can precompute this
-  const double precomputed_constant((1 - birth_probability) / birth_probability * window.volume() * static_cast<double>(number_types));
+  const double precomputed_constant((1 - birth_probability) / birth_probability * window.volume() * static_cast<double>(only_simulate_these_types.size()));
 
-  Configuration points(starting_configuration);
+  Configuration points(thinned_starting_configuration);
 
   // Set up timer to regularly check for user interruption
   PreciseTimer timer{};
