@@ -11,7 +11,7 @@
 #' @param include_y Optional vector of types that should be included on the y-axis
 #' @param include_x Optional vector of types that should be included on the x-axis
 #' @param names Optional list of full names of types, if for example abbreviations were used when running the fit
-#' @importFrom ggplot2 aes geom_tile scale_fill_gradientn labs theme geom_text geom_point scale_size_manual
+#' @importFrom ggplot2 aes geom_tile scale_fill_gradientn labs theme geom_text geom_point scale_size_manual waiver
 #' @importFrom scales squish
 #' @importFrom rlang splice-operator
 #' @importFrom dplyr filter mutate recode
