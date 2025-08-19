@@ -6,9 +6,13 @@
 \usage{
 heat_map(
   fit,
+  summ = NULL,
   coefficient = c("alpha", "beta"),
   show_values = TRUE,
+  show_sig = FALSE,
   limits = NULL,
+  colours = c("#6c63ac", "#61AEE6", "#80D6BE", "gray95", "#F2CE61", "#F5A54F", "#F55E2C"),
+  scale_by = 0.5,
   include_y = NULL,
   include_x = NULL,
   names = NULL
@@ -17,11 +21,19 @@ heat_map(
 \arguments{
 \item{fit}{A fit object obtained by a call to 'ppjsdm::gibbsm'}
 
-\item{coefficient}{A strong representing the coefficient to plot}
+\item{summ}{Provide a summary object of the fit, only needed if show_sig = TRUE}
+
+\item{coefficient}{A string representing the coefficient to plot, either alpha or beta}
 
 \item{show_values}{Should the cells show the coefficient value?}
 
+\item{show_sig}{Should the significance of each cell be shown by a point in the cell?}
+
 \item{limits}{Optional vector that gives what coefficient values should be plotted}
+
+\item{colours}{Colours that the gradient of the heatmap will be filled by}
+
+\item{scale_by}{For visualisation - what should the interval of legend scale increase by?}
 
 \item{include_y}{Optional vector of types that should be included on the y-axis}
 
@@ -33,7 +45,7 @@ heat_map(
 Heatmap of coefficient values of a fit object
 }
 \examples{
-set.seed(1)
+#' set.seed(1)
 
 # Construct a configuration
 
