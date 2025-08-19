@@ -21,6 +21,8 @@ heat_map(
 \arguments{
 \item{fit}{A fit object obtained by a call to 'ppjsdm::gibbsm'}
 
+\item{summ}{Provide a summary object of the fit, only needed if show_sig = TRUE}
+
 \item{coefficient}{A string representing the coefficient to plot, either alpha or beta}
 
 \item{show_values}{Should the cells show the coefficient value?}
@@ -38,8 +40,6 @@ heat_map(
 \item{include_x}{Optional vector of types that should be included on the x-axis}
 
 \item{names}{Optional list of full names of types, if for example abbreviations were used when running the fit}
-
-\item{sum}{Provide a summary object of the fit, only needed if show_sig = TRUE}
 }
 \description{
 Heatmap of coefficient values of a fit object

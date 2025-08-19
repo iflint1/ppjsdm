@@ -1,7 +1,7 @@
 #' Heatmap of coefficient values of a fit object
 #'
 #' @param fit A fit object obtained by a call to 'ppjsdm::gibbsm'
-#' @param sum Provide a summary object of the fit, only needed if show_sig = TRUE
+#' @param summ Provide a summary object of the fit, only needed if show_sig = TRUE
 #' @param coefficient A string representing the coefficient to plot, either alpha or beta
 #' @param show_values Should the cells show the coefficient value?
 #' @param show_sig Should the significance of each cell be shown by a point in the cell?
