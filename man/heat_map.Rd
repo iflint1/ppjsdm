@@ -15,7 +15,7 @@ heat_map(
   scale_by = 0.5,
   include_y = NULL,
   include_x = NULL,
-  names = NULL
+  full_names = NULL
 )
 }
 \arguments{
@@ -39,7 +39,7 @@ heat_map(
 
 \item{include_x}{Optional vector of types that should be included on the x-axis}
 
-\item{names}{Optional list of full names of types, if for example abbreviations were used when running the fit}
+\item{full_names}{Optional list of full names of types, if for example abbreviations were used when running the fit}
 }
 \description{
 Heatmap of coefficient values of a fit object
@@ -57,6 +57,6 @@ fit <- ppjsdm::gibbsm(configuration, covariates = list(x = function(x, y) x))
 
 # Plot the heatmap of coefficients
 
-ppjsdm::heat_map(fit, coefficient = "x", show_values = FALSE)
+ppjsdm::heat_map(fit, coefficient = "x")
 
 }
