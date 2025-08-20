@@ -10,7 +10,7 @@
 #' @param scale_by For visualisation - what should the interval of legend scale increase by?
 #' @param include_y Optional vector of types that should be included on the y-axis
 #' @param include_x Optional vector of types that should be included on the x-axis
-#' @param names Optional list of full names of types, if for example abbreviations were used when running the fit
+#' @param full_names Optional list of full names of types, if for example abbreviations were used when running the fit
 #' @importFrom ggplot2 aes geom_tile scale_fill_gradientn labs theme geom_text geom_point scale_size_manual waiver
 #' @importFrom scales squish
 #' @importFrom rlang splice-operator
@@ -43,7 +43,7 @@ heat_map <- function(fit,
                      scale_by = 0.5,
                      include_y = NULL,
                      include_x = NULL,
-                     names = NULL)
+                     full_names = NULL)
 {
 
   if(coefficient == "alpha") {
@@ -66,18 +66,18 @@ df$value <- sapply(seq_len(nrow(df)), function(i) {
 if(!is.null(summ)){
 #insert low CI value
 df$lo <- sapply(seq_len(nrow(df)), function(i) { # Get the lower-bound of the CIs
-  val <- sum$lo$alpha[[1]][df$from[i], df$to[i]]
+  val <- summ$lo$alpha[[1]][df$from[i], df$to[i]]
   if(length(val) == 0) {
-    val <- sum$lo$alpha[[1]][df$to[i], df$from[i]]
+    val <- summ$lo$alpha[[1]][df$to[i], df$from[i]]
   }
   val
 })
 
 #insert high CI value
 df$hi <- sapply(seq_len(nrow(df)), function(i) { # Get the lower-bound of the CIs
-  val <- sum$hi$alpha[[1]][df$from[i], df$to[i]]
+  val <- summ$hi$alpha[[1]][df$from[i], df$to[i]]
   if(length(val) == 0) {
-    val <- sum$hi$alpha[[1]][df$to[i], df$from[i]]
+    val <- summ$hi$alpha[[1]][df$to[i], df$from[i]]
   }
   val
 })
@@ -102,7 +102,7 @@ if(!is.null(include_y)){
 
 }
 
-if(!is.null(names)){
+if(!is.null(full_names)){
   df <- df %>% mutate(from = recode(from, !!!names))
 
   df <- df %>% mutate(to = recode(to, !!!names))
@@ -132,7 +132,7 @@ p <- ggplot(df, aes(x = from,
                           breaks = breaks,
                           labels = custom_labels,
                           name = "Coefficient",
-                          oob = squish) +
+                          oob = scales::squish) +
 
      labs(x = "",
           y = "") +
