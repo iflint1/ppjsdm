@@ -31,7 +31,7 @@
 #'
 #' # Plot the heatmap of coefficients
 #'
-#' ppjsdm::heat_map(fit, coefficient = "x", show_values = FALSE)
+#' ppjsdm::heat_map(fit, coefficient = "x")
 #'
 heat_map <- function(fit,
                      summ = NULL,
@@ -132,7 +132,7 @@ p <- ggplot(df, aes(x = from,
                           breaks = breaks,
                           labels = custom_labels,
                           name = "Coefficient",
-                          oob = scales::squish) +
+                          oob = squish) +
 
      labs(x = "",
           y = "") +

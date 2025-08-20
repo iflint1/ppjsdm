@@ -57,6 +57,6 @@ fit <- ppjsdm::gibbsm(configuration, covariates = list(x = function(x, y) x))
 
 # Plot the heatmap of coefficients
 
-ppjsdm::heat_map(fit, coefficient = "x", show_values = FALSE)
+ppjsdm::heat_map(fit, coefficient = "x")
 
 }
