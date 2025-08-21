@@ -103,9 +103,9 @@ if(!is.null(include_y)){
 }
 
 if(!is.null(full_names)){
-  df <- df %>% mutate(from = recode(from, !!!names))
+  df <- df %>% mutate(from = recode(from, !!!full_names))
 
-  df <- df %>% mutate(to = recode(to, !!!names))
+  df <- df %>% mutate(to = recode(to, !!!full_names))
 }
 
 
