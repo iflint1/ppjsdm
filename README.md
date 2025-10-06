@@ -13,7 +13,7 @@ For package installation, gfortan and a c++ complier are necessary. Therefore, t
 
 For Windows users, the `Rtools` toolchain is required, see [the following tutorial](https://cran.r-project.org/bin/windows/Rtools/) for help installing `Rtools`. Check RTools version is compatible R version (i.e. RTools 4.5 = R 4.5)
 
-Mac users require xcode and a c++ complier to install the package. See the following guides: <https://mac.r-project.org/tools/> for xcode and gfortran, or <https://cran.r-project.org/bin/macosx/tools/> for gfortran downloading help. For recent versions of Mac and R complier 'gfortran-12.2-universal.pkg' required. For other versions of Mac and R, check version compatibility in the above guides. 
+Mac users require xcode and a c++ complier to install the package. See the following guides: for [xcode and gfortran](https://mac.r-project.org/tools/), or for [gfortran downloading help](https://cran.r-project.org/bin/macosx/tools/). For recent versions of Mac and R complier 'gfortran-12.2-universal.pkg' required. For other versions of Mac and R, check version compatibility in the above guides. 
 
 
 ## Tutorials 
