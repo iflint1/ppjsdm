@@ -15,7 +15,7 @@ For Windows users, the `Rtools` toolchain is required, see [the following tutori
 
 Mac users require xcode and a c++ complier to install the package. See the following guides: for [xcode and gfortran](https://mac.r-project.org/tools/), or for [gfortran downloading help](https://cran.r-project.org/bin/macosx/tools/). For recent versions of Mac and R complier 'gfortran-12.2-universal.pkg' required. For other versions of Mac and R, check version compatibility in the above guides. 
 
-The package 'Rcpp' may be required, as well as accompanying Rcpp packages (RcppArmadillo, RcppEigen, RcppProgress, RcppThread). 
+The `Rcpp` package may be required, as well as accompanying packages (`RcppArmadillo`, `RcppEigen`, `RcppProgress`, `RcppThread`). 
 
 ## Tutorials 
 An in-depth tutorial on model application including parametrisation, fitting, prediction and troubleshooting is available at <https://github.com/shenali-fernando/ppjsdm_tutorial/>. More tutorials can be found in the repo. 
