@@ -18,7 +18,7 @@ Mac users require xcode and a c++ complier to install the package. See the follo
 For all users the `Rcpp` package may be required, as well as accompanying packages (`RcppArmadillo`, `RcppEigen`, `RcppProgress`, `RcppThread`). 
 
 ## Tutorials 
-An in-depth tutorial on model application including parametrisation, fitting, prediction and troubleshooting is available at <https://github.com/shenali-fernando/ppjsdm_tutorial/>. More tutorials can be found in the repo. 
+An in-depth tutorial on model application including the parametrisation, fitting, prediction and troubleshooting using ppjsdm is available at <https://github.com/shenali-fernando/ppjsdm_tutorial/>. Shorter tutorials can also be found in this repo. 
 
 The accompanying package `ppjsdm_on_datasets` demonstrates the package on a few datasets from plant ecology.
 
