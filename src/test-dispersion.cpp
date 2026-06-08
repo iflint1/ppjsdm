@@ -132,7 +132,7 @@ context("Dispersion") {
                                                                                    configuration,
                                                                                    configuration_subset,
                                                                                    0,
-                                                                                   ppjsdm::size(configuration_subset) * (ppjsdm::size(configuration_subset) - 1) / 2));
+                                                                                   ppjsdm::size_of(configuration_subset) * (ppjsdm::size_of(configuration_subset) - 1) / 2));
 
               for(Configuration::size_type k1(0); k1 < configuration_subset.size(); ++k1) {
                 for(Configuration::size_type k2(k1 + 1); k2 < configuration_subset.size(); ++k2) {

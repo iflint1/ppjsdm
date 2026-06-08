@@ -58,17 +58,17 @@ inline void emplace_point(Configuration& configuration, Args... args) {
 }
 
 template<typename Configuration>
-inline auto size(const Configuration& configuration) {
+inline auto size_of(const Configuration& configuration) {
   return traits::configuration_manipulation<Configuration>::size(configuration);
 }
 
 template<typename Configuration, typename... Configurations, std::enable_if_t<sizeof...(Configurations) != 0>* = nullptr>
-inline auto size(const Configuration& configuration, Configurations&... configurations) {
-  return traits::configuration_manipulation<Configuration>::size(configuration) + size(configurations...);
+inline auto size_of(const Configuration& configuration, Configurations&... configurations) {
+  return traits::configuration_manipulation<Configuration>::size(configuration) + size_of(configurations...);
 }
 
 template<typename T>
-using size_t = decltype(size(std::declval<T>()));
+using size_t = decltype(size_of(std::declval<T>()));
 
 template<typename Configuration>
 inline auto remove_point_by_iterator(Configuration& configuration, typename Configuration::iterator iterator) {
@@ -78,14 +78,14 @@ inline auto remove_point_by_iterator(Configuration& configuration, typename Conf
 template<typename Configuration>
 inline auto remove_random_point(Configuration& configuration) {
   using difference_type = typename std::iterator_traits<decltype(configuration.begin())>::difference_type;
-  const difference_type index(Rcpp::sample(size(configuration), 1, false, R_NilValue, false)[0]);
+  const difference_type index(Rcpp::sample(size_of(configuration), 1, false, R_NilValue, false)[0]);
   return remove_point_by_iterator(configuration, std::next(configuration.begin(), index));
 }
 
 template<typename Configuration>
 inline auto random_point(Configuration& configuration) {
   using difference_type = typename std::iterator_traits<decltype(configuration.begin())>::difference_type;
-  const difference_type index(Rcpp::sample(size(configuration), 1, false, R_NilValue, false)[0]);
+  const difference_type index(Rcpp::sample(size_of(configuration), 1, false, R_NilValue, false)[0]);
   return std::next(configuration.begin(), index);
 }
 
@@ -93,13 +93,13 @@ inline auto random_point(Configuration& configuration) {
 template<typename Generator, typename Configuration>
 inline auto remove_random_point(Generator& generator, Configuration& configuration) {
   using difference_type = typename std::iterator_traits<decltype(configuration.begin())>::difference_type;
-  std::uniform_int_distribution<difference_type> random_point_distribution(0, size(configuration) - 1);
+  std::uniform_int_distribution<difference_type> random_point_distribution(0, size_of(configuration) - 1);
   const auto index(random_point_distribution(generator));
   return remove_point_by_iterator(configuration, std::next(configuration.begin(), index));
 }
 
 template<typename Configuration>
-inline bool empty(const Configuration& configuration) {
+inline bool is_empty(const Configuration& configuration) {
   return traits::configuration_manipulation<Configuration>::empty(configuration);
 }
 

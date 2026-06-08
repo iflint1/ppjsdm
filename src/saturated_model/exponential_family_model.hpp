@@ -157,7 +157,7 @@ protected:
     std::vector<bool> is_any_alpha_nonzero(alpha_.size());
     std::fill(is_any_alpha_nonzero.begin(), is_any_alpha_nonzero.end(), false);
     bool is_any_gamma_nonzero(false);
-    for(typename Points::size_type i(0); i < size(points); ++i) {
+    for(typename Points::size_type i(0); i < size_of(points); ++i) {
       for(decltype(alpha_.size()) j(0); j < alpha_.size(); ++j) {
         if(!is_column_zero(alpha_[j], get_type(points[i]))) {
           is_any_alpha_nonzero[j] = true;
@@ -192,23 +192,23 @@ protected:
     }
 
     // Fill in the returned vector
-    std::vector<decltype(matrix_times_vector_at_index(alpha_[0], short_range_dispersion[0][0], 0))> return_value(size(points));
-    for(typename Points::size_type i(0); i < size(points); ++i) {
+    std::vector<decltype(matrix_times_vector_at_index(alpha_[0], short_range_dispersion[0][0], 0))> return_value(size_of(points));
+    for(typename Points::size_type i(0); i < size_of(points); ++i) {
       // TODO: Put back commented code below??
       //if(!is_column_zero(alpha_, get_type(points[i])) || !is_column_zero(gamma_, get_type(points[i]))) {
         typename Configuration::size_type index_in_configuration(0);
-        while(index_in_configuration < size(configuration) && !is_equal(configuration[index_in_configuration], points[i])) {
+        while(index_in_configuration < size_of(configuration) && !is_equal(configuration[index_in_configuration], points[i])) {
           ++index_in_configuration;
         }
         for(decltype(alpha_.size()) j(0); j < alpha_.size(); ++j) {
           if(!is_column_zero(alpha_[j], get_type(points[i]))) {
             return_value[i] += matrix_times_vector_at_index(alpha_[j],
-                                                            short_range_dispersion[j][index_in_configuration < size(configuration) ? index_in_configuration : i + size(configuration)],
+                                                            short_range_dispersion[j][index_in_configuration < size_of(configuration) ? index_in_configuration : i + size_of(configuration)],
                                                             get_type(points[i]));
           }
         }
         if(!is_column_zero(gamma_, get_type(points[i]))) {
-          return_value[i] += matrix_times_vector_at_index(gamma_, medium_range_dispersion[index_in_configuration < size(configuration) ? index_in_configuration : i + size(configuration)], get_type(points[i]));
+          return_value[i] += matrix_times_vector_at_index(gamma_, medium_range_dispersion[index_in_configuration < size_of(configuration) ? index_in_configuration : i + size_of(configuration)], get_type(points[i]));
         }
       //}
     }

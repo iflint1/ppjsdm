@@ -25,7 +25,7 @@ inline auto make_R_configuration(const Configuration_wrapper& configuration, Rcp
 
 template<typename Configuration>
 inline auto make_R_configuration(const Configuration& configuration, Rcpp::CharacterVector types) {
-  const auto configuration_size(size(configuration));
+  const auto configuration_size(size_of(configuration));
   Configuration_wrapper r_configuration(configuration_size);
   std::copy_n(configuration.begin(), configuration_size, r_configuration.begin());
   return make_R_configuration(r_configuration, types);

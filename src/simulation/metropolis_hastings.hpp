@@ -26,7 +26,7 @@ template<typename Configuration, typename Vector>
 inline auto thinned_configuration(const Vector& only_simulate_these_types,
                                   const Configuration& configuration) {
   Configuration thinned_configuration{};
-  reserve_if_possible(thinned_configuration, size(configuration));
+  reserve_if_possible(thinned_configuration, size_of(configuration));
   for(const auto& point: configuration) {
     for(decltype(only_simulate_these_types.size()) j(0); j < only_simulate_these_types.size(); ++j) {
       if(get_type(point) == only_simulate_these_types[j]) {
@@ -124,15 +124,15 @@ inline auto simulate_metropolis_hastings(Generator& generator,
       const auto point(window.sample(generator, random_type));
 
       const double papangelou(model.compute_papangelou(point, points, conditional_configuration));
-      const double birth_ratio(papangelou * precomputed_constant / (1. + static_cast<double>(size(points))));
+      const double birth_ratio(papangelou * precomputed_constant / (1. + static_cast<double>(size_of(points))));
 
       // Use C++ short-circuiting
       if(birth_ratio >= 1. || birth_ratio >= random_uniform_distribution(generator)) {
         add_point(points, point);
         ++points_by_type[k + 1][random_type];
       }
-    } else if(!empty(points)) { // Deaths
-      const auto current_size = static_cast<double>(size(points));
+    } else if(!is_empty(points)) { // Deaths
+      const auto current_size = static_cast<double>(size_of(points));
       const auto point(remove_random_point(generator, points));
 
       const double papangelou(model.compute_papangelou(point, points, conditional_configuration));

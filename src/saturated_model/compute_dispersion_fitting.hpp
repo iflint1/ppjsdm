@@ -35,10 +35,10 @@ struct dispersion_computation_fitting {
     using CountType = std::vector<ValueType>;
     using DispersionType = std::vector<FloatType>;
 
-    const auto configuration_size(size(configuration));
-    using size_t = std::remove_cv_t<decltype(size(configuration))>;
+    const auto configuration_size(size_of(configuration));
+    using size_t = std::remove_cv_t<decltype(size_of(configuration))>;
     std::vector<CountType> count_vector(configuration_size);
-    const auto other_configuration_size(size(other_configuration));
+    const auto other_configuration_size(size_of(other_configuration));
     const auto index_configuration(compute_on_configuration ? configuration_size : 0);
     std::vector<DispersionType> dispersion(index_configuration + other_configuration_size);
 
@@ -78,12 +78,12 @@ struct dispersion_computation_fitting {
 #pragma omp parallel shared(other_configuration) \
       shared(dispersion, configuration, number_types, count_vector, varphi)
 {
-      decltype(dispersion) dispersion_private(size(other_configuration));
+      decltype(dispersion) dispersion_private(size_of(other_configuration));
 #pragma omp for nowait
-      for(decltype(size(other_configuration)) i = 0; i < size(other_configuration); ++i) {
+      for(decltype(size_of(other_configuration)) i = 0; i < size_of(other_configuration); ++i) {
         dispersion_private[i] = DispersionType(number_types);
         CountType count_point(number_types);
-        for(size_t j(0); j < size(configuration); ++j) {
+        for(size_t j(0); j < size_of(configuration); ++j) {
           AbstractDispersion::template update_count<std::numeric_limits<int>::infinity()>(varphi, count_point[get_type(configuration[j])],
                                                                                   other_configuration[i], configuration[j]);
         }
@@ -91,7 +91,7 @@ struct dispersion_computation_fitting {
                                                           count_point, other_configuration[i]);
       }
 #pragma omp critical
-      for(decltype(size(other_configuration)) i(0); i < size(other_configuration); ++i) {
+      for(decltype(size_of(other_configuration)) i(0); i < size_of(other_configuration); ++i) {
         if(dispersion_private[i] != DispersionType{}) {
           dispersion[index_configuration + i] = dispersion_private[i];
         }
@@ -140,19 +140,19 @@ struct dispersion_computation_fitting {
 #pragma omp parallel shared(other_configuration) \
       shared(dispersion, configuration, number_types, count_vector, varphi)
 {
-      decltype(dispersion) dispersion_private(size(other_configuration));
+      decltype(dispersion) dispersion_private(size_of(other_configuration));
 #pragma omp for nowait
-      for(decltype(size(other_configuration)) i = 0; i < size(other_configuration); ++i) {
+      for(decltype(size_of(other_configuration)) i = 0; i < size_of(other_configuration); ++i) {
         dispersion_private[i] = DispersionType(number_types);
         CountType count_point(number_types);
-        for(size_t j(0); j < size(configuration); ++j) {
+        for(size_t j(0); j < size_of(configuration); ++j) {
           dispersion_private[i][get_type(configuration[j])] += AbstractDispersion::template delta<1, false>(varphi, count_vector[j][get_type(other_configuration[i])], configuration[j], other_configuration[i]);
           AbstractDispersion::template update_count<0>(varphi, count_point[get_type(configuration[j])], other_configuration[i], configuration[j]);
         }
         add_count_to_dispersion<0, AbstractDispersion, 1>(varphi, dispersion_private[i], count_point, other_configuration[i]);
       }
 #pragma omp critical
-      for(decltype(size(other_configuration)) i(0); i < size(other_configuration); ++i) {
+      for(decltype(size_of(other_configuration)) i(0); i < size_of(other_configuration); ++i) {
         if(dispersion_private[i] != DispersionType{}) {
           dispersion[index_configuration + i] = dispersion_private[i];
         }

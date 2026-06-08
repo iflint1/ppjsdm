@@ -188,7 +188,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   // Precompute how many of the points in the configuration we'll have to drop due to NA values on the covariates.
   size_t total_configuration_length(0);
   for(size_t i(0); i < configuration_list.size(); ++i) {
-    total_configuration_length += ppjsdm::size(configuration_list[i]);
+    total_configuration_length += ppjsdm::size_of(configuration_list[i]);
   }
 
   // Compute a few parameters necessary for the construction of regressors
@@ -212,10 +212,10 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
   // Fill the regressors, response, offset and shift with what we precomputed.
   size_t filling(0);
   for(size_t configuration_index(0); configuration_index < configuration_list.size(); ++configuration_index) {
-    for(size_t point_index(0); point_index < ppjsdm::size(configuration_list[configuration_index]) + ppjsdm::size(D_no_NA_covariates); ++point_index) {
-      const auto current_point(point_index < ppjsdm::size(configuration_list[configuration_index]) ?
+    for(size_t point_index(0); point_index < ppjsdm::size_of(configuration_list[configuration_index]) + ppjsdm::size_of(D_no_NA_covariates); ++point_index) {
+      const auto current_point(point_index < ppjsdm::size_of(configuration_list[configuration_index]) ?
                                  configuration_list[configuration_index][point_index] :
-                                 D_no_NA_covariates[point_index - ppjsdm::size(configuration_list[configuration_index])]);
+                                 D_no_NA_covariates[point_index - ppjsdm::size_of(configuration_list[configuration_index])]);
       // Check if the points generates any NA values, move on if so
       std::vector<decltype(covariates[0](current_point))> covariates_values(covariates.size());
       for(size_t covariate_index(0); covariate_index < static_cast<size_t>(covariates.size()); ++covariate_index) {
@@ -227,7 +227,7 @@ Rcpp::List prepare_gibbsm_data_helper(const std::vector<Configuration>& configur
       }
 
       // fill response
-      if(point_index < ppjsdm::size(configuration_list[configuration_index])) {
+      if(point_index < ppjsdm::size_of(configuration_list[configuration_index])) {
         response[filling] = 1;
       }
 
@@ -315,11 +315,11 @@ Rcpp::List prepare_gibbsm_data(Rcpp::List configuration_list,
   std::vector<std::vector<ppjsdm::Marked_point>> vector_configurations(configuration_list.size());
   for(R_xlen_t i(0); i < configuration_list.size(); ++i) {
     const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::as<Rcpp::List>(configuration_list[i]));
-    const auto length_configuration(ppjsdm::size(wrapped_configuration));
+    const auto length_configuration(ppjsdm::size_of(wrapped_configuration));
 
     // Convert configurations to std::vector in order for parallelised version to work.
     vector_configurations[i] = std::vector<ppjsdm::Marked_point>(length_configuration);
-    for(decltype(ppjsdm::size(wrapped_configuration)) j(0); j < length_configuration; ++j) {
+    for(decltype(ppjsdm::size_of(wrapped_configuration)) j(0); j < length_configuration; ++j) {
       vector_configurations[i][j] = wrapped_configuration[j];
     }
   }
@@ -394,21 +394,21 @@ Rcpp::List prepare_gibbsm_data_with_dummy(Rcpp::List configuration_list,
   std::vector<std::vector<ppjsdm::Marked_point>> vector_configurations(configuration_list.size());
   for(R_xlen_t i(0); i < configuration_list.size(); ++i) {
     const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::as<Rcpp::List>(configuration_list[i]));
-    const auto length_configuration(ppjsdm::size(wrapped_configuration));
+    const auto length_configuration(ppjsdm::size_of(wrapped_configuration));
 
     // Convert configurations to std::vector in order for parallelised version to work.
     vector_configurations[i] = std::vector<ppjsdm::Marked_point>(length_configuration);
-    for(decltype(ppjsdm::size(wrapped_configuration)) j(0); j < length_configuration; ++j) {
+    for(decltype(ppjsdm::size_of(wrapped_configuration)) j(0); j < length_configuration; ++j) {
       vector_configurations[i][j] = wrapped_configuration[j];
     }
   }
 
   // Construct std::vector of dummy
   const ppjsdm::Configuration_wrapper wrapped_dummy(Rcpp::as<Rcpp::List>(dummy));
-  const auto length_dummy(ppjsdm::size(wrapped_dummy));
+  const auto length_dummy(ppjsdm::size_of(wrapped_dummy));
 
   std::vector<ppjsdm::Marked_point> vector_dummy(length_dummy);
-  for(decltype(ppjsdm::size(wrapped_dummy)) j(0); j < length_dummy; ++j) {
+  for(decltype(ppjsdm::size_of(wrapped_dummy)) j(0); j < length_dummy; ++j) {
     vector_dummy[j] = wrapped_dummy[j];
   }
 

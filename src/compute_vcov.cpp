@@ -63,7 +63,7 @@ inline auto convert_list_of_boolean_matrices_to_vector(Rcpp::List boolean_matric
 
 template<typename Configuration>
 inline void restrict_window(ppjsdm::Window& window, const Configuration& configuration, typename Configuration::size_type max_size, double percent) {
-  if(ppjsdm::size(configuration) <= max_size) {
+  if(ppjsdm::size_of(configuration) <= max_size) {
     return;
   }
 
@@ -88,7 +88,7 @@ template<typename Configuration, typename Window>
 inline auto restrict_configuration(const Window& restricted_window, const Configuration& configuration) {
   // Create object to return and reserve
   Configuration restricted_configuration;
-  restricted_configuration.reserve(ppjsdm::size(configuration));
+  restricted_configuration.reserve(ppjsdm::size_of(configuration));
 
   // Fill in with points within the window
   for(const auto& point: configuration) {
@@ -247,8 +247,8 @@ inline auto make_G2_stratified(const Configuration& configuration,
   // }
   const auto other_stratified(subset_to_nonNA(ppjsdm::rstratpp_single<Configuration>(window, ppjsdm::get_number_points(dummy)), covariates));
 
-  if(ppjsdm::size(dummy) != ppjsdm::size(other_stratified)) {
-    Rcpp::Rcout << "Size dummy: " << ppjsdm::size(dummy) << " and size new stratified: " << ppjsdm::size(other_stratified) << ".\n";
+  if(ppjsdm::size_of(dummy) != ppjsdm::size_of(other_stratified)) {
+    Rcpp::Rcout << "Size dummy: " << ppjsdm::size_of(dummy) << " and size new stratified: " << ppjsdm::size_of(other_stratified) << ".\n";
     Rcpp::stop("The dummy points and the independent draw of a stratified binomial point process should have the same number of points. This could be due to NA values on the covariates, causing some of the dummy points to be removed on the draws. To solve this, either subset the window to locations where the covariates are non-NA, or avoid dummy points distributed as a stratified point process.");
   }
 
@@ -294,7 +294,7 @@ inline auto make_G2_stratified(const Configuration& configuration,
 {
   decltype(G2) G2_private(number_parameters);
 #pragma omp for nowait
-  for(decltype(ppjsdm::size(dummy)) i = 0; i < ppjsdm::size(dummy); ++i) {
+  for(decltype(ppjsdm::size_of(dummy)) i = 0; i < ppjsdm::size_of(dummy); ++i) {
     // Recover the precomputed short and medium range dispersions
     using dispersion_t = std::remove_cv_t<std::remove_reference_t<decltype(medium_computation_dummy[0])>>;
     std::vector<dispersion_t> short_dummy, short_other;
@@ -530,7 +530,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
 
   // A few useful typedefs
   using computation_t = double;
-  using size_t = decltype(ppjsdm::size(configuration));
+  using size_t = decltype(ppjsdm::size_of(configuration));
 
   // Do we need to compute some of the alphas/gammas? If not, we can skip some of the dispersion computations
   bool compute_some_alphas(false);
@@ -550,9 +550,9 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
 
   // In the main loop, we need to compute papangelou[i] and regressors[i, *] / (rho + papangelou[i])
   // for indices i that correspond to points in the restricted configuration. Precompute this here.
-  std::vector<std::vector<computation_t>> regressors_over_papangelou_plus_rho(ppjsdm::size(restricted_configuration));
-  std::vector<computation_t> restricted_papangelou(ppjsdm::size(restricted_configuration));
-  for(size_t i(0); i < ppjsdm::size(restricted_configuration); ++i) {
+  std::vector<std::vector<computation_t>> regressors_over_papangelou_plus_rho(ppjsdm::size_of(restricted_configuration));
+  std::vector<computation_t> restricted_papangelou(ppjsdm::size_of(restricted_configuration));
+  for(size_t i(0); i < ppjsdm::size_of(restricted_configuration); ++i) {
     regressors_over_papangelou_plus_rho[i] = typename decltype(regressors_over_papangelou_plus_rho)::value_type(number_parameters);
 
     using x_size_t = typename decltype(x)::size_type;
@@ -583,7 +583,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
   // TODO: This depends on memory
   // TODO: Clean up code below, new technique
   const long long int increment(10000000);
-  for(long long int filling(0); filling < static_cast<long long int>(ppjsdm::size(restricted_configuration)) * (static_cast<long long int>(ppjsdm::size(restricted_configuration)) - 1) / 2; filling += increment) {
+  for(long long int filling(0); filling < static_cast<long long int>(ppjsdm::size_of(restricted_configuration)) * (static_cast<long long int>(ppjsdm::size_of(restricted_configuration)) - 1) / 2; filling += increment) {
     // Parallel computations done before adding A2 and A3
     using precomputation_t = decltype(ppjsdm::compute_dispersion_for_vcov(medium_dispersion_model, number_types, configuration, restricted_configuration, 0, 0, 1));
     std::vector<precomputation_t> short_computation;
@@ -591,7 +591,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
 
     if(debug) {
       timer.set_current();
-      Rcpp::Rcout << "Starting computation of batch of dispersions... Number of points in batch: " << ppjsdm::size(restricted_configuration) << ".\n";
+      Rcpp::Rcout << "Starting computation of batch of dispersions... Number of points in batch: " << ppjsdm::size_of(restricted_configuration) << ".\n";
     }
     if(compute_some_alphas) {
       for(decltype(estimate_alpha.size()) k(0); k < estimate_alpha.size(); ++k) {
@@ -607,7 +607,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
       Rcpp::Rcout << "Filling the matrix...\n";
     }
 
-    const auto max_index(std::min<long long int>(filling + increment, static_cast<long long int>(ppjsdm::size(restricted_configuration)) * (static_cast<long long int>(ppjsdm::size(restricted_configuration)) - 1) / 2));
+    const auto max_index(std::min<long long int>(filling + increment, static_cast<long long int>(ppjsdm::size_of(restricted_configuration)) * (static_cast<long long int>(ppjsdm::size_of(restricted_configuration)) - 1) / 2));
 #pragma omp parallel                                              \
     shared(filling, regressors, compute_some_alphas, compute_some_gammas)           \
       shared(short_computation, medium_computation, estimate_alpha, estimate_gamma) \
@@ -616,7 +616,7 @@ inline auto make_A2_plus_A3(const std::vector<double>& papangelou,
         decltype(mat) mat_private(number_parameters);
 #pragma omp for nowait
         for(long long int index_in_computation = filling; index_in_computation < max_index; ++index_in_computation) {
-          const auto pr(ppjsdm::decode_linear(index_in_computation, ppjsdm::size(restricted_configuration)));
+          const auto pr(ppjsdm::decode_linear(index_in_computation, ppjsdm::size_of(restricted_configuration)));
           const size_t i(pr.first);
           const size_t j(pr.second);
           const auto point_i(restricted_configuration[i]);
@@ -803,11 +803,11 @@ Rcpp::List compute_vcov_helper(const Configuration& configuration,
     int nx, ny;
     if(delta_x >= delta_y) {
       const auto r(delta_y / delta_x);
-      nx = std::max<int>(1, static_cast<int>(std::ceil(std::sqrt(static_cast<double>(ppjsdm::size(configuration)) / (r * static_cast<double>(npoints))))));
+      nx = std::max<int>(1, static_cast<int>(std::ceil(std::sqrt(static_cast<double>(ppjsdm::size_of(configuration)) / (r * static_cast<double>(npoints))))));
       ny = static_cast<int>(std::ceil(r * nx));
     } else {
       const auto r(delta_x / delta_y);
-      ny = std::max<int>(1, static_cast<int>(std::ceil(std::sqrt(static_cast<double>(ppjsdm::size(configuration)) / (r * static_cast<double>(npoints))))));
+      ny = std::max<int>(1, static_cast<int>(std::ceil(std::sqrt(static_cast<double>(ppjsdm::size_of(configuration)) / (r * static_cast<double>(npoints))))));
       nx = static_cast<int>(std::ceil(r * ny));
     }
 
@@ -1064,9 +1064,9 @@ Rcpp::List compute_vcov(SEXP configuration,
   const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::wrap(configuration));
 
   // Convert configuration to std::vector in order for parallelised version to work.
-  const auto length_configuration(ppjsdm::size(wrapped_configuration));
+  const auto length_configuration(ppjsdm::size_of(wrapped_configuration));
   std::vector<ppjsdm::Marked_point> vector_configuration(length_configuration);
-  for(decltype(ppjsdm::size(wrapped_configuration)) j(0); j < length_configuration; ++j) {
+  for(decltype(ppjsdm::size_of(wrapped_configuration)) j(0); j < length_configuration; ++j) {
     vector_configuration[j] = wrapped_configuration[j];
   }
 
@@ -1074,9 +1074,9 @@ Rcpp::List compute_vcov(SEXP configuration,
   const ppjsdm::Configuration_wrapper wrapped_dummy(Rcpp::wrap(dummy));
 
   // Convert configuration to std::vector in order for parallelised version to work.
-  const auto length_dummy(ppjsdm::size(wrapped_dummy));
+  const auto length_dummy(ppjsdm::size_of(wrapped_dummy));
   std::vector<ppjsdm::Marked_point> vector_dummy(length_dummy);
-  for(decltype(ppjsdm::size(wrapped_dummy)) j(0); j < length_dummy; ++j) {
+  for(decltype(ppjsdm::size_of(wrapped_dummy)) j(0); j < length_dummy; ++j) {
     vector_dummy[j] = wrapped_dummy[j];
   }
 
@@ -1176,9 +1176,9 @@ Rcpp::NumericMatrix compute_A2_plus_A3_cpp(SEXP configuration,
   const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::wrap(configuration));
 
   // Convert configuration to std::vector in order for parallelised version to work.
-  const auto length_configuration(ppjsdm::size(wrapped_configuration));
+  const auto length_configuration(ppjsdm::size_of(wrapped_configuration));
   std::vector<ppjsdm::Marked_point> vector_configuration(length_configuration);
-  for(decltype(ppjsdm::size(wrapped_configuration)) j(0); j < length_configuration; ++j) {
+  for(decltype(ppjsdm::size_of(wrapped_configuration)) j(0); j < length_configuration; ++j) {
     vector_configuration[j] = wrapped_configuration[j];
   }
 
@@ -1200,11 +1200,11 @@ Rcpp::NumericMatrix compute_A2_plus_A3_cpp(SEXP configuration,
     int nx, ny;
     if(delta_x >= delta_y) {
       const auto r(delta_y / delta_x);
-      nx = std::max<int>(1, static_cast<int>(std::ceil(std::sqrt(static_cast<double>(ppjsdm::size(vector_configuration)) / (r * static_cast<double>(npoints))))));
+      nx = std::max<int>(1, static_cast<int>(std::ceil(std::sqrt(static_cast<double>(ppjsdm::size_of(vector_configuration)) / (r * static_cast<double>(npoints))))));
       ny = static_cast<int>(std::ceil(r * nx));
     } else {
       const auto r(delta_x / delta_y);
-      ny = std::max<int>(1, static_cast<int>(std::ceil(std::sqrt(static_cast<double>(ppjsdm::size(vector_configuration)) / (r * static_cast<double>(npoints))))));
+      ny = std::max<int>(1, static_cast<int>(std::ceil(std::sqrt(static_cast<double>(ppjsdm::size_of(vector_configuration)) / (r * static_cast<double>(npoints))))));
       nx = static_cast<int>(std::ceil(r * ny));
     }
     int total_executions(0);
@@ -1286,9 +1286,9 @@ Rcpp::NumericMatrix compute_G2_cpp(SEXP configuration,
   const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::wrap(configuration));
 
   // Convert configuration to std::vector in order for parallelised version to work.
-  const auto length_configuration(ppjsdm::size(wrapped_configuration));
+  const auto length_configuration(ppjsdm::size_of(wrapped_configuration));
   std::vector<ppjsdm::Marked_point> vector_configuration(length_configuration);
-  for(decltype(ppjsdm::size(wrapped_configuration)) j(0); j < length_configuration; ++j) {
+  for(decltype(ppjsdm::size_of(wrapped_configuration)) j(0); j < length_configuration; ++j) {
     vector_configuration[j] = wrapped_configuration[j];
   }
 
@@ -1296,9 +1296,9 @@ Rcpp::NumericMatrix compute_G2_cpp(SEXP configuration,
   const ppjsdm::Configuration_wrapper wrapped_dummy(Rcpp::wrap(dummy));
 
   // Convert configuration to std::vector in order for parallelised version to work.
-  const auto length_dummy(ppjsdm::size(wrapped_dummy));
+  const auto length_dummy(ppjsdm::size_of(wrapped_dummy));
   std::vector<ppjsdm::Marked_point> vector_dummy(length_dummy);
-  for(decltype(ppjsdm::size(wrapped_dummy)) j(0); j < length_dummy; ++j) {
+  for(decltype(ppjsdm::size_of(wrapped_dummy)) j(0); j < length_dummy; ++j) {
     vector_dummy[j] = wrapped_dummy[j];
   }
 

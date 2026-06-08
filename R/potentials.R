@@ -381,7 +381,7 @@ plot.potentials <- function(x, base_size = 11, max_npairs = 100, compute_average
     g <- g +
       scale_colour_viridis_d(name = "", labels = lab, begin = 0.1, end = 0.9, option = "turbo") +
       scale_linetype_manual(name = "", values = val, labels = lab) +
-      guides(colour = guide_legend(keywidth = 5, override.aes = list(linewidth = 1.5)))
+      guides(colour = guide_legend(keywidth = 5, override.aes = list(size = 1.5)))
   } else {
     if(npairs > max_npairs) {
       g <- g + scale_colour_viridis_d(guide = "none")
@@ -393,7 +393,7 @@ plot.potentials <- function(x, base_size = 11, max_npairs = 100, compute_average
       scale_linetype_manual(values = c("solid", "dotted", "longdash")) +
       guides(linetype = guide_legend(order = 3,
                                      keywidth = 3,
-                                     override.aes = list(linewidth = 1))) +
+                                     override.aes = list(size = 1))) +
       new_scale_colour()
     if(compute_median) {
       g <- g + geom_line(data = avg_df, aes(x = .data$x, y = .data$median, colour = "Median"), alpha = 0.9, size = 2.5)

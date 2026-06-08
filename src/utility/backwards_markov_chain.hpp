@@ -43,7 +43,7 @@ public:
     // Random distribution
     std::uniform_real_distribution<double> random_uniform_distribution(0, 1);
 
-    const auto initial_last_size(ppjsdm::size(last_configuration_));
+    const auto initial_last_size(ppjsdm::size_of(last_configuration_));
     if(initial_last_size != 0) {
       Configuration points_not_in_last{};
 
@@ -53,15 +53,15 @@ public:
         // Do the computations by blocks of size `initial_last_size`, reserving space each time
         chain_.reserve(chain_.size() + initial_last_size);
         ppjsdm::reserve_if_possible(points_not_in_last, points_not_in_last.size() + initial_last_size);
-        using size_t = decltype(ppjsdm::size(last_configuration_));
+        using size_t = decltype(ppjsdm::size_of(last_configuration_));
         for(size_t i(0); i < initial_last_size; ++i) {
-          const double sum_sizes(ppjsdm::size(points_not_in_last) + ppjsdm::size(last_configuration_));
+          const double sum_sizes(ppjsdm::size_of(points_not_in_last) + ppjsdm::size_of(last_configuration_));
           const auto v(random_uniform_distribution(generator) * (intensity_integral_ + sum_sizes) - intensity_integral_); // Uniformly distributed on [-beta, s_1 + s_2].
           if(v < 0.0) { // Happens with probability beta / (beta + s_1 + s_2).
             insert_uniform_point_in_configuration_and_update_chain(generator, points_not_in_last);
-          } else if(v < static_cast<double>(ppjsdm::size(last_configuration_))) { // Happens with probability s_2 / (s_1 + s_2).
+          } else if(v < static_cast<double>(ppjsdm::size_of(last_configuration_))) { // Happens with probability s_2 / (s_1 + s_2).
             delete_random_point_in_configuration_and_update_chain(generator, last_configuration_);
-            if(empty(last_configuration_)) {
+            if(is_empty(last_configuration_)) {
               last_configuration_ = std::move(points_not_in_last);
               return;
             }
@@ -86,7 +86,7 @@ public:
     // Start a timer to allow for user interruption
     const auto timer(start_timer());
     for(IntegerType i(0); i < number_extensions; ++i) {
-      if(random_uniform_distribution(generator) * (intensity_integral_ + static_cast<double>(ppjsdm::size(last_configuration_))) < intensity_integral_) {
+      if(random_uniform_distribution(generator) * (intensity_integral_ + static_cast<double>(ppjsdm::size_of(last_configuration_))) < intensity_integral_) {
         insert_uniform_point_in_configuration_and_update_chain(generator, last_configuration_);
       } else {
         delete_random_point_in_configuration_and_update_chain(generator, last_configuration_);
@@ -106,8 +106,8 @@ public:
     Configuration L_complement(last_configuration_); // U starts with the end value of the chain.
     Configuration L{}; // L is an empty configuration.
     // Reserve a bit extra space for each of the configurations
-    ppjsdm::reserve_if_possible(L, 2 * ppjsdm::size(last_configuration_));
-    ppjsdm::reserve_if_possible(L_complement, 2 * ppjsdm::size(last_configuration_));
+    ppjsdm::reserve_if_possible(L, 2 * ppjsdm::size_of(last_configuration_));
+    ppjsdm::reserve_if_possible(L_complement, 2 * ppjsdm::size_of(last_configuration_));
 
     // Start a timer to allow for user interruption
     const auto timer(start_timer());
@@ -131,7 +131,7 @@ public:
         stop_if_interrupt(timer);
       }
     }
-    return std::pair<bool, Configuration>(empty(L_complement), L);
+    return std::pair<bool, Configuration>(is_empty(L_complement), L);
   }
 
 private:

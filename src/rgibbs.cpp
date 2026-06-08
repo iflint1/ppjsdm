@@ -140,18 +140,18 @@ SEXP rgibbs_cpp(SEXP window,
     Configuration_type vector_conditional_configuration{};
     if(conditional_configuration != R_NilValue) {
       const ppjsdm::Configuration_wrapper wrapped_conditional_configuration(Rcpp::wrap(conditional_configuration));
-      const auto length_conditional_configuration(ppjsdm::size(wrapped_conditional_configuration));
+      const auto length_conditional_configuration(ppjsdm::size_of(wrapped_conditional_configuration));
       vector_conditional_configuration = Configuration_type(length_conditional_configuration);
-      for(decltype(ppjsdm::size(wrapped_conditional_configuration)) j(0); j < length_conditional_configuration; ++j) {
+      for(decltype(ppjsdm::size_of(wrapped_conditional_configuration)) j(0); j < length_conditional_configuration; ++j) {
         vector_conditional_configuration[j] = wrapped_conditional_configuration[j];
       }
     }
 
     if(starting_configuration != R_NilValue) {
       const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::wrap(starting_configuration));
-      const auto length_configuration(ppjsdm::size(wrapped_configuration));
+      const auto length_configuration(ppjsdm::size_of(wrapped_configuration));
       Configuration_type vector_starting_configuration(length_configuration);
-      for(decltype(ppjsdm::size(wrapped_configuration)) j(0); j < length_configuration; ++j) {
+      for(decltype(ppjsdm::size_of(wrapped_configuration)) j(0); j < length_configuration; ++j) {
         vector_starting_configuration[j] = wrapped_configuration[j];
       }
       return rgibbs_helper<Configuration_type>(nthreads,

@@ -62,20 +62,20 @@ SEXP rbirth_cpp(R_xlen_t nsim,
 
   if(starting_configuration != R_NilValue) {
     const ppjsdm::Configuration_wrapper wrapped_configuration(Rcpp::wrap(starting_configuration));
-    const auto length_configuration(ppjsdm::size(wrapped_configuration));
+    const auto length_configuration(ppjsdm::size_of(wrapped_configuration));
     vector_starting_configuration = Configuration_type(length_configuration);
 
-    for(decltype(ppjsdm::size(wrapped_configuration)) j(0); j < length_configuration; ++j) {
+    for(decltype(ppjsdm::size_of(wrapped_configuration)) j(0); j < length_configuration; ++j) {
       vector_starting_configuration[j] = wrapped_configuration[j];
     }
   }
 
   // Convert dummy into C++ format
   const ppjsdm::Configuration_wrapper wrapped_dummy(Rcpp::wrap(dummy));
-  const auto length_dummy(ppjsdm::size(wrapped_dummy));
+  const auto length_dummy(ppjsdm::size_of(wrapped_dummy));
   auto vector_dummy = Configuration_type(length_dummy);
 
-  for(decltype(ppjsdm::size(wrapped_dummy)) j(0); j < length_dummy; ++j) {
+  for(decltype(ppjsdm::size_of(wrapped_dummy)) j(0); j < length_dummy; ++j) {
     vector_dummy[j] = wrapped_dummy[j];
   }
 

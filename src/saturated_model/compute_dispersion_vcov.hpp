@@ -41,15 +41,15 @@ struct generic_vcov_dispersion_computation {
 
     // TODO: Better way?
     min_index = std::max<typename Configuration::size_type>(min_index, 0);
-    max_index = std::min<typename Configuration::size_type>(max_index, ppjsdm::size(restricted_configuration) * (ppjsdm::size(restricted_configuration) - 1) / 2);
+    max_index = std::min<typename Configuration::size_type>(max_index, ppjsdm::size_of(restricted_configuration) * (ppjsdm::size_of(restricted_configuration) - 1) / 2);
 
     using ValueType = typename AbstractDispersion::ValueType;
     using CountType = std::vector<ValueType>;
     using DispersionType = std::vector<FloatType>;
 
-    const auto restricted_configuration_size(size(restricted_configuration));
-    const auto configuration_size(size(configuration));
-    using size_t = std::remove_cv_t<decltype(size(configuration))>;
+    const auto restricted_configuration_size(size_of(restricted_configuration));
+    const auto configuration_size(size_of(configuration));
+    using size_t = std::remove_cv_t<decltype(size_of(configuration))>;
     std::vector<CountType> count_vector(configuration_size);
 
     std::vector<size_t> index_in_configuration(restricted_configuration_size);
@@ -154,7 +154,7 @@ struct generic_vcov_dispersion_computation {
       decltype(dispersion_j) dispersion_j_private(dispersion_i.size());
 #pragma omp for nowait
       for(std::remove_cv_t<decltype(dispersion_i.size())> index = min_index; index < max_index; ++index) {
-        const auto pr(decode_linear(index, size(restricted_configuration)));
+        const auto pr(decode_linear(index, size_of(restricted_configuration)));
         const size_t i(pr.first);
         const size_t j(pr.second);
 
@@ -162,7 +162,7 @@ struct generic_vcov_dispersion_computation {
         if(get_type(restricted_configuration[i]) == get_type(restricted_configuration[j])) {
           dispersion_i_private[index - min_index] = DispersionType(number_types);
           dispersion_j_private[index - min_index] = DispersionType(number_types);
-          for(size_t l(0); l < size(configuration); ++l) {
+          for(size_t l(0); l < size_of(configuration); ++l) {
             if(l != index_in_configuration[i] && l != index_in_configuration[j]) {
               dispersion_i_private[index - min_index][get_type(configuration[l])] += AbstractDispersion::template delta_discarding<2, true>(varphi, count_vector[l][get_type(restricted_configuration[i])], configuration[l], restricted_configuration[i], restricted_configuration[j]);
               dispersion_j_private[index - min_index][get_type(configuration[l])] += AbstractDispersion::template delta_discarding<2, true>(varphi, count_vector[l][get_type(restricted_configuration[j])], configuration[l], restricted_configuration[j], restricted_configuration[i]);
@@ -216,7 +216,7 @@ inline auto compute_dispersion_for_vcov(const Saturated_model<FloatType>& model,
                                         const Configuration& configuration,
                                         int nthreads = 1,
                                         bool debug = false) {
-  return compute_dispersion_for_vcov(model, number_types, configuration, configuration, 0, size(configuration) * (size(configuration) - 1) / 2, nthreads, debug);
+  return compute_dispersion_for_vcov(model, number_types, configuration, configuration, 0, size_of(configuration) * (size_of(configuration) - 1) / 2, nthreads, debug);
 }
 
 } // namespace ppjsdm
